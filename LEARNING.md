@@ -115,3 +115,12 @@ To the eye nothing changed, and that is the point of the increment: prove we can
 Why go to this trouble: increment 2.2 wants to draw 478 landmark dots on top of your face. You cannot draw on a video element, but a canvas takes dots, lines and heatmaps as happily as it takes camera frames, all in the same paint call sequence.
 Note the gating: we only draw while the state machine says running, and only after the canvas was sized from the stream's real dimensions. Drawing from a frameless video or onto an unsized canvas produces black or stretched output, the same class of silent wrongness the aspect ratio bug taught us to distrust.
 This surface is where the rest of the project happens: dots at 2.2, the eye region at 2.3, sparklines at 3.2, fixation circles at 5.7, the heatmap at 5.9.
+
+## 1.5 Normalise the world at the edge
+
+The concept this increment teaches is the boundary mapper: raw data from the outside world gets cleaned into our own shape by a pure function, before anything else touches it.
+The browser's device list is honest but messy. It mixes cameras with microphones and speakers, and until the user grants permission, every label is an empty string, a quirk that exists for privacy, so websites cannot fingerprint your hardware before you trust them. Feeding that mess straight into the page invites the mess to spread.
+Instead, `cameraOptions` swallows the mess once: it keeps only cameras and turns blank labels into "Camera 1", "Camera 2". Everything after it deals only in our clean shape. The rule of thumb: the further a mess travels into a program, the more places know about it. Stop it at the door.
+The mapper also carries the picker's business rule, more than one camera or no picker at all, as its own tiny tested function. The test file covers zero, one and two cameras, because "more than one" is a threshold, and thresholds get all three sides tested.
+A design consequence worth noticing: the picker can only fill itself after the first successful camera start, since labels are blank before permission. That ordering came from the browser's privacy model, not from our code, and the code simply respects it.
+Boundary mappers return in force at 2.1, where the landmark model's raw output crosses into our FeatureRecord world, and at 7.2, where a CSV loader does the same for the analysis track.
