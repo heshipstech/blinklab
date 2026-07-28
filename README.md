@@ -40,6 +40,7 @@ The project grows one small increment per session, each one branch, one pull req
 - [ROADMAP.md](ROADMAP.md), the full increment ladder.
 - [STATE.md](STATE.md), where things stand right now.
 - [LEARNING.md](LEARNING.md), one plain English engineering note per increment.
+- [decisions/](decisions/), architecture decision records, the why behind choices that are expensive to reverse.
 
 ## License
 

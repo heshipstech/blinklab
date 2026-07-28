@@ -19,7 +19,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 0.5 GitHub Actions CI (continuous integration) running install, lint, typecheck, test, build on every pull request. Check: green check on a pull request.
 - [x] 0.6 Branch protection on `main`, pull request template, two issue templates. Done when direct pushes to `main` are blocked.
 - [x] 0.7 GitHub Pages deployment workflow. Done when a public URL shows the page.
-- [ ] 0.8 ADR-0001 recording the stack decision and its alternatives.
+- [x] 0.8 ADR-0001 recording the stack decision and its alternatives.
 
 ## Phase 1. Pixels
 

@@ -64,3 +64,11 @@ Our app has no server. `npm run build` produces the `dist` folder, a handful of 
 The one real lesson lives in `vite.config.ts`, and it is the subpath problem. Our site is not at the root of a domain, it lives under `/blinklab/`. A page that asks for its script at `/assets/app.js` gets a 404 (not found) there, and renders blank with no error you would notice. The `base` setting makes every generated URL start with `/blinklab/`. Blank page on a fresh deploy, wrong base path, is one of the most common deployment bugs on the entire internet, and now you have seen the cure before ever hitting the disease.
 Note what deploys: `dist` only. The TypeScript, the tests, the documents stay in the repo. Visitors receive only the translated result.
 This comes back at 8.7, where the size of what we deploy gets a budget, and every increment from now on, because each merged pull request updates the public demo.
+
+## 0.8 The ADR: decisions have worse memories than code
+
+The concept this increment teaches is the architecture decision record, ADR for short.
+Code remembers itself, git holds every version forever. Decisions do not. Six months from now the code will show _that_ we use MediaPipe, but nothing in the code shows _why_, or what we rejected, or what we knew it would cost us. That context evaporates first, and its absence is how projects end up re-fighting settled questions or, worse, cargo-culting choices nobody can defend anymore.
+An ADR is a small dated note with a fixed shape: the situation, the options actually on the table, the choice, and the consequences we accepted, good and bad. The bad consequences are the valuable part. Writing "we are bound to MediaPipe's landmark quality" today means that when that limit bites in Phase 3, it arrives as something we chose, not something that ambushed us.
+Two rules give ADRs their strength. They are written only for decisions that are expensive to reverse, so the folder stays short and important. And they are never edited after merge, only superseded by a newer numbered ADR, so the folder is an honest history, not a polished story.
+This comes back whenever we are tempted by a framework or a charting library, both of which now require a superseding ADR by their own rule, and at 7.3, where choosing a dataset gets the same treatment.
