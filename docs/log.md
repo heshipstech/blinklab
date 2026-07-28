@@ -8,3 +8,4 @@ One line per increment: date, id, what changed, what was surprising.
 - 2026-07-28, 0.4, vitest plus the first pure core function, distance, with three real tests, proven able to fail by mutating a minus sign. Surprise: git checkout cannot restore a brand new file, git is blind to files it has never been shown.
 - 2026-07-28, 0.5, github actions ci running all five gates on every pull request, judged its own pull request. Also the first review ritual: the recall quiz format did not fit, switched to predict then verify with practical examples.
 - 2026-07-28, 0.6, branch protection plus pull request and issue templates. Surprise: the gate locked out its own builders, the STATE.md wrap up ritual had to move inside the pull request, which is the gate doing its job.
+- 2026-07-28, 0.7, github pages deployment on every merge to main, live at heshipstech.github.io/blinklab. Lesson banked before the bug: the subpath base setting that prevents the classic blank page deploy.

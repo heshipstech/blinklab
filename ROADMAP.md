@@ -18,7 +18,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 0.4 Vitest with one real test of a trivial pure function in `core`. Check: `npm test` shows 1 passing test.
 - [x] 0.5 GitHub Actions CI (continuous integration) running install, lint, typecheck, test, build on every pull request. Check: green check on a pull request.
 - [x] 0.6 Branch protection on `main`, pull request template, two issue templates. Done when direct pushes to `main` are blocked.
-- [ ] 0.7 GitHub Pages deployment workflow. Done when a public URL shows the page.
+- [x] 0.7 GitHub Pages deployment workflow. Done when a public URL shows the page.
 - [ ] 0.8 ADR-0001 recording the stack decision and its alternatives.
 
 ## Phase 1. Pixels
