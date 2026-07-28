@@ -38,3 +38,12 @@ The third test states a property: the distance from a to b equals the distance f
 A test only earns its keep if it can lose. We proved ours can: flipping one minus sign to a plus inside the function made a test fail within milliseconds. A test that passes no matter what is decoration, not protection.
 We also widened tsconfig so test files are typechecked. A test file with a type error would otherwise lie quietly.
 This comes back constantly: increment 3.1 builds the eye aspect ratio on top of this exact `distance` function, and every threshold in the blink logic will get the same three part treatment, below, at, above.
+
+## 0.5 CI: a stranger's computer judges every change
+
+The concept this increment teaches is continuous integration, CI for short.
+Until now, "all gates pass" meant they passed on one specific Mac, with its particular Node version, its installed tools, and any local files that never made it into git. CI removes that asterisk. On every pull request, GitHub rents us a fresh Linux machine that has nothing, checks out only what is committed, installs only what the lockfile names, and runs the exact same five commands we run locally.
+The key line is `npm ci` instead of `npm install`. Plain install is allowed to make choices, ci (clean install) is not: it reproduces the lockfile exactly or fails. This is the moment increment 0.2's lockfile earns its keep.
+The deeper shift is social, even in a team of two like ours. Before CI, "does it work" was a claim a person makes. After CI, it is a fact a machine certifies, visible to any stranger reading the repository. The green check is the project's reputation, rebuilt from zero on every change.
+And because the workflow triggers on pull requests, the pull request that introduced it was judged by it. The test of the test machine was the test machine.
+This comes back at 0.6, where branch protection makes the green check mandatory rather than polite, and at 0.7, where a second workflow deploys the page to a public URL.

@@ -1,5 +1,7 @@
 # blinklab
 
+[![CI](https://github.com/heshipstech/blinklab/actions/workflows/ci.yml/badge.svg)](https://github.com/heshipstech/blinklab/actions/workflows/ci.yml)
+
 A browser based eye signal laboratory. It reads your webcam locally, measures what your eyes are doing, and turns that into interpretable numbers: blinks, eyelid aperture in millimetres, gaze regions, and rolling attention metrics.
 
 > **This is a demo and a personal learning project. It is not a medical device, not a safety product, and must not be used for clinical, workplace or safety decisions.**
