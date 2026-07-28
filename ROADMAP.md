@@ -28,7 +28,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 1.3 Measured frames per second, displayed. Check: unit test of the fps calculator with fake timestamps.
 - [x] 1.4 Draw the video into a canvas instead of showing the video element. Check: visual check documented in `test/MANUAL.md`.
 - [x] 1.5 Camera device picker when more than one camera exists. Check: unit test on the device list mapper.
-- [ ] 1.6 Mirror toggle and resolution readout. Check: unit test on the transform matrix.
+- [x] 1.6 Mirror toggle and resolution readout. Check: unit test on the transform matrix.
 
 ## Phase 2. Landmarks
 
