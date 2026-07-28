@@ -124,3 +124,12 @@ Instead, `cameraOptions` swallows the mess once: it keeps only cameras and turns
 The mapper also carries the picker's business rule, more than one camera or no picker at all, as its own tiny tested function. The test file covers zero, one and two cameras, because "more than one" is a threshold, and thresholds get all three sides tested.
 A design consequence worth noticing: the picker can only fill itself after the first successful camera start, since labels are blank before permission. That ordering came from the browser's privacy model, not from our code, and the code simply respects it.
 Boundary mappers return in force at 2.1, where the landmark model's raw output crosses into our FeatureRecord world, and at 7.2, where a CSV loader does the same for the analysis track.
+
+## 1.6 Six numbers that move a world
+
+The concept this increment teaches is the transform matrix, the standard way graphics systems describe moving, scaling and flipping in one object.
+Mirroring sounds like it needs pixel work, copy every row of the image reversed. Nobody does that. Instead you tell the canvas: before you draw anything, run every coordinate through these six numbers. Our mirror is `a: -1` (x runs backwards) and `e: width` (then shift it back into frame). The picture flips because the coordinate system flipped, the pixels were never touched.
+The reason this deserves its own `core` module instead of two magic numbers in the draw call: the same matrix must apply to everything that lands on that canvas. At 2.2 we draw 478 landmark dots over your face. If the picture is mirrored and the dots are not, every dot sits beside the feature it belongs to, a bug you would stare at for an hour. With the matrix in one tested place, picture and dots cannot disagree.
+The tests do not check the six numbers as trivia, they push actual points through: the left edge must land on the right edge, the centre must not move, and mirroring twice must hand back the original point. Properties, not opinions.
+Why mirrored is the default: people have watched themselves in mirrors their whole lives. An unmirrored self view feels subtly wrong before you can say why. But the measurements in later phases work on unmirrored coordinates, the mirror is a display courtesy only, which is exactly why it lives at the drawing edge and not inside any maths.
+This matrix returns immediately at 2.2 as the landmark projector, and its inverse thinking returns at 5.4, where screen points must map back into camera space.

@@ -9,6 +9,7 @@ import {
   type CameraOption,
 } from "./core/deviceList";
 import { keepRecent, measureFps } from "./core/fps";
+import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { startFrameLoop } from "./io/frameLoop";
@@ -57,6 +58,22 @@ video.muted = true;
 const canvas = document.createElement("canvas");
 let canvasContext: CanvasRenderingContext2D | null = null;
 
+// People expect to see themselves as a mirror shows them.
+let mirrored = true;
+
+const mirrorLabel = document.createElement("label");
+const mirrorToggle = document.createElement("input");
+mirrorToggle.type = "checkbox";
+mirrorToggle.checked = mirrored;
+mirrorToggle.addEventListener("change", () => {
+  mirrored = mirrorToggle.checked;
+});
+mirrorLabel.append(mirrorToggle, " Mirror");
+mirrorLabel.hidden = true;
+
+const resolutionLabel = document.createElement("p");
+resolutionLabel.hidden = true;
+
 const status = document.createElement("p");
 
 let state: CameraState = { kind: "idle" };
@@ -64,6 +81,8 @@ let state: CameraState = { kind: "idle" };
 function render(): void {
   status.textContent = cameraStateMessage(state);
   canvas.hidden = state.kind !== "running";
+  mirrorLabel.hidden = state.kind !== "running";
+  resolutionLabel.hidden = state.kind !== "running";
   startButton.hidden = state.kind === "running" || state.kind === "requesting";
 }
 
@@ -83,6 +102,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
       canvas.height = display.height;
     }
     canvasContext = canvas.getContext("2d");
+    resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
     setState({ kind: "running" });
   } catch (error: unknown) {
     const name = error instanceof Error ? error.name : String(error);
@@ -122,9 +142,22 @@ startFrameLoop((nowMs) => {
       : `Frames per second: ${String(Math.round(fps))}`;
 
   if (state.kind === "running" && canvasContext !== null) {
-    drawVideoFrame(canvasContext, video);
+    drawVideoFrame(
+      canvasContext,
+      video,
+      frameTransform(mirrored, canvas.width),
+    );
   }
 });
 
-app.append(title, startButton, picker, canvas, status, fpsLabel);
+app.append(
+  title,
+  startButton,
+  picker,
+  canvas,
+  mirrorLabel,
+  resolutionLabel,
+  status,
+  fpsLabel,
+);
 render();
