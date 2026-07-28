@@ -34,13 +34,13 @@ export type FeatureRecord = {
 
 Each state renders a readable message. The page never crashes and never shows stale numbers.
 
-| State | Behaviour |
-| --- | --- |
-| No camera found | Message with what to check |
-| Permission denied | Message with recovery steps |
-| No face in frame | "No face detected", measurements stop |
-| Low frame rate, under 25 fps | Blink metrics return null, UI says "not measurable" |
-| Wrong landmark count, 468 instead of 478 | On screen error naming the cause, no crash |
+| State                                    | Behaviour                                           |
+| ---------------------------------------- | --------------------------------------------------- |
+| No camera found                          | Message with what to check                          |
+| Permission denied                        | Message with recovery steps                         |
+| No face in frame                         | "No face detected", measurements stop               |
+| Low frame rate, under 25 fps             | Blink metrics return null, UI says "not measurable" |
+| Wrong landmark count, 468 instead of 478 | On screen error naming the cause, no crash          |
 
 ## Performance budget
 
