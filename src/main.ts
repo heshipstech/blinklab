@@ -7,6 +7,7 @@ import { keepRecent, measureFps } from "./core/fps";
 import { displaySize } from "./core/videoLayout";
 import { startCamera } from "./io/camera";
 import { startFrameLoop } from "./io/frameLoop";
+import { drawVideoFrame } from "./io/videoCanvas";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -20,9 +21,14 @@ title.textContent = "blinklab";
 const startButton = document.createElement("button");
 startButton.textContent = "Start camera";
 
+// The video element is only a source now. It never joins the page,
+// the canvas below shows what we draw from it each frame.
 const video = document.createElement("video");
 video.playsInline = true;
 video.muted = true;
+
+const canvas = document.createElement("canvas");
+let canvasContext: CanvasRenderingContext2D | null = null;
 
 const status = document.createElement("p");
 
@@ -30,7 +36,7 @@ let state: CameraState = { kind: "idle" };
 
 function render(): void {
   status.textContent = cameraStateMessage(state);
-  video.hidden = state.kind !== "running";
+  canvas.hidden = state.kind !== "running";
   startButton.hidden = state.kind === "running" || state.kind === "requesting";
 }
 
@@ -45,9 +51,10 @@ startButton.addEventListener("click", () => {
     (frame) => {
       const display = displaySize(frame.widthPx, frame.heightPx, 640);
       if (display !== null) {
-        video.width = display.width;
-        video.height = display.height;
+        canvas.width = display.width;
+        canvas.height = display.height;
       }
+      canvasContext = canvas.getContext("2d");
       setState({ kind: "running" });
     },
     (error: unknown) => {
@@ -69,7 +76,11 @@ startFrameLoop((nowMs) => {
     fps === null
       ? "Frames per second: measuring..."
       : `Frames per second: ${String(Math.round(fps))}`;
+
+  if (state.kind === "running" && canvasContext !== null) {
+    drawVideoFrame(canvasContext, video);
+  }
 });
 
-app.append(title, startButton, video, status, fpsLabel);
+app.append(title, startButton, canvas, status, fpsLabel);
 render();
