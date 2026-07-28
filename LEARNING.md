@@ -47,3 +47,12 @@ The key line is `npm ci` instead of `npm install`. Plain install is allowed to m
 The deeper shift is social, even in a team of two like ours. Before CI, "does it work" was a claim a person makes. After CI, it is a fact a machine certifies, visible to any stranger reading the repository. The green check is the project's reputation, rebuilt from zero on every change.
 And because the workflow triggers on pull requests, the pull request that introduced it was judged by it. The test of the test machine was the test machine.
 This comes back at 0.6, where branch protection makes the green check mandatory rather than polite, and at 0.7, where a second workflow deploys the page to a public URL.
+
+## 0.6 Conventions become mechanisms
+
+The concept this increment teaches is the process gate: the difference between a rule people follow and a rule the system enforces.
+Until today, "main only changes through reviewed pull requests with green CI" was a convention. We followed it every time, but nothing stopped a tired Sunday evening push straight to main. Branch protection turns the convention into a mechanism. GitHub now rejects direct pushes, rejects merges without the green check, and rejects force pushes, for everyone, including the repository owner, including me.
+A rule you must remember is a hope. A rule the machine enforces is a guarantee. Guarantees compound: because main provably always passed CI, anyone can pull any commit of main and trust it.
+The same idea, softer, drives the templates. A blank issue box invites vague issues. A template with headings, what happened, what should have happened, first failing observation, does the remembering for you.
+Enforcement has a price, and we paid it immediately: my little post merge STATE.md pushes to main are now impossible, so STATE.md travels inside each pull request already written in its final form. When a gate inconveniences you, that is the gate working.
+This comes back every single increment from now on, and especially at 8.6 and 8.7, where coverage floors and performance budgets become mechanisms the same way.
