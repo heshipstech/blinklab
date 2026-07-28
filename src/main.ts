@@ -1,3 +1,8 @@
+import {
+  cameraStateMessage,
+  classifyCameraError,
+  type CameraState,
+} from "./core/cameraState";
 import { startCamera } from "./io/camera";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -16,23 +21,34 @@ const video = document.createElement("video");
 video.playsInline = true;
 video.muted = true;
 video.width = 640;
-video.hidden = true;
 
 const status = document.createElement("p");
 
+let state: CameraState = { kind: "idle" };
+
+function render(): void {
+  status.textContent = cameraStateMessage(state);
+  video.hidden = state.kind !== "running";
+  startButton.hidden = state.kind === "running" || state.kind === "requesting";
+}
+
+function setState(next: CameraState): void {
+  state = next;
+  render();
+}
+
 startButton.addEventListener("click", () => {
-  status.textContent = "Requesting camera permission...";
+  setState({ kind: "requesting" });
   startCamera(video).then(
     () => {
-      video.hidden = false;
-      startButton.hidden = true;
-      status.textContent = "";
+      setState({ kind: "running" });
     },
     (error: unknown) => {
-      // Readable degraded states are increment 1.2's job.
-      status.textContent = `Camera could not start. ${String(error)}`;
+      const name = error instanceof Error ? error.name : String(error);
+      setState(classifyCameraError(name));
     },
   );
 });
 
 app.append(title, startButton, video, status);
+render();
