@@ -24,7 +24,7 @@ Accepted on 2026-07-28, before any code:
 ## Phase 1. Pixels
 
 - [x] 1.1 Request webcam permission, show the live video element. Done when your face appears. Check: manual steps in `test/MANUAL.md` (amended, see above).
-- [ ] 1.2 Permission denied and no camera states with readable messages. Check: unit test on the state machine.
+- [x] 1.2 Permission denied and no camera states with readable messages. Check: unit test on the state machine.
 - [ ] 1.3 Measured frames per second, displayed. Check: unit test of the fps calculator with fake timestamps.
 - [ ] 1.4 Draw the video into a canvas instead of showing the video element. Check: visual check documented in `test/MANUAL.md`.
 - [ ] 1.5 Camera device picker when more than one camera exists. Check: unit test on the device list mapper.

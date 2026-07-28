@@ -3,6 +3,7 @@ import {
   classifyCameraError,
   type CameraState,
 } from "./core/cameraState";
+import { displaySize } from "./core/videoLayout";
 import { startCamera } from "./io/camera";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -20,7 +21,6 @@ startButton.textContent = "Start camera";
 const video = document.createElement("video");
 video.playsInline = true;
 video.muted = true;
-video.width = 640;
 
 const status = document.createElement("p");
 
@@ -40,7 +40,12 @@ function setState(next: CameraState): void {
 startButton.addEventListener("click", () => {
   setState({ kind: "requesting" });
   startCamera(video).then(
-    () => {
+    (frame) => {
+      const display = displaySize(frame.widthPx, frame.heightPx, 640);
+      if (display !== null) {
+        video.width = display.width;
+        video.height = display.height;
+      }
       setState({ kind: "running" });
     },
     (error: unknown) => {
