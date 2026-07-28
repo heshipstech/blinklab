@@ -1,7 +1,7 @@
-Last increment: 0.3, merged as 070e3de via pull request #6
-Last commit: 070e3de on 2026-07-28
+Last increment: 0.4 in review, pull request #8 open
+Last commit: pushed to test/0-4-first-unit-test on 2026-07-28
 Live demo: none yet, arrives at increment 0.7
-Currently working: nothing, between increments
-Next increment: 0.4, Vitest with the first real test of a pure core function
+Currently working: waiting for human review and merge of pull request #8
+Next increment: 0.5, GitHub Actions CI on every pull request
 Known issues: none
-Test count: 0
+Test count: 3 passing
