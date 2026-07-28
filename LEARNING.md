@@ -106,3 +106,12 @@ The escape is to split the question. "What time is it" stays at the impure edge:
 The fencepost detail is why the tests use countable numbers: eleven timestamps are ten intervals. Dividing by eleven would read plausibly and be wrong by ten percent, which is exactly the kind of mistake a reader cannot spot but a hand checked test cannot miss.
 One discovery from verification: browsers pause the animation loop entirely for hidden tabs, my embedded test browser lives permanently in that state, so the live number can only be confirmed by a human with a visible window.
 The injected clock returns everywhere time appears: blink durations at 4.3, rolling windows at 4.4 and 6.1, and the honesty gate at 4.6 that reads this exact fps number before daring to report a blink.
+
+## 1.4 The canvas: owning the pixels
+
+The concept this increment teaches is the canvas, and the ownership shift it brings.
+Until now the browser displayed the camera stream for us. A video element is a black box with a picture inside: convenient, but closed. You cannot write on it, measure it, or decide what appears. The canvas inverts the deal. It is an empty rectangle of pixels that shows nothing unless code paints it, and now our frame loop paints the current camera frame onto it, sixty times a second.
+To the eye nothing changed, and that is the point of the increment: prove we can reproduce reality before we start annotating it. The right-click test in the manual script is the tell, the browser now offers image options, because as far as it knows this is just a picture we drew.
+Why go to this trouble: increment 2.2 wants to draw 478 landmark dots on top of your face. You cannot draw on a video element, but a canvas takes dots, lines and heatmaps as happily as it takes camera frames, all in the same paint call sequence.
+Note the gating: we only draw while the state machine says running, and only after the canvas was sized from the stream's real dimensions. Drawing from a frameless video or onto an unsized canvas produces black or stretched output, the same class of silent wrongness the aspect ratio bug taught us to distrust.
+This surface is where the rest of the project happens: dots at 2.2, the eye region at 2.3, sparklines at 3.2, fixation circles at 5.7, the heatmap at 5.9.
