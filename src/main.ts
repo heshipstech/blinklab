@@ -3,8 +3,10 @@ import {
   classifyCameraError,
   type CameraState,
 } from "./core/cameraState";
+import { keepRecent, measureFps } from "./core/fps";
 import { displaySize } from "./core/videoLayout";
 import { startCamera } from "./io/camera";
+import { startFrameLoop } from "./io/frameLoop";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -55,5 +57,19 @@ startButton.addEventListener("click", () => {
   );
 });
 
-app.append(title, startButton, video, status);
+const fpsLabel = document.createElement("p");
+
+let frameTimestampsMs: number[] = [];
+
+startFrameLoop((nowMs) => {
+  frameTimestampsMs.push(nowMs);
+  frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
+  const fps = measureFps(frameTimestampsMs);
+  fpsLabel.textContent =
+    fps === null
+      ? "Frames per second: measuring..."
+      : `Frames per second: ${String(Math.round(fps))}`;
+});
+
+app.append(title, startButton, video, status, fpsLabel);
 render();
