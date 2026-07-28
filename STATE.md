@@ -1,7 +1,7 @@
-Last increment: 1.1, merged via pull request #19
-Last commit: squash merge of pull request #19 on 2026-07-28
+Last increment: 1.2, merged via pull request #21
+Last commit: squash merge of pull request #21 on 2026-07-28
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing, between increments
-Next increment: 1.2, readable permission denied and no camera states
+Next increment: 1.3, measured frames per second, displayed
 Known issues: #15 (bump github actions majors off deprecated node 20)
-Test count: 3 passing
+Test count: 9 passing
