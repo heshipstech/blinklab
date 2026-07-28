@@ -15,7 +15,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 0.1 The four working documents, plus LICENSE, .gitignore, README skeleton. Done when the repo has docs and nothing else.
 - [x] 0.2 Vite plus TypeScript project that prints "blinklab" to the page. Done when `npm run dev` shows a page locally. Check: `npm run build` succeeds.
 - [x] 0.3 ESLint, Prettier, strict tsconfig, and the rule that `core` cannot import `io` or `ui`. Check: lint and typecheck scripts pass.
-- [ ] 0.4 Vitest with one real test of a trivial pure function in `core`. Check: `npm test` shows 1 passing test.
+- [x] 0.4 Vitest with one real test of a trivial pure function in `core`. Check: `npm test` shows 1 passing test.
 - [ ] 0.5 GitHub Actions CI (continuous integration) running install, lint, typecheck, test, build on every pull request. Check: green check on a pull request.
 - [ ] 0.6 Branch protection on `main`, pull request template, two issue templates. Done when direct pushes to `main` are blocked.
 - [ ] 0.7 GitHub Pages deployment workflow. Done when a public URL shows the page.

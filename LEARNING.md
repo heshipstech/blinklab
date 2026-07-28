@@ -28,3 +28,13 @@ TypeScript in strict mode is the typechecker. It tracks what kind of thing every
 Our own invented rule is the most important line of configuration in the project: files in `src/core` cannot import from `io` or `ui`, and cannot touch `window`, `document` or `navigator`. That fence is what will keep every measurement function testable without a camera. We proved the fence works by writing a violating file and watching lint fail with our own error message, then deleting it.
 One real world lesson came free: we had to step TypeScript back from version 7 to 6.0.3, because the lint plugin does not support the brand new compiler yet. Tools travel in convoys, and the slowest ship sets the pace.
 This all comes back at increment 0.5, when CI runs these same three machines on every pull request, and at 0.4, when the first protected `core` function appears.
+
+## 0.4 The unit test: a claim that can lose
+
+The concept this increment teaches is the unit test, through the smallest possible example.
+Our function `distance` is pure: give it the same two points, it returns the same number, and it touches nothing else in the world. Purity is what makes testing trivial. There is no camera to fake and no page to load, you call the function and look at the answer.
+The first two tests state ground truth: the distance from a point to itself is zero, and the corner points of a 3 4 5 triangle are exactly 5 apart. Maths knows these answers, so the test is not our opinion.
+The third test states a property: the distance from a to b equals the distance from b to a, whatever the points are. Property tests catch mistakes that example tests miss.
+A test only earns its keep if it can lose. We proved ours can: flipping one minus sign to a plus inside the function made a test fail within milliseconds. A test that passes no matter what is decoration, not protection.
+We also widened tsconfig so test files are typechecked. A test file with a type error would otherwise lie quietly.
+This comes back constantly: increment 3.1 builds the eye aspect ratio on top of this exact `distance` function, and every threshold in the blink logic will get the same three part treatment, below, at, above.
