@@ -56,3 +56,11 @@ A rule you must remember is a hope. A rule the machine enforces is a guarantee. 
 The same idea, softer, drives the templates. A blank issue box invites vague issues. A template with headings, what happened, what should have happened, first failing observation, does the remembering for you.
 Enforcement has a price, and we paid it immediately: my little post merge STATE.md pushes to main are now impossible, so STATE.md travels inside each pull request already written in its final form. When a gate inconveniences you, that is the gate working.
 This comes back every single increment from now on, and especially at 8.6 and 8.7, where coverage floors and performance budgets become mechanisms the same way.
+
+## 0.7 Deployment: the dist folder goes public
+
+The concept this increment teaches is deployment, which for a site like ours is less mysterious than the word sounds.
+Our app has no server. `npm run build` produces the `dist` folder, a handful of plain files, and "deploying" means copying those files to a computer that answers web requests. GitHub Pages is that computer, for free. The new workflow does the copy on every merge to main: build on a clean machine, hand `dist` to Pages, done. Merging to main and publishing to the world are now the same motion.
+The one real lesson lives in `vite.config.ts`, and it is the subpath problem. Our site is not at the root of a domain, it lives under `/blinklab/`. A page that asks for its script at `/assets/app.js` gets a 404 (not found) there, and renders blank with no error you would notice. The `base` setting makes every generated URL start with `/blinklab/`. Blank page on a fresh deploy, wrong base path, is one of the most common deployment bugs on the entire internet, and now you have seen the cure before ever hitting the disease.
+Note what deploys: `dist` only. The TypeScript, the tests, the documents stay in the repo. Visitors receive only the translated result.
+This comes back at 8.7, where the size of what we deploy gets a budget, and every increment from now on, because each merged pull request updates the public demo.

@@ -10,9 +10,13 @@ A browser based eye signal laboratory. It reads your webcam locally, measures wh
 
 Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend, no analytics and no telemetry. A dedicated SECURITY.md arrives later in the ladder.
 
+## Live demo
+
+The current state of the app is always at **https://heshipstech.github.io/blinklab/**, republished automatically on every merge to main.
+
 ## Status
 
-Very early. Increment 0.2 of a long public ladder: the toolchain works and a page renders. The live demo arrives at increment 0.7.
+Very early. Late Phase 0 of a long public ladder: toolchain, tests, CI and deployment all work, the page itself still only prints a word. The camera arrives in Phase 1.
 
 ## How to run
 
