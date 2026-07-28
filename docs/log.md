@@ -11,3 +11,4 @@ One line per increment: date, id, what changed, what was surprising.
 - 2026-07-28, 0.7, github pages deployment on every merge to main, live at heshipstech.github.io/blinklab. Lesson banked before the bug: the subpath base setting that prevents the classic blank page deploy.
 - 2026-07-28, 0.8, adr-0001 records the stack decision, its rejected alternatives and its accepted costs. Phase 0 complete: eight increments from empty folder to tested, gated, publicly deployed page.
 - 2026-07-28, 1.1, start camera button, permission request, live video element. Surprise: the agent's embedded test browser blocks cameras entirely, which accidentally gave the deny path a machine check while the happy path stays human only.
+- 2026-07-28, 1.2, camera state machine in core with a readable sentence per state, six new unit tests. The camera-blocking test browser walked idle, requesting and denied live in one sitting.
