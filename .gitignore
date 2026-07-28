@@ -1,0 +1,24 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Environment and secrets, defensive, the project must never need one
+.env
+.env.*
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Python analysis track, from Phase 7
+__pycache__/
+.venv/
+*.egg-info/
+.ipynb_checkpoints/
