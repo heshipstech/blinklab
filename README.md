@@ -10,11 +10,20 @@ Everything runs in your browser. No video, image or measurement ever leaves your
 
 ## Status
 
-Very early. Increment 0.1 of a long public ladder: documents exist, code does not. The live demo arrives at increment 0.7.
+Very early. Increment 0.2 of a long public ladder: the toolchain works and a page renders. The live demo arrives at increment 0.7.
 
 ## How to run
 
-Nothing to run yet. From increment 0.2 onwards: clone the repo, `npm install`, `npm run dev`.
+You need Node.js 20 or newer. Then:
+
+```
+git clone https://github.com/heshipstech/blinklab.git
+cd blinklab
+npm install
+npm run dev
+```
+
+Open the local URL that Vite prints. You should see the word blinklab.
 
 ## How this repo works
 
