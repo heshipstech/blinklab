@@ -10,12 +10,13 @@ import {
 } from "./core/deviceList";
 import { isFacePresent } from "./core/facePresence";
 import { keepRecent, measureFps } from "./core/fps";
+import { projectNormalizedPoint } from "./core/projection";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { startFrameLoop } from "./io/frameLoop";
 import { loadLandmarker } from "./io/landmarker";
-import { drawVideoFrame } from "./io/videoCanvas";
+import { drawDots, drawVideoFrame } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -165,11 +166,8 @@ startFrameLoop((nowMs) => {
       : `Frames per second: ${String(Math.round(fps))}`;
 
   if (state.kind === "running" && canvasContext !== null) {
-    drawVideoFrame(
-      canvasContext,
-      video,
-      frameTransform(mirrored, canvas.width),
-    );
+    const transform = frameTransform(mirrored, canvas.width);
+    drawVideoFrame(canvasContext, video, transform);
 
     if (landmarker !== null) {
       const result = landmarker.detectForVideo(video, nowMs);
@@ -177,6 +175,19 @@ startFrameLoop((nowMs) => {
       if (present !== lastFacePresent) {
         console.log("face detected:", present);
         lastFacePresent = present;
+      }
+
+      const face = result.faceLandmarks[0];
+      if (face !== undefined) {
+        const dots = face.map((landmark) =>
+          projectNormalizedPoint(
+            landmark,
+            canvas.width,
+            canvas.height,
+            transform,
+          ),
+        );
+        drawDots(canvasContext, dots, 1.5, "#00e676");
       }
     }
   }

@@ -142,3 +142,12 @@ Both artefacts now live on our origin, the model committed to the repo, the WASM
 Note the asymmetry the code respects: loading is slow and happens once, inference is fast and happens per frame. And note what `core` sees: nothing of MediaPipe. The presence predicate defines its own small shape of the result, so the vendor stays quarantined at the edge like the camera before it.
 The lint gate also earned its keep today, by red flagging seven thousand lines of copied vendor code until it was told that vendor code is not ours to judge.
 This is the foundation of everything in Phases 2 to 6: dots at 2.2 are these landmarks drawn, blinks at 4.x are these landmarks moving, and the 30 millisecond budget at 2.6 is this engine timed.
+
+## 2.2 A point is meaningless without its space
+
+The concept this increment teaches is the coordinate space, the silent assumption behind every x and y.
+The model reports landmarks in normalised space: 0 to 1 across the frame, whatever its size. The canvas wants pixels. The display may additionally be mirrored. Three spaces, and a point only means something when you know which space it lives in. The bugs of this domain are all space confusion: draw normalised values as pixels and all 478 dots huddle in the top left corner, apply the mirror twice and the mask floats beside your face.
+The defence is a single bridge. `projectNormalizedPoint` is the only road from model space to screen space: scale by the canvas size, then through the exact same mirror matrix the picture uses. Because picture and dots cross the same bridge, they cannot disagree, toggling Mirror flips them together by construction, not by carefulness.
+The fixture tests pin the bridge with points a human can check while reading: the centre of the frame must land at the centre of the canvas, the top left corner at the top left, and under mirroring only x flips while y holds still.
+Notice also what stayed where: the projector decides coordinates and lives in `core`, fully tested. `drawDots` only paints what it is handed and lives in `io`, untestable and trivially simple. Decisions in the testable place, actions at the edge, the same split as ever.
+Spaces multiply from here: 3.4 adds millimetres, 5.2 adds screen regions, 5.4 maps gaze back from screen space toward camera space. Every one of those conversions will be a small pure bridge like this one.
