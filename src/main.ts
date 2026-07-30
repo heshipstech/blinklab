@@ -18,6 +18,10 @@ import {
 } from "./core/constants";
 import { isFacePresent } from "./core/facePresence";
 import { keepRecent, measureFps } from "./core/fps";
+import {
+  landmarkValidationMessage,
+  validateLandmarkCount,
+} from "./core/landmarkGuard";
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
 import { frameTransform } from "./core/transform";
@@ -86,6 +90,9 @@ mirrorLabel.hidden = true;
 
 const resolutionLabel = document.createElement("p");
 resolutionLabel.hidden = true;
+
+// Speaks only when the model breaks its contract. Empty otherwise.
+const modelStatus = document.createElement("p");
 
 const status = document.createElement("p");
 
@@ -188,6 +195,12 @@ startFrameLoop((nowMs) => {
 
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
+        const validation = validateLandmarkCount(face.length);
+        modelStatus.textContent = landmarkValidationMessage(validation);
+        if (validation.kind !== "valid") {
+          return;
+        }
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -228,6 +241,7 @@ app.append(
   canvas,
   mirrorLabel,
   resolutionLabel,
+  modelStatus,
   status,
   fpsLabel,
 );
