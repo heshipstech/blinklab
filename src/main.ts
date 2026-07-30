@@ -8,12 +8,15 @@ import {
   shouldShowPicker,
   type CameraOption,
 } from "./core/deviceList";
+import { isFacePresent } from "./core/facePresence";
 import { keepRecent, measureFps } from "./core/fps";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { startFrameLoop } from "./io/frameLoop";
+import { loadLandmarker } from "./io/landmarker";
 import { drawVideoFrame } from "./io/videoCanvas";
+import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -104,6 +107,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     canvasContext = canvas.getContext("2d");
     resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
     setState({ kind: "running" });
+    void ensureLandmarker();
   } catch (error: unknown) {
     const name = error instanceof Error ? error.name : String(error);
     setState(classifyCameraError(name));
@@ -117,6 +121,25 @@ async function beginCamera(deviceId?: string): Promise<void> {
     }
   } catch {
     // Device listing failed. The camera still runs, the picker stays hidden.
+  }
+}
+
+let landmarker: FaceLandmarker | null = null;
+let landmarkerLoading = false;
+let lastFacePresent: boolean | null = null;
+
+async function ensureLandmarker(): Promise<void> {
+  if (landmarker !== null || landmarkerLoading) {
+    return;
+  }
+  landmarkerLoading = true;
+  try {
+    landmarker = await loadLandmarker();
+  } catch (error: unknown) {
+    // Full degraded-state treatment for a failed model load is 2.5 territory.
+    console.error("face landmarker failed to load:", error);
+  } finally {
+    landmarkerLoading = false;
   }
 }
 
@@ -147,6 +170,15 @@ startFrameLoop((nowMs) => {
       video,
       frameTransform(mirrored, canvas.width),
     );
+
+    if (landmarker !== null) {
+      const result = landmarker.detectForVideo(video, nowMs);
+      const present = isFacePresent(result);
+      if (present !== lastFacePresent) {
+        console.log("face detected:", present);
+        lastFacePresent = present;
+      }
+    }
   }
 });
 

@@ -133,3 +133,12 @@ The reason this deserves its own `core` module instead of two magic numbers in t
 The tests do not check the six numbers as trivia, they push actual points through: the left edge must land on the right edge, the centre must not move, and mirroring twice must hand back the original point. Properties, not opinions.
 Why mirrored is the default: people have watched themselves in mirrors their whole lives. An unmirrored self view feels subtly wrong before you can say why. But the measurements in later phases work on unmirrored coordinates, the mirror is a display courtesy only, which is exactly why it lives at the drawing edge and not inside any maths.
 This matrix returns immediately at 2.2 as the landmark projector, and its inverse thinking returns at 5.4, where screen points must map back into camera space.
+
+## 2.1 A neural network is a file
+
+The concept this increment teaches is what a machine learning model actually is at rest: a file of numbers, and an engine that runs it.
+The `face_landmarker.task` file is 3.7 megabytes of learned weights, the distilled result of Google training on faces. It does nothing by itself, like sheet music without an orchestra. The orchestra is the WASM runtime, 33 megabytes of compiled inference engine that the browser executes at near native speed. Load both, and you get a function: hand it a video frame, get back landmark positions. That is all "running a model" means.
+Both artefacts now live on our origin, the model committed to the repo, the WASM copied from the version locked npm package before every build. ADR-0002 records why: our privacy stance forbids the running app from calling anyone. Today we proved it, the network log during a full model load showed zero third party requests. A promise in SECURITY.md is a claim, an empty network tab is evidence.
+Note the asymmetry the code respects: loading is slow and happens once, inference is fast and happens per frame. And note what `core` sees: nothing of MediaPipe. The presence predicate defines its own small shape of the result, so the vendor stays quarantined at the edge like the camera before it.
+The lint gate also earned its keep today, by red flagging seven thousand lines of copied vendor code until it was told that vendor code is not ours to judge.
+This is the foundation of everything in Phases 2 to 6: dots at 2.2 are these landmarks drawn, blinks at 4.x are these landmarks moving, and the 30 millisecond budget at 2.6 is this engine timed.
