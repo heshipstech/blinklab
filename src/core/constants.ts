@@ -14,3 +14,10 @@ export const LEFT_EYE_INDICES: readonly number[] = [
   263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388,
   466,
 ];
+
+// Iris topology: a centre point, then its four rim points in the
+// order right, top, left, bottom. Subject's right iris comes first.
+export const RIGHT_IRIS_CENTER_INDEX = 468;
+export const RIGHT_IRIS_RING_INDICES: readonly number[] = [469, 470, 471, 472];
+export const LEFT_IRIS_CENTER_INDEX = 473;
+export const LEFT_IRIS_RING_INDICES: readonly number[] = [474, 475, 476, 477];

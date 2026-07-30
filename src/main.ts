@@ -8,7 +8,14 @@ import {
   shouldShowPicker,
   type CameraOption,
 } from "./core/deviceList";
-import { LEFT_EYE_INDICES, RIGHT_EYE_INDICES } from "./core/constants";
+import {
+  LEFT_EYE_INDICES,
+  LEFT_IRIS_CENTER_INDEX,
+  LEFT_IRIS_RING_INDICES,
+  RIGHT_EYE_INDICES,
+  RIGHT_IRIS_CENTER_INDEX,
+  RIGHT_IRIS_RING_INDICES,
+} from "./core/constants";
 import { isFacePresent } from "./core/facePresence";
 import { keepRecent, measureFps } from "./core/fps";
 import { pickPoints } from "./core/landmarks";
@@ -18,7 +25,7 @@ import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { startFrameLoop } from "./io/frameLoop";
 import { loadLandmarker } from "./io/landmarker";
-import { drawDots, drawVideoFrame } from "./io/videoCanvas";
+import { drawDots, drawRing, drawVideoFrame } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -181,19 +188,34 @@ startFrameLoop((nowMs) => {
 
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
-        const eyeLandmarks = pickPoints(face, [
-          ...RIGHT_EYE_INDICES,
-          ...LEFT_EYE_INDICES,
-        ]);
-        const dots = eyeLandmarks.map((landmark) =>
-          projectNormalizedPoint(
-            landmark,
-            canvas.width,
-            canvas.height,
-            transform,
-          ),
+        const project = (landmarks: readonly { x: number; y: number }[]) =>
+          landmarks.map((landmark) =>
+            projectNormalizedPoint(
+              landmark,
+              canvas.width,
+              canvas.height,
+              transform,
+            ),
+          );
+
+        const eyelidDots = project(
+          pickPoints(face, [...RIGHT_EYE_INDICES, ...LEFT_EYE_INDICES]),
         );
-        drawDots(canvasContext, dots, 2, "#00e676");
+        drawDots(canvasContext, eyelidDots, 2, "#00e676");
+
+        const irisColor = "#ff9100";
+        for (const ring of [RIGHT_IRIS_RING_INDICES, LEFT_IRIS_RING_INDICES]) {
+          drawRing(
+            canvasContext,
+            project(pickPoints(face, ring)),
+            1.5,
+            irisColor,
+          );
+        }
+        const centers = project(
+          pickPoints(face, [RIGHT_IRIS_CENTER_INDEX, LEFT_IRIS_CENTER_INDEX]),
+        );
+        drawDots(canvasContext, centers, 2, irisColor);
       }
     }
   }

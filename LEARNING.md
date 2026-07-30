@@ -160,3 +160,12 @@ So the eye indices moved into `core/constants.ts` under names, with a comment se
 Then the unusual part, we wrote tests for constants. Tests for data, not behaviour: the two eyes may not share an index, every index must exist inside the model's range, no index may repeat, and both eyes must have equal point counts. None of that proves index 159 is truly an eyelid, no test can, only your eyes on the canvas can. But the tests do make the cheap typos impossible, and the manual check covers the expensive one.
 The quiet importance of this increment: from now on the code does not see 478 dots, it sees eyes. Naming a subset is the first act of measurement.
 These lists come back instantly: 2.4 adds the iris rings beside them, 3.1 computes the eye aspect ratio from exactly these points, and 2.5's guard leans on LANDMARK_COUNT.
+
+## 2.4 The ruler you were born with
+
+The concept this increment teaches is the anatomical constant, and why ten orange points deserve their own increment.
+Here is the problem they will solve. Every distance we can measure on the canvas is in pixels, and pixels lie: lean toward the camera and your eye grows fifty percent without opening at all. Phase 3 needs a way to turn pixels into real world units that hold still while you move.
+The trick is that adult humans carry a built in ruler. The visible iris is close to 11.7 millimetres across in almost everybody, one of the most stable measurements in the human body, it is essentially adult sized from early childhood. If we can see how many pixels the iris spans, we know how many pixels a millimetre is, in this frame, at this distance, updated sixty times a second. That division is increment 3.4, and today's ten landmarks, a centre and a four point rim per iris, are its raw material.
+So this increment looks cosmetic, orange rings sliding over your irises, but it is really instrument calibration: we are visually confirming that the model tracks the one feature whose true size we know. Watch the rings while you look around, their steadiness is the ceiling on every millimetre number this project will ever report.
+One code note: "the ring is closed" became a data test, each ring must be exactly the four indices after its centre, which pins the topology assumption we took from MediaPipe's documentation.
+The iris returns at 3.4 as the pixel to millimetre bridge, at 5.1 as the gaze pointer, and in Phase 9's pupil ideas.

@@ -18,6 +18,29 @@ export function drawVideoFrame(
   context.setTransform(1, 0, 0, 1, 0, 0);
 }
 
+// Strokes a closed path through already projected points.
+// Like drawDots, it only paints, it makes no coordinate decisions.
+export function drawRing(
+  context: CanvasRenderingContext2D,
+  points: readonly Point2[],
+  lineWidthPx: number,
+  color: string,
+): void {
+  const first = points[0];
+  if (first === undefined) {
+    return;
+  }
+  context.strokeStyle = color;
+  context.lineWidth = lineWidthPx;
+  context.beginPath();
+  context.moveTo(first.x, first.y);
+  for (const point of points.slice(1)) {
+    context.lineTo(point.x, point.y);
+  }
+  context.closePath();
+  context.stroke();
+}
+
 // Points arrive already projected into canvas pixels. This function
 // only paints, it makes no coordinate decisions.
 export function drawDots(
