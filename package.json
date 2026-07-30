@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare-assets": "rm -rf public/mediapipe-wasm && cp -R node_modules/@mediapipe/tasks-vision/wasm public/mediapipe-wasm",
+    "predev": "npm run prepare-assets",
+    "prebuild": "npm run prepare-assets"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -23,5 +26,8 @@
     "typescript-eslint": "^8.65.0",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.0"
   }
 }

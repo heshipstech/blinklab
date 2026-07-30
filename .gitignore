@@ -22,3 +22,6 @@ __pycache__/
 .venv/
 *.egg-info/
 .ipynb_checkpoints/
+
+# MediaPipe WASM, copied from the locked npm package at build time
+public/mediapipe-wasm/

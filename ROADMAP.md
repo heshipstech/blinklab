@@ -32,7 +32,7 @@ Accepted on 2026-07-28, before any code:
 
 ## Phase 2. Landmarks
 
-- [ ] 2.1 Load FaceLandmarker, log face detected true or false. Check: unit test on the face present predicate using a fixture.
+- [x] 2.1 Load FaceLandmarker, log face detected true or false. Check: unit test on the face present predicate using a fixture.
 - [ ] 2.2 Draw all 478 landmarks as dots on the canvas. Check: fixture based test of the point projector.
 - [ ] 2.3 Move landmark index groups into `core/constants.ts`, draw only the eye region. Check: index sets do not overlap and are in range.
 - [ ] 2.4 Draw the iris landmarks in a second colour. Check: iris indices form a closed ring.
