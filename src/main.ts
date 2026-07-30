@@ -8,8 +8,10 @@ import {
   shouldShowPicker,
   type CameraOption,
 } from "./core/deviceList";
+import { LEFT_EYE_INDICES, RIGHT_EYE_INDICES } from "./core/constants";
 import { isFacePresent } from "./core/facePresence";
 import { keepRecent, measureFps } from "./core/fps";
+import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
@@ -179,7 +181,11 @@ startFrameLoop((nowMs) => {
 
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
-        const dots = face.map((landmark) =>
+        const eyeLandmarks = pickPoints(face, [
+          ...RIGHT_EYE_INDICES,
+          ...LEFT_EYE_INDICES,
+        ]);
+        const dots = eyeLandmarks.map((landmark) =>
           projectNormalizedPoint(
             landmark,
             canvas.width,
@@ -187,7 +193,7 @@ startFrameLoop((nowMs) => {
             transform,
           ),
         );
-        drawDots(canvasContext, dots, 1.5, "#00e676");
+        drawDots(canvasContext, dots, 2, "#00e676");
       }
     }
   }

@@ -151,3 +151,12 @@ The defence is a single bridge. `projectNormalizedPoint` is the only road from m
 The fixture tests pin the bridge with points a human can check while reading: the centre of the frame must land at the centre of the canvas, the top left corner at the top left, and under mirroring only x flips while y holds still.
 Notice also what stayed where: the projector decides coordinates and lives in `core`, fully tested. `drawDots` only paints what it is handed and lives in `io`, untestable and trivially simple. Decisions in the testable place, actions at the edge, the same split as ever.
 Spaces multiply from here: 3.4 adds millimetres, 5.2 adds screen regions, 5.4 maps gaze back from screen space toward camera space. Every one of those conversions will be a small pure bridge like this one.
+
+## 2.3 Magic numbers get names and guards
+
+The concept this increment teaches is the named constant, and why a list of numbers deserves tests.
+The model's 478 landmarks come as an anonymous array. Landmark 159 is a spot on an upper eyelid, but nothing in the code said so until today, the knowledge lived in MediaPipe's documentation and nowhere else. Numbers used bare like that are called magic numbers, and they rot: six months on, nobody remembers why 159, and nobody dares change it.
+So the eye indices moved into `core/constants.ts` under names, with a comment settling the classic trap: left means the subject's left, which appears on the right side of an unmirrored image. Every eye measurement for the rest of the project reads from these two lists.
+Then the unusual part, we wrote tests for constants. Tests for data, not behaviour: the two eyes may not share an index, every index must exist inside the model's range, no index may repeat, and both eyes must have equal point counts. None of that proves index 159 is truly an eyelid, no test can, only your eyes on the canvas can. But the tests do make the cheap typos impossible, and the manual check covers the expensive one.
+The quiet importance of this increment: from now on the code does not see 478 dots, it sees eyes. Naming a subset is the first act of measurement.
+These lists come back instantly: 2.4 adds the iris rings beside them, 3.1 computes the eye aspect ratio from exactly these points, and 2.5's guard leans on LANDMARK_COUNT.
