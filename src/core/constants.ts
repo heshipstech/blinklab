@@ -18,6 +18,26 @@ export const LEFT_EYE_INDICES: readonly number[] = [
   466,
 ];
 
+// The six canonical points for the eye aspect ratio, drawn from the
+// contour sets above: the two corners, and two vertical lid pairs.
+export const RIGHT_EYE_EAR_INDICES = {
+  outerCorner: 33,
+  innerCorner: 133,
+  upperOuter: 160,
+  lowerOuter: 144,
+  upperInner: 158,
+  lowerInner: 153,
+} as const;
+
+export const LEFT_EYE_EAR_INDICES = {
+  outerCorner: 263,
+  innerCorner: 362,
+  upperOuter: 387,
+  lowerOuter: 373,
+  upperInner: 385,
+  lowerInner: 380,
+} as const;
+
 // Iris topology: a centre point, then its four rim points in the
 // order right, top, left, bottom. Subject's right iris comes first.
 export const RIGHT_IRIS_CENTER_INDEX = 468;
