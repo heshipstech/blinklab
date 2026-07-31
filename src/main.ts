@@ -17,6 +17,13 @@ import {
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
 import { isFacePresent } from "./core/facePresence";
+import {
+  addFrame,
+  isComplete,
+  serializeFixture,
+  startRecording,
+  type RecordingState,
+} from "./core/fixtureRecording";
 import { keepRecent, measureFps } from "./core/fps";
 import {
   landmarkValidationMessage,
@@ -28,6 +35,7 @@ import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
+import { downloadTextFile } from "./io/download";
 import { startFrameLoop } from "./io/frameLoop";
 import { loadLandmarker } from "./io/landmarker";
 import { drawDots, drawRing, drawVideoFrame } from "./io/videoCanvas";
@@ -95,6 +103,54 @@ resolutionLabel.hidden = true;
 // Speaks only when the model breaks its contract. Empty otherwise.
 const modelStatus = document.createElement("p");
 
+// Development tool only: records landmark frames into a test fixture.
+// Creation itself is gated on import.meta.env.DEV, which is false in
+// production builds, so dead code elimination removes the recorder
+// entirely. Hidden is not absent, only absent is absent.
+const RECORD_TARGET_FRAMES = 300;
+
+type Recorder = {
+  button: HTMLButtonElement;
+  captureFrame: (
+    nowMs: number,
+    face: readonly { x: number; y: number; z: number }[],
+  ) => void;
+};
+
+function createRecorder(): Recorder {
+  const button = document.createElement("button");
+  button.textContent = "Record fixture";
+  button.hidden = true;
+  let recording: RecordingState | null = null;
+
+  button.addEventListener("click", () => {
+    recording = startRecording(RECORD_TARGET_FRAMES);
+    button.disabled = true;
+  });
+
+  return {
+    button,
+    captureFrame: (nowMs, face) => {
+      if (recording === null) {
+        return;
+      }
+      recording = addFrame(recording, {
+        timestampMs: nowMs,
+        landmarks: face.map((l) => ({ x: l.x, y: l.y, z: l.z })),
+      });
+      button.textContent = `Recording ${String(recording.frames.length)}/${String(RECORD_TARGET_FRAMES)}...`;
+      if (isComplete(recording)) {
+        downloadTextFile("session-01.json", serializeFixture(recording));
+        recording = null;
+        button.disabled = false;
+        button.textContent = "Record fixture";
+      }
+    },
+  };
+}
+
+const recorder = import.meta.env.DEV ? createRecorder() : null;
+
 const status = document.createElement("p");
 
 let state: CameraState = { kind: "idle" };
@@ -105,6 +161,9 @@ function render(): void {
   mirrorLabel.hidden = state.kind !== "running";
   resolutionLabel.hidden = state.kind !== "running";
   inferenceLabel.hidden = state.kind !== "running";
+  if (recorder !== null) {
+    recorder.button.hidden = state.kind !== "running";
+  }
   startButton.hidden = state.kind === "running" || state.kind === "requesting";
 }
 
@@ -216,6 +275,8 @@ startFrameLoop((nowMs) => {
           return;
         }
 
+        recorder?.captureFrame(nowMs, face);
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -260,5 +321,6 @@ app.append(
   status,
   fpsLabel,
   inferenceLabel,
+  ...(recorder !== null ? [recorder.button] : []),
 );
 render();
