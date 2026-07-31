@@ -9,13 +9,16 @@ import {
   type CameraOption,
 } from "./core/deviceList";
 import {
+  LEFT_EYE_EAR_INDICES,
   LEFT_EYE_INDICES,
   LEFT_IRIS_CENTER_INDEX,
   LEFT_IRIS_RING_INDICES,
+  RIGHT_EYE_EAR_INDICES,
   RIGHT_EYE_INDICES,
   RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
+import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { isFacePresent } from "./core/facePresence";
 import {
   addFrame,
@@ -161,6 +164,7 @@ function render(): void {
   mirrorLabel.hidden = state.kind !== "running";
   resolutionLabel.hidden = state.kind !== "running";
   inferenceLabel.hidden = state.kind !== "running";
+  earLabel.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
   }
@@ -232,6 +236,8 @@ picker.addEventListener("change", () => {
 const fpsLabel = document.createElement("p");
 const inferenceLabel = document.createElement("p");
 inferenceLabel.hidden = true;
+const earLabel = document.createElement("p");
+earLabel.hidden = true;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
@@ -277,6 +283,15 @@ startFrameLoop((nowMs) => {
 
         recorder?.captureFrame(nowMs, face);
 
+        const rightEye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
+        const leftEye = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
+        const rightEar = rightEye === null ? null : eyeAspectRatio(rightEye);
+        const leftEar = leftEye === null ? null : eyeAspectRatio(leftEye);
+        earLabel.textContent =
+          rightEar === null || leftEar === null
+            ? "Eye aspect ratio: no valid measurement"
+            : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`;
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -321,6 +336,7 @@ app.append(
   status,
   fpsLabel,
   inferenceLabel,
+  earLabel,
   ...(recorder !== null ? [recorder.button] : []),
 );
 render();
