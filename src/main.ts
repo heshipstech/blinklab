@@ -20,6 +20,7 @@ import {
 } from "./core/constants";
 import { apertureMm, aperturePx } from "./core/aperture";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
+import { eulerFromMatrix } from "./core/headPose";
 import { isFacePresent } from "./core/facePresence";
 import {
   addFrame,
@@ -176,6 +177,7 @@ function render(): void {
   earLabel.hidden = state.kind !== "running";
   apertureLabel.hidden = state.kind !== "running";
   stabilityLabel.hidden = state.kind !== "running";
+  headPoseLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -257,6 +259,8 @@ apertureLabel.hidden = true;
 // of variation over the last 10 seconds, side by side.
 const stabilityLabel = document.createElement("p");
 stabilityLabel.hidden = true;
+const headPoseLabel = document.createElement("p");
+headPoseLabel.hidden = true;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -374,6 +378,14 @@ startFrameLoop((nowMs) => {
         stabilityMm =
           rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
 
+        const matrixData = result.facialTransformationMatrixes[0]?.data;
+        const pose =
+          matrixData === undefined ? null : eulerFromMatrix(matrixData);
+        headPoseLabel.textContent =
+          pose === null
+            ? "Head pose: no valid measurement"
+            : `Head pose, pitch: ${pose.pitchDeg.toFixed(0)}°, yaw: ${pose.yawDeg.toFixed(0)}°, roll: ${pose.rollDeg.toFixed(0)}°`;
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -406,6 +418,7 @@ startFrameLoop((nowMs) => {
         // No face: the numbers must vanish, not go stale.
         earLabel.textContent = "Eye aspect ratio: no valid measurement";
         apertureLabel.textContent = "Eyelid aperture: no valid measurement";
+        headPoseLabel.textContent = "Head pose: no valid measurement";
       }
 
       earSamples = pushBounded(
@@ -462,6 +475,7 @@ app.append(
   earLabel,
   apertureLabel,
   stabilityLabel,
+  headPoseLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );

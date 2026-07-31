@@ -13,5 +13,6 @@ export async function loadLandmarker(): Promise<FaceLandmarker> {
     },
     runningMode: "VIDEO",
     numFaces: 1,
+    outputFacialTransformationMatrixes: true,
   });
 }
