@@ -46,7 +46,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 3.2 Rolling sparkline of EAR over the last 10 seconds. Check: unit test of the ring buffer.
 - [x] 3.3 Synthetic face generator in `test/fixtures/syntheticFace.ts`, landmark sets at known distances and angles. Check: whole new test file.
 - [x] 3.4 Iris width normalisation, pixels to millimetres via the fixed 11.7 mm human iris diameter. Check: mm output stable while px output varies across synthetic distances.
-- [ ] 3.5 Lean in and lean out validation, coefficient of variation for px and mm. Check: CV(mm) < CV(px) on synthetic data.
+- [x] 3.5 Lean in and lean out validation, coefficient of variation for px and mm. Check: CV(mm) < CV(px) on synthetic data.
 - [ ] 3.6 Head pose estimate: pitch, yaw, roll. Check: three separate synthetic tests, one per axis.
 - [ ] 3.7 Tilt correction on aperture, using roll. Check: synthetic test at 0, 15, 30 degrees roll.
 - [ ] 3.8 Reject frames outside a head pose range, mark them invalid instead of guessing. Check: unit test of the validity gate.

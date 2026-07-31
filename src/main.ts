@@ -18,7 +18,7 @@ import {
   RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
-import { apertureMm } from "./core/aperture";
+import { apertureMm, aperturePx } from "./core/aperture";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { isFacePresent } from "./core/facePresence";
 import {
@@ -37,6 +37,7 @@ import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
 import { pushBounded } from "./core/ringBuffer";
 import { sparklineSegments, type EarSample } from "./core/sparkline";
+import { coefficientOfVariation } from "./core/statistics";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
@@ -174,6 +175,7 @@ function render(): void {
   inferenceLabel.hidden = state.kind !== "running";
   earLabel.hidden = state.kind !== "running";
   apertureLabel.hidden = state.kind !== "running";
+  stabilityLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -251,6 +253,17 @@ earLabel.hidden = true;
 const apertureLabel = document.createElement("p");
 apertureLabel.hidden = true;
 
+// The lean in, lean out experiment, live: both apertures' coefficient
+// of variation over the last 10 seconds, side by side.
+const stabilityLabel = document.createElement("p");
+stabilityLabel.hidden = true;
+type StabilitySample = {
+  timestampMs: number;
+  px: number | null;
+  mm: number | null;
+};
+let stabilitySamples: StabilitySample[] = [];
+
 // The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
 const SPARK_WINDOW_MS = 10000;
 const SPARK_EAR_MAX = 0.6;
@@ -300,6 +313,8 @@ startFrameLoop((nowMs) => {
       }
 
       let meanEar: number | null = null;
+      let stabilityPx: number | null = null;
+      let stabilityMm: number | null = null;
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
         const validation = validateLandmarkCount(face.length);
@@ -342,6 +357,23 @@ startFrameLoop((nowMs) => {
             ? "Eyelid aperture: no valid measurement"
             : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`;
 
+        const rightPx = aperturePx(
+          face,
+          RIGHT_EYE_EAR_INDICES,
+          canvas.width,
+          canvas.height,
+        );
+        const leftPx = aperturePx(
+          face,
+          LEFT_EYE_EAR_INDICES,
+          canvas.width,
+          canvas.height,
+        );
+        stabilityPx =
+          rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
+        stabilityMm =
+          rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -381,6 +413,24 @@ startFrameLoop((nowMs) => {
         { timestampMs: nowMs, ear: meanEar },
         1200,
       );
+
+      stabilitySamples = pushBounded(
+        stabilitySamples,
+        { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
+        1200,
+      ).filter((sample) => nowMs - sample.timestampMs <= SPARK_WINDOW_MS);
+      const pxSeries = stabilitySamples
+        .map((sample) => sample.px)
+        .filter((value): value is number => value !== null);
+      const mmSeries = stabilitySamples
+        .map((sample) => sample.mm)
+        .filter((value): value is number => value !== null);
+      const cvPx = coefficientOfVariation(pxSeries);
+      const cvMm = coefficientOfVariation(mmSeries);
+      stabilityLabel.textContent =
+        cvPx === null || cvMm === null
+          ? "Aperture stability: measuring..."
+          : `Aperture stability over 10 s, px CV: ${(cvPx * 100).toFixed(1)}%, mm CV: ${(cvMm * 100).toFixed(1)}%`;
       if (sparkContext !== null) {
         sparkContext.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
         for (const segment of sparklineSegments(
@@ -411,6 +461,7 @@ app.append(
   inferenceLabel,
   earLabel,
   apertureLabel,
+  stabilityLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );

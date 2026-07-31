@@ -225,3 +225,11 @@ A camera reports pixels, and pixels are a lie about size: lean 20 centimetres cl
 Two craft notes. The ruler is the horizontal iris diameter, because the vertical one hides behind the lids exactly when blinks make measurement interesting. And the aspect ratio trap: normalised x is a fraction of frame width, normalised y of frame height, on a 16:9 frame those units differ by almost double, so everything becomes pixels before directions mix. Mixing them raw would skew every millimetre by that factor, silently.
 Reality graded the work too: the median across your 300 recorded frames came out at 7.1 millimetres, with mid blink dipping to 2.5. Plausible human numbers, from arithmetic and one anatomical constant.
 This number becomes the blink signal of Phase 4, gets distance validated at 3.5, and tilt corrected at 3.7.
+
+## 3.5 One fair number for wobble
+
+The concept this increment teaches is the coefficient of variation, and behind it, how to compare variability fairly.
+The question was: does the millimetre aperture really hold steadier than the pixel one when you move? Raw standard deviations cannot answer it, a deviation of 3 pixels and a deviation of 0.3 millimetres are in different currencies, comparing them is meaningless. The exchange rate is the mean: divide each deviation by its own average and both become unit free percentages of themselves. That ratio is the coefficient of variation, CV, and it lets pixels and millimetres stand on one scale.
+The verdict is now a permanent test: sweeping synthetic faces from 350 to 800 millimetres, the pixel aperture's CV exceeds 25 percent while the millimetre CV stays under a tenth of a percent. On perfect synthetic data the ruler cancels distance exactly, real faces will be noisier, which is why the live stability line exists: perform the lean in, lean out experiment yourself and watch the two percentages diverge on screen.
+One honesty guard: CV divides by the mean, and a mean near zero, eyes long closed, makes the ratio explode into nonsense. A mean at or below zero returns null, the refusal rule again.
+CV returns in the analysis track at Phase 7, where every claimed result will carry a variability alongside its average, and the stability line becomes demo material for the pixels versus millimetres story, the strongest post of the ladder.
