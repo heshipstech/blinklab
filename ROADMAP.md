@@ -9,6 +9,7 @@ Accepted on 2026-07-28, before any code:
 1. Increment 1.1's automated check was replaced by manual steps in `test/MANUAL.md`. Playwright (the browser testing tool) is introduced at 5.5 as planned, and a headless browser cannot click a real camera permission prompt anyway.
 2. Increment 5.4 was split into 5.4a and 5.4b. The gaze target is reliable quadrant classification with the head reasonably still, not a precise gaze point. The head pose gate from 3.8 marks gaze invalid when the head moves too much.
 3. Video upload mode moved from 8.1 to 7.0, so dataset videos run through the same TypeScript pipeline as the live camera. Python only loads the resulting CSV files and does statistics. Increment 7.3 is a go or no-go gate on dataset licensing.
+4. Accepted 2026-07-31: increment 3.7 delivers a verification of tilt invariance instead of a tilt correction. The aperture is measured as distances between landmarks, and rotations cannot change distances, so there is nothing to correct. The synthetic tests at 0, 15 and 30 degrees prove it, and a counterfactual test shows the cos(roll) shrinkage a naive vertical measurement would have suffered.
 
 ## Phase 0. Foundations (no eye code at all)
 
@@ -48,7 +49,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 3.4 Iris width normalisation, pixels to millimetres via the fixed 11.7 mm human iris diameter. Check: mm output stable while px output varies across synthetic distances.
 - [x] 3.5 Lean in and lean out validation, coefficient of variation for px and mm. Check: CV(mm) < CV(px) on synthetic data.
 - [x] 3.6 Head pose estimate: pitch, yaw, roll. Check: three separate synthetic tests, one per axis.
-- [ ] 3.7 Tilt correction on aperture, using roll. Check: synthetic test at 0, 15, 30 degrees roll.
+- [x] 3.7 Tilt invariance of aperture, verified instead of corrected (amended, see above). Check: synthetic test at 0, 15, 30 degrees roll, plus the cos(roll) counterfactual.
 - [ ] 3.8 Reject frames outside a head pose range, mark them invalid instead of guessing. Check: unit test of the validity gate.
 
 ## Phase 4. Blinks
