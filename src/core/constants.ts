@@ -7,6 +7,10 @@ export const LANDMARK_COUNT = 478;
 // SPEC.md performance budget: model inference per frame, modern laptop.
 export const INFERENCE_BUDGET_MS = 30;
 
+// The ruler humans are born with: the visible iris is close to
+// 11.7 mm across in almost every adult, stable from early childhood.
+export const IRIS_DIAMETER_MM = 11.7;
+
 // Eyelid contour of the subject's right eye, 16 points around the rim.
 export const RIGHT_EYE_INDICES: readonly number[] = [
   33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,
