@@ -209,3 +209,11 @@ Second, the gap. When you cover the camera, there is no measurement. The temptin
 Underneath sits the ring buffer, the standard answer to "the stream never ends but memory must": push forever, capacity stays fixed, the oldest samples fall off the front. The timing module from 2.6 already needed exactly this, so its own push now delegates to the shared one, reuse instead of a second copy.
 And the fixture keeps earning: one of the tests feeds all 300 recorded frames through the sparkline and requires a single unbroken segment, your five seconds becoming the chart's first regression test.
 Hand drawn charts return at 5.9's heatmap and 6.6's contribution panel, and this exact sparkline becomes the backdrop on which 4.1's blink detector draws its threshold line.
+
+## 3.3 Ground truth by construction
+
+The concept this increment teaches is the answer key, and how to build one when reality refuses to provide it.
+The next increments make physical claims: your eyelid opening is so many millimetres, your head is tilted so many degrees. How would a test check that? Your recorded fixture cannot help, nobody knows the true millimetres behind it, reality comes without labels. So we build faces from arithmetic instead: a tiny 3D model with the true anatomical sizes typed in, iris 11.7 millimetres, eye width 30, pupils 63 apart, rotated by chosen angles, placed at a chosen distance, and pushed through a pinhole projection, the one line of maths behind every camera, size on screen equals size over distance. Now the test knows every answer before asking, because it chose the answers.
+The generator's own tests read like physics homework: the iris at half a metre must span exactly 11.7 over 500 of the frame, doubling the distance must exactly halve it, and the EAR of a synthetic face must equal aperture over eye width to ten decimals, three increments shaking hands.
+Note the conventions block at the top of the file, axes, rotation order, signs, written once. Convention bugs are the worst bugs in geometry because every formula is locally right and the whole is wrong.
+Synthetic answers keys and recorded reality now work as a pair, exactly as 2.7 planned: the generator grades the maths, your fixture confronts it with noise. Every increment through 3.8 tests against this generator, starting immediately with 3.4's millimetres.
