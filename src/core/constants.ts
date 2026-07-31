@@ -4,6 +4,9 @@
 
 export const LANDMARK_COUNT = 478;
 
+// SPEC.md performance budget: model inference per frame, modern laptop.
+export const INFERENCE_BUDGET_MS = 30;
+
 // Eyelid contour of the subject's right eye, 16 points around the rim.
 export const RIGHT_EYE_INDICES: readonly number[] = [
   33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,

@@ -24,6 +24,7 @@ import {
 } from "./core/landmarkGuard";
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
+import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
@@ -103,6 +104,7 @@ function render(): void {
   canvas.hidden = state.kind !== "running";
   mirrorLabel.hidden = state.kind !== "running";
   resolutionLabel.hidden = state.kind !== "running";
+  inferenceLabel.hidden = state.kind !== "running";
   startButton.hidden = state.kind === "running" || state.kind === "requesting";
 }
 
@@ -169,8 +171,11 @@ picker.addEventListener("change", () => {
 });
 
 const fpsLabel = document.createElement("p");
+const inferenceLabel = document.createElement("p");
+inferenceLabel.hidden = true;
 
 let frameTimestampsMs: number[] = [];
+let inferenceSamplesMs: number[] = [];
 
 startFrameLoop((nowMs) => {
   frameTimestampsMs.push(nowMs);
@@ -186,7 +191,17 @@ startFrameLoop((nowMs) => {
     drawVideoFrame(canvasContext, video, transform);
 
     if (landmarker !== null) {
+      const inferenceStartMs = performance.now();
       const result = landmarker.detectForVideo(video, nowMs);
+      inferenceSamplesMs = pushSample(
+        inferenceSamplesMs,
+        performance.now() - inferenceStartMs,
+        60,
+      );
+      inferenceLabel.textContent = inferenceMessage(
+        meanDurationMs(inferenceSamplesMs),
+      );
+
       const present = isFacePresent(result);
       if (present !== lastFacePresent) {
         console.log("face detected:", present);
@@ -244,5 +259,6 @@ app.append(
   modelStatus,
   status,
   fpsLabel,
+  inferenceLabel,
 );
 render();
