@@ -11,6 +11,12 @@ export const INFERENCE_BUDGET_MS = 30;
 // 11.7 mm across in almost every adult, stable from early childhood.
 export const IRIS_DIAMETER_MM = 11.7;
 
+// The fixed blink threshold of increment 4.1. The owner's fixture
+// showed full blinks bottoming near 2.2 mm and a shallow blink near
+// 5, with an open median around 7. Four sits in the stable band,
+// every threshold from 3 to 4.5 finds the same two full blinks.
+export const BLINK_APERTURE_THRESHOLD_MM = 4;
+
 // Beyond these head angles, eye landmarks foreshorten and occlude
 // enough that measurements would be guesses. Symmetric on purpose,
 // so axis sign conventions never matter to the gate.

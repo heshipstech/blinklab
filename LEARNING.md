@@ -257,3 +257,11 @@ Every number this phase built rests on assumptions: the eye landmarks are visibl
 Design details that matter: the limits are symmetric, so the sign conventions we never fully calibrated cannot matter to the gate. The boundary is inclusive, exactly at the limit is still valid, and the tests check below, at and above, our oldest threshold rule. An unknown pose gates as invalid too, unknown is not a licence.
 This is the pattern the whole project has been converging on: 1.2 refused broken cameras, 2.5 refused wrong models, 4.6 will refuse low frame rates, and now geometry refuses untrustworthy angles. An instrument that cannot say "I do not know" is not an instrument, it is an opinion generator.
 Phase 3 ends here: pixels became millimetres, the head learned its angles, and every number learned when to stay silent.
+
+## 4.1 The threshold is a decision, not a fact
+
+The concept that opens Phase 4 is event detection, turning a continuous signal into countable happenings, and the confession at its heart: every event detector hides a decision.
+The detector itself is three states and one rule. The aperture runs below 4 millimetres, the eye counts as closed; it rises back, one blink is counted, on the reopen, so a held closure counts once when it ends. An invalid frame, face lost or head turned too far, breaks the cycle: a blink we could not watch from start to finish is not a blink we may count, the gate's honesty flowing downstream.
+The decision is the 4. Your own fixture priced it: your full blinks bottom near 2.2 millimetres, your shallow half blink near 5, your open eyes near 7. Any threshold from 3 to 4.5 finds exactly two blinks, at 5 the third appears. So "how many times did you blink" has no answer independent of a chosen line, and the tests now document both answers with their prices. This is the ritual's mystery from 3.1, resolved into arithmetic.
+Two blindnesses ship on purpose, each with its increment booked: the threshold is tuned to one person's anatomy, 4.2 learns it per person instead, and a slow deep squint will fool it, 4.7 separates them by shape.
+Everything else in Phase 4 decorates this reducer: durations at 4.3 are time between its transitions, rates at 4.4 count its events per minute, velocities at 4.5 measure how fast the signal falls into it.

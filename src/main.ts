@@ -9,6 +9,7 @@ import {
   type CameraOption,
 } from "./core/deviceList";
 import {
+  BLINK_APERTURE_THRESHOLD_MM,
   LEFT_EYE_EAR_INDICES,
   LEFT_EYE_INDICES,
   LEFT_IRIS_CENTER_INDEX,
@@ -19,6 +20,7 @@ import {
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
 import { apertureMm, aperturePx } from "./core/aperture";
+import { blinkStep, initialBlinkState } from "./core/blink";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
 import { isFacePresent } from "./core/facePresence";
@@ -180,6 +182,7 @@ function render(): void {
   stabilityLabel.hidden = state.kind !== "running";
   headPoseLabel.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
+  blinkLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -267,6 +270,10 @@ headPoseLabel.hidden = true;
 // Speaks only while the pose gate is refusing. Empty otherwise.
 const gateLabel = document.createElement("p");
 gateLabel.hidden = true;
+
+const blinkLabel = document.createElement("p");
+blinkLabel.hidden = true;
+let blinkState = initialBlinkState;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -443,6 +450,13 @@ startFrameLoop((nowMs) => {
         1200,
       );
 
+      blinkState = blinkStep(
+        blinkState,
+        stabilityMm,
+        BLINK_APERTURE_THRESHOLD_MM,
+      );
+      blinkLabel.textContent = `Blinks: ${String(blinkState.blinkCount)}`;
+
       stabilitySamples = pushBounded(
         stabilitySamples,
         { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
@@ -493,6 +507,7 @@ app.append(
   stabilityLabel,
   headPoseLabel,
   gateLabel,
+  blinkLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );
