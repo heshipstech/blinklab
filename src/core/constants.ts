@@ -11,6 +11,15 @@ export const INFERENCE_BUDGET_MS = 30;
 // 11.7 mm across in almost every adult, stable from early childhood.
 export const IRIS_DIAMETER_MM = 11.7;
 
+// Beyond these head angles, eye landmarks foreshorten and occlude
+// enough that measurements would be guesses. Symmetric on purpose,
+// so axis sign conventions never matter to the gate.
+export const POSE_LIMITS = {
+  maxPitchDeg: 20,
+  maxYawDeg: 25,
+  maxRollDeg: 25,
+} as const;
+
 // Eyelid contour of the subject's right eye, 16 points around the rim.
 export const RIGHT_EYE_INDICES: readonly number[] = [
   33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,

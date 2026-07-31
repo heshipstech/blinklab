@@ -40,6 +40,7 @@ import { pushBounded } from "./core/ringBuffer";
 import { sparklineSegments, type EarSample } from "./core/sparkline";
 import { coefficientOfVariation } from "./core/statistics";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
+import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
@@ -178,6 +179,7 @@ function render(): void {
   apertureLabel.hidden = state.kind !== "running";
   stabilityLabel.hidden = state.kind !== "running";
   headPoseLabel.hidden = state.kind !== "running";
+  gateLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -261,6 +263,10 @@ const stabilityLabel = document.createElement("p");
 stabilityLabel.hidden = true;
 const headPoseLabel = document.createElement("p");
 headPoseLabel.hidden = true;
+
+// Speaks only while the pose gate is refusing. Empty otherwise.
+const gateLabel = document.createElement("p");
+gateLabel.hidden = true;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -329,55 +335,6 @@ startFrameLoop((nowMs) => {
 
         recorder?.captureFrame(nowMs, face);
 
-        const rightEye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
-        const leftEye = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
-        const rightEar = rightEye === null ? null : eyeAspectRatio(rightEye);
-        const leftEar = leftEye === null ? null : eyeAspectRatio(leftEye);
-        earLabel.textContent =
-          rightEar === null || leftEar === null
-            ? "Eye aspect ratio: no valid measurement"
-            : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`;
-        meanEar =
-          rightEar === null || leftEar === null
-            ? null
-            : (rightEar + leftEar) / 2;
-
-        const rightMm = apertureMm(
-          face,
-          RIGHT_EYE_EAR_INDICES,
-          RIGHT_IRIS_RING_INDICES,
-          canvas.width,
-          canvas.height,
-        );
-        const leftMm = apertureMm(
-          face,
-          LEFT_EYE_EAR_INDICES,
-          LEFT_IRIS_RING_INDICES,
-          canvas.width,
-          canvas.height,
-        );
-        apertureLabel.textContent =
-          rightMm === null || leftMm === null
-            ? "Eyelid aperture: no valid measurement"
-            : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`;
-
-        const rightPx = aperturePx(
-          face,
-          RIGHT_EYE_EAR_INDICES,
-          canvas.width,
-          canvas.height,
-        );
-        const leftPx = aperturePx(
-          face,
-          LEFT_EYE_EAR_INDICES,
-          canvas.width,
-          canvas.height,
-        );
-        stabilityPx =
-          rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
-        stabilityMm =
-          rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
-
         const matrixData = result.facialTransformationMatrixes[0]?.data;
         const pose =
           matrixData === undefined ? null : eulerFromMatrix(matrixData);
@@ -385,6 +342,64 @@ startFrameLoop((nowMs) => {
           pose === null
             ? "Head pose: no valid measurement"
             : `Head pose, pitch: ${pose.pitchDeg.toFixed(0)}°, yaw: ${pose.yawDeg.toFixed(0)}°, roll: ${pose.rollDeg.toFixed(0)}°`;
+        const gate = poseValidity(pose);
+        gateLabel.textContent = poseValidityMessage(gate);
+
+        if (gate.kind === "valid") {
+          const rightEye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
+          const leftEye = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
+          const rightEar = rightEye === null ? null : eyeAspectRatio(rightEye);
+          const leftEar = leftEye === null ? null : eyeAspectRatio(leftEye);
+          earLabel.textContent =
+            rightEar === null || leftEar === null
+              ? "Eye aspect ratio: no valid measurement"
+              : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`;
+          meanEar =
+            rightEar === null || leftEar === null
+              ? null
+              : (rightEar + leftEar) / 2;
+
+          const rightMm = apertureMm(
+            face,
+            RIGHT_EYE_EAR_INDICES,
+            RIGHT_IRIS_RING_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          const leftMm = apertureMm(
+            face,
+            LEFT_EYE_EAR_INDICES,
+            LEFT_IRIS_RING_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          apertureLabel.textContent =
+            rightMm === null || leftMm === null
+              ? "Eyelid aperture: no valid measurement"
+              : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`;
+
+          const rightPx = aperturePx(
+            face,
+            RIGHT_EYE_EAR_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          const leftPx = aperturePx(
+            face,
+            LEFT_EYE_EAR_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          stabilityPx =
+            rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
+          stabilityMm =
+            rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+        } else {
+          // The gate refused: numbers pause, the gap is honest, the
+          // pose stays visible so you can see your way back.
+          earLabel.textContent = "Eye aspect ratio: no valid measurement";
+          apertureLabel.textContent = "Eyelid aperture: no valid measurement";
+        }
 
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
@@ -419,6 +434,7 @@ startFrameLoop((nowMs) => {
         earLabel.textContent = "Eye aspect ratio: no valid measurement";
         apertureLabel.textContent = "Eyelid aperture: no valid measurement";
         headPoseLabel.textContent = "Head pose: no valid measurement";
+        gateLabel.textContent = "";
       }
 
       earSamples = pushBounded(
@@ -476,6 +492,7 @@ app.append(
   apertureLabel,
   stabilityLabel,
   headPoseLabel,
+  gateLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );

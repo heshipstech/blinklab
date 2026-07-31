@@ -50,7 +50,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 3.5 Lean in and lean out validation, coefficient of variation for px and mm. Check: CV(mm) < CV(px) on synthetic data.
 - [x] 3.6 Head pose estimate: pitch, yaw, roll. Check: three separate synthetic tests, one per axis.
 - [x] 3.7 Tilt invariance of aperture, verified instead of corrected (amended, see above). Check: synthetic test at 0, 15, 30 degrees roll, plus the cos(roll) counterfactual.
-- [ ] 3.8 Reject frames outside a head pose range, mark them invalid instead of guessing. Check: unit test of the validity gate.
+- [x] 3.8 Reject frames outside a head pose range, mark them invalid instead of guessing. Check: unit test of the validity gate.
 
 ## Phase 4. Blinks
 
