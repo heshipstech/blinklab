@@ -1,12 +1,12 @@
 import { INFERENCE_BUDGET_MS } from "./constants";
+import { pushBounded } from "./ringBuffer";
 
 export function pushSample(
   samples: readonly number[],
   sample: number,
   maxSamples: number,
 ): number[] {
-  const next = [...samples, sample];
-  return next.length > maxSamples ? next.slice(next.length - maxSamples) : next;
+  return pushBounded(samples, sample, maxSamples);
 }
 
 export function meanDurationMs(samples: readonly number[]): number | null {

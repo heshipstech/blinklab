@@ -34,6 +34,8 @@ import {
 } from "./core/landmarkGuard";
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
+import { pushBounded } from "./core/ringBuffer";
+import { sparklineSegments, type EarSample } from "./core/sparkline";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
@@ -41,7 +43,12 @@ import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
 import { startFrameLoop } from "./io/frameLoop";
 import { loadLandmarker } from "./io/landmarker";
-import { drawDots, drawRing, drawVideoFrame } from "./io/videoCanvas";
+import {
+  drawDots,
+  drawPolyline,
+  drawRing,
+  drawVideoFrame,
+} from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -165,6 +172,7 @@ function render(): void {
   resolutionLabel.hidden = state.kind !== "running";
   inferenceLabel.hidden = state.kind !== "running";
   earLabel.hidden = state.kind !== "running";
+  sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
   }
@@ -239,6 +247,20 @@ inferenceLabel.hidden = true;
 const earLabel = document.createElement("p");
 earLabel.hidden = true;
 
+// The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
+const SPARK_WINDOW_MS = 10000;
+const SPARK_EAR_MAX = 0.6;
+const sparkCanvas = document.createElement("canvas");
+sparkCanvas.width = 640;
+sparkCanvas.height = 80;
+sparkCanvas.hidden = true;
+sparkCanvas.setAttribute(
+  "aria-label",
+  "Eye aspect ratio over the last 10 seconds",
+);
+const sparkContext = sparkCanvas.getContext("2d");
+let earSamples: EarSample[] = [];
+
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
 
@@ -273,6 +295,7 @@ startFrameLoop((nowMs) => {
         lastFacePresent = present;
       }
 
+      let meanEar: number | null = null;
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
         const validation = validateLandmarkCount(face.length);
@@ -291,6 +314,10 @@ startFrameLoop((nowMs) => {
           rightEar === null || leftEar === null
             ? "Eye aspect ratio: no valid measurement"
             : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`;
+        meanEar =
+          rightEar === null || leftEar === null
+            ? null
+            : (rightEar + leftEar) / 2;
 
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
@@ -320,6 +347,28 @@ startFrameLoop((nowMs) => {
           pickPoints(face, [RIGHT_IRIS_CENTER_INDEX, LEFT_IRIS_CENTER_INDEX]),
         );
         drawDots(canvasContext, centers, 2, irisColor);
+      } else {
+        // No face: the number must vanish, not go stale.
+        earLabel.textContent = "Eye aspect ratio: no valid measurement";
+      }
+
+      earSamples = pushBounded(
+        earSamples,
+        { timestampMs: nowMs, ear: meanEar },
+        1200,
+      );
+      if (sparkContext !== null) {
+        sparkContext.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
+        for (const segment of sparklineSegments(
+          earSamples,
+          nowMs,
+          SPARK_WINDOW_MS,
+          sparkCanvas.width,
+          sparkCanvas.height,
+          SPARK_EAR_MAX,
+        )) {
+          drawPolyline(sparkContext, segment, 1.5, "#00b0ff");
+        }
       }
     }
   }
@@ -337,6 +386,7 @@ app.append(
   fpsLabel,
   inferenceLabel,
   earLabel,
+  sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );
 render();
