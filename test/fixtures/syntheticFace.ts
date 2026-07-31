@@ -1,4 +1,5 @@
 import {
+  IRIS_DIAMETER_MM,
   LANDMARK_COUNT,
   LEFT_EYE_EAR_INDICES,
   LEFT_IRIS_CENTER_INDEX,
@@ -23,7 +24,7 @@ import type { LandmarkPoint } from "../../src/core/facePresence";
 // - Only the measurement landmarks are meaningful. Every other index
 //   sits at the face origin, projecting to the frame centre.
 
-export const IRIS_DIAMETER_MM = 11.7;
+export { IRIS_DIAMETER_MM };
 export const EYE_WIDTH_MM = 30;
 export const INTERPUPILLARY_MM = 63;
 

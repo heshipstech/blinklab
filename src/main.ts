@@ -18,6 +18,7 @@ import {
   RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
+import { apertureMm } from "./core/aperture";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { isFacePresent } from "./core/facePresence";
 import {
@@ -172,6 +173,7 @@ function render(): void {
   resolutionLabel.hidden = state.kind !== "running";
   inferenceLabel.hidden = state.kind !== "running";
   earLabel.hidden = state.kind !== "running";
+  apertureLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -246,6 +248,8 @@ const inferenceLabel = document.createElement("p");
 inferenceLabel.hidden = true;
 const earLabel = document.createElement("p");
 earLabel.hidden = true;
+const apertureLabel = document.createElement("p");
+apertureLabel.hidden = true;
 
 // The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
 const SPARK_WINDOW_MS = 10000;
@@ -319,6 +323,25 @@ startFrameLoop((nowMs) => {
             ? null
             : (rightEar + leftEar) / 2;
 
+        const rightMm = apertureMm(
+          face,
+          RIGHT_EYE_EAR_INDICES,
+          RIGHT_IRIS_RING_INDICES,
+          canvas.width,
+          canvas.height,
+        );
+        const leftMm = apertureMm(
+          face,
+          LEFT_EYE_EAR_INDICES,
+          LEFT_IRIS_RING_INDICES,
+          canvas.width,
+          canvas.height,
+        );
+        apertureLabel.textContent =
+          rightMm === null || leftMm === null
+            ? "Eyelid aperture: no valid measurement"
+            : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`;
+
         const project = (landmarks: readonly { x: number; y: number }[]) =>
           landmarks.map((landmark) =>
             projectNormalizedPoint(
@@ -348,8 +371,9 @@ startFrameLoop((nowMs) => {
         );
         drawDots(canvasContext, centers, 2, irisColor);
       } else {
-        // No face: the number must vanish, not go stale.
+        // No face: the numbers must vanish, not go stale.
         earLabel.textContent = "Eye aspect ratio: no valid measurement";
+        apertureLabel.textContent = "Eyelid aperture: no valid measurement";
       }
 
       earSamples = pushBounded(
@@ -386,6 +410,7 @@ app.append(
   fpsLabel,
   inferenceLabel,
   earLabel,
+  apertureLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );
