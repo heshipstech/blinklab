@@ -37,7 +37,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 2.3 Move landmark index groups into `core/constants.ts`, draw only the eye region. Check: index sets do not overlap and are in range.
 - [x] 2.4 Draw the iris landmarks in a second colour. Check: iris indices form a closed ring.
 - [x] 2.5 Guard against a model returning 468 landmarks instead of 478. Check: unit test with a 468 point fixture.
-- [ ] 2.6 Display per frame inference time in milliseconds. Check: test on the timing helper.
+- [x] 2.6 Display per frame inference time in milliseconds. Check: test on the timing helper.
 - [ ] 2.7 Record 300 frames of landmarks to a JSON fixture file for tests. Done when `test/fixtures/session-01.json` exists and is used by a test.
 
 ## Phase 3. First real measurement
