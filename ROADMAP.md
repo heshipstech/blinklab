@@ -43,7 +43,7 @@ Accepted on 2026-07-28, before any code:
 ## Phase 3. First real measurement
 
 - [x] 3.1 Eye aspect ratio (EAR) per eye, displayed. Check: unit test with hand built synthetic eye shapes.
-- [ ] 3.2 Rolling sparkline of EAR over the last 10 seconds. Check: unit test of the ring buffer.
+- [x] 3.2 Rolling sparkline of EAR over the last 10 seconds. Check: unit test of the ring buffer.
 - [ ] 3.3 Synthetic face generator in `test/fixtures/syntheticFace.ts`, landmark sets at known distances and angles. Check: whole new test file.
 - [ ] 3.4 Iris width normalisation, pixels to millimetres via the fixed 11.7 mm human iris diameter. Check: mm output stable while px output varies across synthetic distances.
 - [ ] 3.5 Lean in and lean out validation, coefficient of variation for px and mm. Check: CV(mm) < CV(px) on synthetic data.
