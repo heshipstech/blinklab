@@ -50,3 +50,4 @@ Each state renders a readable message. The page never crashes and never shows st
 ## Assumptions
 
 - Gaze features assume the head stays reasonably still. The head pose gate (increment 3.8) marks gaze invalid when the head moves beyond its range.
+- Aperture and EAR are distances between landmarks, never vertical drops, which makes them invariant under head roll by construction. No roll correction exists because none is needed, proven at 0, 15 and 30 degrees in the tilt invariance tests.
