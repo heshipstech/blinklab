@@ -17,6 +17,11 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The frame rate honesty gate of 4.6. A fast blink's closed phase
+// can be under 100 ms; below 25 fps it may fall entirely between
+// frames, and a count that missed blinks would read as calm.
+export const MIN_BLINK_FPS = 25;
+
 // The blink rate window of 4.4. Rates from very young windows are
 // arithmetic nonsense, one blink in two seconds reads as thirty per
 // minute, so no rate exists before the observation minimum.
