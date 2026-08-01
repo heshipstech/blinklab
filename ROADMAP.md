@@ -61,7 +61,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 4.5 Blink closing velocity and the amplitude over velocity ratio. Check: unit tests on velocity extraction.
 - [x] 4.6 Frame rate honesty gate, null instead of a number when fps is too low. Check: null, not zero, below threshold.
 - [x] 4.7 Squint versus blink separation. Check: synthetic squint plateau counts no blinks.
-- [ ] 4.8 Blink event log with timestamps in a side panel. Check: test on the event reducer.
+- [x] 4.8 Blink event log with timestamps in a side panel. Check: test on the event reducer.
 
 ## Phase 5. Gaze and attention
 

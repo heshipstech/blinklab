@@ -35,6 +35,11 @@ import {
   type BlinkRateState,
 } from "./core/blinkRate";
 import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
+import {
+  appendEvent,
+  formatBlinkEvent,
+  type BlinkEvent,
+} from "./core/blinkLog";
 import { analyzeClosing } from "./core/blinkShape";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
@@ -200,6 +205,7 @@ function render(): void {
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
   blinkShapeLabel.hidden = state.kind !== "running";
+  blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -228,6 +234,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     // light, distance and even the person may have changed.
     baselineState = null;
     rateState = null;
+    blinkEvents = [];
+    sessionStartMs = null;
+    blinkLogList.replaceChildren();
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -303,6 +312,15 @@ let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
+
+// The blink event log: newest on top, capped, scrolls.
+const blinkLogList = document.createElement("ul");
+blinkLogList.setAttribute("aria-label", "Blink events");
+blinkLogList.style.maxHeight = "160px";
+blinkLogList.style.overflowY = "auto";
+blinkLogList.hidden = true;
+let blinkEvents: BlinkEvent[] = [];
+let sessionStartMs: number | null = null;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -520,6 +538,20 @@ startFrameLoop((nowMs) => {
         if (shape !== null) {
           blinkShapeLabel.textContent = `Last blink shape: amplitude ${shape.amplitudeMm.toFixed(1)} mm, peak closing ${shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
         }
+
+        sessionStartMs ??= nowMs;
+        blinkEvents = appendEvent(blinkEvents, {
+          atMs: nowMs,
+          durationMs: blinkState.lastBlinkDurationMs ?? 0,
+          shape,
+        });
+        blinkLogList.replaceChildren(
+          ...[...blinkEvents].reverse().map((event) => {
+            const item = document.createElement("li");
+            item.textContent = formatBlinkEvent(event, sessionStartMs ?? 0);
+            return item;
+          }),
+        );
       }
       if (!blinkMeasurable) {
         blinkLabel.textContent = fpsGateMessage(fps);
@@ -591,6 +623,7 @@ app.append(
   baselineLabel,
   blinkShapeLabel,
   sparkCanvas,
+  blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
 );
 render();
