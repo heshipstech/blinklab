@@ -17,6 +17,12 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The blink rate window of 4.4. Rates from very young windows are
+// arithmetic nonsense, one blink in two seconds reads as thirty per
+// minute, so no rate exists before the observation minimum.
+export const BLINK_RATE_WINDOW_MS = 60000;
+export const BLINK_RATE_MIN_OBSERVATION_MS = 15000;
+
 // The personal baseline of increment 4.2: thirty seconds of watching
 // learns what this person's open eyes measure. The threshold becomes
 // half of that. The 90th percentile keeps brief blinks from lowering

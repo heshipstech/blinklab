@@ -28,6 +28,12 @@ import {
   type BaselineState,
 } from "./core/baseline";
 import { blinkStep, initialBlinkState } from "./core/blink";
+import {
+  blinkRatePerMin,
+  recordBlink,
+  startRate,
+  type BlinkRateState,
+} from "./core/blinkRate";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
 import { isFacePresent } from "./core/facePresence";
@@ -215,9 +221,10 @@ async function beginCamera(deviceId?: string): Promise<void> {
     }
     canvasContext = canvas.getContext("2d");
     resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
-    // A fresh camera start restarts the baseline: light, distance and
-    // even the person may have changed.
+    // A fresh camera start restarts the baseline and the rate window:
+    // light, distance and even the person may have changed.
     baselineState = null;
+    rateState = null;
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -289,6 +296,7 @@ let blinkState = initialBlinkState;
 const baselineLabel = document.createElement("p");
 baselineLabel.hidden = true;
 let baselineState: BaselineState | null = null;
+let rateState: BlinkRateState | null = null;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -477,16 +485,28 @@ startFrameLoop((nowMs) => {
           ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
           : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`;
 
+      const blinkCountBefore = blinkState.blinkCount;
       blinkState = blinkStep(
         blinkState,
         nowMs,
         stabilityMm,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
-      blinkLabel.textContent =
-        blinkState.lastBlinkDurationMs === null
-          ? `Blinks: ${String(blinkState.blinkCount)}`
-          : `Blinks: ${String(blinkState.blinkCount)} (last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms)`;
+      rateState ??= startRate(nowMs);
+      if (blinkState.blinkCount > blinkCountBefore) {
+        rateState = recordBlink(rateState, nowMs);
+      }
+      const ratePerMin = blinkRatePerMin(rateState, nowMs);
+      const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
+      if (blinkState.lastBlinkDurationMs !== null) {
+        parts.push(`last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms`);
+      }
+      parts.push(
+        ratePerMin === null
+          ? "rate: measuring..."
+          : `rate: ${ratePerMin.toFixed(0)}/min`,
+      );
+      blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
 
       stabilitySamples = pushBounded(
         stabilitySamples,
