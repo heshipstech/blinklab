@@ -34,6 +34,10 @@ export type SyntheticFaceOptions = {
   rollDeg?: number;
   pitchDeg?: number;
   yawDeg?: number;
+  // Shifts both irises inside their eyes, in face local millimetres,
+  // the synthetic version of looking around. +x toward image right,
+  // +y toward image bottom, applied before rotation.
+  irisShiftMm?: { xMm: number; yMm: number };
 };
 
 type P3 = { x: number; y: number; z: number };
@@ -72,6 +76,7 @@ export function syntheticFace(
   const pitchDeg = options.pitchDeg ?? 0;
   const yawDeg = options.yawDeg ?? 0;
 
+  const irisShift = options.irisShiftMm ?? { xMm: 0, yMm: 0 };
   const halfIpd = INTERPUPILLARY_MM / 2;
   const halfEye = EYE_WIDTH_MM / 2;
   const halfIris = IRIS_DIAMETER_MM / 2;
@@ -88,11 +93,13 @@ export function syntheticFace(
     irisRing: readonly number[],
     outerSign: -1 | 1,
   ): void {
-    points.set(irisCenter, { x: pupilX, y: 0, z: 0 });
-    points.set(irisRing[0] ?? -1, { x: pupilX + halfIris, y: 0, z: 0 });
-    points.set(irisRing[1] ?? -1, { x: pupilX, y: -halfIris, z: 0 });
-    points.set(irisRing[2] ?? -1, { x: pupilX - halfIris, y: 0, z: 0 });
-    points.set(irisRing[3] ?? -1, { x: pupilX, y: halfIris, z: 0 });
+    const cx = pupilX + irisShift.xMm;
+    const cy = irisShift.yMm;
+    points.set(irisCenter, { x: cx, y: cy, z: 0 });
+    points.set(irisRing[0] ?? -1, { x: cx + halfIris, y: cy, z: 0 });
+    points.set(irisRing[1] ?? -1, { x: cx, y: cy - halfIris, z: 0 });
+    points.set(irisRing[2] ?? -1, { x: cx - halfIris, y: cy, z: 0 });
+    points.set(irisRing[3] ?? -1, { x: cx, y: cy + halfIris, z: 0 });
     points.set(ear.outerCorner, {
       x: pupilX + outerSign * halfEye,
       y: 0,

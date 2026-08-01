@@ -35,6 +35,7 @@ import {
   type BlinkRateState,
 } from "./core/blinkRate";
 import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
+import { irisOffset } from "./core/gazeOffset";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -201,6 +202,7 @@ function render(): void {
   apertureLabel.hidden = state.kind !== "running";
   stabilityLabel.hidden = state.kind !== "running";
   headPoseLabel.hidden = state.kind !== "running";
+  gazeLabel.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
@@ -296,6 +298,8 @@ const stabilityLabel = document.createElement("p");
 stabilityLabel.hidden = true;
 const headPoseLabel = document.createElement("p");
 headPoseLabel.hidden = true;
+const gazeLabel = document.createElement("p");
+gazeLabel.hidden = true;
 
 // Speaks only while the pose gate is refusing. Empty otherwise.
 const gateLabel = document.createElement("p");
@@ -448,11 +452,35 @@ startFrameLoop((nowMs) => {
             rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
           stabilityMm =
             rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+
+          const rightOffset = irisOffset(
+            face,
+            RIGHT_EYE_EAR_INDICES,
+            RIGHT_IRIS_CENTER_INDEX,
+            "right",
+            canvas.width,
+            canvas.height,
+          );
+          const leftOffset = irisOffset(
+            face,
+            LEFT_EYE_EAR_INDICES,
+            LEFT_IRIS_CENTER_INDEX,
+            "left",
+            canvas.width,
+            canvas.height,
+          );
+          const fmt = (v: number) =>
+            v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+          gazeLabel.textContent =
+            rightOffset === null || leftOffset === null
+              ? "Iris offset: no valid measurement"
+              : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`;
         } else {
           // The gate refused: numbers pause, the gap is honest, the
           // pose stays visible so you can see your way back.
           earLabel.textContent = "Eye aspect ratio: no valid measurement";
           apertureLabel.textContent = "Eyelid aperture: no valid measurement";
+          gazeLabel.textContent = "Iris offset: no valid measurement";
         }
 
         const project = (landmarks: readonly { x: number; y: number }[]) =>
@@ -488,6 +516,7 @@ startFrameLoop((nowMs) => {
         earLabel.textContent = "Eye aspect ratio: no valid measurement";
         apertureLabel.textContent = "Eyelid aperture: no valid measurement";
         headPoseLabel.textContent = "Head pose: no valid measurement";
+        gazeLabel.textContent = "Iris offset: no valid measurement";
         gateLabel.textContent = "";
       }
 
@@ -618,6 +647,7 @@ app.append(
   apertureLabel,
   stabilityLabel,
   headPoseLabel,
+  gazeLabel,
   gateLabel,
   blinkLabel,
   baselineLabel,
