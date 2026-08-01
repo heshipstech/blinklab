@@ -55,7 +55,7 @@ Accepted on 2026-07-28, before any code:
 ## Phase 4. Blinks
 
 - [x] 4.1 Fixed threshold blink detector, blink counter. Check: unit test on a synthetic aperture time series.
-- [ ] 4.2 Personal baseline learned over 30 seconds, visible countdown. Check: baseline rises but never falls.
+- [x] 4.2 Personal baseline learned over 30 seconds, visible countdown. Check: baseline rises but never falls.
 - [ ] 4.3 Blink duration in milliseconds. Check: synthetic series with known durations.
 - [ ] 4.4 Blink rate per minute, rolling window. Check: ring buffer and window edge tests.
 - [ ] 4.5 Blink closing velocity and the amplitude over velocity ratio. Check: unit tests on velocity extraction.
