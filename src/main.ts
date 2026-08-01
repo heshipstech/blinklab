@@ -34,6 +34,7 @@ import {
   startRate,
   type BlinkRateState,
 } from "./core/blinkRate";
+import { analyzeClosing } from "./core/blinkShape";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
 import { isFacePresent } from "./core/facePresence";
@@ -197,6 +198,7 @@ function render(): void {
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
+  blinkShapeLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -297,6 +299,9 @@ const baselineLabel = document.createElement("p");
 baselineLabel.hidden = true;
 let baselineState: BaselineState | null = null;
 let rateState: BlinkRateState | null = null;
+
+const blinkShapeLabel = document.createElement("p");
+blinkShapeLabel.hidden = true;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -495,6 +500,24 @@ startFrameLoop((nowMs) => {
       rateState ??= startRate(nowMs);
       if (blinkState.blinkCount > blinkCountBefore) {
         rateState = recordBlink(rateState, nowMs);
+
+        // Analyse the descent that just ended: the closure plus a
+        // little lead in, from the rolling aperture history.
+        const closureStartMs =
+          nowMs - (blinkState.lastBlinkDurationMs ?? 0) - 400;
+        const window = stabilitySamples
+          .filter(
+            (sample) =>
+              sample.timestampMs >= closureStartMs && sample.mm !== null,
+          )
+          .map((sample) => ({
+            timestampMs: sample.timestampMs,
+            apertureMm: sample.mm ?? 0,
+          }));
+        const shape = analyzeClosing(window);
+        if (shape !== null) {
+          blinkShapeLabel.textContent = `Last blink shape: amplitude ${shape.amplitudeMm.toFixed(1)} mm, peak closing ${shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
+        }
       }
       const ratePerMin = blinkRatePerMin(rateState, nowMs);
       const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
@@ -560,6 +583,7 @@ app.append(
   gateLabel,
   blinkLabel,
   baselineLabel,
+  blinkShapeLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );
