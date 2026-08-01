@@ -479,10 +479,14 @@ startFrameLoop((nowMs) => {
 
       blinkState = blinkStep(
         blinkState,
+        nowMs,
         stabilityMm,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
-      blinkLabel.textContent = `Blinks: ${String(blinkState.blinkCount)}`;
+      blinkLabel.textContent =
+        blinkState.lastBlinkDurationMs === null
+          ? `Blinks: ${String(blinkState.blinkCount)}`
+          : `Blinks: ${String(blinkState.blinkCount)} (last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms)`;
 
       stabilitySamples = pushBounded(
         stabilitySamples,
