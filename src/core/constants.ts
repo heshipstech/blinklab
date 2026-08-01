@@ -17,6 +17,10 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The blink event log of 4.8 keeps the most recent events only,
+// the oldest fall away silently once the cap is reached.
+export const BLINK_LOG_CAP = 50;
+
 // The squint separation of 4.7. A blink's closed phase is brief,
 // yours measured 133 and 117 ms. Beyond half a second below the
 // threshold, the eye is not blinking, it is closed, a different
