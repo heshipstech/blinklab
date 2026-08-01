@@ -29,11 +29,12 @@ import {
 } from "./core/baseline";
 import { blinkStep, initialBlinkState } from "./core/blink";
 import {
-  blinkRatePerMin,
+  gatedBlinkRatePerMin,
   recordBlink,
   startRate,
   type BlinkRateState,
 } from "./core/blinkRate";
+import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
 import { analyzeClosing } from "./core/blinkShape";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
@@ -491,10 +492,11 @@ startFrameLoop((nowMs) => {
           : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`;
 
       const blinkCountBefore = blinkState.blinkCount;
+      const blinkMeasurable = measurableAtFps(fps);
       blinkState = blinkStep(
         blinkState,
         nowMs,
-        stabilityMm,
+        blinkMeasurable ? stabilityMm : null,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       rateState ??= startRate(nowMs);
@@ -519,17 +521,21 @@ startFrameLoop((nowMs) => {
           blinkShapeLabel.textContent = `Last blink shape: amplitude ${shape.amplitudeMm.toFixed(1)} mm, peak closing ${shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
         }
       }
-      const ratePerMin = blinkRatePerMin(rateState, nowMs);
-      const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
-      if (blinkState.lastBlinkDurationMs !== null) {
-        parts.push(`last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms`);
+      if (!blinkMeasurable) {
+        blinkLabel.textContent = fpsGateMessage(fps);
+      } else {
+        const ratePerMin = gatedBlinkRatePerMin(fps, rateState, nowMs);
+        const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
+        if (blinkState.lastBlinkDurationMs !== null) {
+          parts.push(`last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms`);
+        }
+        parts.push(
+          ratePerMin === null
+            ? "rate: measuring..."
+            : `rate: ${ratePerMin.toFixed(0)}/min`,
+        );
+        blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
       }
-      parts.push(
-        ratePerMin === null
-          ? "rate: measuring..."
-          : `rate: ${ratePerMin.toFixed(0)}/min`,
-      );
-      blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
 
       stabilitySamples = pushBounded(
         stabilitySamples,

@@ -3,6 +3,7 @@ import {
   BLINK_RATE_WINDOW_MS,
 } from "./constants";
 import { keepRecent } from "./fps";
+import { measurableAtFps } from "./fpsGate";
 
 // Blinks per minute over a rolling window. The denominator is the
 // time actually observed, capped at the window, and no rate exists
@@ -40,4 +41,18 @@ export function blinkRatePerMin(
   }
   const recent = keepRecent(state.blinkTimesMs, nowMs, BLINK_RATE_WINDOW_MS);
   return (recent.length * 60000) / observedMs;
+}
+
+// The 4.6 gate composed with the rate: below the minimum frame rate
+// the rate is null even when blinks are in the window. Null, not
+// zero: zero would claim calm eyes on evidence that missed blinks.
+export function gatedBlinkRatePerMin(
+  fps: number | null,
+  state: BlinkRateState,
+  nowMs: number,
+): number | null {
+  if (!measurableAtFps(fps)) {
+    return null;
+  }
+  return blinkRatePerMin(state, nowMs);
 }

@@ -298,3 +298,11 @@ The ratio is the clever one, and it comes from the drowsiness literature: as peo
 The extraction respects its own limits: it measures the descent only, from the pre closure maximum, ignoring whatever the window starts with and the reopening tail, and it refuses degenerate input, too few samples, no fall, or a clock that did not advance.
 The manual check is the demonstration the whole phase was named for: a natural blink and a deliberate slow one have similar amplitudes and utterly different velocities, and the page now shows that difference in numbers.
 These three numbers join duration and rate in 4.8's event log, and the score at 6.5 will weigh the ratio among its inputs.
+
+## 4.6 Zero is a claim, null is an admission
+
+The concept this increment teaches is the sampling limit, and the master plan's own words for it: the detector now refuses to answer when it cannot see properly.
+The physics is short. A quick blink's closed phase can be under 100 milliseconds. At 60 fps that phase spans six frames, comfortably visible. At 20 fps it spans two at best, and with slight mistiming, zero, the eye closes and reopens entirely between samples. The detector would then report few blinks with total confidence, and a false calm is worse than no reading, because low blink counts are exactly what a fatigue system treats as meaningful.
+So below 25 fps, every temporal blink metric returns null and the page says not measurable, naming the current rate and the minimum. The ladder's test spells out the distinction the whole increment turns on: with real blinks sitting in the window, the gated rate below 25 fps must be null and must NOT be zero. Zero says "this person did not blink", null says "I could not have seen it either way". One is a claim, the other an admission, and instruments that cannot tell them apart produce confident nonsense at their edges.
+This is the fourth refusal in the family: broken cameras at 1.2, wrong models at 2.5, turned heads at 3.8, and now starved sampling. One honest simplification is on record: the rate's observation clock keeps running through a low fps spell, mildly diluting the rate afterwards, accepted rather than hidden.
+The gate feeds 7.8's latency measurements, where sampling limits get quantified rather than just respected.
