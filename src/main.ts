@@ -20,6 +20,13 @@ import {
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
 import { apertureMm, aperturePx } from "./core/aperture";
+import {
+  baselineStep,
+  learningSecondsLeft,
+  personalThresholdMm,
+  startBaseline,
+  type BaselineState,
+} from "./core/baseline";
 import { blinkStep, initialBlinkState } from "./core/blink";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
@@ -183,6 +190,7 @@ function render(): void {
   headPoseLabel.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
+  baselineLabel.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
@@ -207,6 +215,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     }
     canvasContext = canvas.getContext("2d");
     resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
+    // A fresh camera start restarts the baseline: light, distance and
+    // even the person may have changed.
+    baselineState = null;
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -274,6 +285,10 @@ gateLabel.hidden = true;
 const blinkLabel = document.createElement("p");
 blinkLabel.hidden = true;
 let blinkState = initialBlinkState;
+
+const baselineLabel = document.createElement("p");
+baselineLabel.hidden = true;
+let baselineState: BaselineState | null = null;
 type StabilitySample = {
   timestampMs: number;
   px: number | null;
@@ -450,10 +465,22 @@ startFrameLoop((nowMs) => {
         1200,
       );
 
+      baselineState = baselineStep(
+        baselineState ?? startBaseline(nowMs),
+        nowMs,
+        stabilityMm,
+      );
+      const personalMm = personalThresholdMm(baselineState);
+      const secondsLeft = learningSecondsLeft(baselineState, nowMs);
+      baselineLabel.textContent =
+        baselineState.kind === "ready" && personalMm !== null
+          ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
+          : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`;
+
       blinkState = blinkStep(
         blinkState,
         stabilityMm,
-        BLINK_APERTURE_THRESHOLD_MM,
+        personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       blinkLabel.textContent = `Blinks: ${String(blinkState.blinkCount)}`;
 
@@ -508,6 +535,7 @@ app.append(
   headPoseLabel,
   gateLabel,
   blinkLabel,
+  baselineLabel,
   sparkCanvas,
   ...(recorder !== null ? [recorder.button] : []),
 );

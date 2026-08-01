@@ -17,6 +17,17 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The personal baseline of increment 4.2: thirty seconds of watching
+// learns what this person's open eyes measure. The threshold becomes
+// half of that. The 90th percentile keeps brief blinks from lowering
+// the estimate of "open".
+export const BASELINE_LEARN_MS = 30000;
+export const BASELINE_MIN_SAMPLES = 100;
+export const BASELINE_PERCENTILE = 90;
+export const BASELINE_THRESHOLD_FRACTION = 0.5;
+export const BASELINE_RECENT_CAP = 600;
+export const BASELINE_RISE_MIN_SAMPLES = 300;
+
 // Beyond these head angles, eye landmarks foreshorten and occlude
 // enough that measurements would be guesses. Symmetric on purpose,
 // so axis sign conventions never matter to the gate.
