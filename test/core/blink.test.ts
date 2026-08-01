@@ -57,9 +57,11 @@ describe("blink duration, new at 4.3", () => {
     expect(state.lastBlinkDurationMs).toBe(300);
   });
 
-  it("reads a long deliberate closure longer, 2000 ms", () => {
-    const series: (number | null)[] = [8, ...Array<number>(20).fill(2), 8];
-    expect(runSeries(series).lastBlinkDurationMs).toBe(2000);
+  it("counts a brief closure at exactly the maximum duration", () => {
+    // Closed at t=100, reopen at t=600: 500 ms, the boundary, counts.
+    const state = runSeries([8, 2, 2, 2, 2, 2, 8]);
+    expect(state.blinkCount).toBe(1);
+    expect(state.lastBlinkDurationMs).toBe(500);
   });
 
   it("keeps the most recent duration when blinks differ", () => {
@@ -76,6 +78,41 @@ describe("blink duration, new at 4.3", () => {
 
   it("has no duration before any blink completed", () => {
     expect(runSeries([8, 8, 8]).lastBlinkDurationMs).toBeNull();
+  });
+});
+
+describe("squint separation, new at 4.7", () => {
+  it("counts nothing for the ladder's held squint plateau, five seconds", () => {
+    const series: (number | null)[] = [8, ...Array<number>(50).fill(3), 8];
+    const state = runSeries(series);
+    expect(state.blinkCount).toBe(0);
+    expect(state.lastBlinkDurationMs).toBeNull();
+  });
+
+  it("refuses a closure just over the maximum, 600 ms", () => {
+    const state = runSeries([8, 2, 2, 2, 2, 2, 2, 8]);
+    expect(state.blinkCount).toBe(0);
+    expect(state.lastBlinkDurationMs).toBeNull();
+  });
+
+  it("still counts a clearly brief closure, 300 ms", () => {
+    const state = runSeries([8, 2, 2, 2, 8]);
+    expect(state.blinkCount).toBe(1);
+    expect(state.lastBlinkDurationMs).toBe(300);
+  });
+
+  it("keeps the previous blink's duration when a squint follows it", () => {
+    const series: (number | null)[] = [
+      8,
+      2,
+      2,
+      8,
+      ...Array<number>(20).fill(3),
+      8,
+    ];
+    const state = runSeries(series);
+    expect(state.blinkCount).toBe(1);
+    expect(state.lastBlinkDurationMs).toBe(200);
   });
 });
 

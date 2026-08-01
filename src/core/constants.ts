@@ -17,6 +17,12 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The squint separation of 4.7. A blink's closed phase is brief,
+// yours measured 133 and 117 ms. Beyond half a second below the
+// threshold, the eye is not blinking, it is closed, a different
+// phenomenon that 6.2 detects in its own right.
+export const MAX_BLINK_DURATION_MS = 500;
+
 // The frame rate honesty gate of 4.6. A fast blink's closed phase
 // can be under 100 ms; below 25 fps it may fall entirely between
 // frames, and a count that missed blinks would read as calm.
