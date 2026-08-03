@@ -42,6 +42,12 @@ import {
   startCapture,
   type CalibrationCapture,
 } from "./core/calibrationCapture";
+import {
+  calibratedPoint,
+  calibratedQuadrant,
+  solveCalibration,
+  type CalibrationProfile,
+} from "./core/calibrationProfile";
 import { irisOffset, type IrisOffset } from "./core/gazeOffset";
 import {
   isOnScreen,
@@ -78,7 +84,11 @@ import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
-import { saveCalibrationSamples } from "./io/calibrationStore";
+import {
+  loadCalibrationProfile,
+  saveCalibrationProfile,
+  saveCalibrationSamples,
+} from "./io/calibrationStore";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
 import { startFrameLoop } from "./io/frameLoop";
@@ -322,9 +332,12 @@ const quadrantLabel = document.createElement("p");
 quadrantLabel.hidden = true;
 
 // The calibration capture screen: a dark overlay, one moving dot,
-// click anywhere to cancel.
+// click anywhere to cancel. A profile solved in an earlier visit
+// survives in local storage and works from the first frame.
+let calibrationProfile: CalibrationProfile | null = loadCalibrationProfile();
 const calibrateButton = document.createElement("button");
-calibrateButton.textContent = "Calibrate gaze";
+calibrateButton.textContent =
+  calibrationProfile === null ? "Calibrate gaze" : "Recalibrate gaze";
 calibrateButton.hidden = true;
 let calibrationRequested = false;
 let captureState: CalibrationCapture | null = null;
@@ -365,6 +378,23 @@ calibrationOverlay.addEventListener("click", () => {
   calibrationRequested = false;
   calibrationOverlay.hidden = true;
 });
+
+// Four ways to answer where the eyes point. Off screen keeps its
+// uncalibrated tag even with a profile: that boundary is still the
+// guessed 5.3 threshold, only the quadrants are calibrated here.
+function lookingTowardMessage(offset: IrisOffset | null): string {
+  if (offset === null) {
+    return "Looking toward: no valid measurement";
+  }
+  if (!isOnScreen(offset)) {
+    return "Looking toward: off screen (uncalibrated)";
+  }
+  if (calibrationProfile === null) {
+    return `Looking toward: ${screenQuadrant(offset)} (uncalibrated)`;
+  }
+  const point = calibratedPoint(calibrationProfile, offset);
+  return `Looking toward: ${calibratedQuadrant(point)} (calibrated)`;
+}
 
 // Speaks only while the pose gate is refusing. Empty otherwise.
 const gateLabel = document.createElement("p");
@@ -544,12 +574,7 @@ startFrameLoop((nowMs) => {
 
           const meanOffset = meanIrisOffset(rightOffset, leftOffset);
           frameMeanOffset = meanOffset;
-          quadrantLabel.textContent =
-            meanOffset === null
-              ? "Looking toward: no valid measurement"
-              : isOnScreen(meanOffset)
-                ? `Looking toward: ${screenQuadrant(meanOffset)} (uncalibrated)`
-                : "Looking toward: off screen (uncalibrated)";
+          quadrantLabel.textContent = lookingTowardMessage(meanOffset);
         } else {
           // The gate refused: numbers pause, the gap is honest, the
           // pose stays visible so you can see your way back.
@@ -606,9 +631,20 @@ startFrameLoop((nowMs) => {
         captureState = captureStep(captureState, nowMs, frameMeanOffset);
         if (isCaptureDone(captureState)) {
           saveCalibrationSamples(captureState.completed);
+          // Solve immediately: the very next frame classifies with
+          // the fresh profile. A refused solve keeps the old profile,
+          // stale beats poisoned.
+          const solved = solveCalibration(captureState.completed);
+          if (solved !== null) {
+            calibrationProfile = solved;
+            saveCalibrationProfile(solved);
+          }
           captureState = null;
           calibrationOverlay.hidden = true;
-          calibrateButton.textContent = "Recalibrate gaze (samples stored)";
+          calibrateButton.textContent =
+            solved === null
+              ? "Recalibrate gaze (solver refused the samples, try again)"
+              : "Recalibrate gaze";
         } else {
           const target = CALIBRATION_TARGETS[captureState.targetIndex];
           if (target !== undefined) {
