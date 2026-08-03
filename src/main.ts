@@ -35,7 +35,14 @@ import {
   type BlinkRateState,
 } from "./core/blinkRate";
 import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
-import { irisOffset } from "./core/gazeOffset";
+import {
+  CALIBRATION_TARGETS,
+  captureStep,
+  isCaptureDone,
+  startCapture,
+  type CalibrationCapture,
+} from "./core/calibrationCapture";
+import { irisOffset, type IrisOffset } from "./core/gazeOffset";
 import {
   isOnScreen,
   meanIrisOffset,
@@ -71,6 +78,7 @@ import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
+import { saveCalibrationSamples } from "./io/calibrationStore";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
 import { startFrameLoop } from "./io/frameLoop";
@@ -209,6 +217,7 @@ function render(): void {
   headPoseLabel.hidden = state.kind !== "running";
   gazeLabel.hidden = state.kind !== "running";
   quadrantLabel.hidden = state.kind !== "running";
+  calibrateButton.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
@@ -245,6 +254,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     blinkEvents = [];
     sessionStartMs = null;
     blinkLogList.replaceChildren();
+    captureState = null;
+    calibrationRequested = false;
+    calibrationOverlay.hidden = true;
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -308,6 +320,51 @@ const gazeLabel = document.createElement("p");
 gazeLabel.hidden = true;
 const quadrantLabel = document.createElement("p");
 quadrantLabel.hidden = true;
+
+// The calibration capture screen: a dark overlay, one moving dot,
+// click anywhere to cancel.
+const calibrateButton = document.createElement("button");
+calibrateButton.textContent = "Calibrate gaze";
+calibrateButton.hidden = true;
+let calibrationRequested = false;
+let captureState: CalibrationCapture | null = null;
+calibrateButton.addEventListener("click", () => {
+  calibrationRequested = true;
+});
+
+const calibrationOverlay = document.createElement("div");
+calibrationOverlay.hidden = true;
+Object.assign(calibrationOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  background: "rgba(0, 0, 0, 0.85)",
+  zIndex: "10",
+  cursor: "pointer",
+});
+const calibrationDot = document.createElement("div");
+Object.assign(calibrationDot.style, {
+  position: "absolute",
+  width: "18px",
+  height: "18px",
+  borderRadius: "50%",
+  background: "#ff9100",
+  transform: "translate(-50%, -50%)",
+  transition: "left 0.4s, top 0.4s",
+});
+const calibrationProgress = document.createElement("p");
+Object.assign(calibrationProgress.style, {
+  position: "absolute",
+  bottom: "24px",
+  width: "100%",
+  textAlign: "center",
+  color: "#ffffff",
+});
+calibrationOverlay.append(calibrationDot, calibrationProgress);
+calibrationOverlay.addEventListener("click", () => {
+  captureState = null;
+  calibrationRequested = false;
+  calibrationOverlay.hidden = true;
+});
 
 // Speaks only while the pose gate is refusing. Empty otherwise.
 const gateLabel = document.createElement("p");
@@ -391,6 +448,7 @@ startFrameLoop((nowMs) => {
       let meanEar: number | null = null;
       let stabilityPx: number | null = null;
       let stabilityMm: number | null = null;
+      let frameMeanOffset: IrisOffset | null = null;
       const face = result.faceLandmarks[0];
       if (face !== undefined) {
         const validation = validateLandmarkCount(face.length);
@@ -485,6 +543,7 @@ startFrameLoop((nowMs) => {
               : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`;
 
           const meanOffset = meanIrisOffset(rightOffset, leftOffset);
+          frameMeanOffset = meanOffset;
           quadrantLabel.textContent =
             meanOffset === null
               ? "Looking toward: no valid measurement"
@@ -536,6 +595,28 @@ startFrameLoop((nowMs) => {
         gazeLabel.textContent = "Iris offset: no valid measurement";
         quadrantLabel.textContent = "Looking toward: no valid measurement";
         gateLabel.textContent = "";
+      }
+
+      if (calibrationRequested) {
+        captureState = startCapture(nowMs);
+        calibrationRequested = false;
+        calibrationOverlay.hidden = false;
+      }
+      if (captureState !== null) {
+        captureState = captureStep(captureState, nowMs, frameMeanOffset);
+        if (isCaptureDone(captureState)) {
+          saveCalibrationSamples(captureState.completed);
+          captureState = null;
+          calibrationOverlay.hidden = true;
+          calibrateButton.textContent = "Recalibrate gaze (samples stored)";
+        } else {
+          const target = CALIBRATION_TARGETS[captureState.targetIndex];
+          if (target !== undefined) {
+            calibrationDot.style.left = `${String(target.x * 100)}%`;
+            calibrationDot.style.top = `${String(target.y * 100)}%`;
+          }
+          calibrationProgress.textContent = `Follow the dot (${String(captureState.targetIndex + 1)}/9). Click anywhere to cancel.`;
+        }
       }
 
       earSamples = pushBounded(
@@ -667,6 +748,7 @@ app.append(
   headPoseLabel,
   gazeLabel,
   quadrantLabel,
+  calibrateButton,
   gateLabel,
   blinkLabel,
   baselineLabel,
@@ -674,5 +756,6 @@ app.append(
   sparkCanvas,
   blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
+  calibrationOverlay,
 );
 render();
