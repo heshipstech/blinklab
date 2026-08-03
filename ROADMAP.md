@@ -66,7 +66,7 @@ Accepted on 2026-07-28, before any code:
 ## Phase 5. Gaze and attention
 
 - [x] 5.1 Iris centre offset relative to the eye corners, per eye. Check: synthetic tests at known offsets.
-- [ ] 5.2 Screen quadrant classification, four regions. Check: test on labelled fixture frames.
+- [x] 5.2 Screen quadrant classification, four regions. Check: test on labelled fixture frames.
 - [ ] 5.3 On screen versus off screen classification. Check: threshold test.
 - [ ] 5.4a Calibration capture screen: nine points shown, samples collected and stored (amended, split from 5.4). Check: test on the sample collector.
 - [ ] 5.4b Calibration solver producing a stored profile. Done when quadrant classification is reliably correct with the head reasonably still (amended target). Check: solver test with synthetic points.
