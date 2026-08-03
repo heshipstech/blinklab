@@ -36,6 +36,7 @@ import {
 } from "./core/blinkRate";
 import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
 import { irisOffset } from "./core/gazeOffset";
+import { meanIrisOffset, screenQuadrant } from "./core/gazeQuadrant";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -203,6 +204,7 @@ function render(): void {
   stabilityLabel.hidden = state.kind !== "running";
   headPoseLabel.hidden = state.kind !== "running";
   gazeLabel.hidden = state.kind !== "running";
+  quadrantLabel.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
@@ -300,6 +302,8 @@ const headPoseLabel = document.createElement("p");
 headPoseLabel.hidden = true;
 const gazeLabel = document.createElement("p");
 gazeLabel.hidden = true;
+const quadrantLabel = document.createElement("p");
+quadrantLabel.hidden = true;
 
 // Speaks only while the pose gate is refusing. Empty otherwise.
 const gateLabel = document.createElement("p");
@@ -475,12 +479,19 @@ startFrameLoop((nowMs) => {
             rightOffset === null || leftOffset === null
               ? "Iris offset: no valid measurement"
               : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`;
+
+          const meanOffset = meanIrisOffset(rightOffset, leftOffset);
+          quadrantLabel.textContent =
+            meanOffset === null
+              ? "Looking toward: no valid measurement"
+              : `Looking toward: ${screenQuadrant(meanOffset)} (uncalibrated)`;
         } else {
           // The gate refused: numbers pause, the gap is honest, the
           // pose stays visible so you can see your way back.
           earLabel.textContent = "Eye aspect ratio: no valid measurement";
           apertureLabel.textContent = "Eyelid aperture: no valid measurement";
           gazeLabel.textContent = "Iris offset: no valid measurement";
+          quadrantLabel.textContent = "Looking toward: no valid measurement";
         }
 
         const project = (landmarks: readonly { x: number; y: number }[]) =>
@@ -517,6 +528,7 @@ startFrameLoop((nowMs) => {
         apertureLabel.textContent = "Eyelid aperture: no valid measurement";
         headPoseLabel.textContent = "Head pose: no valid measurement";
         gazeLabel.textContent = "Iris offset: no valid measurement";
+        quadrantLabel.textContent = "Looking toward: no valid measurement";
         gateLabel.textContent = "";
       }
 
@@ -648,6 +660,7 @@ app.append(
   stabilityLabel,
   headPoseLabel,
   gazeLabel,
+  quadrantLabel,
   gateLabel,
   blinkLabel,
   baselineLabel,
