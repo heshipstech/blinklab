@@ -1,3 +1,4 @@
+import { OFF_SCREEN_OFFSET_THRESHOLD } from "./constants";
 import type { IrisOffset } from "./gazeOffset";
 
 // Gaze into four screen regions, named from the USER's perspective.
@@ -24,6 +25,15 @@ export function meanIrisOffset(
     horizontal: (right.horizontal + left.horizontal) / 2,
     vertical: (right.vertical + left.vertical) / 2,
   };
+}
+
+// 5.3: eyes wandered past the threshold on either axis mean the
+// gaze has left the screen entirely, and no quadrant applies.
+export function isOnScreen(offset: IrisOffset): boolean {
+  return (
+    Math.abs(offset.horizontal) <= OFF_SCREEN_OFFSET_THRESHOLD &&
+    Math.abs(offset.vertical) <= OFF_SCREEN_OFFSET_THRESHOLD
+  );
 }
 
 export function screenQuadrant(offset: IrisOffset): ScreenQuadrant {

@@ -8,6 +8,7 @@ import {
 } from "../../src/core/constants";
 import { irisOffset } from "../../src/core/gazeOffset";
 import {
+  isOnScreen,
   meanIrisOffset,
   screenQuadrant,
   type ScreenQuadrant,
@@ -71,6 +72,56 @@ describe("screenQuadrant on labelled synthetic frames", () => {
     expect(screenQuadrant({ horizontal: -0.001, vertical: 0.001 })).toBe(
       "bottom right",
     );
+  });
+});
+
+describe("isOnScreen, the 5.3 threshold", () => {
+  const T = 0.18;
+
+  it("runs the boundary trio on the horizontal axis", () => {
+    expect(isOnScreen({ horizontal: T - 0.001, vertical: 0 })).toBe(true);
+    expect(isOnScreen({ horizontal: T, vertical: 0 })).toBe(true);
+    expect(isOnScreen({ horizontal: T + 0.001, vertical: 0 })).toBe(false);
+  });
+
+  it("runs the boundary trio on the vertical axis, negative side", () => {
+    expect(isOnScreen({ horizontal: 0, vertical: -(T - 0.001) })).toBe(true);
+    expect(isOnScreen({ horizontal: 0, vertical: -T })).toBe(true);
+    expect(isOnScreen({ horizontal: 0, vertical: -(T + 0.001) })).toBe(false);
+  });
+
+  it("goes off screen when either axis exceeds, not only both", () => {
+    expect(isOnScreen({ horizontal: T + 0.01, vertical: 0.01 })).toBe(false);
+    expect(isOnScreen({ horizontal: 0.01, vertical: T + 0.01 })).toBe(false);
+  });
+
+  it("classifies a synthetic far glance as off screen", () => {
+    const face = syntheticFace({
+      distanceMm: 500,
+      irisShiftMm: { xMm: 6.5, yMm: 0 },
+    });
+    const mean = meanIrisOffset(
+      irisOffset(
+        face,
+        RIGHT_EYE_EAR_INDICES,
+        RIGHT_IRIS_CENTER_INDEX,
+        "right",
+        W,
+        H,
+      ),
+      irisOffset(
+        face,
+        LEFT_EYE_EAR_INDICES,
+        LEFT_IRIS_CENTER_INDEX,
+        "left",
+        W,
+        H,
+      ),
+    );
+    expect(mean).not.toBeNull();
+    if (mean !== null) {
+      expect(isOnScreen(mean)).toBe(false);
+    }
   });
 });
 
