@@ -25,3 +25,7 @@ __pycache__/
 
 # MediaPipe WASM, copied from the locked npm package at build time
 public/mediapipe-wasm/
+
+# Playwright output
+test-results/
+playwright-report/
