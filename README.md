@@ -31,6 +31,8 @@ npm run dev
 
 Open the local URL that Vite prints. You should see the word blinklab.
 
+To run the tests: `npm test` runs the unit tests, and `npm run e2e` runs the end to end tests, which drive the built app in a headless browser with a fake camera. The first e2e run needs the browser downloaded once: `npx playwright install chromium`.
+
 ## How this repo works
 
 The project grows one small increment per session, each one branch, one pull request, one push. The working documents:

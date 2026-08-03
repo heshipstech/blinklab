@@ -346,6 +346,9 @@ calibrateButton.addEventListener("click", () => {
 });
 
 const calibrationOverlay = document.createElement("div");
+// Stable handles for the end to end test. Styles and text can change
+// freely, these names are the contract the test holds on to.
+calibrationOverlay.dataset.testid = "calibration-overlay";
 calibrationOverlay.hidden = true;
 Object.assign(calibrationOverlay.style, {
   position: "fixed",
@@ -355,6 +358,7 @@ Object.assign(calibrationOverlay.style, {
   cursor: "pointer",
 });
 const calibrationDot = document.createElement("div");
+calibrationDot.dataset.testid = "calibration-dot";
 Object.assign(calibrationDot.style, {
   position: "absolute",
   width: "18px",
