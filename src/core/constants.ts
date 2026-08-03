@@ -17,6 +17,12 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The calibration capture of 5.4a. Samples taken while the eye is
+// still travelling toward a fresh dot would poison the calibration,
+// so nothing counts until the settle window has passed.
+export const CALIBRATION_SETTLE_MS = 800;
+export const CALIBRATION_SAMPLES_PER_TARGET = 30;
+
 // The on screen boundary of 5.3. Corner glances observed on the
 // owner's setup swing about 0.05 to 0.15 of an eye width, true look
 // aways exceed it. Calibration at 5.4 will earn a better number.
