@@ -36,7 +36,11 @@ import {
 } from "./core/blinkRate";
 import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
 import { irisOffset } from "./core/gazeOffset";
-import { meanIrisOffset, screenQuadrant } from "./core/gazeQuadrant";
+import {
+  isOnScreen,
+  meanIrisOffset,
+  screenQuadrant,
+} from "./core/gazeQuadrant";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -484,7 +488,9 @@ startFrameLoop((nowMs) => {
           quadrantLabel.textContent =
             meanOffset === null
               ? "Looking toward: no valid measurement"
-              : `Looking toward: ${screenQuadrant(meanOffset)} (uncalibrated)`;
+              : isOnScreen(meanOffset)
+                ? `Looking toward: ${screenQuadrant(meanOffset)} (uncalibrated)`
+                : "Looking toward: off screen (uncalibrated)";
         } else {
           // The gate refused: numbers pause, the gap is honest, the
           // pose stays visible so you can see your way back.

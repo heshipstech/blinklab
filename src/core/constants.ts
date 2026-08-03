@@ -17,6 +17,11 @@ export const IRIS_DIAMETER_MM = 11.7;
 // every threshold from 3 to 4.5 finds the same two full blinks.
 export const BLINK_APERTURE_THRESHOLD_MM = 4;
 
+// The on screen boundary of 5.3. Corner glances observed on the
+// owner's setup swing about 0.05 to 0.15 of an eye width, true look
+// aways exceed it. Calibration at 5.4 will earn a better number.
+export const OFF_SCREEN_OFFSET_THRESHOLD = 0.18;
+
 // The blink event log of 4.8 keeps the most recent events only,
 // the oldest fall away silently once the cap is reached.
 export const BLINK_LOG_CAP = 50;
