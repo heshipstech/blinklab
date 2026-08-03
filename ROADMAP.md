@@ -69,7 +69,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 5.2 Screen quadrant classification, four regions. Check: test on labelled fixture frames.
 - [x] 5.3 On screen versus off screen classification. Check: threshold test.
 - [x] 5.4a Calibration capture screen: nine points shown, samples collected and stored (amended, split from 5.4). Check: test on the sample collector.
-- [ ] 5.4b Calibration solver producing a stored profile. Done when quadrant classification is reliably correct with the head reasonably still (amended target). Check: solver test with synthetic points.
+- [x] 5.4b Calibration solver producing a stored profile. Done when quadrant classification is reliably correct with the head reasonably still (amended target). Check: solver test with synthetic points.
 - [ ] 5.5 Introduce Playwright, first end to end test of the calibration flow. Check: headless test passes in CI.
 - [ ] 5.6 Gaze point smoothing filter, raw and smoothed traces both drawn. Check: filter preserves step response within tolerance.
 - [ ] 5.7 Fixation and saccade separation using a dispersion threshold algorithm (I-DT). Check: synthetic scanpath of known structure.
