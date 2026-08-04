@@ -75,7 +75,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 5.7 Fixation and saccade separation using a dispersion threshold algorithm (I-DT). Check: synthetic scanpath of known structure.
 - [x] 5.8 Fixation duration statistics panel. Check: aggregation tests.
 - [x] 5.9 Gaze heatmap over a static image. Check: test on the accumulation grid.
-- [ ] 5.10 Scanpath replay with a time slider. Check: test on the replay index lookup.
+- [x] 5.10 Scanpath replay with a time slider. Check: test on the replay index lookup.
 
 ## Phase 6. Rolling state and the demo score
 
