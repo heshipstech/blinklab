@@ -79,7 +79,7 @@ Accepted on 2026-07-28, before any code:
 
 ## Phase 6. Rolling state and the demo score
 
-- [ ] 6.1 PERCLOS (percentage of eye closure) over a rolling 60 second window. Check: synthetic series with known closure fraction.
+- [x] 6.1 PERCLOS (percentage of eye closure) over a rolling 60 second window. Check: synthetic series with known closure fraction.
 - [ ] 6.2 Long closure detector, eyes shut beyond a threshold triggers an event. Check: boundary case included.
 - [ ] 6.3 Alert with debounce so it cannot fire repeatedly. Check: repeated triggers within the debounce window.
 - [ ] 6.4 Feature vector assembled into one typed FeatureRecord per second. Check: schema test.

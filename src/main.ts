@@ -65,6 +65,7 @@ import {
 } from "./core/fixation";
 import { fixationStats } from "./core/fixationStats";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
+import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
   appendEvent,
@@ -248,6 +249,7 @@ function render(): void {
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
   blinkShapeLabel.hidden = state.kind !== "running";
+  perclosLabel.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -284,6 +286,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     gazeSmoothing = null;
     gazeTraces = emptyGazeTraces();
     gazeSamples = [];
+    perclosState = emptyPerclos();
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -694,6 +697,9 @@ let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
+const perclosLabel = document.createElement("p");
+perclosLabel.hidden = true;
+let perclosState = emptyPerclos();
 
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
@@ -1152,6 +1158,22 @@ startFrameLoop((nowMs) => {
         blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
       }
 
+      // PERCLOS rides the same trusted aperture feed as the blink
+      // reducer: below the fps gate the frame is untrusted, before
+      // the baseline is ready there is no personal closed line yet,
+      // both cases join neither side of the ratio.
+      perclosState = perclosStep(
+        perclosState,
+        nowMs,
+        blinkMeasurable ? stabilityMm : null,
+        baselineState.kind === "ready" ? baselineState.baselineMm : null,
+      );
+      const perclos = perclosValue(perclosState, nowMs);
+      perclosLabel.textContent =
+        perclos === null
+          ? "PERCLOS (eyes closed share, last 60 s): measuring..."
+          : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`;
+
       stabilitySamples = pushBounded(
         stabilitySamples,
         { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
@@ -1263,6 +1285,7 @@ app.append(
   blinkLabel,
   baselineLabel,
   blinkShapeLabel,
+  perclosLabel,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
