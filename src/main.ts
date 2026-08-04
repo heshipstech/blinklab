@@ -55,6 +55,10 @@ import {
   screenQuadrant,
 } from "./core/gazeQuadrant";
 import {
+  gazeSmoothingStep,
+  type GazeSmoothingState,
+} from "./core/gazeSmoothing";
+import {
   appendEvent,
   formatBlinkEvent,
   type BlinkEvent,
@@ -78,7 +82,7 @@ import {
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
 import { pushBounded } from "./core/ringBuffer";
-import { sparklineSegments, type EarSample } from "./core/sparkline";
+import { sparklineSegments, type TimedSample } from "./core/sparkline";
 import { coefficientOfVariation } from "./core/statistics";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
@@ -234,6 +238,8 @@ function render(): void {
   blinkShapeLabel.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
+  gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
+  gazeTraceVerticalCanvas.hidden = state.kind !== "running";
   if (recorder !== null) {
     recorder.button.hidden = state.kind !== "running";
   }
@@ -263,6 +269,8 @@ async function beginCamera(deviceId?: string): Promise<void> {
     rateState = null;
     blinkEvents = [];
     sessionStartMs = null;
+    gazeSmoothing = null;
+    gazeTraces = emptyGazeTraces();
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -443,7 +451,44 @@ sparkCanvas.setAttribute(
   "Eye aspect ratio over the last 10 seconds",
 );
 const sparkContext = sparkCanvas.getContext("2d");
-let earSamples: EarSample[] = [];
+let earSamples: TimedSample[] = [];
+
+// The 5.6 gaze traces: raw and smoothed mean offset per axis, over
+// the same 10 second window. Display flips the sign so both charts
+// read in the user's language: glance toward YOUR right and the
+// horizontal trace rises, look up and the vertical trace rises, a
+// blink notches the vertical trace briefly downward.
+const GAZE_TRACE_HALF = 0.3;
+function createGazeTraceCanvas(label: string): HTMLCanvasElement {
+  const traceCanvas = document.createElement("canvas");
+  traceCanvas.width = 640;
+  traceCanvas.height = 60;
+  traceCanvas.hidden = true;
+  traceCanvas.setAttribute("aria-label", label);
+  return traceCanvas;
+}
+const gazeTraceHorizontalCanvas = createGazeTraceCanvas(
+  "Horizontal gaze offset over the last 10 seconds, raw and smoothed",
+);
+const gazeTraceHorizontalContext = gazeTraceHorizontalCanvas.getContext("2d");
+const gazeTraceVerticalCanvas = createGazeTraceCanvas(
+  "Vertical gaze offset over the last 10 seconds, raw and smoothed",
+);
+const gazeTraceVerticalContext = gazeTraceVerticalCanvas.getContext("2d");
+let gazeSmoothing: GazeSmoothingState | null = null;
+type GazeTraces = {
+  rawH: TimedSample[];
+  smoothedH: TimedSample[];
+  rawV: TimedSample[];
+  smoothedV: TimedSample[];
+};
+const emptyGazeTraces = (): GazeTraces => ({
+  rawH: [],
+  smoothedH: [],
+  rawV: [],
+  smoothedV: [],
+});
+let gazeTraces = emptyGazeTraces();
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
@@ -626,6 +671,45 @@ startFrameLoop((nowMs) => {
         gateLabel.textContent = "";
       }
 
+      // The smoothing filter runs every frame on the mean offset. An
+      // untrusted frame (gate refused, face lost) resets it: the
+      // traces draw the gap, the filter restarts fresh after it. The
+      // quadrant line and calibration capture stay on the RAW signal,
+      // wiring smoothed gaze into consumers is 5.7's business.
+      const smoothedGaze = gazeSmoothingStep(
+        gazeSmoothing,
+        nowMs,
+        frameMeanOffset,
+      );
+      gazeSmoothing = smoothedGaze.state;
+      const pushTrace = (
+        samples: TimedSample[],
+        offset: IrisOffset | null,
+        axis: "horizontal" | "vertical",
+      ): TimedSample[] =>
+        pushBounded(
+          samples,
+          {
+            timestampMs: nowMs,
+            value: offset === null ? null : GAZE_TRACE_HALF - offset[axis],
+          },
+          1200,
+        );
+      gazeTraces = {
+        rawH: pushTrace(gazeTraces.rawH, frameMeanOffset, "horizontal"),
+        smoothedH: pushTrace(
+          gazeTraces.smoothedH,
+          smoothedGaze.smoothed,
+          "horizontal",
+        ),
+        rawV: pushTrace(gazeTraces.rawV, frameMeanOffset, "vertical"),
+        smoothedV: pushTrace(
+          gazeTraces.smoothedV,
+          smoothedGaze.smoothed,
+          "vertical",
+        ),
+      };
+
       if (calibrationRequested) {
         captureState = startCapture(nowMs);
         calibrationRequested = false;
@@ -661,7 +745,7 @@ startFrameLoop((nowMs) => {
 
       earSamples = pushBounded(
         earSamples,
-        { timestampMs: nowMs, ear: meanEar },
+        { timestampMs: nowMs, value: meanEar },
         1200,
       );
 
@@ -767,6 +851,57 @@ startFrameLoop((nowMs) => {
           drawPolyline(sparkContext, segment, 1.5, "#00b0ff");
         }
       }
+      const drawGazeTraces = (
+        traceContext: CanvasRenderingContext2D | null,
+        raw: readonly TimedSample[],
+        smoothed: readonly TimedSample[],
+      ): void => {
+        if (traceContext === null) {
+          return;
+        }
+        const { width, height } = traceContext.canvas;
+        traceContext.clearRect(0, 0, width, height);
+        // The centre line is zero offset, eyes straight at the camera.
+        drawPolyline(
+          traceContext,
+          [
+            { x: 0, y: height / 2 },
+            { x: width, y: height / 2 },
+          ],
+          1,
+          "#37474f",
+        );
+        for (const segment of sparklineSegments(
+          raw,
+          nowMs,
+          SPARK_WINDOW_MS,
+          width,
+          height,
+          2 * GAZE_TRACE_HALF,
+        )) {
+          drawPolyline(traceContext, segment, 1, "#546e7a");
+        }
+        for (const segment of sparklineSegments(
+          smoothed,
+          nowMs,
+          SPARK_WINDOW_MS,
+          width,
+          height,
+          2 * GAZE_TRACE_HALF,
+        )) {
+          drawPolyline(traceContext, segment, 2, "#ff9100");
+        }
+      };
+      drawGazeTraces(
+        gazeTraceHorizontalContext,
+        gazeTraces.rawH,
+        gazeTraces.smoothedH,
+      );
+      drawGazeTraces(
+        gazeTraceVerticalContext,
+        gazeTraces.rawV,
+        gazeTraces.smoothedV,
+      );
     }
   }
 });
@@ -794,6 +929,8 @@ app.append(
   baselineLabel,
   blinkShapeLabel,
   sparkCanvas,
+  gazeTraceHorizontalCanvas,
+  gazeTraceVerticalCanvas,
   blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
   calibrationOverlay,
