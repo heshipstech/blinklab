@@ -73,7 +73,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 5.5 Introduce Playwright, first end to end test of the calibration flow. Check: headless test passes in CI.
 - [x] 5.6 Gaze point smoothing filter, raw and smoothed traces both drawn. Check: filter preserves step response within tolerance.
 - [x] 5.7 Fixation and saccade separation using a dispersion threshold algorithm (I-DT). Check: synthetic scanpath of known structure.
-- [ ] 5.8 Fixation duration statistics panel. Check: aggregation tests.
+- [x] 5.8 Fixation duration statistics panel. Check: aggregation tests.
 - [ ] 5.9 Gaze heatmap over a static image. Check: test on the accumulation grid.
 - [ ] 5.10 Scanpath replay with a time slider. Check: test on the replay index lookup.
 

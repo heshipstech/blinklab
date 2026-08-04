@@ -59,6 +59,7 @@ import {
   type GazeSmoothingState,
 } from "./core/gazeSmoothing";
 import { detectFixations, type GazeSample } from "./core/fixation";
+import { fixationStats } from "./core/fixationStats";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -233,6 +234,7 @@ function render(): void {
   gazeLabel.hidden = state.kind !== "running";
   quadrantLabel.hidden = state.kind !== "running";
   gazeStateLabel.hidden = state.kind !== "running";
+  fixationStatsLabel.hidden = state.kind !== "running";
   calibrateButton.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
@@ -343,6 +345,8 @@ const quadrantLabel = document.createElement("p");
 quadrantLabel.hidden = true;
 const gazeStateLabel = document.createElement("p");
 gazeStateLabel.hidden = true;
+const fixationStatsLabel = document.createElement("p");
+fixationStatsLabel.hidden = true;
 
 // The calibration capture screen: a dark overlay, one moving dot,
 // click anywhere to cancel. A profile solved in an earlier visit
@@ -725,6 +729,7 @@ startFrameLoop((nowMs) => {
       if (smoothedGaze.smoothed === null) {
         gazeSamples = [];
         gazeStateLabel.textContent = "Gaze state: no valid measurement";
+        fixationStatsLabel.textContent = "Fixations in the last 10 s: none yet";
       } else {
         gazeSamples = pushBounded(
           gazeSamples,
@@ -740,6 +745,14 @@ startFrameLoop((nowMs) => {
           lastFixation !== undefined && lastFixation.endMs === nowMs
             ? `Gaze state: fixating for ${((lastFixation.endMs - lastFixation.startMs) / 1000).toFixed(1)} s`
             : "Gaze state: moving";
+
+        // The statistics include the still-growing fixation at its
+        // length so far: a panel that waits for the end lags the eye.
+        const stats = fixationStats(fixations);
+        fixationStatsLabel.textContent =
+          stats === null
+            ? "Fixations in the last 10 s: none yet"
+            : `Fixations in the last 10 s: ${String(stats.count)}, duration mean ${stats.meanMs.toFixed(0)} ms, median ${stats.medianMs.toFixed(0)} ms, longest ${stats.longestMs.toFixed(0)} ms`;
       }
 
       if (calibrationRequested) {
@@ -956,6 +969,7 @@ app.append(
   gazeLabel,
   quadrantLabel,
   gazeStateLabel,
+  fixationStatsLabel,
   calibrateButton,
   gateLabel,
   blinkLabel,
