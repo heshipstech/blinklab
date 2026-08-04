@@ -5,7 +5,7 @@ import {
   RIGHT_EYE_EAR_INDICES,
 } from "../../src/core/constants";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "../../src/core/ear";
-import { sparklineSegments, type EarSample } from "../../src/core/sparkline";
+import { sparklineSegments, type TimedSample } from "../../src/core/sparkline";
 import { frameLandmarks, loadSession01 } from "../fixtures/loadSession01";
 
 const WIDTH = 600;
@@ -16,10 +16,10 @@ const EAR_MAX = 0.6;
 describe("sparklineSegments", () => {
   it("maps known samples to hand checkable canvas points", () => {
     const nowMs = 10000;
-    const samples: EarSample[] = [
-      { timestampMs: 0, ear: 0.6 },
-      { timestampMs: 5000, ear: 0.3 },
-      { timestampMs: 10000, ear: 0 },
+    const samples: TimedSample[] = [
+      { timestampMs: 0, value: 0.6 },
+      { timestampMs: 5000, value: 0.3 },
+      { timestampMs: 10000, value: 0 },
     ];
     expect(
       sparklineSegments(samples, nowMs, WINDOW_MS, WIDTH, HEIGHT, EAR_MAX),
@@ -32,12 +32,12 @@ describe("sparklineSegments", () => {
     ]);
   });
 
-  it("splits into separate segments where the ear was null", () => {
+  it("splits into separate segments where the value was null", () => {
     const nowMs = 10000;
-    const samples: EarSample[] = [
-      { timestampMs: 9000, ear: 0.3 },
-      { timestampMs: 9500, ear: null },
-      { timestampMs: 10000, ear: 0.3 },
+    const samples: TimedSample[] = [
+      { timestampMs: 9000, value: 0.3 },
+      { timestampMs: 9500, value: null },
+      { timestampMs: 10000, value: 0.3 },
     ];
     const segments = sparklineSegments(
       samples,
@@ -53,7 +53,7 @@ describe("sparklineSegments", () => {
   });
 
   it("drops samples older than the window and returns nothing for none", () => {
-    const samples: EarSample[] = [{ timestampMs: 0, ear: 0.3 }];
+    const samples: TimedSample[] = [{ timestampMs: 0, value: 0.3 }];
     expect(
       sparklineSegments(samples, 20000, WINDOW_MS, WIDTH, HEIGHT, EAR_MAX),
     ).toEqual([]);
@@ -62,9 +62,9 @@ describe("sparklineSegments", () => {
     ).toEqual([]);
   });
 
-  it("clamps an ear above the fixed scale to the top edge", () => {
+  it("clamps a value above the fixed scale to the top edge", () => {
     const segments = sparklineSegments(
-      [{ timestampMs: 10000, ear: 0.9 }],
+      [{ timestampMs: 10000, value: 0.9 }],
       10000,
       WINDOW_MS,
       WIDTH,
@@ -76,7 +76,7 @@ describe("sparklineSegments", () => {
 
   it("maps the whole fixture to one unbroken segment", () => {
     const session = loadSession01();
-    const samples: EarSample[] = session.frames.map((frame) => {
+    const samples: TimedSample[] = session.frames.map((frame) => {
       const face = frameLandmarks(frame);
       const right = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
       const left = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
@@ -84,7 +84,7 @@ describe("sparklineSegments", () => {
       const leftEar = left === null ? null : eyeAspectRatio(left);
       return {
         timestampMs: frame.timestampMs,
-        ear:
+        value:
           rightEar === null || leftEar === null
             ? null
             : (rightEar + leftEar) / 2,

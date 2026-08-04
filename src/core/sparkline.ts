@@ -1,22 +1,24 @@
 import type { Point2 } from "./geometry";
 
-export type EarSample = {
+// One timed value of any rolling signal: EAR since 3.2, gaze offsets
+// since 5.6. The mapper below never asks what the number means.
+export type TimedSample = {
   timestampMs: number;
   // null means no trustworthy measurement existed at that moment.
   // It draws as a gap in the line, never as a zero.
-  ear: number | null;
+  value: number | null;
 };
 
 // Maps timed samples onto canvas polyline segments. Time runs left to
 // right across the window, the value runs bottom to top on a FIXED
 // scale, and null samples split the line into separate segments.
 export function sparklineSegments(
-  samples: readonly EarSample[],
+  samples: readonly TimedSample[],
   nowMs: number,
   windowMs: number,
   widthPx: number,
   heightPx: number,
-  earMax: number,
+  valueMax: number,
 ): Point2[][] {
   const windowStartMs = nowMs - windowMs;
   const segments: Point2[][] = [];
@@ -26,17 +28,17 @@ export function sparklineSegments(
     if (sample.timestampMs < windowStartMs || sample.timestampMs > nowMs) {
       continue;
     }
-    if (sample.ear === null) {
+    if (sample.value === null) {
       if (current.length > 0) {
         segments.push(current);
         current = [];
       }
       continue;
     }
-    const clamped = Math.min(Math.max(sample.ear, 0), earMax);
+    const clamped = Math.min(Math.max(sample.value, 0), valueMax);
     current.push({
       x: ((sample.timestampMs - windowStartMs) / windowMs) * widthPx,
-      y: heightPx - (clamped / earMax) * heightPx,
+      y: heightPx - (clamped / valueMax) * heightPx,
     });
   }
   if (current.length > 0) {
