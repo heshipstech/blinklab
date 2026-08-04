@@ -58,6 +58,7 @@ import {
   gazeSmoothingStep,
   type GazeSmoothingState,
 } from "./core/gazeSmoothing";
+import { detectFixations, type GazeSample } from "./core/fixation";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -231,6 +232,7 @@ function render(): void {
   headPoseLabel.hidden = state.kind !== "running";
   gazeLabel.hidden = state.kind !== "running";
   quadrantLabel.hidden = state.kind !== "running";
+  gazeStateLabel.hidden = state.kind !== "running";
   calibrateButton.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
@@ -271,6 +273,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     sessionStartMs = null;
     gazeSmoothing = null;
     gazeTraces = emptyGazeTraces();
+    gazeSamples = [];
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -338,6 +341,8 @@ const gazeLabel = document.createElement("p");
 gazeLabel.hidden = true;
 const quadrantLabel = document.createElement("p");
 quadrantLabel.hidden = true;
+const gazeStateLabel = document.createElement("p");
+gazeStateLabel.hidden = true;
 
 // The calibration capture screen: a dark overlay, one moving dot,
 // click anywhere to cancel. A profile solved in an earlier visit
@@ -489,6 +494,10 @@ const emptyGazeTraces = (): GazeTraces => ({
   smoothedV: [],
 });
 let gazeTraces = emptyGazeTraces();
+
+// The 5.7 fixation buffer: smoothed samples since the last gap,
+// capped to the same 10 second window as the traces.
+let gazeSamples: GazeSample[] = [];
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
@@ -710,6 +719,29 @@ startFrameLoop((nowMs) => {
         ),
       };
 
+      // Fixation and saccade separation runs on the smoothed signal,
+      // its first consumer. A gap clears the buffer: a fixation that
+      // bridged a lost face would be an invented stillness.
+      if (smoothedGaze.smoothed === null) {
+        gazeSamples = [];
+        gazeStateLabel.textContent = "Gaze state: no valid measurement";
+      } else {
+        gazeSamples = pushBounded(
+          gazeSamples,
+          { timestampMs: nowMs, offset: smoothedGaze.smoothed },
+          1200,
+        ).filter((sample) => nowMs - sample.timestampMs <= SPARK_WINDOW_MS);
+        const fixations = detectFixations(gazeSamples);
+        const lastFixation = fixations[fixations.length - 1];
+        // Fixating right now means the newest fixation reaches the
+        // newest sample. "Moving" covers a saccade in flight and the
+        // first not-yet-long-enough moments of the next stillness.
+        gazeStateLabel.textContent =
+          lastFixation !== undefined && lastFixation.endMs === nowMs
+            ? `Gaze state: fixating for ${((lastFixation.endMs - lastFixation.startMs) / 1000).toFixed(1)} s`
+            : "Gaze state: moving";
+      }
+
       if (calibrationRequested) {
         captureState = startCapture(nowMs);
         calibrationRequested = false;
@@ -923,6 +955,7 @@ app.append(
   headPoseLabel,
   gazeLabel,
   quadrantLabel,
+  gazeStateLabel,
   calibrateButton,
   gateLabel,
   blinkLabel,
