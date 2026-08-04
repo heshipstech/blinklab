@@ -60,6 +60,7 @@ import {
 } from "./core/gazeSmoothing";
 import { detectFixations, type GazeSample } from "./core/fixation";
 import { fixationStats } from "./core/fixationStats";
+import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -236,6 +237,7 @@ function render(): void {
   gazeStateLabel.hidden = state.kind !== "running";
   fixationStatsLabel.hidden = state.kind !== "running";
   calibrateButton.hidden = state.kind !== "running";
+  heatmapButton.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
@@ -280,6 +282,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     captureState = null;
     calibrationRequested = false;
     calibrationOverlay.hidden = true;
+    heatmapOpen = false;
+    heatmapOverlay.hidden = true;
+    heatmapGrid = emptyGrid();
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -399,6 +404,129 @@ calibrationOverlay.addEventListener("click", () => {
   calibrationRequested = false;
   calibrationOverlay.hidden = true;
 });
+
+// The 5.9 gaze heatmap: a full viewport overlay showing a drawn test
+// card, dwell accumulating as translucent heat. It is the calibrated
+// profile's first live consumer, raw offsets have no screen meaning,
+// so the button stays disabled until a profile exists.
+const heatmapButton = document.createElement("button");
+heatmapButton.hidden = true;
+function refreshHeatmapButton(): void {
+  heatmapButton.disabled = calibrationProfile === null;
+  heatmapButton.textContent =
+    calibrationProfile === null
+      ? "Gaze heatmap (calibrate first)"
+      : "Gaze heatmap";
+}
+refreshHeatmapButton();
+const heatmapOverlay = document.createElement("div");
+heatmapOverlay.hidden = true;
+Object.assign(heatmapOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  background: "#101418",
+  zIndex: "10",
+  cursor: "pointer",
+});
+const heatmapCanvas = document.createElement("canvas");
+heatmapCanvas.setAttribute(
+  "aria-label",
+  "Gaze heatmap accumulating over a test image",
+);
+heatmapOverlay.append(heatmapCanvas);
+let heatmapGrid = emptyGrid();
+let heatmapOpen = false;
+heatmapButton.addEventListener("click", () => {
+  heatmapGrid = emptyGrid();
+  heatmapCanvas.width = window.innerWidth;
+  heatmapCanvas.height = window.innerHeight;
+  heatmapOpen = true;
+  heatmapOverlay.hidden = false;
+});
+heatmapOverlay.addEventListener("click", () => {
+  heatmapOpen = false;
+  heatmapOverlay.hidden = true;
+});
+
+// The test card: five distinct shapes at known screen fractions, so
+// the owner knows exactly where they looked. Drawn, not loaded, no
+// image licence to carry.
+function drawHeatmapCard(context: CanvasRenderingContext2D): void {
+  const { width, height } = context.canvas;
+  context.fillStyle = "#101418";
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = "#78909c";
+  context.fillStyle = "#78909c";
+  context.lineWidth = 3;
+  const size = Math.min(width, height) * 0.05;
+  const atPx = (fx: number, fy: number): { x: number; y: number } => ({
+    x: fx * width,
+    y: fy * height,
+  });
+  // Top left: circle.
+  const circle = atPx(0.15, 0.2);
+  context.beginPath();
+  context.arc(circle.x, circle.y, size, 0, 2 * Math.PI);
+  context.stroke();
+  // Top right: square.
+  const square = atPx(0.85, 0.2);
+  context.strokeRect(square.x - size, square.y - size, 2 * size, 2 * size);
+  // Centre: cross.
+  const cross = atPx(0.5, 0.5);
+  context.beginPath();
+  context.moveTo(cross.x - size, cross.y);
+  context.lineTo(cross.x + size, cross.y);
+  context.moveTo(cross.x, cross.y - size);
+  context.lineTo(cross.x, cross.y + size);
+  context.stroke();
+  // Bottom left: triangle.
+  const triangle = atPx(0.15, 0.8);
+  context.beginPath();
+  context.moveTo(triangle.x, triangle.y - size);
+  context.lineTo(triangle.x + size, triangle.y + size);
+  context.lineTo(triangle.x - size, triangle.y + size);
+  context.closePath();
+  context.stroke();
+  // Bottom right: filled dot.
+  const dot = atPx(0.85, 0.8);
+  context.beginPath();
+  context.arc(dot.x, dot.y, size / 2, 0, 2 * Math.PI);
+  context.fill();
+  context.fillStyle = "#eceff1";
+  context.font = "16px system-ui, sans-serif";
+  context.textAlign = "center";
+  context.fillText(
+    "Look at the shapes, hold on each. Click anywhere to close.",
+    width / 2,
+    height - 24,
+  );
+}
+
+function renderHeatmap(context: CanvasRenderingContext2D): void {
+  drawHeatmapCard(context);
+  const cells = normalizedCells(heatmapGrid);
+  if (cells === null) {
+    return;
+  }
+  const { width, height } = context.canvas;
+  const cellWidth = width / heatmapGrid.cols;
+  const cellHeight = height / heatmapGrid.rows;
+  for (let row = 0; row < heatmapGrid.rows; row++) {
+    for (let col = 0; col < heatmapGrid.cols; col++) {
+      const heat = cells[row * heatmapGrid.cols + col] ?? 0;
+      if (heat <= 0) {
+        continue;
+      }
+      context.fillStyle = `rgba(255, 145, 0, ${String(0.55 * heat)})`;
+      context.fillRect(
+        col * cellWidth,
+        row * cellHeight,
+        cellWidth,
+        cellHeight,
+      );
+    }
+  }
+}
 
 // Four ways to answer where the eyes point. Off screen keeps its
 // uncalibrated tag even with a profile: that boundary is still the
@@ -755,6 +883,23 @@ startFrameLoop((nowMs) => {
             : `Fixations in the last 10 s: ${String(stats.count)}, duration mean ${stats.meanMs.toFixed(0)} ms, median ${stats.medianMs.toFixed(0)} ms, longest ${stats.longestMs.toFixed(0)} ms`;
       }
 
+      // While the heatmap overlay is up, every trusted frame adds one
+      // frame of dwell to the calibrated gaze point's cell. Untrusted
+      // frames add nothing, and the core grid ignores points that
+      // land outside the unit square.
+      if (heatmapOpen) {
+        if (smoothedGaze.smoothed !== null && calibrationProfile !== null) {
+          heatmapGrid = accumulate(
+            heatmapGrid,
+            calibratedPoint(calibrationProfile, smoothedGaze.smoothed),
+          );
+        }
+        const heatmapContext = heatmapCanvas.getContext("2d");
+        if (heatmapContext !== null) {
+          renderHeatmap(heatmapContext);
+        }
+      }
+
       if (calibrationRequested) {
         captureState = startCapture(nowMs);
         calibrationRequested = false;
@@ -778,6 +923,7 @@ startFrameLoop((nowMs) => {
             solved === null
               ? "Recalibrate gaze (solver refused the samples, try again)"
               : "Recalibrate gaze";
+          refreshHeatmapButton();
         } else {
           const target = CALIBRATION_TARGETS[captureState.targetIndex];
           if (target !== undefined) {
@@ -971,6 +1117,7 @@ app.append(
   gazeStateLabel,
   fixationStatsLabel,
   calibrateButton,
+  heatmapButton,
   gateLabel,
   blinkLabel,
   baselineLabel,
@@ -981,5 +1128,6 @@ app.append(
   blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
   calibrationOverlay,
+  heatmapOverlay,
 );
 render();
