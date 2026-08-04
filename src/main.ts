@@ -58,9 +58,14 @@ import {
   gazeSmoothingStep,
   type GazeSmoothingState,
 } from "./core/gazeSmoothing";
-import { detectFixations, type GazeSample } from "./core/fixation";
+import {
+  detectFixations,
+  MIN_FIXATION_DURATION_MS,
+  type GazeSample,
+} from "./core/fixation";
 import { fixationStats } from "./core/fixationStats";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
+import { replayIndex, sliderTime } from "./core/replay";
 import {
   appendEvent,
   formatBlinkEvent,
@@ -238,6 +243,7 @@ function render(): void {
   fixationStatsLabel.hidden = state.kind !== "running";
   calibrateButton.hidden = state.kind !== "running";
   heatmapButton.hidden = state.kind !== "running";
+  replayButton.hidden = state.kind !== "running";
   gateLabel.hidden = state.kind !== "running";
   blinkLabel.hidden = state.kind !== "running";
   baselineLabel.hidden = state.kind !== "running";
@@ -285,6 +291,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     heatmapOpen = false;
     heatmapOverlay.hidden = true;
     heatmapGrid = emptyGrid();
+    scanpathSamples = [];
+    scanpathSlider.hidden = true;
+    refreshReplayButton();
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -436,16 +445,74 @@ heatmapCanvas.setAttribute(
 heatmapOverlay.append(heatmapCanvas);
 let heatmapGrid = emptyGrid();
 let heatmapOpen = false;
+
+// The 5.10 scanpath: while a heat session runs, every accumulated
+// point is also remembered with its timestamp, and the replay button
+// scrubs back through them. The cap holds five minutes at 60 fps,
+// far beyond any card session; past it the oldest points fall away.
+type ScanpathSample = { timestampMs: number; x: number; y: number };
+let scanpathSamples: ScanpathSample[] = [];
+const SCANPATH_SAMPLE_CAP = 18000;
+// Fixation detection on screen points needs a screen sized box: five
+// percent of the viewport, summed over both axes, quadrant-coarse in
+// spirit like the heatmap grid.
+const SCANPATH_SCREEN_DISPERSION = 0.05;
+const replayButton = document.createElement("button");
+replayButton.hidden = true;
+function refreshReplayButton(): void {
+  replayButton.disabled = scanpathSamples.length < 2;
+  replayButton.textContent =
+    scanpathSamples.length < 2
+      ? "Replay scanpath (run the heatmap first)"
+      : "Replay scanpath";
+}
+refreshReplayButton();
+const scanpathSlider = document.createElement("input");
+scanpathSlider.type = "range";
+scanpathSlider.min = "0";
+scanpathSlider.max = "1000";
+scanpathSlider.value = "1000";
+scanpathSlider.setAttribute("aria-label", "Replay time");
+scanpathSlider.hidden = true;
+Object.assign(scanpathSlider.style, {
+  position: "absolute",
+  bottom: "56px",
+  left: "10%",
+  width: "80%",
+  cursor: "default",
+});
+// The slider lives inside a close-on-click overlay: its own clicks
+// must not bubble up and slam the door mid scrub.
+scanpathSlider.addEventListener("click", (event) => {
+  event.stopPropagation();
+});
+scanpathSlider.addEventListener("input", () => {
+  renderReplay();
+});
+heatmapOverlay.append(scanpathSlider);
 heatmapButton.addEventListener("click", () => {
   heatmapGrid = emptyGrid();
+  scanpathSamples = [];
+  refreshReplayButton();
   heatmapCanvas.width = window.innerWidth;
   heatmapCanvas.height = window.innerHeight;
+  scanpathSlider.hidden = true;
   heatmapOpen = true;
   heatmapOverlay.hidden = false;
+});
+replayButton.addEventListener("click", () => {
+  heatmapCanvas.width = window.innerWidth;
+  heatmapCanvas.height = window.innerHeight;
+  scanpathSlider.value = "1000";
+  scanpathSlider.hidden = false;
+  heatmapOverlay.hidden = false;
+  renderReplay();
 });
 heatmapOverlay.addEventListener("click", () => {
   heatmapOpen = false;
   heatmapOverlay.hidden = true;
+  scanpathSlider.hidden = true;
+  refreshReplayButton();
 });
 
 // The test card: five distinct shapes at known screen fractions, so
@@ -526,6 +593,73 @@ function renderHeatmap(context: CanvasRenderingContext2D): void {
       );
     }
   }
+}
+
+// Draws the recorded path up to the slider's moment: the travelled
+// line, circles around fixations sized by how long they held, and a
+// dot at the current position. Pure lookups decide what is visible,
+// this function only draws what they return.
+function renderReplay(): void {
+  const context = heatmapCanvas.getContext("2d");
+  const first = scanpathSamples[0];
+  const last = scanpathSamples[scanpathSamples.length - 1];
+  if (context === null || first === undefined || last === undefined) {
+    return;
+  }
+  drawHeatmapCard(context);
+  const fraction = Number(scanpathSlider.value) / 1000;
+  const atMs = sliderTime(first.timestampMs, last.timestampMs, fraction);
+  const visible = replayIndex(
+    scanpathSamples.map((sample) => sample.timestampMs),
+    atMs,
+  );
+  const past = scanpathSamples.slice(0, visible);
+  const { width, height } = heatmapCanvas;
+  drawPolyline(
+    context,
+    past.map((sample) => ({ x: sample.x * width, y: sample.y * height })),
+    1,
+    "#546e7a",
+  );
+  // Fixations on screen points reuse the 5.7 detector with a screen
+  // sized dispersion box passed explicitly. Structurally the same
+  // pair of numbers, only the ruler changes.
+  const fixations = detectFixations(
+    past.map((sample) => ({
+      timestampMs: sample.timestampMs,
+      offset: { horizontal: sample.x, vertical: sample.y },
+    })),
+    SCANPATH_SCREEN_DISPERSION,
+    MIN_FIXATION_DURATION_MS,
+  );
+  context.strokeStyle = "#ff9100";
+  context.lineWidth = 2;
+  for (const fixation of fixations) {
+    const radius = 6 + Math.sqrt(fixation.endMs - fixation.startMs) / 2;
+    context.beginPath();
+    context.arc(
+      fixation.centroid.horizontal * width,
+      fixation.centroid.vertical * height,
+      radius,
+      0,
+      2 * Math.PI,
+    );
+    context.stroke();
+  }
+  const current = past[past.length - 1];
+  if (current !== undefined) {
+    context.fillStyle = "#ff9100";
+    context.beginPath();
+    context.arc(current.x * width, current.y * height, 5, 0, 2 * Math.PI);
+    context.fill();
+  }
+  context.fillStyle = "#eceff1";
+  context.textAlign = "center";
+  context.fillText(
+    `Replay at ${((atMs - first.timestampMs) / 1000).toFixed(1)} s of ${((last.timestampMs - first.timestampMs) / 1000).toFixed(1)} s`,
+    width / 2,
+    24,
+  );
 }
 
 // Four ways to answer where the eyes point. Off screen keeps its
@@ -889,9 +1023,15 @@ startFrameLoop((nowMs) => {
       // land outside the unit square.
       if (heatmapOpen) {
         if (smoothedGaze.smoothed !== null && calibrationProfile !== null) {
-          heatmapGrid = accumulate(
-            heatmapGrid,
-            calibratedPoint(calibrationProfile, smoothedGaze.smoothed),
+          const point = calibratedPoint(
+            calibrationProfile,
+            smoothedGaze.smoothed,
+          );
+          heatmapGrid = accumulate(heatmapGrid, point);
+          scanpathSamples = pushBounded(
+            scanpathSamples,
+            { timestampMs: nowMs, x: point.x, y: point.y },
+            SCANPATH_SAMPLE_CAP,
           );
         }
         const heatmapContext = heatmapCanvas.getContext("2d");
@@ -1118,6 +1258,7 @@ app.append(
   fixationStatsLabel,
   calibrateButton,
   heatmapButton,
+  replayButton,
   gateLabel,
   blinkLabel,
   baselineLabel,
