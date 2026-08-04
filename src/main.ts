@@ -65,6 +65,11 @@ import {
 } from "./core/fixation";
 import { fixationStats } from "./core/fixationStats";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
+import {
+  initialLongClosureState,
+  longClosureStep,
+  ongoingClosureMs,
+} from "./core/longClosure";
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
@@ -250,6 +255,7 @@ function render(): void {
   baselineLabel.hidden = state.kind !== "running";
   blinkShapeLabel.hidden = state.kind !== "running";
   perclosLabel.hidden = state.kind !== "running";
+  longClosureLabel.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -287,6 +293,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     gazeTraces = emptyGazeTraces();
     gazeSamples = [];
     perclosState = emptyPerclos();
+    longClosureState = initialLongClosureState;
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -700,6 +707,9 @@ blinkShapeLabel.hidden = true;
 const perclosLabel = document.createElement("p");
 perclosLabel.hidden = true;
 let perclosState = emptyPerclos();
+const longClosureLabel = document.createElement("p");
+longClosureLabel.hidden = true;
+let longClosureState = initialLongClosureState;
 
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
@@ -1158,6 +1168,34 @@ startFrameLoop((nowMs) => {
         blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
       }
 
+      // The long closure detector rides the exact inputs blinkStep
+      // just consumed: same trusted aperture, same personal
+      // threshold, so the two detectors watch one closure and can
+      // never disagree about when it began.
+      longClosureState = longClosureStep(
+        longClosureState,
+        nowMs,
+        blinkMeasurable ? stabilityMm : null,
+        personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
+      );
+      const ongoingMs = ongoingClosureMs(longClosureState, nowMs);
+      const longClosureParts = [
+        `Long closures: ${String(longClosureState.count)}`,
+      ];
+      if (ongoingMs !== null) {
+        longClosureParts.push(
+          `eyes closed ${(ongoingMs / 1000).toFixed(1)} s and counting`,
+        );
+      } else if (longClosureState.lastLongClosureDurationMs !== null) {
+        longClosureParts.push(
+          `last: ${longClosureState.lastLongClosureDurationMs.toFixed(0)} ms`,
+        );
+      }
+      longClosureLabel.textContent =
+        longClosureParts.length > 1
+          ? `${longClosureParts[0] ?? ""} (${longClosureParts.slice(1).join(", ")})`
+          : (longClosureParts[0] ?? "");
+
       // PERCLOS rides the same trusted aperture feed as the blink
       // reducer: below the fps gate the frame is untrusted, before
       // the baseline is ready there is no personal closed line yet,
@@ -1286,6 +1324,7 @@ app.append(
   baselineLabel,
   blinkShapeLabel,
   perclosLabel,
+  longClosureLabel,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
