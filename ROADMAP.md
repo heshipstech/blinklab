@@ -81,7 +81,7 @@ Accepted on 2026-07-28, before any code:
 
 - [x] 6.1 PERCLOS (percentage of eye closure) over a rolling 60 second window. Check: synthetic series with known closure fraction.
 - [x] 6.2 Long closure detector, eyes shut beyond a threshold triggers an event. Check: boundary case included.
-- [ ] 6.3 Alert with debounce so it cannot fire repeatedly. Check: repeated triggers within the debounce window.
+- [x] 6.3 Alert with debounce so it cannot fire repeatedly. Check: repeated triggers within the debounce window.
 - [ ] 6.4 Feature vector assembled into one typed FeatureRecord per second. Check: schema test.
 - [ ] 6.5 Explainable 0 to 100 demo score using a documented weighted heuristic. Check: contribution numbers sum to the score.
 - [ ] 6.6 Contribution panel showing the top three drivers of the score. Check: snapshot test.

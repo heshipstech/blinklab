@@ -65,6 +65,7 @@ import {
 } from "./core/fixation";
 import { fixationStats } from "./core/fixationStats";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
+import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
   initialLongClosureState,
   longClosureStep,
@@ -256,6 +257,9 @@ function render(): void {
   blinkShapeLabel.hidden = state.kind !== "running";
   perclosLabel.hidden = state.kind !== "running";
   longClosureLabel.hidden = state.kind !== "running";
+  if (state.kind !== "running") {
+    alertBanner.hidden = true;
+  }
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -294,6 +298,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     gazeSamples = [];
     perclosState = emptyPerclos();
     longClosureState = initialLongClosureState;
+    alertState = initialAlertState;
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -710,6 +715,20 @@ let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
 longClosureLabel.hidden = true;
 let longClosureState = initialLongClosureState;
+
+// The alert banner: hidden until a firing, then visible for the
+// display window. The frame loop owns its visibility while the
+// camera runs; render() only forces it hidden when the camera stops.
+const alertBanner = document.createElement("p");
+alertBanner.setAttribute("role", "alert");
+alertBanner.hidden = true;
+Object.assign(alertBanner.style, {
+  background: "#ff9100",
+  color: "#1a1a1a",
+  fontWeight: "bold",
+  padding: "8px 12px",
+});
+let alertState = initialAlertState;
 
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
@@ -1172,12 +1191,30 @@ startFrameLoop((nowMs) => {
       // just consumed: same trusted aperture, same personal
       // threshold, so the two detectors watch one closure and can
       // never disagree about when it began.
+      const longCountBefore = longClosureState.count;
       longClosureState = longClosureStep(
         longClosureState,
         nowMs,
         blinkMeasurable ? stabilityMm : null,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
+
+      // Each new long closure event asks the alert governor whether
+      // a person gets told; the governor's debounce decides. The text
+      // is written ONLY on the firing edge: the banner is an
+      // assertive live region, and rewriting it per frame would make
+      // screen readers announce every suppressed trigger, defeating
+      // the debounce for exactly those users.
+      const alertResult = alertStep(
+        alertState,
+        nowMs,
+        longClosureState.count > longCountBefore,
+      );
+      alertState = alertResult.state;
+      if (alertResult.fires) {
+        alertBanner.textContent = `Alert: long eye closure (alerts: ${String(alertState.firedCount)}, suppressed: ${String(alertState.suppressedCount)})`;
+      }
+      alertBanner.hidden = !alertVisible(alertState, nowMs);
       const ongoingMs = ongoingClosureMs(longClosureState, nowMs);
       const longClosureParts = [
         `Long closures: ${String(longClosureState.count)}`,
@@ -1325,6 +1362,7 @@ app.append(
   blinkShapeLabel,
   perclosLabel,
   longClosureLabel,
+  alertBanner,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
