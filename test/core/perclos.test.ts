@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { EYES_SHUT_FRACTION } from "../../src/core/longClosure";
+import perclosSource from "../../src/core/perclos.ts?raw";
 import {
   emptyPerclos,
   PERCLOS_CLOSED_FRACTION,
@@ -119,15 +121,75 @@ describe("the observation minimum", () => {
   });
 });
 
+describe("the closed line moved to the shut line, fix #113", () => {
+  it("is the long closure detector's shut line, aliased so the two cannot drift", () => {
+    // The literature's P80 (20 percent) proved unreachable: the
+    // instrument reads fully shut eyes as about a third of baseline,
+    // and PERCLOS read 0.0 percent through a witnessed 12.9 second
+    // closure. Both watchers of "shut" now share one measured line.
+    expect(PERCLOS_CLOSED_FRACTION).toBe(EYES_SHUT_FRACTION);
+    expect(PERCLOS_CLOSED_FRACTION).toBe(0.4);
+  });
+
+  it("replays the owner's blindness experiment: the closure now registers", () => {
+    // The 2026-08-06 measurement: baseline 7.2 mm, eyes fully shut
+    // at 2.35 mm for six of sixty seconds. Under the 20 percent line
+    // (1.44 mm) this read 0.0 percent. Under the shut line (2.88 mm)
+    // it must read exactly ten percent.
+    const script = [
+      ...Array<"open">(54).fill("open"),
+      ...Array<"closed">(6).fill("closed"),
+    ];
+    let state = emptyPerclos();
+    let t = 0;
+    for (const second of script) {
+      for (let frame = 0; frame < 30; frame++) {
+        state = perclosStep(state, t, second === "closed" ? 2.35 : 5.9, 7.2);
+        t += 1000 / 30;
+      }
+    }
+    expect(perclosValue(state, t - 1000 / 30)).toBeCloseTo(0.1, 12);
+  });
+
+  it("still refuses the owner's reading droop as closed time", () => {
+    // Lids low at 3.4 mm while reading (47 percent of the 7.2 mm
+    // baseline, inside the measured 45 to 50 percent droop band) and
+    // a harder probe just 0.02 mm above the 2.88 mm shut line: a
+    // full minute of either reads zero percent, not a false fatigue
+    // signal.
+    for (const droopMm of [3.4, 2.9]) {
+      let state = emptyPerclos();
+      let t = 0;
+      for (let frame = 0; frame < 1800; frame++) {
+        state = perclosStep(state, t, droopMm, 7.2);
+        t += 1000 / 30;
+      }
+      expect(perclosValue(state, t - 1000 / 30)).toBe(0);
+    }
+  });
+
+  it("enforces aliased-not-copied at the source level", () => {
+    // Value equality cannot tell an alias from a copied literal, so
+    // this reads the source: the constant must be defined AS the
+    // long closure detector's fraction, not restated.
+    expect(perclosSource).toContain(
+      "export const PERCLOS_CLOSED_FRACTION = EYES_SHUT_FRACTION;",
+    );
+  });
+});
+
 describe("the closed line", () => {
-  it("runs the boundary trio: exactly at the P80 line counts as closed", () => {
+  it("runs the boundary trio: exactly at the shut line stays open", () => {
+    // Amended by fix #113: strictly below closes, exactly at stays
+    // open, the same convention as every other aperture detector, so
+    // the two consumers of the shared line agree at the line itself.
     const threshold = PERCLOS_CLOSED_FRACTION * BASELINE_MM;
     let state = emptyPerclos();
     state = perclosStep(state, 0, threshold - 0.001, BASELINE_MM);
     state = perclosStep(state, 20000, threshold, BASELINE_MM);
     state = perclosStep(state, 40000, threshold + 0.001, BASELINE_MM);
-    // Three samples: closed, closed, open.
-    expect(perclosValue(state, 40000)).toBeCloseTo(2 / 3, 12);
+    // Three samples: closed, open, open.
+    expect(perclosValue(state, 40000)).toBeCloseTo(1 / 3, 12);
   });
 
   it("classifies at push time, a later baseline never rewrites history", () => {
