@@ -38,6 +38,19 @@ export const BLINK_LOG_CAP = 50;
 // phenomenon that 6.2 detects in its own right.
 export const MAX_BLINK_DURATION_MS = 500;
 
+// The arming gap of fix #114. One line plus measurement noise mints
+// events: the owner's log filled with 17 ms, 0.1 mm "blinks" while
+// their aperture sat at 3.7 mm against a 3.8 mm threshold (the
+// 2026-08-05 session recorded in issues #112 and #114). So a
+// closure only arms as a blink once it reaches the threshold minus
+// this fraction: at that session's threshold, a 0.38 mm proving
+// depth, comfortably past the 0.1 to 0.2 mm chatter, while real
+// blinks plunge millimetres below it.
+// The gap sits BELOW the line on purpose: an earlier design put it
+// above, as a reopen latch, and review proved a latch corrupts
+// durations. Depth arming never changes when a closure ends.
+export const APERTURE_HYSTERESIS_FRACTION = 0.1;
+
 // The frame rate honesty gate of 4.6. A fast blink's closed phase
 // can be under 100 ms; below 25 fps it may fall entirely between
 // frames, and a count that missed blinks would read as calm.
