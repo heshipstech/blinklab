@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { blinkStep, initialBlinkState } from "../../src/core/blink";
 import { MAX_BLINK_DURATION_MS } from "../../src/core/constants";
 import {
+  EYES_SHUT_FRACTION,
   initialLongClosureState,
   LONG_CLOSURE_THRESHOLD_MS,
   longClosureStep,
+  longClosureThresholdMm,
   ongoingClosureMs,
   type LongClosureState,
 } from "../../src/core/longClosure";
@@ -36,6 +38,79 @@ function frames(seconds: number, apertureMm: number | null): (number | null)[] {
 describe("the shared line", () => {
   it("is the blink maximum itself, aliased so the partition cannot drift", () => {
     expect(LONG_CLOSURE_THRESHOLD_MS).toBe(MAX_BLINK_DURATION_MS);
+  });
+});
+
+describe("the shut line, roadmap amendment 5", () => {
+  it("sits at the measured fraction of the personal baseline", () => {
+    expect(EYES_SHUT_FRACTION).toBe(0.4);
+    expect(longClosureThresholdMm(7.2)).toBeCloseTo(2.88, 12);
+    expect(longClosureThresholdMm(9)).toBeCloseTo(3.6, 12);
+  });
+
+  it("replays the owner's reading droop: lids low is not eyes shut", () => {
+    // The owner's measured numbers, 2026-08-05 and 2026-08-06:
+    // baseline 7.2 mm, relaxed reading gaze holds the aperture in
+    // the 45 to 50 percent band, scripted here at 3.4 mm (47
+    // percent), fully shut eyes read 2.2 to 2.5 mm (the instrument's
+    // floor, not zero). The droop value is chosen BELOW the old
+    // blink line (3.6 mm at this baseline), so this exact stream
+    // false-fired under the old wiring: review proved a droop above
+    // the old line would pass against both wirings and kill nothing.
+    // Against the shut line (2.88 mm) it must produce nothing.
+    const shutLine = longClosureThresholdMm(7.2);
+    let state = initialLongClosureState;
+    let t = 0;
+    state = longClosureStep(state, t, 5.9, shutLine);
+    for (let i = 0; i < 90; i++) {
+      t += DT_MS;
+      state = longClosureStep(state, t, 3.4, shutLine);
+    }
+    expect(state.count).toBe(0);
+    expect(state.eye).toBe("open");
+    // Fully shut eyes at the measured floor still fire, once.
+    for (let i = 0; i < 60; i++) {
+      t += DT_MS;
+      state = longClosureStep(state, t, 2.35, shutLine);
+    }
+    expect(state.count).toBe(1);
+    // And reopening records the witnessed duration.
+    t += DT_MS;
+    state = longClosureStep(state, t, 5.9, shutLine);
+    expect(state.lastLongClosureDurationMs).not.toBeNull();
+  });
+
+  it("brackets the line with measured probes, not only the constant", () => {
+    // Review found that any fraction between roughly 0.33 and 0.51
+    // survived the behavioral tests, pinned only by restating the
+    // constant. These two probes bracket it with measurements: the
+    // top of the measured shut range (2.5 mm, 34.7 percent of 7.2)
+    // must close, the bottom of the measured droop band (3.3 mm,
+    // 45.8 percent) must stay open.
+    const shutLine = longClosureThresholdMm(7.2);
+    const eyeAfter = (apertureMm: number): string => {
+      let state = initialLongClosureState;
+      state = longClosureStep(state, 0, 5.9, shutLine);
+      state = longClosureStep(state, 100, apertureMm, shutLine);
+      return state.eye;
+    };
+    expect(eyeAfter(2.5)).toBe("closed");
+    expect(eyeAfter(3.3)).toBe("open");
+  });
+
+  it("runs the aperture boundary trio at the shut line itself", () => {
+    // Strictly below the line closes, exactly at it stays open, the
+    // blink reducer's own convention carried over.
+    const shutLine = longClosureThresholdMm(7.2);
+    const eyeAfter = (apertureMm: number): string => {
+      let state = initialLongClosureState;
+      state = longClosureStep(state, 0, 5.9, shutLine);
+      state = longClosureStep(state, 100, apertureMm, shutLine);
+      return state.eye;
+    };
+    expect(eyeAfter(shutLine - 0.001)).toBe("closed");
+    expect(eyeAfter(shutLine)).toBe("open");
+    expect(eyeAfter(shutLine + 0.001)).toBe("open");
   });
 });
 

@@ -69,6 +69,7 @@ import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
   initialLongClosureState,
   longClosureStep,
+  longClosureThresholdMm,
   ongoingClosureMs,
 } from "./core/longClosure";
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
@@ -298,6 +299,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     gazeSamples = [];
     perclosState = emptyPerclos();
     longClosureState = initialLongClosureState;
+    frozenShutLineMm = null;
     alertState = initialAlertState;
     blinkLogList.replaceChildren();
     captureState = null;
@@ -715,6 +717,13 @@ let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
 longClosureLabel.hidden = true;
 let longClosureState = initialLongClosureState;
+// The shut line freezes at the FIRST ready baseline. The 4.2 ratchet
+// keeps serving the blink line, where a rising baseline means better
+// sensitivity, but the shut line's anchors are absolute lid geometry:
+// adversarial review showed two seconds of widened eyes would ratchet
+// a live shut line above the measured reading droop and bring the
+// false alarms back. Frozen, it cannot. Camera restart re-learns.
+let frozenShutLineMm: number | null = null;
 
 // The alert banner: hidden until a firing, then visible for the
 // display window. The frame loop owns its visibility while the
@@ -1187,16 +1196,27 @@ startFrameLoop((nowMs) => {
         blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
       }
 
-      // The long closure detector rides the exact inputs blinkStep
-      // just consumed: same trusted aperture, same personal
-      // threshold, so the two detectors watch one closure and can
-      // never disagree about when it began.
+      // Roadmap amendment 5: the long closure detector no longer
+      // rides the blink line. Eyes SHUT is the deeper 40 percent
+      // line, measured between the owner's shut floor and their
+      // relaxed reading droop; a lid relaxed between the two lines
+      // is a partial droop, deliberately neither blink nor long
+      // closure. No baseline yet means no personal shut line yet,
+      // so the frame is untrusted for this detector, the same rule
+      // PERCLOS keeps. The zero threshold below is never read: a
+      // null aperture returns before any comparison.
+      if (frozenShutLineMm === null && baselineState.kind === "ready") {
+        frozenShutLineMm = longClosureThresholdMm(baselineState.baselineMm);
+      }
       const longCountBefore = longClosureState.count;
+      // The zero below is never read: a null aperture returns before
+      // any comparison, and the aperture is null whenever the shut
+      // line is not yet frozen.
       longClosureState = longClosureStep(
         longClosureState,
         nowMs,
-        blinkMeasurable ? stabilityMm : null,
-        personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
+        frozenShutLineMm !== null && blinkMeasurable ? stabilityMm : null,
+        frozenShutLineMm ?? 0,
       );
 
       // Each new long closure event asks the alert governor whether
@@ -1215,23 +1235,30 @@ startFrameLoop((nowMs) => {
         alertBanner.textContent = `Alert: long eye closure (alerts: ${String(alertState.firedCount)}, suppressed: ${String(alertState.suppressedCount)})`;
       }
       alertBanner.hidden = !alertVisible(alertState, nowMs);
-      const ongoingMs = ongoingClosureMs(longClosureState, nowMs);
-      const longClosureParts = [
-        `Long closures: ${String(longClosureState.count)}`,
-      ];
-      if (ongoingMs !== null) {
-        longClosureParts.push(
-          `eyes closed ${(ongoingMs / 1000).toFixed(1)} s and counting`,
-        );
-      } else if (longClosureState.lastLongClosureDurationMs !== null) {
-        longClosureParts.push(
-          `last: ${longClosureState.lastLongClosureDurationMs.toFixed(0)} ms`,
-        );
+      if (frozenShutLineMm === null) {
+        // An asserted zero built on frames the detector never saw
+        // would break the null-never-zero rule: say why instead.
+        longClosureLabel.textContent =
+          "Long closures: waiting for the baseline";
+      } else {
+        const ongoingMs = ongoingClosureMs(longClosureState, nowMs);
+        const longClosureParts = [
+          `Long closures: ${String(longClosureState.count)}`,
+        ];
+        if (ongoingMs !== null) {
+          longClosureParts.push(
+            `eyes closed ${(ongoingMs / 1000).toFixed(1)} s and counting`,
+          );
+        } else if (longClosureState.lastLongClosureDurationMs !== null) {
+          longClosureParts.push(
+            `last: ${longClosureState.lastLongClosureDurationMs.toFixed(0)} ms`,
+          );
+        }
+        longClosureLabel.textContent =
+          longClosureParts.length > 1
+            ? `${longClosureParts[0] ?? ""} (${longClosureParts.slice(1).join(", ")})`
+            : (longClosureParts[0] ?? "");
       }
-      longClosureLabel.textContent =
-        longClosureParts.length > 1
-          ? `${longClosureParts[0] ?? ""} (${longClosureParts.slice(1).join(", ")})`
-          : (longClosureParts[0] ?? "");
 
       // PERCLOS rides the same trusted aperture feed as the blink
       // reducer: below the fps gate the frame is untrusted, before
