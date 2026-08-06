@@ -11,11 +11,32 @@ import { MAX_BLINK_DURATION_MS } from "./constants";
 // late, on the reopen, using the same reopen-measured span blink.ts
 // uses to refuse it.
 //
-// The line is the blink maximum itself, aliased not copied: at or
-// below it a closure is a blink (blink.ts counts it), strictly
-// beyond it a long closure (this counts it). Every closure lands in
-// exactly one category, and no drifting constant can break that.
+// The TIME line is the blink maximum itself, aliased not copied: at
+// or below it a closure is a blink (blink.ts counts it), strictly
+// beyond it a long closure (this counts it). For any one aperture
+// line, every closure lands in exactly one time category, and no
+// drifting constant can break that.
 export const LONG_CLOSURE_THRESHOLD_MS = MAX_BLINK_DURATION_MS;
+
+// The APERTURE line, roadmap amendment 5: eyes SHUT is not lids low.
+// The blink detector keeps its half-of-baseline line, because a
+// blink is a rapid partial descent. But this detector asks whether
+// the eyes are actually shut, and a real face proved the two lines
+// must differ: naturally low eyelids reading at the bottom of a
+// screen sat below the blink line for five seconds while fully
+// awake. The literature's P80 convention (20 percent of baseline)
+// assumes an instrument that reads shut eyes as nearly zero; this
+// instrument has a measured floor, fully shut eyes still report
+// about a third of baseline. So the shut line sits at 40 percent:
+// the measured midpoint between the owner's shut floor (about 33
+// percent) and their relaxed reading droop (45 to 50 percent). The
+// band between the blink line and this line is a partial droop,
+// deliberately neither a blink nor a long closure.
+export const EYES_SHUT_FRACTION = 0.4;
+
+export function longClosureThresholdMm(baselineMm: number): number {
+  return EYES_SHUT_FRACTION * baselineMm;
+}
 
 export type LongClosureState = {
   eye: "open" | "closed" | "unknown";

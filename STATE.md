@@ -1,7 +1,7 @@
-Last increment: 6.3, merged via pull request #111
-Last commit: squash merge of pull request #111 on 2026-08-05
+Last increment: amendment 5 fix, long closure shut line, merged via pull request #116
+Last commit: squash merge of pull request #116 on 2026-08-06
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing, between increments
-Next increment: 6.4, feature vector assembled into one typed FeatureRecord per second
-Known issues: #15 (actions majors), #47 (UI polish), #90 (calibrated off screen boundary), #92 (stale README status), #107 (backwards timestamps in reducers), #108 (log.md backfill 5.6 to 6.1)
-Test count: 280 unit tests passing, plus 1 end to end test
+Next increment: blink hysteresis (#114), then PERCLOS line fix (#113), then back to 6.4
+Known issues: #15 (actions majors), #47 (UI polish), #90 (calibrated off screen boundary), #92 (stale README status), #107 (backwards timestamps), #108 (log.md backfill), #113 (PERCLOS unreachable line), #114 (blink hysteresis), #115 (depth-qualified closure episodes)
+Test count: 284 unit tests passing, plus 1 end to end test
