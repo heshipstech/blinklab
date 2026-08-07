@@ -69,6 +69,7 @@ import {
   type FeatureRecord,
 } from "./core/featureRecord";
 import { scoreRecords } from "./core/score";
+import { serializeRecords } from "./core/csv";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -268,6 +269,7 @@ function render(): void {
     alertBanner.hidden = true;
   }
   featureLabel.hidden = state.kind !== "running";
+  exportButton.hidden = state.kind !== "running";
   scoreLabel.hidden = state.kind !== "running";
   panelSummaryLabel.hidden = state.kind !== "running";
   panelList.hidden = state.kind !== "running";
@@ -313,6 +315,8 @@ async function beginCamera(deviceId?: string): Promise<void> {
     alertState = initialAlertState;
     featureRecords = [];
     lastRecordAtMs = null;
+    exportButton.disabled = true;
+    sessionStartedAtEpochMs = null;
     featureLabel.textContent = "";
     scoreLabel.textContent = "";
     panelSummaryLabel.textContent = "";
@@ -768,6 +772,24 @@ let alertState = initialAlertState;
 // for the 6.5 score and the 6.7 export. A bounded hour of rows.
 const featureLabel = document.createElement("p");
 featureLabel.hidden = true;
+// The 6.7 export: one session becomes one file, on this device only.
+const exportButton = document.createElement("button");
+exportButton.textContent = "Export CSV";
+exportButton.hidden = true;
+exportButton.disabled = true;
+exportButton.addEventListener("click", () => {
+  const csv = serializeRecords(featureRecords);
+  if (csv === null) {
+    return;
+  }
+  // Colons are not safe in filenames on every system, so the ISO
+  // stamp is punctuated with dashes: sorts by name, sorts by time.
+  const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("Z", "");
+  downloadTextFile(`blinklab-session-${stamp}.csv`, csv, "text/csv");
+});
 // The 6.5 demo score, one glanceable number with its audit trail
 // close behind (6.6). The disclaimer is part of the line, always.
 const scoreLabel = document.createElement("p");
@@ -781,6 +803,13 @@ panelList.setAttribute("aria-label", "Score contributions");
 panelList.hidden = true;
 let featureRecords: FeatureRecord[] = [];
 let lastRecordAtMs: number | null = null;
+// The frame clock is milliseconds since page load, which is right
+// for durations and useless for dating a session, so the wall clock
+// is captured once when recording begins. Taken from the buffer's
+// first row instead, the name would change on every export once the
+// 3600 row cap starts discarding, naming a session by a moment that
+// is no longer in it.
+let sessionStartedAtEpochMs: number | null = null;
 
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
@@ -1367,6 +1396,8 @@ startFrameLoop((nowMs) => {
         // the firing frame), and the cap drops the oldest row
         // silently, so both truths reach the label. Durations come
         // from timestamps, never from row counts.
+        sessionStartedAtEpochMs ??= Date.now();
+        exportButton.disabled = featureRecords.length === 0;
         featureLabel.textContent =
           featureRecords.length >= 3600
             ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
@@ -1521,6 +1552,7 @@ app.append(
   longClosureLabel,
   alertBanner,
   featureLabel,
+  exportButton,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
