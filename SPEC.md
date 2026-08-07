@@ -63,6 +63,21 @@ Every ramp floor is priced above this instrument's own documented normal range (
 
 The score refuses rather than guesses: null when the newest record saw no face, and null until PERCLOS has a value.
 
+## The CSV export contract
+
+Increment 6.7 writes a session to a file, which is where this project's data becomes someone else's input. The rules, so a reader in another language can trust it:
+
+- The column list is `CSV_COLUMNS` in core/csv.ts, exported and tested against the FeatureRecord field set, so a field cannot join the record without joining the file.
+- One header row, then one row per record, in that column order.
+- Encoding follows RFC 4180: `CRLF` line endings including after the last row, a value containing a comma, quote or line break is wrapped in quotes, and a quote inside a quoted value is escaped by doubling it.
+- **Null is an EMPTY field**, never the word "null" and never zero. A reader must treat an empty field as "not measured", which is the same rule the FeatureRecord contract states, carried across the border.
+- Booleans are the bare words `true` and `false`. Numbers are written at full JavaScript precision, unrounded.
+- An empty session exports nothing at all rather than a lone header, because a header-only file claims a recording happened.
+- **`timestampMs` is milliseconds since the page loaded, not since the epoch.** It is a monotonic clock, correct for durations and for ordering rows WITHIN one file, and meaningless across files: two sessions both start near zero. The session's wall-clock start is carried in the filename as an ISO stamp instead, so files date and sort correctly on disk. A future increment may add an absolute column; until then a reader must not compare timestamps between files.
+- Non-finite numbers (NaN, the infinities) are written as empty fields. The FeatureRecord schema refuses them upstream, so one reaching the serialiser means something broke; writing the word "NaN" would be worse than useless, since pandas reads it as a missing value and a broken computation would become indistinguishable from an honest "not measured".
+
+The file is written to the user's own device through the browser's download path. There is no server, and the export does not change the project's privacy stance.
+
 ## Conventions
 
 - Coordinates: MediaPipe normalised image coordinates. Origin top left, x grows right, y grows down, values 0 to 1. Convert to pixels only at the drawing edge.
