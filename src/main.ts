@@ -68,6 +68,7 @@ import {
   assembleFeatureRecord,
   type FeatureRecord,
 } from "./core/featureRecord";
+import { scoreRecords } from "./core/score";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
@@ -266,6 +267,7 @@ function render(): void {
     alertBanner.hidden = true;
   }
   featureLabel.hidden = state.kind !== "running";
+  scoreLabel.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -309,6 +311,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
     featureRecords = [];
     lastRecordAtMs = null;
     featureLabel.textContent = "";
+    scoreLabel.textContent = "";
+    // Review found this missing: without it the previous session's
+    // last blink duration still charged the new session's score,
+    // possibly a different person's blink entirely.
+    blinkState = initialBlinkState;
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -756,6 +763,11 @@ let alertState = initialAlertState;
 // for the 6.5 score and the 6.7 export. A bounded hour of rows.
 const featureLabel = document.createElement("p");
 featureLabel.hidden = true;
+// The 6.5 demo score, one glanceable number with its audit trail
+// close behind (6.6). The disclaimer is part of the line, always.
+const scoreLabel = document.createElement("p");
+scoreLabel.hidden = true;
+scoreLabel.style.fontWeight = "bold";
 let featureRecords: FeatureRecord[] = [];
 let lastRecordAtMs: number | null = null;
 
@@ -1348,6 +1360,19 @@ startFrameLoop((nowMs) => {
           featureRecords.length >= 3600
             ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
             : `Feature records: ${String(featureRecords.length)} this session (about one per second)`;
+
+        // The score reads the last minute of rows, selected by
+        // TIMESTAMP inside core: a row-count window would bridge a
+        // paused tab's gap and charge closures from ten minutes ago.
+        const breakdown = scoreRecords(featureRecords);
+        const noFaceNow =
+          featureRecords[featureRecords.length - 1]?.faceDetected;
+        scoreLabel.textContent =
+          breakdown !== null
+            ? `Alertness score: ${String(breakdown.score)} / 100 (demo, not a safety or medical device)`
+            : noFaceNow === false
+              ? "Alertness score: no face in frame (demo, not a safety or medical device)"
+              : "Alertness score: measuring... (demo, not a safety or medical device)";
       }
 
       stabilitySamples = pushBounded(
@@ -1444,6 +1469,7 @@ app.append(
   resolutionLabel,
   modelStatus,
   status,
+  scoreLabel,
   fpsLabel,
   inferenceLabel,
   earLabel,
