@@ -164,6 +164,34 @@ describe("serializeRecords", () => {
     expect(parsed[1]).toEqual(EMPTY_ROW);
   });
 
+  it("writes metadata comment lines above the header", () => {
+    const csv = serializeRecords(
+      [FULL],
+      [
+        "# kss_before: 3 (Alert)",
+        "# kss_after: 7 (Sleepy, but no effort to keep awake)",
+      ],
+    );
+    const lines = csv?.split("\r\n") ?? [];
+    expect(lines[0]).toBe("# kss_before: 3 (Alert)");
+    expect(lines[1]).toBe(
+      "# kss_after: 7 (Sleepy, but no effort to keep awake)",
+    );
+    expect(lines[2]).toBe(csvHeader());
+    expect(lines[3]?.startsWith("61000,")).toBe(true);
+  });
+
+  it("writes no metadata block when none is given", () => {
+    const csv = serializeRecords([FULL]);
+    expect(csv?.startsWith(csvHeader())).toBe(true);
+  });
+
+  it("still refuses an empty session even with metadata to write", () => {
+    // Metadata without records describes a recording that did not
+    // happen, which is the header-only file wearing a hat.
+    expect(serializeRecords([], ["# kss_before: 3 (Alert)"])).toBeNull();
+  });
+
   it("survives a record carrying a hostile string in a future column", () => {
     // The record type has no string fields today, but the serialiser
     // must not become the weak point when one arrives.

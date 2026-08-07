@@ -84,11 +84,16 @@ export function csvHeader(): string {
 // happened, which is the export's version of a fake zero.
 export function serializeRecords(
   records: readonly FeatureRecord[],
+  // Session-level facts (6.8's KSS answers) as `# key: value` lines
+  // above the header. Per-session data must not become a per-second
+  // column repeated three thousand times, and a comment block is
+  // what both pandas (comment="#") and a spreadsheet can survive.
+  metadataRows: readonly string[] = [],
 ): string | null {
   if (records.length === 0) {
     return null;
   }
-  const lines = [csvHeader()];
+  const lines = [...metadataRows, csvHeader()];
   for (const record of records) {
     lines.push(CSV_COLUMNS.map((column) => csvCell(record[column])).join(","));
   }

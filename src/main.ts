@@ -70,6 +70,7 @@ import {
 } from "./core/featureRecord";
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
+import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -270,6 +271,9 @@ function render(): void {
   }
   featureLabel.hidden = state.kind !== "running";
   exportButton.hidden = state.kind !== "running";
+  if (state.kind !== "running") {
+    kssPanel.hidden = true;
+  }
   scoreLabel.hidden = state.kind !== "running";
   panelSummaryLabel.hidden = state.kind !== "running";
   panelList.hidden = state.kind !== "running";
@@ -317,6 +321,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
     lastRecordAtMs = null;
     exportButton.disabled = true;
     sessionStartedAtEpochMs = null;
+    kssBefore = null;
+    kssAfter = null;
+    askKss("Before you begin: how sleepy do you feel?", (rating) => {
+      kssBefore = rating;
+    });
     featureLabel.textContent = "";
     scoreLabel.textContent = "";
     panelSummaryLabel.textContent = "";
@@ -773,12 +782,53 @@ let alertState = initialAlertState;
 const featureLabel = document.createElement("p");
 featureLabel.hidden = true;
 // The 6.7 export: one session becomes one file, on this device only.
-const exportButton = document.createElement("button");
-exportButton.textContent = "Export CSV";
-exportButton.hidden = true;
-exportButton.disabled = true;
-exportButton.addEventListener("click", () => {
-  const csv = serializeRecords(featureRecords);
+// The 6.8 self report: the project's first LABEL, asked at the start
+// of a session and again at export. Skipping is a real answer and is
+// recorded as one; a refusal must never be rounded to a middle
+// value, which would put a fabricated label in a training set.
+let kssBefore: KssRating | null = null;
+let kssAfter: KssRating | null = null;
+const kssPanel = document.createElement("div");
+kssPanel.hidden = true;
+const kssPrompt = document.createElement("p");
+const kssButtons = document.createElement("div");
+kssPanel.append(kssPrompt, kssButtons);
+
+function askKss(
+  question: string,
+  onAnswer: (r: KssRating | null) => void,
+): void {
+  kssPrompt.textContent = question;
+  const choose = (rating: KssRating | null): void => {
+    kssPanel.hidden = true;
+    onAnswer(rating);
+  };
+  kssButtons.replaceChildren(
+    ...KSS_SCALE.map((step) => {
+      const button = document.createElement("button");
+      button.textContent = `${String(step.rating)} ${step.label}`;
+      button.style.display = "block";
+      button.addEventListener("click", () => {
+        choose(step.rating);
+      });
+      return button;
+    }),
+  );
+  const skip = document.createElement("button");
+  skip.textContent = "Skip";
+  skip.style.display = "block";
+  skip.addEventListener("click", () => {
+    choose(null);
+  });
+  kssButtons.append(skip);
+  kssPanel.hidden = false;
+}
+
+function exportSession(): void {
+  const csv = serializeRecords(
+    featureRecords,
+    kssMetadataRows(kssBefore, kssAfter),
+  );
   if (csv === null) {
     return;
   }
@@ -789,6 +839,24 @@ exportButton.addEventListener("click", () => {
     .replace(/[:.]/g, "-")
     .replace("Z", "");
   downloadTextFile(`blinklab-session-${stamp}.csv`, csv, "text/csv");
+}
+
+const exportButton = document.createElement("button");
+exportButton.textContent = "Export CSV";
+exportButton.hidden = true;
+exportButton.disabled = true;
+exportButton.addEventListener("click", () => {
+  // The after answer is asked once, on the first export, so the
+  // question arrives when the session is actually over rather than
+  // interrupting it.
+  if (kssAfter === null) {
+    askKss("How sleepy do you feel now?", (rating) => {
+      kssAfter = rating;
+      exportSession();
+    });
+    return;
+  }
+  exportSession();
 });
 // The 6.5 demo score, one glanceable number with its audit trail
 // close behind (6.6). The disclaimer is part of the line, always.
@@ -1553,6 +1621,7 @@ app.append(
   alertBanner,
   featureLabel,
   exportButton,
+  kssPanel,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
