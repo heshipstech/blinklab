@@ -71,6 +71,7 @@ import {
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
+import { demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -137,6 +138,22 @@ if (app === null) {
 
 const title = document.createElement("h1");
 title.textContent = "blinklab";
+
+// The permanent notice, 6.9. Present before the camera starts, never
+// dismissible, and above everything so it cannot be scrolled past
+// unseen. The score line keeps its own parenthetical: a number and
+// its caveat should travel together.
+const demoNotice = document.createElement("p");
+demoNotice.dataset.testid = "demo-notice";
+demoNotice.textContent = demoNoticeText();
+Object.assign(demoNotice.style, {
+  border: "2px solid #b26500",
+  background: "#fff3e0",
+  color: "#1a1a1a",
+  padding: "10px 12px",
+  margin: "0 0 12px 0",
+  fontWeight: "bold",
+});
 
 const startButton = document.createElement("button");
 startButton.textContent = "Start camera";
@@ -1588,6 +1605,7 @@ startFrameLoop((nowMs) => {
 });
 
 app.append(
+  demoNotice,
   title,
   startButton,
   picker,

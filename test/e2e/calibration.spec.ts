@@ -45,3 +45,20 @@ test("the calibration flow opens on dot 1 of 9 and cancels cleanly", async ({
   );
   expect(storedProfile).toBeNull();
 });
+
+test("the demo notice is visible on load and cannot be dismissed", async ({
+  page,
+}) => {
+  // The ladder's check for 6.9. It must be there BEFORE any camera
+  // permission, so a visitor who never starts the camera still sees
+  // it, and no interaction may remove it.
+  await page.goto("/blinklab/");
+  const notice = page.getByTestId("demo-notice");
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText("not a safety or medical device");
+  await expect(notice).toContainText("no data leaves your device");
+  // Click it, click the page, and confirm it survives.
+  await notice.click();
+  await page.locator("body").click();
+  await expect(notice).toBeVisible();
+});
