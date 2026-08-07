@@ -86,7 +86,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 6.3 Alert with debounce so it cannot fire repeatedly. Check: repeated triggers within the debounce window.
 - [x] 6.4 Feature vector assembled into one typed FeatureRecord per second. Check: schema test.
 - [x] 6.5 Explainable 0 to 100 demo score using a documented weighted heuristic. Check: contribution numbers sum to the score.
-- [ ] 6.6 Contribution panel showing the top three drivers of the score. Check: snapshot test.
+- [x] 6.6 Contribution panel showing the top three drivers of the score. Check: snapshot test.
 - [ ] 6.7 Session recorder, export CSV (comma separated values) to a local download. Check: serialiser tests including comma and header edge cases.
 - [ ] 6.8 KSS (Karolinska Sleepiness Scale, 1 to 9) self report before and after a session, written into the CSV. Check: metadata writer test.
 - [ ] 6.9 Prominent, permanent "demo, not a safety or medical device" notice in UI and README. Check: Playwright assertion.
