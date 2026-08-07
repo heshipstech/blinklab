@@ -299,7 +299,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     gazeSamples = [];
     perclosState = emptyPerclos();
     longClosureState = initialLongClosureState;
-    frozenShutLineMm = null;
+    frozenShutBaselineMm = null;
     alertState = initialAlertState;
     blinkLogList.replaceChildren();
     captureState = null;
@@ -717,13 +717,18 @@ let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
 longClosureLabel.hidden = true;
 let longClosureState = initialLongClosureState;
-// The shut line freezes at the FIRST ready baseline. The 4.2 ratchet
+// The shut-line BASELINE freezes at the FIRST ready baseline, and
+// both shut-line consumers, the long closure detector and PERCLOS,
+// derive their line from this one frozen number. The 4.2 ratchet
 // keeps serving the blink line, where a rising baseline means better
 // sensitivity, but the shut line's anchors are absolute lid geometry:
 // adversarial review showed two seconds of widened eyes would ratchet
-// a live shut line above the measured reading droop and bring the
-// false alarms back. Frozen, it cannot. Camera restart re-learns.
-let frozenShutLineMm: number | null = null;
+// a live shut line above the measured reading droop, bringing false
+// alarms back for long closures and, at the 0.4 line, saturating
+// PERCLOS to a false 100 percent during ordinary reading. Frozen and
+// shared, neither can happen and the two detectors cannot drift
+// apart. Camera restart re-learns.
+let frozenShutBaselineMm: number | null = null;
 
 // The alert banner: hidden until a firing, then visible for the
 // display window. The frame loop owns its visibility while the
@@ -1205,8 +1210,8 @@ startFrameLoop((nowMs) => {
       // so the frame is untrusted for this detector, the same rule
       // PERCLOS keeps. The zero threshold below is never read: a
       // null aperture returns before any comparison.
-      if (frozenShutLineMm === null && baselineState.kind === "ready") {
-        frozenShutLineMm = longClosureThresholdMm(baselineState.baselineMm);
+      if (frozenShutBaselineMm === null && baselineState.kind === "ready") {
+        frozenShutBaselineMm = baselineState.baselineMm;
       }
       const longCountBefore = longClosureState.count;
       // The zero below is never read: a null aperture returns before
@@ -1215,8 +1220,10 @@ startFrameLoop((nowMs) => {
       longClosureState = longClosureStep(
         longClosureState,
         nowMs,
-        frozenShutLineMm !== null && blinkMeasurable ? stabilityMm : null,
-        frozenShutLineMm ?? 0,
+        frozenShutBaselineMm !== null && blinkMeasurable ? stabilityMm : null,
+        frozenShutBaselineMm !== null
+          ? longClosureThresholdMm(frozenShutBaselineMm)
+          : 0,
       );
 
       // Each new long closure event asks the alert governor whether
@@ -1235,7 +1242,7 @@ startFrameLoop((nowMs) => {
         alertBanner.textContent = `Alert: long eye closure (alerts: ${String(alertState.firedCount)}, suppressed: ${String(alertState.suppressedCount)})`;
       }
       alertBanner.hidden = !alertVisible(alertState, nowMs);
-      if (frozenShutLineMm === null) {
+      if (frozenShutBaselineMm === null) {
         // An asserted zero built on frames the detector never saw
         // would break the null-never-zero rule: say why instead.
         longClosureLabel.textContent =
@@ -1268,7 +1275,7 @@ startFrameLoop((nowMs) => {
         perclosState,
         nowMs,
         blinkMeasurable ? stabilityMm : null,
-        baselineState.kind === "ready" ? baselineState.baselineMm : null,
+        frozenShutBaselineMm,
       );
       const perclos = perclosValue(perclosState, nowMs);
       perclosLabel.textContent =

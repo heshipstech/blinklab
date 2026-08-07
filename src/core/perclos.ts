@@ -1,3 +1,5 @@
+import { EYES_SHUT_FRACTION } from "./longClosure";
+
 // PERCLOS, the percentage of eye closure: what share of the recent
 // past the eyes spent closed. Blink metrics count events, this
 // measures a duty cycle, and it is the most validated drowsiness
@@ -6,11 +8,23 @@
 
 export const PERCLOS_WINDOW_MS = 60000;
 
-// The classic P80 convention: an eye at or below 20 percent of its
-// own open baseline counts as closed. Exactly at the line counts,
-// the house boundary rule. Relative to the PERSONAL baseline from
-// 4.2, because absolute apertures differ between faces.
-export const PERCLOS_CLOSED_FRACTION = 0.2;
+// The closed line, amendment 6. This began as the literature's P80
+// convention, 20 percent of baseline, and measurement killed it: the
+// instrument reads fully shut eyes as about a third of baseline
+// (never near zero, the model stops short of a zero aperture), so
+// the 20 percent line was unreachable and PERCLOS read 0.0 percent
+// through a witnessed 12.9 second closure. The line is now the same
+// measured shut line the long closure detector uses, aliased so the
+// two watchers of "shut" can never drift apart. This is an
+// INSTRUMENT-ADJUSTED convention, no longer literal P80, and the
+// docs say so plainly. Boundary: strictly below the line closes,
+// exactly at it stays open, the SAME convention as the blink and
+// long closure reducers, aligned by review so the two watchers of
+// the shared line agree at the line itself. Relative to the
+// PERSONAL baseline from 4.2, and in the wiring both shut-line
+// consumers receive the same frozen first-ready baseline, so their
+// millimetre lines are identical for a whole session.
+export const PERCLOS_CLOSED_FRACTION = EYES_SHUT_FRACTION;
 
 // The 4.4 observed-time discipline: no number until the window holds
 // enough reality to summarize. Fifteen seconds of valid span.
@@ -45,7 +59,7 @@ export function perclosStep(
   if (apertureMm === null || baselineMm === null) {
     return { samples: kept };
   }
-  const closed = apertureMm <= PERCLOS_CLOSED_FRACTION * baselineMm;
+  const closed = apertureMm < PERCLOS_CLOSED_FRACTION * baselineMm;
   return { samples: [...kept, { timestampMs: nowMs, closed }] };
 }
 
