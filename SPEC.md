@@ -8,7 +8,7 @@ camera frame → landmarker → landmark array → core functions → feature re
 
 - `src/io` owns the camera, the canvas and model loading. It is the impure edge.
 - `src/core` owns all measurement logic. Pure functions only: no DOM (Document Object Model, the browser page), no camera, no browser globals.
-- `src/ui` renders numbers and controls. It never computes a measurement.
+- Rendering lives in `src/main.ts`. The `src/ui` folder this document originally planned was never created: the page is small enough that one wiring file has stayed readable, and every string it renders that carries meaning is produced by a tested pure function in `core` (blink log lines at 4.8, score panel lines at 6.6). The rule that survives is the one that matters: the renderer never computes a measurement.
 - `core` never imports from `io` or `ui`. This rule is enforced by lint from increment 0.3.
 
 ## The FeatureRecord contract

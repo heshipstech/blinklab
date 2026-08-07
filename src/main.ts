@@ -69,6 +69,7 @@ import {
   type FeatureRecord,
 } from "./core/featureRecord";
 import { scoreRecords } from "./core/score";
+import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
@@ -268,6 +269,8 @@ function render(): void {
   }
   featureLabel.hidden = state.kind !== "running";
   scoreLabel.hidden = state.kind !== "running";
+  panelSummaryLabel.hidden = state.kind !== "running";
+  panelList.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -312,6 +315,8 @@ async function beginCamera(deviceId?: string): Promise<void> {
     lastRecordAtMs = null;
     featureLabel.textContent = "";
     scoreLabel.textContent = "";
+    panelSummaryLabel.textContent = "";
+    panelList.replaceChildren();
     // Review found this missing: without it the previous session's
     // last blink duration still charged the new session's score,
     // possibly a different person's blink entirely.
@@ -768,6 +773,12 @@ featureLabel.hidden = true;
 const scoreLabel = document.createElement("p");
 scoreLabel.hidden = true;
 scoreLabel.style.fontWeight = "bold";
+// The 6.6 contribution panel: the score's own arithmetic, shown.
+const panelSummaryLabel = document.createElement("p");
+panelSummaryLabel.hidden = true;
+const panelList = document.createElement("ul");
+panelList.setAttribute("aria-label", "Score contributions");
+panelList.hidden = true;
 let featureRecords: FeatureRecord[] = [];
 let lastRecordAtMs: number | null = null;
 
@@ -1373,6 +1384,23 @@ startFrameLoop((nowMs) => {
             : noFaceNow === false
               ? "Alertness score: no face in frame (demo, not a safety or medical device)"
               : "Alertness score: measuring... (demo, not a safety or medical device)";
+
+        // The panel speaks only when a score exists: with no score
+        // there is no arithmetic to explain, and an empty list under
+        // a refusal would read as a broken panel.
+        if (breakdown === null) {
+          panelSummaryLabel.textContent = "";
+          panelList.replaceChildren();
+        } else {
+          panelSummaryLabel.textContent = panelSummary(breakdown);
+          panelList.replaceChildren(
+            ...topDrivers(breakdown).map((driver) => {
+              const item = document.createElement("li");
+              item.textContent = formatDriver(driver);
+              return item;
+            }),
+          );
+        }
       }
 
       stabilitySamples = pushBounded(
@@ -1470,6 +1498,8 @@ app.append(
   modelStatus,
   status,
   scoreLabel,
+  panelSummaryLabel,
+  panelList,
   fpsLabel,
   inferenceLabel,
   earLabel,
