@@ -40,6 +40,29 @@ export type FeatureRecord = {
 
 Null always means a gate refused, never zero. A row with `faceDetected: false` carries nulls: measured absence. Durations are computed from `timestampMs` spans, never from row counts, because the cadence is about one row per second, not exactly.
 
+## The ScoreBreakdown contract
+
+The demo score (increment 6.5) is the second contract everything downstream agrees on. It is derived from FeatureRecords, never stored, and its defining property is an identity a person can check by hand:
+
+```ts
+export type Contribution = {
+  name: string;
+  points: number; // whole points, never fractional
+  available: boolean; // false: signal missing, contributes 0, says so
+};
+
+export type ScoreBreakdown = {
+  score: number; // 100 - sum(contributions.points), exactly
+  contributions: Contribution[];
+};
+```
+
+`score = 100 - sum(points)` holds with no clamping, because the four penalty caps sum to exactly 100 and every contribution is an integer. Any future penalty must take its points from the existing caps, never add to the total, or the identity breaks and 6.6's panel starts lying.
+
+Every ramp floor is priced above this instrument's own documented normal range (test/MANUAL.md items 24, 26 and 40), not from the literature's numbers, because this instrument reads differently from the ones the literature used. A resting person scores 100.
+
+The score refuses rather than guesses: null when the newest record saw no face, and null until PERCLOS has a value.
+
 ## Conventions
 
 - Coordinates: MediaPipe normalised image coordinates. Origin top left, x grows right, y grows down, values 0 to 1. Convert to pixels only at the drawing edge.
