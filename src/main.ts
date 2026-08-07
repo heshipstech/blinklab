@@ -63,7 +63,11 @@ import {
   MIN_FIXATION_DURATION_MS,
   type GazeSample,
 } from "./core/fixation";
-import { fixationStats } from "./core/fixationStats";
+import { fixationStats, type FixationStats } from "./core/fixationStats";
+import {
+  assembleFeatureRecord,
+  type FeatureRecord,
+} from "./core/featureRecord";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
@@ -261,6 +265,7 @@ function render(): void {
   if (state.kind !== "running") {
     alertBanner.hidden = true;
   }
+  featureLabel.hidden = state.kind !== "running";
   blinkLogList.hidden = state.kind !== "running";
   sparkCanvas.hidden = state.kind !== "running";
   gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
@@ -301,6 +306,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     longClosureState = initialLongClosureState;
     frozenShutBaselineMm = null;
     alertState = initialAlertState;
+    featureRecords = [];
+    lastRecordAtMs = null;
+    featureLabel.textContent = "";
     blinkLogList.replaceChildren();
     captureState = null;
     calibrationRequested = false;
@@ -744,6 +752,13 @@ Object.assign(alertBanner.style, {
 });
 let alertState = initialAlertState;
 
+// The 6.4 feature vector: one typed row per second, the raw material
+// for the 6.5 score and the 6.7 export. A bounded hour of rows.
+const featureLabel = document.createElement("p");
+featureLabel.hidden = true;
+let featureRecords: FeatureRecord[] = [];
+let lastRecordAtMs: number | null = null;
+
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
 blinkLogList.setAttribute("aria-label", "Blink events");
@@ -849,17 +864,25 @@ startFrameLoop((nowMs) => {
       }
 
       let meanEar: number | null = null;
+      let frameFixationStats: FixationStats | null = null;
+      let frameFixating: boolean | null = null;
+      let frameOnScreen: boolean | null = null;
       let stabilityPx: number | null = null;
       let stabilityMm: number | null = null;
       let frameMeanOffset: IrisOffset | null = null;
       const face = result.faceLandmarks[0];
+      // A wrong landmark count refuses the face the same way a lost
+      // face does: the frame flows on and the second's record shows
+      // honest nulls. Review found the old early return here made
+      // wrong-count seconds vanish from the record stream entirely,
+      // two different meanings of "untrusted" in one pipeline.
+      let faceTrusted = false;
       if (face !== undefined) {
         const validation = validateLandmarkCount(face.length);
         modelStatus.textContent = landmarkValidationMessage(validation);
-        if (validation.kind !== "valid") {
-          return;
-        }
-
+        faceTrusted = validation.kind === "valid";
+      }
+      if (face !== undefined && faceTrusted) {
         recorder?.captureFrame(nowMs, face);
 
         const matrixData = result.facialTransformationMatrixes[0]?.data;
@@ -947,6 +970,7 @@ startFrameLoop((nowMs) => {
 
           const meanOffset = meanIrisOffset(rightOffset, leftOffset);
           frameMeanOffset = meanOffset;
+          frameOnScreen = meanOffset === null ? null : isOnScreen(meanOffset);
           quadrantLabel.textContent = lookingTowardMessage(meanOffset);
         } else {
           // The gate refused: numbers pause, the gap is honest, the
@@ -1060,6 +1084,9 @@ startFrameLoop((nowMs) => {
         // The statistics include the still-growing fixation at its
         // length so far: a panel that waits for the end lags the eye.
         const stats = fixationStats(fixations);
+        frameFixationStats = stats;
+        frameFixating =
+          lastFixation !== undefined && lastFixation.endMs === nowMs;
         fixationStatsLabel.textContent =
           stats === null
             ? "Fixations in the last 10 s: none yet"
@@ -1283,6 +1310,46 @@ startFrameLoop((nowMs) => {
           ? "PERCLOS (eyes closed share, last 60 s): measuring..."
           : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`;
 
+      // One typed row per second. The assembler's identity shape is
+      // the honesty here: every field must be supplied, so a metric
+      // cannot silently fall out of the record.
+      if (lastRecordAtMs === null || nowMs - lastRecordAtMs >= 1000) {
+        lastRecordAtMs = nowMs;
+        const lastShape = blinkEvents[blinkEvents.length - 1]?.shape ?? null;
+        featureRecords = pushBounded(
+          featureRecords,
+          assembleFeatureRecord({
+            timestampMs: nowMs,
+            faceDetected: face !== undefined && faceTrusted,
+            fps,
+            apertureMm: stabilityMm,
+            baselineMm:
+              baselineState.kind === "ready" ? baselineState.baselineMm : null,
+            shutBaselineMm: frozenShutBaselineMm,
+            blinkRatePerMin: gatedBlinkRatePerMin(fps, rateState, nowMs),
+            lastBlinkDurationMs: blinkState.lastBlinkDurationMs,
+            lastBlinkAmplitudeMm: lastShape?.amplitudeMm ?? null,
+            lastBlinkPeakVelocityMmPerS:
+              lastShape?.peakClosingVelocityMmPerS ?? null,
+            perclos,
+            longClosureCount: longClosureState.count,
+            fixationCount: frameFixationStats?.count ?? null,
+            fixationMedianMs: frameFixationStats?.medianMs ?? null,
+            fixating: frameFixating,
+            onScreen: frameOnScreen,
+          }),
+          3600,
+        );
+        // Cadence is ABOUT one row per second (the gate re-arms on
+        // the firing frame), and the cap drops the oldest row
+        // silently, so both truths reach the label. Durations come
+        // from timestamps, never from row counts.
+        featureLabel.textContent =
+          featureRecords.length >= 3600
+            ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
+            : `Feature records: ${String(featureRecords.length)} this session (about one per second)`;
+      }
+
       stabilitySamples = pushBounded(
         stabilitySamples,
         { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
@@ -1397,6 +1464,7 @@ app.append(
   perclosLabel,
   longClosureLabel,
   alertBanner,
+  featureLabel,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,

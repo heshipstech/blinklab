@@ -13,15 +13,32 @@ camera frame → landmarker → landmark array → core functions → feature re
 
 ## The FeatureRecord contract
 
-One record describes what the system knows at one moment. Everything downstream (UI, CSV export, scoring) agrees on this type. It grows one field per increment, never more.
+One record describes what the system knows at one moment, assembled once per second since increment 6.4. Everything downstream (UI, CSV export, scoring, the Python analysis) agrees on this type, and `isFeatureRecord` in core/featureRecord.ts is its runtime schema: NaN and infinities refused, negatives refused where meaningless, missing keys refused, extra keys tolerated for forward compatibility.
+
+The original seed here held three fields and planned to grow one per increment. The fields did each arrive through their increments; this document failed to record them as they landed, which increment 6.4's review caught. The full contract, now kept current:
 
 ```ts
 export type FeatureRecord = {
   timestampMs: number;
-  faceDetected: boolean;
-  fps: number;
+  faceDetected: boolean; // face present AND landmark count valid
+  fps: number | null;
+  apertureMm: number | null;
+  baselineMm: number | null; // the live 4.2 baseline (blink line)
+  shutBaselineMm: number | null; // frozen first-ready baseline (shut line)
+  blinkRatePerMin: number | null;
+  lastBlinkDurationMs: number | null;
+  lastBlinkAmplitudeMm: number | null;
+  lastBlinkPeakVelocityMmPerS: number | null;
+  perclos: number | null; // 0 to 1
+  longClosureCount: number;
+  fixationCount: number | null;
+  fixationMedianMs: number | null;
+  fixating: boolean | null;
+  onScreen: boolean | null;
 };
 ```
+
+Null always means a gate refused, never zero. A row with `faceDetected: false` carries nulls: measured absence. Durations are computed from `timestampMs` spans, never from row counts, because the cadence is about one row per second, not exactly.
 
 ## Conventions
 
