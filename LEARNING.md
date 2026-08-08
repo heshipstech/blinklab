@@ -633,3 +633,15 @@ One caveat recorded rather than glossed: Playwright's WebKit is not Safari. It i
 WebKit found the real bug and then cost three more rounds failing for reasons that had nothing to do with the code: no MediaRecorder on a Linux runner at all, and a stepped clip stopping at 27 frames of 60 through fixes to both the calibration and the duration handling. Playwright WebKit on Linux is not Safari on a Mac, and a test that fails for reasons unrelated to the change under review teaches people to ignore red, which is worse than not having the test.
 
 So it runs locally and not in continuous integration. That is a retreat and it is written down as one. The protection now lives in three places of decreasing strength: a local run covers both engines on a Mac, continuous integration covers Chromium, and Safari proper is a manual check, because Playwright WebKit is not Safari either. Naming which of those actually runs on every pull request, and which depends on somebody remembering, is more useful than pretending the coverage is uniform.
+
+## The blink log, and why a second file rather than a wider one
+
+The concept here is that a table's shape encodes a claim about what kind of thing it holds, and choosing the wrong shape loses data silently.
+
+Everything this project exports has been one row per second. That is right for a state: what the eyes were doing during that second is a fair question with one answer. A blink is not a state, it is an EVENT, and events do not fit. At a resting rate of fifteen a minute two blinks land in the same second often enough to matter, and a per-second table keeps one of them. Not with an error, not with a warning: it simply keeps the last one and reads as complete.
+
+So blinks get their own file, one row per blink. The thing that makes it worth building at all is the two frame columns. A human annotator marks blinks by frame number, because that is the only unit a video really has, and a comparison against their work therefore has to happen in frames. Milliseconds look like they would substitute and they do not: our clock and theirs agree only if the frame rate is exactly what both parties assumed, and this project has now been wrong about a clip's frame rate twice in one day.
+
+Two smaller decisions follow the rules the per-second file already set. The frame columns are empty for a live camera, because "frame 900" of a webcam session means nothing to anyone and writing a number there would invite somebody to compare it with something. And a blink whose shape could not be analysed writes empty amplitude, never zero, because zero amplitude is not a missing measurement, it is a claim that the eyelid did not move.
+
+Verified on a real recording rather than asserted: seven blinks across forty seconds, and each frame span agrees with its own duration column. A 133 millisecond blink spans frames 374 to 382, which is eight frames, which is exactly 133 milliseconds at sixty frames per second. That internal consistency is the check that the two numbers came from the same reality.
