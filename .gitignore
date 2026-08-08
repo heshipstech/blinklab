@@ -55,3 +55,7 @@ recordings/
 # command and contains nothing but a test pattern. See
 # test/fixtures/README.md.
 !test/fixtures/*.mp4
+
+# Throwaway probe scripts written while debugging in a browser.
+# They are not part of the project and must not reach a commit.
+*.cjs
