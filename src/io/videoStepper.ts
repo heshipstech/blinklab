@@ -40,36 +40,70 @@ export type StepSummary = {
 const SEEK_TIMEOUT_MS = 2000;
 
 // Sampled to learn the clip's frame interval before stepping begins.
-const CALIBRATION_FRAMES = 5;
+const CALIBRATION_FRAMES = 8;
 
-function nextFrame(
+// How long to let the frame callback answer after `seeked` has
+// already fired, before settling for the less precise reading.
+// Measured in WebKit: the frame callback answered a paused seek
+// between 17 and 66 ms after `seeked`. A 60 ms grace clipped the slow
+// end and let the imprecise reading win, which is how a 60 frame clip
+// came to be measured as 180.
+const FRAME_GRACE_MS = 200;
+
+// Seeking, and finding out where we landed.
+//
+// Two signals can tell us a seek finished, and browsers disagree about
+// which arrives. requestVideoFrameCallback carries the frame's true
+// media time, which is what we want. The `seeked` event carries no
+// frame information but is more reliably delivered on a paused video.
+// So both are awaited and the better answer is preferred, rather than
+// depending on one and hanging when it does not come.
+type SeekLanding = {
+  mediaTimeSeconds: number;
+  exact: boolean;
+};
+
+function seekTo(
   video: VideoWithFrameCallback,
+  timeSeconds: number,
   timeoutMs = SEEK_TIMEOUT_MS,
-): Promise<number | null> {
+): Promise<SeekLanding | null> {
   return new Promise((resolve) => {
     let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      resolve(null);
-    }, timeoutMs);
+    let seekedFired = false;
 
-    video.requestVideoFrameCallback((_nowMs, metadata) => {
+    function finish(landing: SeekLanding | null): void {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve(metadata.mediaTime);
-    });
-  });
-}
+      video.removeEventListener("seeked", onSeeked);
+      resolve(landing);
+    }
 
-async function seekTo(
-  video: VideoWithFrameCallback,
-  timeSeconds: number,
-): Promise<number | null> {
-  const pending = nextFrame(video);
-  video.currentTime = timeSeconds;
-  return pending;
+    // A little grace after `seeked` so the frame callback, which knows
+    // the true media time, gets a chance to win before falling back to
+    // currentTime, which only reports where we aimed.
+    function onSeeked(): void {
+      seekedFired = true;
+      setTimeout(() => {
+        finish({ mediaTimeSeconds: video.currentTime, exact: false });
+      }, FRAME_GRACE_MS);
+    }
+
+    const timer = setTimeout(() => {
+      finish(
+        seekedFired
+          ? { mediaTimeSeconds: video.currentTime, exact: false }
+          : null,
+      );
+    }, timeoutMs);
+
+    video.addEventListener("seeked", onSeeked);
+    video.requestVideoFrameCallback((_nowMs, metadata) => {
+      finish({ mediaTimeSeconds: metadata.mediaTime, exact: true });
+    });
+    video.currentTime = timeSeconds;
+  });
 }
 
 /**
@@ -86,8 +120,18 @@ async function measureFrameInterval(
   const times: number[] = [];
   let probe = 0;
   for (let attempt = 0; attempt < CALIBRATION_FRAMES * 2; attempt += 1) {
-    const mediaTime = await seekTo(video, probe);
-    if (mediaTime === null) break;
+    const landing = await seekTo(video, probe);
+    if (landing === null) break;
+    // Only a frame callback knows where we actually landed. An
+    // imprecise reading returns the time we ASKED for, so measuring
+    // gaps between those would measure this loop's own nudge size
+    // rather than the clip's frame interval. That is exactly how a 60
+    // frame clip was once measured as 180.
+    if (!landing.exact) {
+      probe += 0.004;
+      continue;
+    }
+    const mediaTime = landing.mediaTimeSeconds;
     const newest = times.at(-1);
     if (newest === undefined || mediaTime > newest) {
       times.push(mediaTime);
@@ -113,13 +157,22 @@ async function measureFrameInterval(
     gaps.push(later - earlier);
   }
   if (gaps.length === 0) return null;
-  gaps.sort((a, b) => a - b);
-  const median = gaps[Math.floor(gaps.length / 2)];
-  if (median === undefined) return null;
+  // The SMALLEST gap, not the median or the average, and the reasoning
+  // matters. Frame times are quantised, so every observed gap is a
+  // whole number of frame intervals. Probing can accidentally step over
+  // a frame and see two intervals; it can never see less than one. So
+  // the minimum is the interval and anything larger is a skip.
+  //
+  // The median was wrong and WebKit on a Linux runner proved it: half
+  // the probes skipped a frame there, the median came out about 2.2
+  // times too large, and a 60 frame clip was measured as 27.
+  const smallest = Math.min(...gaps);
   // A clip claiming frames a microsecond or ten seconds apart is not
   // something to build a seek schedule on.
-  if (!Number.isFinite(median) || median <= 0.001 || median > 1) return null;
-  return median;
+  if (!Number.isFinite(smallest) || smallest <= 0.001 || smallest > 1) {
+    return null;
+  }
+  return smallest;
 }
 
 /**
@@ -144,11 +197,21 @@ export async function stepThroughVideo(
 
   let index = 0;
   let lastMediaTimeSeconds: number | null = null;
+  // Deliberately NOT read once before the loop. A browser can report a
+  // short duration while a clip is still buffering and revise it
+  // upward later, and reading it once froze that early guess into the
+  // stop condition. WebKit on a Linux runner did exactly this and
+  // stopped at 27 frames of 60, three times in a row, because 27
+  // frames was as far as the duration it had first reported.
+  const remaining = (): number | null =>
+    Number.isFinite(video.duration) ? video.duration : null;
 
-  // Start from the very beginning again, since calibration moved us.
-  let target = 0;
-  const duration = Number.isFinite(video.duration) ? video.duration : null;
-
+  // Driven by frame INDEX, not by whatever time a seek reports landing
+  // on. Every browser can be asked for frame k; not every browser will
+  // say precisely where it landed. Computing the target from the index
+  // gives exactly one measurement per frame either way, and removes a
+  // whole class of drift where the schedule is derived from its own
+  // previous answer.
   for (;;) {
     if (shouldStop()) {
       return {
@@ -158,28 +221,25 @@ export async function stepThroughVideo(
         stoppedEarly: true,
       };
     }
+
+    // The middle of frame `index`'s window. Aiming at an edge is what
+    // makes a seek ambiguous between two frames.
+    const target = (index + 0.5) * step;
+    const duration = remaining();
     if (duration !== null && target > duration) break;
 
-    const mediaTimeSeconds = await seekTo(video, target);
-    if (mediaTimeSeconds === null) break;
+    const landing = await seekTo(video, target);
+    if (landing === null) break;
 
-    if (
-      lastMediaTimeSeconds !== null &&
-      mediaTimeSeconds <= lastMediaTimeSeconds
-    ) {
-      // The seek landed on the frame already shown, which happens when
-      // the step is slightly under the true interval. Push forward by
-      // half a frame and try again rather than counting it twice.
-      target += step / 2;
-      continue;
-    }
+    // Prefer the frame's own time; fall back to the schedule, which is
+    // correct for constant frame rate video and honest for the rest.
+    const mediaTimeSeconds = landing.exact
+      ? landing.mediaTimeSeconds
+      : index * step;
 
     await onFrame({ mediaTimeSeconds, index });
     lastMediaTimeSeconds = mediaTimeSeconds;
     index += 1;
-    // Aim at the middle of the next frame's window. Landing on an edge
-    // is what makes a seek ambiguous between two frames.
-    target = mediaTimeSeconds + step * 1.5;
   }
 
   return {

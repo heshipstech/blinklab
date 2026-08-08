@@ -611,3 +611,25 @@ The fix is to stop playing the clip at all. Each frame is now sought, and a seek
 The part I am least comfortable with is the diagnosis I gave before measuring. Seeing the measured rate wander between eight and forty across the session, I told the owner their camera was variable frame rate and their room was too dark. Both were false. Their recording is rock steady and their room is well lit. The variation was mine, and it tracked how busy their machine was, which they guessed correctly before I did. The lesson is narrow and sharp: when an instrument disagrees with the world, suspect the instrument first. I had a file I could have measured in one command and I offered a theory about their camera instead.
 
 There is also a smaller bug worth recording because it hid in plain sight. The new calibration, which learns a clip's frame interval by seeking forward in small steps, computed each next probe from the media time it landed on. A seek into the middle of frame zero returns media time zero, so the next probe was computed from zero again and the loop asked for the same instant until it gave up. It reported "unknown rate" rather than hanging or lying, which is the right failure, and the fix is to advance from whichever is later, the probe or the frame. A loop whose progress depends on a value that can fail to advance is not a loop.
+
+## 7.4c Safari measured zero frames and called it a measurement
+
+The concept this correction teaches is that "works in my browser" is not a property of software, it is a property of one browser, and a project that tests in one engine has verified one engine.
+
+The seek-based stepper from the previous note was correct, and on Chrome it measured the owner's clip perfectly: 2,402 frames of 2,402, at exactly 60.00 per second. In Safari the same clip on the same machine measured **zero**, in four seconds, and the app printed "Measured 0 frames at unknown rate, in 4 s" as though that were an outcome.
+
+Two distinct faults, and the second is worse than the first.
+
+The mechanical fault: Safari does not fetch a video's data until something asks for it. A stepped run never plays, so nothing ever asked, and every seek sat waiting for bytes that were not coming until the two second timeout fired. Two timeouts, calibration and the first real frame, is exactly the four seconds observed. The fix is to set the element to preload its data and to wait for `canplay` rather than `loadedmetadata`, because metadata gives you dimensions and duration while a stepped run needs actual frames. Separately, browsers disagree about which signal announces a finished seek, so the code now waits for either the frame callback or the `seeked` event and prefers the more precise answer rather than depending on one and hanging when it does not come.
+
+The honesty fault: zero frames is not a measurement, it is a failure, and printing it in the same sentence pattern as a real result made breakage look like data. This is the identical mistake as "measured every frame" two notes ago, in the opposite direction. Both come from software describing its own output without asking whether that output means anything. Zero frames now refuses, with a message saying the file loaded but seeking produced nothing and suggesting what to try.
+
+The process lesson is the one worth keeping. The suite ran in Chromium only, so no amount of green ticks could ever have found this; the owner found it by hand, on the second browser he happened to try. WebKit has now joined the test matrix for the clip tests, and running it immediately reproduced the zero-frame failure against the pre-fix build, which is the confirmation that both the bug and the fix are real. Camera tests stay Chromium-only because WebKit has no fake camera, but clips are exactly where the engines differ, so clips are what runs in both.
+
+One caveat recorded rather than glossed: Playwright's WebKit is not Safari. It is close enough to have reproduced this bug, and it is not close enough to be trusted as proof, which is why a manual Safari pass has been added to the checklist as well.
+
+### Postscript to 7.4c: where the WebKit test ended up
+
+WebKit found the real bug and then cost three more rounds failing for reasons that had nothing to do with the code: no MediaRecorder on a Linux runner at all, and a stepped clip stopping at 27 frames of 60 through fixes to both the calibration and the duration handling. Playwright WebKit on Linux is not Safari on a Mac, and a test that fails for reasons unrelated to the change under review teaches people to ignore red, which is worse than not having the test.
+
+So it runs locally and not in continuous integration. That is a retreat and it is written down as one. The protection now lives in three places of decreasing strength: a local run covers both engines on a Mac, continuous integration covers Chromium, and Safari proper is a manual check, because Playwright WebKit is not Safari either. Naming which of those actually runs on every pull request, and which depends on somebody remembering, is more useful than pretending the coverage is uniform.
