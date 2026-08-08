@@ -195,6 +195,7 @@ Object.assign(navBar.style, {
   margin: "0 auto",
   padding: "12px 16px 16px 16px",
   boxSizing: "border-box",
+  borderBottom: "1px solid #e4e4e4",
 });
 
 const linkedInLink = document.createElement("a");
@@ -242,11 +243,20 @@ Object.assign(linkedInLink.style, {
 const statusBanner = document.createElement("div");
 statusBanner.dataset.testid = "status-banner";
 statusBanner.id = "status-banner";
+
+// Says so when there is nothing to say. The banner used to collapse,
+// which meant the whole page stepped down the moment anything appeared
+// and stepped back up when it left. A strip that is always there costs
+// one line and buys a page that never moves.
+const bannerIdle = document.createElement("p");
+bannerIdle.className = "banner-idle";
+bannerIdle.textContent = "No alerts at this time.";
 Object.assign(statusBanner.style, {
   maxWidth: "1280px",
-  margin: "0 auto",
-  padding: "0 16px",
   boxSizing: "border-box",
+  // Matches the column's own side padding so its edges line up with
+  // the boxes below it rather than sitting proud of them.
+  width: "calc(100% - 32px)",
 });
 
 const startButton = document.createElement("button");
@@ -1207,7 +1217,9 @@ let kssAfter: KssRating | null = null;
 const kssPanel = document.createElement("div");
 kssPanel.hidden = true;
 const kssPrompt = document.createElement("p");
+kssPrompt.className = "kss-prompt";
 const kssButtons = document.createElement("div");
+kssButtons.className = "kss-grid";
 kssPanel.append(kssPrompt, kssButtons);
 
 function askKss(
@@ -1251,7 +1263,7 @@ function askKss(
     }),
   );
   const skip = document.createElement("button");
-  skip.className = "kss-option";
+  skip.className = "kss-option skip";
   skip.textContent = "Skip";
   skip.addEventListener("click", () => {
     choose(null);
@@ -2209,8 +2221,12 @@ graphStyles.textContent =
   // `display` beats the `hidden` attribute, which is how three empty
   // canvases once appeared above an unstarted page.
   " .box { border: 1px solid #d4d4d4; border-radius: 8px;" +
-  "   padding: 12px 16px; margin: 0 0 16px 0; background: #fbfbfb; }" +
+  "   padding: 12px 16px; margin: 0; background: #fbfbfb; }" +
   " .box[hidden] { display: none; }" +
+  // Every gap on the page comes from a container, never from a box's
+  // own margin, so there is exactly one number to change.
+  " #content { display: flex; flex-direction: column; gap: 16px;" +
+  "   padding-bottom: 16px; }" +
   " .box > h2 { font-size: 12px; text-transform: uppercase;" +
   "   letter-spacing: 0.08em; color: #666; margin: 0 0 8px 0;" +
   "   font-weight: 600; }" +
@@ -2265,12 +2281,25 @@ graphStyles.textContent =
   // This replaced a computed hidden flag that went stale: status text
   // is written from a dozen places that do not call render(), so the
   // banner stayed invisible while the app was talking.
-  " #status-banner > p { margin: 10px 0 0 0; }" +
+  // The strip is always there, bordered like every other section, so
+  // an arriving alert changes its colour rather than the page's height.
+  " #status-banner { border: 1px solid #d4d4d4; border-radius: 8px;" +
+  "   background: #fff; padding: 10px 16px; margin: 16px auto 0 auto; }" +
+  " #status-banner > p { margin: 0; }" +
   " #status-banner > p:empty { display: none; }" +
+  " #status-banner.alerting { background: #ffb300; border-color: #ef6c00; }" +
+  // Inside an orange strip the red rule is invisible and unnecessary.
+  " #status-banner.alerting .alert { border-left: none; padding-left: 0;" +
+  "   font-weight: 600; }" +
   // The sleepiness options, one per row. Option 9 is 54 characters and
   // will not share a line with anything.
-  " .kss-option { display: block; width: 100%; text-align: left;" +
-  "   margin: 3px 0; }" +
+  " .kss-prompt { font-weight: 600; margin: 8px 0 6px 0; }" +
+  " .kss-grid { display: grid; gap: 6px;" +
+  "   grid-template-columns: repeat(2, minmax(0, 1fr)); }" +
+  " .kss-option { text-align: left; width: 100%; }" +
+  // Skip is not one of the nine, so it spans rather than pretending to
+  // be a tenth rating.
+  " .kss-option.skip { grid-column: 1 / -1; }" +
   // 7. Bullets indented every blink and pushed most of them onto two
   // lines. The list is already visually a list.
   " .blink-log { list-style: none; padding: 0; margin: 8px 0 0 0;" +
@@ -2318,6 +2347,7 @@ graphStrip.append(
 // the head while the instrument was measuring; 1280 pixels brings
 // them near the middle, where the gaze angle is small.
 const contentBox = document.createElement("div");
+contentBox.id = "content";
 Object.assign(contentBox.style, {
   maxWidth: "1280px",
   margin: "0 auto",
@@ -2562,7 +2592,37 @@ function writeReadout(element: HTMLElement, text: string): void {
 }
 
 navBar.append(title, linkedInLink);
-statusBanner.append(status, modelStatus, alertBanner);
+statusBanner.append(bannerIdle, status, modelStatus, alertBanner);
+
+// The idle line hides itself whenever a real message arrives, and the
+// strip turns orange only for an alert. Watched rather than computed,
+// because status text is written from a dozen places that do not call
+// render(), which is exactly how the old collapsing banner went stale.
+function refreshBanner(): void {
+  const speaking =
+    status.textContent !== "" ||
+    modelStatus.textContent !== "" ||
+    !alertBanner.hidden;
+  // Written only when it would actually change, and that guard is load
+  // bearing rather than tidiness. This function sets `hidden`, and the
+  // observer below watches `hidden` across the whole strip, so an
+  // unconditional write re-triggers the observer forever. The page then
+  // never finishes loading at all: every browser sat on `page.goto`
+  // until it timed out, on a clean CI machine as well as a busy laptop,
+  // and the overnight corpus run silently produced nothing for an hour.
+  if (bannerIdle.hidden !== speaking) {
+    bannerIdle.hidden = speaking;
+  }
+  statusBanner.classList.toggle("alerting", !alertBanner.hidden);
+}
+new MutationObserver(refreshBanner).observe(statusBanner, {
+  subtree: true,
+  childList: true,
+  characterData: true,
+  attributes: true,
+  attributeFilter: ["hidden"],
+});
+refreshBanner();
 
 app.append(
   demoNotice,
