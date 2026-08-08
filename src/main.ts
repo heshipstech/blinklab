@@ -2191,7 +2191,8 @@ graphStyles.textContent =
   // different depending on the viewer's settings is a demo you cannot
   // reason about.
   " body { margin: 0; background: #ffffff; color: #1a1a1a;" +
-  "   font-family: system-ui, -apple-system, sans-serif; }" +
+  "   font-family: system-ui, -apple-system, sans-serif;" +
+  "   font-size: 14px; }" +
   // The box system. Three tiers, and the tiers are the point: the
   // score is the claim, the measurements are the evidence, and the
   // instrument's own health is neither. Before this every readout had
@@ -2227,7 +2228,7 @@ graphStyles.textContent =
   // Source takes the wider side because it holds the video, which is
   // sized to 640 px. An even split of a 1280 column leaves about 630
   // per side once the gap is taken, which would shrink the picture.
-  " .top-row { display: grid; gap: 16px; align-items: start;" +
+  " .top-row { display: grid; gap: 16px; align-items: stretch;" +
   "   grid-template-columns: 55fr 45fr; }" +
   " .top-row[hidden] { display: none; }" +
   // Below this the columns stack, and Source comes first because
@@ -2277,6 +2278,11 @@ graphStyles.textContent =
   // jump every time a readout gains or loses a line. They can still
   // grow past it; this is a floor, not a ceiling.
   " .top-row .box { min-height: 132px; }" +
+  // The right column is a flex column and Session takes the slack, so
+  // its bottom edge meets Source's however tall the video makes that.
+  " .stack { display: flex; flex-direction: column; gap: 16px;" +
+  "   height: 100%; }" +
+  " .stack > :last-child { flex: 1; }" +
   " .row .box { min-height: 230px; }" +
   " #live-signals { min-height: 210px; }" +
   // 2. Native form controls render differently in every browser, which
@@ -2453,6 +2459,7 @@ const liveSignalsBox = box("Live signals", graphStrip, signalsFooter);
 const topRow = document.createElement("div");
 topRow.className = "top-row";
 const rightColumn = document.createElement("div");
+rightColumn.className = "stack";
 rightColumn.append(alertnessBox, sessionBox);
 topRow.append(sourceBox, rightColumn);
 
