@@ -36,6 +36,13 @@ export default defineConfig({
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
       testMatch: /videoFile\.spec\.ts/,
+      // The WATCHED path is excluded here, not because it is unimportant
+      // but because headless WebKit on a Linux runner cannot play video
+      // reliably and the test would fail for reasons that have nothing
+      // to do with the code. What WebKit is here to check is SEEKING,
+      // which is where the engines genuinely differ and where the
+      // zero-frame bug lived.
+      grepInvert: /@chromium-only/,
     },
   ],
   webServer: {

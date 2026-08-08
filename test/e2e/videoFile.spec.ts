@@ -27,7 +27,7 @@ const CLIP_HEIGHT = 240;
 const FIXTURE = "test/fixtures/clip-60fps-60frames.mp4";
 const FIXTURE_FRAMES = 60;
 
-test("a recorded clip loads and runs through the same pipeline", async ({
+test("a recorded clip loads and runs through the same pipeline @chromium-only", async ({
   page,
 }) => {
   // Generating the clip takes two seconds, and the landmarker fetches
