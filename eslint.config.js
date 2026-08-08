@@ -8,6 +8,15 @@ export default tseslint.config(
   // JavaScript (matplotlib's web backend). Linting a dependency's vendored code
   // is meaningless, and it only passed in CI because the checks job never
   // creates the virtual environment.
+  // tools/ holds Node scripts, not browser code, so they get Node's
+  // globals. Without this the linter calls `process` undefined, which
+  // is true in a browser and false where these actually run.
+  {
+    files: ["tools/**/*.mjs"],
+    languageOptions: {
+      globals: { process: "readonly", console: "readonly" },
+    },
+  },
   { ignores: ["dist/", "public/mediapipe-wasm/", "analysis/.venv/"] },
   js.configs.recommended,
   tseslint.configs.recommended,
