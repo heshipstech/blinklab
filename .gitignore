@@ -29,3 +29,10 @@ public/mediapipe-wasm/
 # Playwright output
 test-results/
 playwright-report/
+
+# The analysis virtual environment. The lockfile is committed, the
+# resolved packages are not.
+analysis/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/

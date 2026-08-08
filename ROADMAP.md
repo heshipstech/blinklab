@@ -94,7 +94,7 @@ Accepted on 2026-07-28, before any code:
 ## Phase 7. Honest evaluation (the Python track)
 
 - [ ] 7.0 Video file upload mode so recorded clips run through the same TypeScript pipeline (amended, moved from 8.1). Check: end to end test with a sample clip.
-- [ ] 7.1 `/analysis` folder, pinned Python environment, ruff, pytest, second CI job. Check: Python CI job green with one real test.
+- [x] 7.1 `/analysis` folder, pinned Python environment, ruff, pytest, second CI job. Check: Python CI job green with one real test.
 - [ ] 7.2 CSV loader plus a first plot of one recorded session. Check: loader tests on malformed CSV.
 - [ ] 7.3 DATASETS.md, choose one openly licensed public dataset, record licence and access terms. Go or no-go gate: if no suitable openly licensed dataset exists, replan 7.4 to 7.7 before starting them (amended).
 - [ ] 7.4 Batch runner computing features over dataset videos into feature CSVs, via the 7.0 upload pipeline (amended). Check: two frame sample test.

@@ -25,3 +25,23 @@ jobs:
       # it is the slowest check and the cheap ones should fail first.
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+
+  # The Python track of Phase 7, a SEPARATE job on purpose. The two
+  # languages have nothing to say to each other at build time, so
+  # they fail independently and a broken notebook never blocks a
+  # browser fix. uv installs the pinned interpreter as well as the
+  # pinned packages, so this job and a laptop run the same versions.
+  analysis:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: analysis
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest
