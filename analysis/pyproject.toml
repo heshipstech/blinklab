@@ -26,3 +26,7 @@ select = ["E", "W", "F", "I", "B", "C4", "UP", "PD"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The package sits beside the tests rather than under src/, so the
+# runner is told where to look. A bare interpreter adds the working
+# directory for you; pytest deliberately does not.
+pythonpath = ["."]
