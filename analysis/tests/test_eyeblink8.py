@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -165,12 +166,16 @@ class TestTheRealCorpus:
     is a test that silently stops protecting anything.
     """
 
-    ROOT = Path(
-        "/Users/evannorus/Desktop/Noddr Fun Build/datasets/eyeblink8/eyeblink8"
-    )
+    # Read from the environment, never hardcoded. A path baked into a
+    # public repository leaks whose machine it is and where their files
+    # live, and it works for exactly one person.
+    #
+    #   BLINKLAB_EYEBLINK8=/path/to/eyeblink8 uv run pytest
+    ROOT = Path(os.environ.get("BLINKLAB_EYEBLINK8", "/nonexistent"))
 
     @pytest.mark.skipif(
-        not ROOT.exists(), reason="Eyeblink8 corpus not prepared locally"
+        not ROOT.exists(),
+        reason="set BLINKLAB_EYEBLINK8 to run against the real corpus",
     )
     def test_reads_all_eight_clips(self) -> None:
         corpus = load_corpus(self.ROOT)
@@ -181,7 +186,8 @@ class TestTheRealCorpus:
         assert sum(1 for a in corpus if a.wears_glasses) == 1
 
     @pytest.mark.skipif(
-        not ROOT.exists(), reason="Eyeblink8 corpus not prepared locally"
+        not ROOT.exists(),
+        reason="set BLINKLAB_EYEBLINK8 to run against the real corpus",
     )
     def test_every_blink_is_a_plausible_length(self) -> None:
         # A blink that lasted one frame or several seconds would mean

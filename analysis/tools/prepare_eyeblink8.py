@@ -89,6 +89,20 @@ def remux(ffmpeg: str, source: Path, target: Path) -> tuple[int, int]:
             "-c:v",
             "copy",
             "-an",
+            # Start the output timeline at zero. Remuxing from AVI can
+            # leave a start offset (one clip here began at 1.633 s), and
+            # browsers handle that badly in opposite directions: Chrome
+            # silently clamps every earlier seek to the first frame,
+            # while Safari never answers them at all. Both report
+            # `seekable` as starting at zero regardless, so the code
+            # cannot even detect the situation. Normalising here is far
+            # cheaper than teaching the stepper to find a hidden origin.
+            "-avoid_negative_ts",
+            "make_zero",
+            "-muxpreload",
+            "0",
+            "-muxdelay",
+            "0",
             "-movflags",
             "+faststart",
             str(target),

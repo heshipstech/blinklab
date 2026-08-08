@@ -1136,6 +1136,7 @@ function exportSession(): void {
 
 const exportButton = document.createElement("button");
 exportButton.textContent = "Export CSV";
+exportButton.setAttribute("data-testid", "export-csv");
 exportButton.hidden = true;
 exportButton.disabled = true;
 // A second export, and a separate one on purpose. The per-second file
