@@ -62,3 +62,49 @@ test("the demo notice is visible on load and cannot be dismissed", async ({
   await page.locator("body").click();
   await expect(notice).toBeVisible();
 });
+
+test("every element lives in a zone, nothing is appended to the page root", async ({
+  page,
+}) => {
+  // The guard against this layout decaying back into a flat list.
+  // The page was a fossil record of the build order because every
+  // increment appended one more line to the root; this fails CI the
+  // moment something is appended outside a zone again.
+  await page.goto("/blinklab/");
+  const orphans = await page.evaluate(() => {
+    const app = document.querySelector("#app");
+    if (app === null) {
+      return ["#app is missing"];
+    }
+    return [...app.children]
+      .filter((child) => !(child as HTMLElement).dataset.zone)
+      .map((child) => `${child.tagName}#${child.id} .${child.className}`);
+  });
+  expect(orphans).toEqual([]);
+
+  const zones = await page.evaluate(() =>
+    [...(document.querySelector("#app")?.children ?? [])].map(
+      (child) => (child as HTMLElement).dataset.zone,
+    ),
+  );
+  expect(zones).toEqual([
+    "notice",
+    "measured",
+    "peripheral",
+    "between",
+    "overlay",
+  ]);
+});
+
+test("the page fits one screen with no vertical scrolling", async ({
+  page,
+}) => {
+  // Scrolling hides the video preview, which is how a person checks
+  // the model is tracking their face at all.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/blinklab/");
+  const overflows = await page.evaluate(
+    () => document.documentElement.scrollHeight > window.innerHeight + 1,
+  );
+  expect(overflows).toBe(false);
+});

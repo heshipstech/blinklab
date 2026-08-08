@@ -1604,48 +1604,131 @@ startFrameLoop((nowMs) => {
   }
 });
 
-app.append(
-  demoNotice,
-  title,
-  startButton,
-  picker,
+// The page is grouped into ZONES, and nothing is appended to the app
+// root any more. That is the durable part of this layout: adding a
+// readout now forces a choice of zone, where before the only path
+// was appending to a flat list, which is why the page had become a
+// fossil record of the ladder's build order rather than a design.
+//
+// The rule, and its reason, are written in SPEC.md. In short:
+// downward gaze physically lowers the eyelid, and the eyelid is what
+// this instrument measures, so anything read WHILE being measured
+// belongs in the top band near the webcam, and anything read between
+// measurements can sit lower or wider.
+function zone(name: string, styles: Partial<CSSStyleDeclaration> = {}) {
+  const element = document.createElement("div");
+  element.dataset.zone = name;
+  Object.assign(element.style, styles);
+  return element;
+}
+
+// A box holding nothing but hidden children would draw an empty
+// bordered rectangle, which is what a visitor sees before the camera
+// starts. Collapsing them is presentation only: the elements inside
+// keep their own hidden state and nothing else changes.
+const zoneStyles = document.createElement("style");
+zoneStyles.textContent =
+  "[data-zone] > .box:not(:has(> *:not([hidden]))) { display: none; }";
+document.head.append(zoneStyles);
+
+function box(...children: readonly Node[]) {
+  const element = document.createElement("div");
+  element.className = "box";
+  Object.assign(element.style, {
+    border: "1px solid #d0d0d0",
+    borderRadius: "6px",
+    padding: "8px 12px",
+    minWidth: "0",
+  });
+  element.append(...children);
+  return element;
+}
+
+const THREE_COLUMNS = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1.5fr 1fr",
+  gap: "12px",
+  alignItems: "start",
+  marginBottom: "12px",
+};
+
+// Measured WHILE sitting still: nearest the webcam, smallest gaze
+// angle, and never below the fold.
+const measuredZone = zone("measured", THREE_COLUMNS);
+measuredZone.append(
+  box(blinkLabel, baselineLabel, blinkShapeLabel, apertureLabel),
+  box(scoreLabel, panelSummaryLabel, panelList, alertBanner),
+  box(
+    perclosLabel,
+    longClosureLabel,
+    quadrantLabel,
+    gazeStateLabel,
+    fixationStatsLabel,
+  ),
+);
+
+// Watched peripherally rather than read: the video confirms the face
+// is tracked, the rest explains itself when something is wrong.
+const peripheralZone = zone("peripheral", THREE_COLUMNS);
+peripheralZone.append(
+  box(status, gateLabel, modelStatus),
+  box(canvas, mirrorLabel),
+  box(
+    resolutionLabel,
+    fpsLabel,
+    inferenceLabel,
+    earLabel,
+    stabilityLabel,
+    headPoseLabel,
+    gazeLabel,
+  ),
+);
+
+// Touched only BETWEEN measurements, so a wide or downward gaze
+// costs nothing here.
+const betweenZone = zone("between", {
+  display: "grid",
+  gridTemplateColumns: "1fr 2fr",
+  gap: "12px",
+  alignItems: "start",
+});
+betweenZone.append(
+  box(
+    startButton,
+    picker,
+    calibrateButton,
+    heatmapButton,
+    replayButton,
+    exportButton,
+    featureLabel,
+    ...(recorder !== null ? [recorder.button] : []),
+  ),
+  box(
+    sparkCanvas,
+    gazeTraceHorizontalCanvas,
+    gazeTraceVerticalCanvas,
+    blinkLogList,
+  ),
+);
+
+// Full screen or floating, so they belong to no column.
+const overlayZone = zone("overlay");
+overlayZone.append(kssPanel, calibrationOverlay, heatmapOverlay);
+
+// Canvases carry intrinsic pixel widths and would otherwise widen
+// their column past the grid.
+for (const element of [
   canvas,
-  mirrorLabel,
-  resolutionLabel,
-  modelStatus,
-  status,
-  scoreLabel,
-  panelSummaryLabel,
-  panelList,
-  fpsLabel,
-  inferenceLabel,
-  earLabel,
-  apertureLabel,
-  stabilityLabel,
-  headPoseLabel,
-  gazeLabel,
-  quadrantLabel,
-  gazeStateLabel,
-  fixationStatsLabel,
-  calibrateButton,
-  heatmapButton,
-  replayButton,
-  gateLabel,
-  blinkLabel,
-  baselineLabel,
-  blinkShapeLabel,
-  perclosLabel,
-  longClosureLabel,
-  alertBanner,
-  featureLabel,
-  exportButton,
-  kssPanel,
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
-  blinkLogList,
-  ...(recorder !== null ? [recorder.button] : []),
-  calibrationOverlay,
-  heatmapOverlay,
-);
+]) {
+  element.style.maxWidth = "100%";
+  element.style.height = "auto";
+}
+
+const noticeZone = zone("notice", { marginBottom: "12px" });
+noticeZone.append(demoNotice, title);
+
+app.append(noticeZone, measuredZone, peripheralZone, betweenZone, overlayZone);
 render();
