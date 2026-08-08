@@ -96,6 +96,7 @@ The project grows one small increment per session, each one branch, one pull req
 - [ROADMAP.md](ROADMAP.md), the full increment ladder and its accepted amendments.
 - [STATE.md](STATE.md), where things stand right now.
 - [LEARNING.md](LEARNING.md), one plain English engineering note per increment, including the ones that record a mistake.
+- [docs/UI.md](docs/UI.md), every element the page can show, when it appears, and every string it can contain.
 - [test/MANUAL.md](test/MANUAL.md), the checks a machine cannot run, because a headless browser has no face.
 - [decisions/](decisions/), architecture decision records.
 
