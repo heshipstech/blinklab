@@ -1604,7 +1604,35 @@ startFrameLoop((nowMs) => {
   }
 });
 
-app.append(
+// The graph strip sits at the very top and spans the whole window,
+// so one screenshot of the top of the page carries the traces plus
+// as many readouts as fit underneath.
+// Canvases are inline by default, which leaves whitespace gaps
+// between them, but an inline display style would beat the `hidden`
+// attribute and show three empty strips before the camera starts.
+// A stylesheet rule stacks them AND keeps hidden meaning hidden.
+const graphStyles = document.createElement("style");
+graphStyles.textContent =
+  ".graph { display: block; } .graph[hidden] { display: none; }";
+document.head.append(graphStyles);
+
+const graphStrip = document.createElement("div");
+graphStrip.append(
+  sparkCanvas,
+  gazeTraceHorizontalCanvas,
+  gazeTraceVerticalCanvas,
+);
+
+// Everything else lives in one centred column. On a wide monitor the
+// readouts used to hug the far left, which meant reading them turned
+// the head while the instrument was measuring; 1200 pixels brings
+// them near the middle, where the gaze angle is small.
+const contentBox = document.createElement("div");
+Object.assign(contentBox.style, {
+  maxWidth: "1200px",
+  margin: "0 auto",
+});
+contentBox.append(
   demoNotice,
   title,
   startButton,
@@ -1640,12 +1668,29 @@ app.append(
   featureLabel,
   exportButton,
   kssPanel,
-  sparkCanvas,
-  gazeTraceHorizontalCanvas,
-  gazeTraceVerticalCanvas,
   blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
-  calibrationOverlay,
-  heatmapOverlay,
 );
+
+// The graph canvases carry their own pixel buffers, and the drawing
+// code reads canvas.width for its coordinates, so widening the
+// buffer to the window genuinely redraws at full width instead of
+// stretching a 640 pixel image across the screen.
+function sizeGraphsToWindow(): void {
+  const width = Math.max(320, Math.floor(window.innerWidth) - 16);
+  for (const graph of [
+    sparkCanvas,
+    gazeTraceHorizontalCanvas,
+    gazeTraceVerticalCanvas,
+  ]) {
+    if (graph.width !== width) {
+      graph.width = width;
+    }
+    graph.classList.add("graph");
+  }
+}
+sizeGraphsToWindow();
+window.addEventListener("resize", sizeGraphsToWindow);
+
+app.append(graphStrip, contentBox, calibrationOverlay, heatmapOverlay);
 render();

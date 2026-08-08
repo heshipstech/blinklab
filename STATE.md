@@ -1,5 +1,5 @@
-Last increment: 6.9, merged via pull request #132
-Last commit: squash merge of pull request #132 on 2026-08-08
+Last increment: layout, single centred column with a full width graph strip, merged via pull request #135
+Last commit: squash merge of pull request #135 on 2026-08-08
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing, between increments
 Next increment: 7.1, analysis folder, pinned Python environment, ruff, pytest, second CI job (7.0 video upload was moved here by amendment 3)
