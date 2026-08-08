@@ -627,3 +627,9 @@ The honesty fault: zero frames is not a measurement, it is a failure, and printi
 The process lesson is the one worth keeping. The suite ran in Chromium only, so no amount of green ticks could ever have found this; the owner found it by hand, on the second browser he happened to try. WebKit has now joined the test matrix for the clip tests, and running it immediately reproduced the zero-frame failure against the pre-fix build, which is the confirmation that both the bug and the fix are real. Camera tests stay Chromium-only because WebKit has no fake camera, but clips are exactly where the engines differ, so clips are what runs in both.
 
 One caveat recorded rather than glossed: Playwright's WebKit is not Safari. It is close enough to have reproduced this bug, and it is not close enough to be trusted as proof, which is why a manual Safari pass has been added to the checklist as well.
+
+### Postscript to 7.4c: where the WebKit test ended up
+
+WebKit found the real bug and then cost three more rounds failing for reasons that had nothing to do with the code: no MediaRecorder on a Linux runner at all, and a stepped clip stopping at 27 frames of 60 through fixes to both the calibration and the duration handling. Playwright WebKit on Linux is not Safari on a Mac, and a test that fails for reasons unrelated to the change under review teaches people to ignore red, which is worse than not having the test.
+
+So it runs locally and not in continuous integration. That is a retreat and it is written down as one. The protection now lives in three places of decreasing strength: a local run covers both engines on a Mac, continuous integration covers Chromium, and Safari proper is a manual check, because Playwright WebKit is not Safari either. Naming which of those actually runs on every pull request, and which depends on somebody remembering, is more useful than pretending the coverage is uniform.

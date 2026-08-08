@@ -23,7 +23,7 @@ jobs:
       # The end to end test drives the real built app in a headless
       # browser with a fake camera stream. Chromium only, kept last:
       # it is the slowest check and the cheap ones should fail first.
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps chromium
       - run: npm run e2e
 
   # The Python track of Phase 7, a SEPARATE job on purpose. The two
