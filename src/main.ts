@@ -142,8 +142,8 @@ import {
 import { loadLandmarker } from "./io/landmarker";
 import {
   drawDots,
+  drawFittedCircle,
   drawPolyline,
-  drawRing,
   drawVideoFrame,
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
@@ -1633,12 +1633,18 @@ function processFrame(
           drawDots(canvasContext, eyelidDots, 1, "#ffffff");
 
           const irisColor = "#ff9100";
-          for (const ring of [
-            RIGHT_IRIS_RING_INDICES,
-            LEFT_IRIS_RING_INDICES,
-          ]) {
-            drawRing(
+          // A circle fitted to the four boundary points, not a polygon
+          // through them. Four points joined up draw a diamond, which
+          // is what was on screen and which nobody chose.
+          for (const [ring, centerIndex] of [
+            [RIGHT_IRIS_RING_INDICES, RIGHT_IRIS_CENTER_INDEX],
+            [LEFT_IRIS_RING_INDICES, LEFT_IRIS_CENTER_INDEX],
+          ] as const) {
+            const center = project(pickPoints(face, [centerIndex]))[0];
+            if (center === undefined) continue;
+            drawFittedCircle(
               canvasContext,
+              center,
               project(pickPoints(face, ring)),
               1.5,
               irisColor,
