@@ -40,7 +40,7 @@ export type StepSummary = {
 const SEEK_TIMEOUT_MS = 2000;
 
 // Sampled to learn the clip's frame interval before stepping begins.
-const CALIBRATION_FRAMES = 5;
+const CALIBRATION_FRAMES = 8;
 
 // How long to let the frame callback answer after `seeked` has
 // already fired, before settling for the less precise reading.
@@ -157,13 +157,22 @@ async function measureFrameInterval(
     gaps.push(later - earlier);
   }
   if (gaps.length === 0) return null;
-  gaps.sort((a, b) => a - b);
-  const median = gaps[Math.floor(gaps.length / 2)];
-  if (median === undefined) return null;
+  // The SMALLEST gap, not the median or the average, and the reasoning
+  // matters. Frame times are quantised, so every observed gap is a
+  // whole number of frame intervals. Probing can accidentally step over
+  // a frame and see two intervals; it can never see less than one. So
+  // the minimum is the interval and anything larger is a skip.
+  //
+  // The median was wrong and WebKit on a Linux runner proved it: half
+  // the probes skipped a frame there, the median came out about 2.2
+  // times too large, and a 60 frame clip was measured as 27.
+  const smallest = Math.min(...gaps);
   // A clip claiming frames a microsecond or ten seconds apart is not
   // something to build a seek schedule on.
-  if (!Number.isFinite(median) || median <= 0.001 || median > 1) return null;
-  return median;
+  if (!Number.isFinite(smallest) || smallest <= 0.001 || smallest > 1) {
+    return null;
+  }
+  return smallest;
 }
 
 /**
