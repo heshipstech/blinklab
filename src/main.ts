@@ -2603,7 +2603,16 @@ function refreshBanner(): void {
     status.textContent !== "" ||
     modelStatus.textContent !== "" ||
     !alertBanner.hidden;
-  bannerIdle.hidden = speaking;
+  // Written only when it would actually change, and that guard is load
+  // bearing rather than tidiness. This function sets `hidden`, and the
+  // observer below watches `hidden` across the whole strip, so an
+  // unconditional write re-triggers the observer forever. The page then
+  // never finishes loading at all: every browser sat on `page.goto`
+  // until it timed out, on a clean CI machine as well as a busy laptop,
+  // and the overnight corpus run silently produced nothing for an hour.
+  if (bannerIdle.hidden !== speaking) {
+    bannerIdle.hidden = speaking;
+  }
   statusBanner.classList.toggle("alerting", !alertBanner.hidden);
 }
 new MutationObserver(refreshBanner).observe(statusBanner, {
