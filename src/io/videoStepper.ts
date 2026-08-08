@@ -40,7 +40,18 @@ export type StepSummary = {
 const SEEK_TIMEOUT_MS = 2000;
 
 // Sampled to learn the clip's frame interval before stepping begins.
-const CALIBRATION_FRAMES = 8;
+const CALIBRATION_FRAMES = 6;
+
+// How many seeks calibration may spend finding those frames. Generous
+// on purpose: a probe that lands on the frame already showing costs an
+// attempt and teaches nothing, and at a 10 ms step it takes three or
+// four of them to cross one frame of a 30 fps clip.
+const CALIBRATION_ATTEMPTS = 60;
+
+// How far each probe moves. Under half a frame even at 60 fps, so it
+// cannot step over one, but four times the old 4 ms so the budget
+// actually reaches several distinct frames.
+const CALIBRATION_STEP_S = 0.01;
 
 // How long to let the frame callback answer after `seeked` has
 // already fired, before settling for the less precise reading.
@@ -143,7 +154,7 @@ async function measureFrameInterval(
 ): Promise<number | null> {
   const times: number[] = [];
   let probe = timelineStart(video);
-  for (let attempt = 0; attempt < CALIBRATION_FRAMES * 2; attempt += 1) {
+  for (let attempt = 0; attempt < CALIBRATION_ATTEMPTS; attempt += 1) {
     const landing = await seekTo(video, probe);
     if (landing === null) break;
     // Only a frame callback knows where we actually landed. An
@@ -152,7 +163,7 @@ async function measureFrameInterval(
     // rather than the clip's frame interval. That is exactly how a 60
     // frame clip was once measured as 180.
     if (!landing.exact) {
-      probe += 0.004;
+      probe += CALIBRATION_STEP_S;
       continue;
     }
     const mediaTime = landing.mediaTimeSeconds;
@@ -168,7 +179,7 @@ async function measureFrameInterval(
     // instant until it gives up. That is why the first real clip
     // reported "unknown rate". 4 ms is under half a frame even at 120
     // frames per second, so this cannot step over one.
-    probe = Math.max(probe, mediaTime) + 0.004;
+    probe = Math.max(probe, mediaTime) + CALIBRATION_STEP_S;
   }
 
   if (times.length < 2) return null;
@@ -213,11 +224,22 @@ export async function stepThroughVideo(
   video.pause();
 
   const interval = await measureFrameInterval(video);
-  // 60 frames per second if the clip will not say. Too small a guess
-  // only costs repeated seeks onto the same frame, which are detected
-  // and skipped; too large a guess would silently miss frames, so the
-  // fallback errs fast.
-  const step = interval ?? 1 / 60;
+  // REFUSED rather than guessed, and this is the whole lesson of the
+  // first corpus run. The old fallback assumed 60 frames per second
+  // when calibration failed. On a 30 fps clip that halves the step, so
+  // every frame is visited twice: a 15,784 frame recording reported
+  // 31,568 measurements, every timestamp was double, and the file
+  // looked entirely normal. A wrong number that looks right is worse
+  // than no number.
+  if (interval === null) {
+    return {
+      framesMeasured: 0,
+      lastMediaTimeSeconds: null,
+      frameIntervalSeconds: null,
+      stoppedEarly: true,
+    };
+  }
+  const step = interval;
 
   // Where this clip's timeline begins, which is not always zero.
   const origin = timelineStart(video);
