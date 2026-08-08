@@ -79,22 +79,6 @@ Increment 6.7 writes a session to a file, which is where this project's data bec
 
 The file is written to the user's own device through the browser's download path. There is no server, and the export does not change the project's privacy stance.
 
-## Layout zones
-
-The page is grouped into zones, and **nothing may be appended to the app root**. Adding a readout means choosing a zone, which is enforced by an end to end test that fails on any element outside one.
-
-The rule exists for a measurement reason, not a visual one. **Downward gaze physically lowers the eyelid**, and the eyelid aperture is what most of this instrument measures, so reading a number near the bottom of the page changes the number being read. That feedback loop contributed to the false long closures that forced amendment 5. Sideways gaze is far cheaper: it does not move the eyelid, and a head turn large enough to matter is already caught by the pose gate.
-
-| Zone         | Holds                                                                                                         | Rule                                               |
-| ------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `notice`     | The permanent demo notice and the title                                                                       | Always first, never dismissible                    |
-| `measured`   | Everything read WHILE being measured: blink measures, the score with its panel and alert slot, state measures | Top band, nearest the webcam, never below the fold |
-| `peripheral` | The video preview, camera and gate status, diagnostics                                                        | Watched peripherally rather than read              |
-| `between`    | Controls, the feature record count, the sparkline and blink log                                               | Touched only between measurements                  |
-| `overlay`    | Calibration, heatmap, replay and the sleepiness question                                                      | Full screen or floating, belongs to no column      |
-
-When a new increment adds a readout, the question is not where it looks best. It is whether a person reads it while being measured, glances at it peripherally, or only touches it between measurements. The answer names the zone.
-
 ## Conventions
 
 - Coordinates: MediaPipe normalised image coordinates. Origin top left, x grows right, y grows down, values 0 to 1. Convert to pixels only at the drawing edge.
