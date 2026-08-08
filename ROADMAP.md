@@ -99,7 +99,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 7.1 `/analysis` folder, pinned Python environment, ruff, pytest, second CI job. Check: Python CI job green with one real test.
 - [x] 7.2 CSV loader plus a first plot of one recorded session. Check: loader tests on malformed CSV.
 - [x] 7.3 DATASETS.md, choose one openly licensed public dataset, record licence and access terms. Go or no-go gate: if no suitable openly licensed dataset exists, replan 7.4 to 7.7 before starting them (amended). Gate returned NO, see amendment 7.
-- [ ] 7.4 Batch runner computing features over dataset videos into feature CSVs, via the 7.0 upload pipeline (amended). Check: two frame sample test.
+- [x] 7.4 Batch runner computing features over dataset videos into feature CSVs, via the 7.0 upload pipeline (amended). Check: two frame sample test. Delivered as a stepped measurement mode, which fixes #145: the clip waits for the instrument on every frame, so the output is a property of the file rather than of the machine.
 - [ ] 7.5 Baseline classifier with a clearly stated train and test split. Check: reproducibility with a fixed seed.
 - [ ] 7.6 Leave one subject out evaluation, per subject scores reported. Check: no subject in both splits.
 - [ ] 7.7 Negative control: shuffle labels, confirm collapse to chance. Check: test asserting the collapse.

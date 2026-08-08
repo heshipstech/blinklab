@@ -127,9 +127,12 @@ import {
   supportsVideoFrameCallback,
 } from "./io/frameLoop";
 import { loadVideoFile, unloadVideoFile } from "./io/videoFile";
+import { stepThroughVideo } from "./io/videoStepper";
 import type { FrameClockState, FrameSource } from "./core/frameClock";
+import type { MeasurementMode } from "./core/frameClock";
 import {
   acceptFrame,
+  coverageMetadataRows,
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
@@ -209,6 +212,9 @@ let canvasContext: CanvasRenderingContext2D | null = null;
 let frameSource: FrameSource = "camera";
 let frameClock: FrameClockState = startFrameClock();
 let loadedClipName: string | null = null;
+let measurementMode: MeasurementMode = "live";
+let framesMeasured = 0;
+let loadedClipDurationSeconds: number | null = null;
 
 // Uploading a clip runs it through the same pipeline as the camera,
 // which is what makes an offline dataset measurable by this instrument
@@ -222,6 +228,24 @@ const clipLabel = document.createElement("label");
 // the first letter sat underneath it.
 Object.assign(clipLabel.style, { display: "block", margin: "8px 0" });
 clipLabel.append("Or measure a recorded clip: ", clipInput);
+
+// Stepping is the DEFAULT for a clip, and that is a deliberate choice
+// about what kind of tool this is. Watching a clip measures it at
+// whatever rate the model manages on this machine, so the same file
+// gives different numbers on different hardware. Stepping waits for
+// the instrument on every frame, so the result is a property of the
+// file. Watching stays available because it is far nicer to look at,
+// and a demo is a fair reason to want that.
+const stepToggle = document.createElement("input");
+stepToggle.type = "checkbox";
+stepToggle.checked = true;
+stepToggle.setAttribute("data-testid", "step-toggle");
+const stepLabel = document.createElement("label");
+Object.assign(stepLabel.style, { display: "block", margin: "0 0 8px 0" });
+stepLabel.append(
+  stepToggle,
+  " Measure every frame (slower to watch, but the same on every machine)",
+);
 clipInput.addEventListener("change", () => {
   const file = clipInput.files?.[0];
   // Cleared so that picking the SAME file again fires another change
@@ -236,6 +260,9 @@ clipInput.addEventListener("change", () => {
 // The per-decoded-frame loop belongs to whichever clip is loaded, so
 // it is stopped whenever the source changes or the clip ends.
 let clipLoop: VideoFrameLoop | null = null;
+// A stepped run is a loop inside an await, so it cannot be cancelled
+// by clearing a handle. It checks this between frames instead.
+let clipStopRequested = false;
 
 // A finished clip must stop claiming to be running. Every readout
 // would otherwise freeze on its last value while the page still says
@@ -416,6 +443,7 @@ function resetSession(): void {
   // Review found these two missed, and the new clock made the omission
   // dangerous: a clip's first blink shape was computed from the
   // PREVIOUS session's aperture trace and exported as this clip's.
+  framesMeasured = 0;
   stabilitySamples = [];
   earSamples = [];
   blinkShapeLabel.textContent = "";
@@ -433,12 +461,17 @@ function fitCanvasTo(widthPx: number, heightPx: number): void {
 
 async function beginCamera(deviceId?: string): Promise<void> {
   setState({ kind: "requesting" });
+  clipStopRequested = true;
+  clipLoop?.stop();
+  clipLoop = null;
   stopCamera(video);
   unloadVideoFile(video);
   try {
     const frame = await startCamera(video, deviceId);
     frameSource = "camera";
     loadedClipName = null;
+    measurementMode = "live";
+    loadedClipDurationSeconds = null;
     fitCanvasTo(frame.widthPx, frame.heightPx);
     resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
     resetSession();
@@ -473,6 +506,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
 // comes from the dataset rather than from the viewer.
 async function beginVideoFile(file: File): Promise<void> {
   setState({ kind: "requesting" });
+  clipStopRequested = true;
   stopCamera(video);
   clipLoop?.stop();
   clipLoop = null;
@@ -492,6 +526,7 @@ async function beginVideoFile(file: File): Promise<void> {
     const clip = await loadVideoFile(video, file);
     frameSource = "file";
     loadedClipName = clip.name;
+    loadedClipDurationSeconds = clip.durationSeconds;
     fitCanvasTo(clip.widthPx, clip.heightPx);
     const duration = Number.isFinite(clip.durationSeconds)
       ? `${clip.durationSeconds.toFixed(1)} s`
@@ -507,6 +542,34 @@ async function beginVideoFile(file: File): Promise<void> {
     await ensureLandmarker();
     status.textContent = "";
 
+    if (stepToggle.checked) {
+      // Stepped. The clip waits for the instrument on every frame, so
+      // the output is a function of the file rather than of this
+      // machine's speed. See issue #145.
+      measurementMode = "stepped";
+      clipStopRequested = false;
+      status.textContent = "Measuring every frame...";
+      const summary = await stepThroughVideo(
+        video,
+        ({ mediaTimeSeconds }) => {
+          const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
+          const clockStep = acceptFrame(frameClock, nowMs);
+          frameClock = clockStep.state;
+          if (!clockStep.accepted) return;
+          processFrame(nowMs, performance.now());
+        },
+        () => clipStopRequested,
+      );
+      status.textContent = summary.stoppedEarly
+        ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV, or pick another clip.`
+        : `Measured every frame: ${String(summary.framesMeasured)} of them. Export the CSV, or pick another clip.`;
+      return;
+    }
+
+    // Watched. Nicer to look at, and honest about being partial: the
+    // frame rate readout describes frames actually measured, and the
+    // export records the mode so an analysis can tell the two apart.
+    measurementMode = "played";
     clipLoop = startVideoFrameLoop(video, (mediaTimeSeconds) => {
       const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
       const clockStep = acceptFrame(frameClock, nowMs);
@@ -992,6 +1055,11 @@ function askKss(
 function exportSession(): void {
   const csv = serializeRecords(featureRecords, [
     ...sourceMetadataRows(frameSource, loadedClipName),
+    ...coverageMetadataRows(
+      measurementMode,
+      framesMeasured,
+      loadedClipDurationSeconds,
+    ),
     ...kssMetadataRows(kssBefore, kssAfter),
   ]);
   if (csv === null) {
@@ -1127,6 +1195,7 @@ let inferenceSamplesMs: number[] = [];
 // wallClockMs is kept separately because MediaPipe wants a strictly
 // increasing number of its own that survives a change of source.
 function processFrame(nowMs: number, wallClockMs: number): void {
+  framesMeasured += 1;
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
   const fps = measureFps(frameTimestampsMs);
@@ -1832,6 +1901,7 @@ contentBox.append(
   title,
   startButton,
   clipLabel,
+  stepLabel,
   picker,
   canvas,
   cameraLine,

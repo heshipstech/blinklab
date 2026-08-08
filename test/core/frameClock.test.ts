@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   acceptFrame,
+  coverageMetadataRows,
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
@@ -150,5 +151,47 @@ describe("sourceMetadataRows", () => {
     const rows = sourceMetadataRows("file", "evil\n1,2,3");
     expect(rows[1]).toBe("# clip: evil 1,2,3");
     expect(rows.join("\n").split("\n")).toHaveLength(2);
+  });
+});
+
+describe("coverageMetadataRows", () => {
+  it("records a stepped run with its true measured rate", () => {
+    expect(coverageMetadataRows("stepped", 300, 10)).toEqual([
+      "# measurement_mode: stepped",
+      "# frames_measured: 300",
+      "# clip_duration_s: 10.000",
+      "# measured_fps: 30.00",
+    ]);
+  });
+
+  it("makes an under-sampled played run visible", () => {
+    // The exact case issue #145 describes: a 10 fps clip of which one
+    // frame in nineteen was seen. Nothing else in the file says so, and
+    // averaging this alongside a complete run mixes two measurements.
+    const rows = coverageMetadataRows("played", 1, 1.9);
+    expect(rows).toContain("# measurement_mode: played");
+    expect(rows).toContain("# frames_measured: 1");
+    expect(rows).toContain("# measured_fps: 0.53");
+  });
+
+  it("says unknown rather than guessing when duration is not known", () => {
+    // A WebM from a recorder often carries no duration, which reads as
+    // Infinity. Dividing by it would print 0.00 and claim the clip was
+    // never measured, which is a lie about a real measurement.
+    const rows = coverageMetadataRows("stepped", 42, Number.POSITIVE_INFINITY);
+    expect(rows).toContain("# clip_duration_s: unknown");
+    expect(rows).toContain("# measured_fps: unknown");
+    expect(rows).toContain("# frames_measured: 42");
+  });
+
+  it("says unknown for a live session with no duration at all", () => {
+    const rows = coverageMetadataRows("live", 900, null);
+    expect(rows).toContain("# measurement_mode: live");
+    expect(rows).toContain("# clip_duration_s: unknown");
+  });
+
+  it("refuses to divide by a zero length clip", () => {
+    const rows = coverageMetadataRows("stepped", 0, 0);
+    expect(rows).toContain("# measured_fps: unknown");
   });
 });

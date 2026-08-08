@@ -25,7 +25,7 @@ export function startFrameLoop(onFrame: (nowMs: number) => void): void {
 
 type VideoFrameMetadata = { mediaTime: number };
 type VideoFrameCallback = (nowMs: number, metadata: VideoFrameMetadata) => void;
-type VideoWithFrameCallback = HTMLVideoElement & {
+export type VideoWithFrameCallback = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: VideoFrameCallback) => number;
   cancelVideoFrameCallback: (handle: number) => void;
 };
