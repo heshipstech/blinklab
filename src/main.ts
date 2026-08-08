@@ -136,6 +136,7 @@ import {
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
+  steppingProgress,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import {
@@ -255,6 +256,18 @@ clipInput.addEventListener("change", () => {
   if (file !== undefined) {
     void beginVideoFile(file);
   }
+});
+
+// Stepping a three minute clip takes minutes. Without a way out, the
+// only escape from a run started by accident is reloading the page,
+// which throws away everything measured so far.
+const stopClipButton = document.createElement("button");
+stopClipButton.textContent = "Stop measuring";
+stopClipButton.hidden = true;
+stopClipButton.setAttribute("data-testid", "stop-clip");
+stopClipButton.addEventListener("click", () => {
+  clipStopRequested = true;
+  status.textContent = "Stopping after this frame...";
 });
 
 // The per-decoded-frame loop belongs to whichever clip is loaded, so
@@ -548,21 +561,36 @@ async function beginVideoFile(file: File): Promise<void> {
       // machine's speed. See issue #145.
       measurementMode = "stepped";
       clipStopRequested = false;
-      status.textContent = "Measuring every frame...";
+      stopClipButton.hidden = false;
+      const startedAtMs = performance.now();
+      status.textContent = "Measuring every frame: 0 done.";
       const summary = await stepThroughVideo(
         video,
-        ({ mediaTimeSeconds }) => {
+        ({ mediaTimeSeconds, index }) => {
           const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
           const clockStep = acceptFrame(frameClock, nowMs);
           frameClock = clockStep.state;
           if (!clockStep.accepted) return;
           processFrame(nowMs, performance.now());
+          // Every fifteenth frame, roughly twice a second of wall time.
+          // Writing it on every frame costs a layout for a number
+          // nobody can read that fast.
+          if (index % 15 === 0) {
+            status.textContent = steppingProgress(
+              index + 1,
+              mediaTimeSeconds,
+              loadedClipDurationSeconds,
+              performance.now() - startedAtMs,
+            );
+          }
         },
         () => clipStopRequested,
       );
+      stopClipButton.hidden = true;
+      const tookSeconds = Math.round((performance.now() - startedAtMs) / 1000);
       status.textContent = summary.stoppedEarly
-        ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV, or pick another clip.`
-        : `Measured every frame: ${String(summary.framesMeasured)} of them. Export the CSV, or pick another clip.`;
+        ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
+        : `Measured every frame: ${String(summary.framesMeasured)} of them, in ${String(tookSeconds)} s. Export the CSV, or pick another clip.`;
       return;
     }
 
@@ -1902,6 +1930,7 @@ contentBox.append(
   startButton,
   clipLabel,
   stepLabel,
+  stopClipButton,
   picker,
   canvas,
   cameraLine,

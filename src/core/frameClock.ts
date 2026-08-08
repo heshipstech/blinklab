@@ -66,6 +66,57 @@ export type FrameSource = "camera" | "file";
 // belongs in the file rather than in somebody's memory.
 export type MeasurementMode = "live" | "played" | "stepped";
 
+function humanDuration(seconds: number): string {
+  if (seconds < 90) return `${String(Math.max(1, Math.round(seconds)))} s`;
+  return `${String(Math.round(seconds / 60))} min`;
+}
+
+/**
+ * What to say while a clip is being stepped.
+ *
+ * Stepping a three minute recording can take ten minutes or more, and
+ * the first version of it said only "Measuring every frame..." for the
+ * whole time. A progress line that never changes is indistinguishable
+ * from a hang, and the owner said so within minutes of the first real
+ * clip. A long wait is acceptable; a silent one is not.
+ *
+ * The estimate is deliberately withheld until a twentieth of the clip
+ * is done. Before that the sample is tiny and the model's first
+ * inference is far slower than the rest, so an early guess would be
+ * wildly wrong and then visibly shrink, which reads as a broken
+ * estimate rather than an improving one.
+ */
+export function steppingProgress(
+  framesMeasured: number,
+  mediaTimeSeconds: number,
+  durationSeconds: number | null,
+  elapsedMs: number,
+): string {
+  const counted = `Measuring every frame: ${String(framesMeasured)} done`;
+
+  if (
+    durationSeconds === null ||
+    !Number.isFinite(durationSeconds) ||
+    durationSeconds <= 0 ||
+    !Number.isFinite(mediaTimeSeconds)
+  ) {
+    return `${counted}. This can take several minutes.`;
+  }
+
+  const fraction = Math.min(1, Math.max(0, mediaTimeSeconds / durationSeconds));
+  const percent = Math.round(fraction * 100);
+
+  if (fraction < 0.05 || elapsedMs <= 0) {
+    return `${counted}, ${String(percent)}% of the clip.`;
+  }
+
+  const remainingSeconds = (elapsedMs / fraction - elapsedMs) / 1000;
+  if (remainingSeconds < 1) {
+    return `${counted}, ${String(percent)}% of the clip, almost there.`;
+  }
+  return `${counted}, ${String(percent)}% of the clip, about ${humanDuration(remainingSeconds)} left.`;
+}
+
 /**
  * The metadata rows recording how completely a session was measured.
  *

@@ -6,6 +6,7 @@ import {
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
+  steppingProgress,
 } from "../../src/core/frameClock";
 
 describe("acceptFrame", () => {
@@ -193,5 +194,49 @@ describe("coverageMetadataRows", () => {
   it("refuses to divide by a zero length clip", () => {
     const rows = coverageMetadataRows("stepped", 0, 0);
     expect(rows).toContain("# measured_fps: unknown");
+  });
+});
+
+describe("steppingProgress", () => {
+  it("reports count, percentage and an estimate once there is enough to estimate from", () => {
+    // A fifth of a 200 second clip done in 60 seconds of wall time
+    // implies four more minutes.
+    const message = steppingProgress(1200, 40, 200, 60_000);
+    expect(message).toContain("1200 done");
+    expect(message).toContain("20% of the clip");
+    expect(message).toContain("about 4 min left");
+  });
+
+  it("withholds the estimate until a twentieth of the clip is done", () => {
+    // The first inference is far slower than the rest, so an estimate
+    // from two frames would be wildly high and then visibly shrink,
+    // which reads as broken rather than as improving.
+    const message = steppingProgress(3, 2, 200, 9000);
+    expect(message).toContain("1% of the clip");
+    expect(message).not.toContain("left");
+  });
+
+  it("still says something useful when the clip has no known duration", () => {
+    // A WebM from a recorder often carries no duration, which reads as
+    // Infinity. A percentage of infinity is not a number worth showing.
+    const message = steppingProgress(500, 12, Number.POSITIVE_INFINITY, 30_000);
+    expect(message).toContain("500 done");
+    expect(message).toContain("several minutes");
+    expect(message).not.toContain("%");
+  });
+
+  it("survives a zero length clip without dividing by it", () => {
+    expect(steppingProgress(0, 0, 0, 0)).toContain("0 done");
+  });
+
+  it("never claims more than one hundred percent", () => {
+    // mediaTime can exceed a container's declared duration by a frame.
+    const message = steppingProgress(6000, 201, 200, 400_000);
+    expect(message).toContain("100% of the clip");
+  });
+
+  it("switches from seconds to minutes rather than saying 300 s", () => {
+    expect(steppingProgress(100, 10, 200, 30_000)).toContain("min left");
+    expect(steppingProgress(100, 100, 200, 30_000)).toContain("30 s left");
   });
 });
