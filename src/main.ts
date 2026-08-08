@@ -588,9 +588,19 @@ async function beginVideoFile(file: File): Promise<void> {
       );
       stopClipButton.hidden = true;
       const tookSeconds = Math.round((performance.now() - startedAtMs) / 1000);
+      // Deliberately NOT "measured every frame". The instrument cannot
+      // know how many frames a file contains, only how many it looked
+      // at, and the previous wording asserted the former from the
+      // latter. It said "measured every frame: 6655 of them" about a
+      // clip holding 12,626. Reporting the rate instead lets a person
+      // check it against a clip they know: 60 here means 60 there.
+      const rate =
+        summary.frameIntervalSeconds === null
+          ? "unknown rate"
+          : `${(1 / summary.frameIntervalSeconds).toFixed(1)} frames per second`;
       status.textContent = summary.stoppedEarly
         ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
-        : `Measured every frame: ${String(summary.framesMeasured)} of them, in ${String(tookSeconds)} s. Export the CSV, or pick another clip.`;
+        : `Measured ${String(summary.framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.`;
       return;
     }
 
