@@ -50,3 +50,19 @@ describe("cameraStateMessage", () => {
     );
   });
 });
+
+describe("a clip that will not load", () => {
+  it("speaks about the file rather than about the camera", () => {
+    // Wrapping this in the camera's message would send someone to
+    // their browser permissions to fix a file they should re-export.
+    const message = cameraStateMessage({
+      kind: "clipFailed",
+      reason:
+        "This browser could not decode clip.avi. Try an MP4 or WebM file.",
+    });
+    expect(message).toBe(
+      "This browser could not decode clip.avi. Try an MP4 or WebM file.",
+    );
+    expect(message).not.toContain("camera");
+  });
+});

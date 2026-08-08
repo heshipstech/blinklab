@@ -112,3 +112,49 @@ class TestWhatItRefuses:
         session = load_session(write(tmp_path, text))
         assert len(session.frame) == 2
         assert isinstance(session.frame, pd.DataFrame)
+
+
+class TestTheSourceOfASession:
+    """7.0 writes where a session's frames came from, and 7.4 will
+    depend on being able to tell a webcam session from a dataset clip.
+    A batch of feature CSVs that cannot say which is which would let
+    one average across both without noticing."""
+
+    def test_a_clip_session_names_its_file(self, tmp_path: Path) -> None:
+        text = (
+            "# source: file\r\n"
+            "# clip: 06_5.mp4\r\n"
+            "# kss_before: not reported\r\n"
+            "# kss_after: not reported\r\n"
+            + HEADER
+            + "\r\n"
+            + a_row(1000)
+            + "\r\n"
+            + a_row(2000)
+            + "\r\n"
+        )
+        session = load_session(write(tmp_path, text))
+        assert session.metadata["source"] == "file"
+        assert session.metadata["clip"] == "06_5.mp4"
+
+    def test_a_camera_session_claims_no_clip(self, tmp_path: Path) -> None:
+        text = (
+            "# source: camera\r\n"
+            "# clip: none\r\n"
+            + HEADER
+            + "\r\n"
+            + a_row(1000)
+            + "\r\n"
+            + a_row(2000)
+            + "\r\n"
+        )
+        session = load_session(write(tmp_path, text))
+        assert session.metadata["source"] == "camera"
+        assert session.metadata["clip"] == "none"
+
+    def test_an_older_export_has_no_source(self, tmp_path: Path) -> None:
+        # Sessions exported before 7.0 carry no source rows. They must
+        # still load, and must not silently claim to be either kind.
+        text = HEADER + "\r\n" + a_row(1000) + "\r\n" + a_row(2000) + "\r\n"
+        session = load_session(write(tmp_path, text))
+        assert "source" not in session.metadata
