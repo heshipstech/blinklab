@@ -193,19 +193,43 @@ Object.assign(navBar.style, {
   gap: "16px",
   maxWidth: "1280px",
   margin: "0 auto",
-  padding: "12px 16px",
+  padding: "12px 16px 16px 16px",
   boxSizing: "border-box",
 });
 
 const linkedInLink = document.createElement("a");
 linkedInLink.href = "https://www.linkedin.com/in/eivinasnorusaitis";
-linkedInLink.textContent = "in /eivinasnorusaitis";
+const linkedInMark = document.createElementNS(
+  "http://www.w3.org/2000/svg",
+  "svg",
+);
+linkedInMark.setAttribute("viewBox", "0 0 24 24");
+linkedInMark.setAttribute("width", "16");
+linkedInMark.setAttribute("height", "16");
+linkedInMark.setAttribute("fill", "currentColor");
+linkedInMark.setAttribute("aria-hidden", "true");
+const linkedInPath = document.createElementNS(
+  "http://www.w3.org/2000/svg",
+  "path",
+);
+linkedInPath.setAttribute(
+  "d",
+  "M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z",
+);
+linkedInMark.append(linkedInPath);
+linkedInLink.append(
+  linkedInMark,
+  document.createTextNode("/eivinasnorusaitis"),
+);
 linkedInLink.target = "_blank";
 // noopener stops the opened page from reaching back into this one
 // through window.opener, which matters more than usual here because
 // this page's whole claim is that nothing leaves the device.
 linkedInLink.rel = "noopener noreferrer";
 Object.assign(linkedInLink.style, {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
   fontSize: "13px",
   color: "#0a66c2",
   textDecoration: "none",
@@ -392,6 +416,10 @@ faceMeshLabel.append(faceMeshToggle, " Face mesh");
 faceMeshLabel.hidden = true;
 
 const resolutionLabel = document.createElement("p");
+// Pushed to the right of the toggles rather than wrapping below them,
+// which is where flex put it once three checkboxes shared the row.
+resolutionLabel.style.marginLeft = "auto";
+resolutionLabel.style.textAlign = "right";
 resolutionLabel.hidden = true;
 
 // Speaks only when the model breaks its contract. Empty otherwise.
@@ -476,8 +504,8 @@ function render(): void {
   // were the instrument's, which is a wrong number rather than a
   // missing one.
   if (!running) {
-    fpsLabel.textContent = "";
-    inferenceLabel.textContent = "";
+    writeReadout(fpsLabel, "");
+    writeReadout(inferenceLabel, "");
   }
 
   // Buttons are DISABLED rather than hidden. A greyed "Calibrate gaze"
@@ -546,8 +574,8 @@ function resetSession(): void {
   sessionStartedAtEpochMs = null;
   kssBefore = null;
   kssAfter = null;
-  featureLabel.textContent = "";
-  scoreLabel.textContent = "";
+  writeReadout(featureLabel, "");
+  writeReadout(scoreLabel, "");
   panelSummaryLabel.textContent = "";
   panelList.replaceChildren();
   // Review found this missing: without it the previous session's
@@ -575,7 +603,7 @@ function resetSession(): void {
   closureStartFrame = null;
   stabilitySamples = [];
   earSamples = [];
-  blinkShapeLabel.textContent = "";
+  writeReadout(blinkShapeLabel, "");
   refreshReplayButton();
 }
 
@@ -602,7 +630,10 @@ async function beginCamera(deviceId?: string): Promise<void> {
     measurementMode = "live";
     loadedClipDurationSeconds = null;
     fitCanvasTo(frame.widthPx, frame.heightPx);
-    resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
+    writeReadout(
+      resolutionLabel,
+      `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`,
+    );
     resetSession();
     askKss("Before you begin: how sleepy do you feel?", (rating) => {
       kssBefore = rating;
@@ -660,7 +691,10 @@ async function beginVideoFile(file: File): Promise<void> {
     const duration = Number.isFinite(clip.durationSeconds)
       ? `${clip.durationSeconds.toFixed(1)} s`
       : "unknown length";
-    resolutionLabel.textContent = `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}`;
+    writeReadout(
+      resolutionLabel,
+      `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}`,
+    );
     resetSession();
     setState({ kind: "running" });
 
@@ -1322,6 +1356,7 @@ let sessionStartedAtEpochMs: number | null = null;
 
 // The blink event log: newest on top, capped, scrolls.
 const blinkLogList = document.createElement("ul");
+blinkLogList.className = "blink-log";
 blinkLogList.setAttribute("aria-label", "Blink events");
 blinkLogList.style.maxHeight = "160px";
 blinkLogList.style.overflowY = "auto";
@@ -1339,7 +1374,7 @@ const SPARK_WINDOW_MS = 10000;
 const SPARK_EAR_MAX = 0.6;
 const sparkCanvas = document.createElement("canvas");
 sparkCanvas.width = 640;
-sparkCanvas.height = 80;
+sparkCanvas.height = 56;
 sparkCanvas.hidden = true;
 sparkCanvas.setAttribute(
   "aria-label",
@@ -1357,7 +1392,7 @@ const GAZE_TRACE_HALF = 0.3;
 function createGazeTraceCanvas(label: string): HTMLCanvasElement {
   const traceCanvas = document.createElement("canvas");
   traceCanvas.width = 640;
-  traceCanvas.height = 60;
+  traceCanvas.height = 40;
   traceCanvas.hidden = true;
   traceCanvas.setAttribute("aria-label", label);
   return traceCanvas;
@@ -1413,12 +1448,14 @@ function processFrame(
   // Only while a session runs. Off duty this loop is still ticking at
   // the DISPLAY's refresh rate, and printing that as the instrument's
   // frame rate is a wrong number rather than a missing one.
-  fpsLabel.textContent =
+  writeReadout(
+    fpsLabel,
     state.kind !== "running"
       ? ""
       : fps === null
         ? "Frames per second: measuring..."
-        : `Frames per second: ${String(Math.round(fps))}`;
+        : `Frames per second: ${String(Math.round(fps))}`,
+  );
 
   if (state.kind === "running" && canvasContext !== null) {
     const transform = frameTransform(mirrored, canvas.width);
@@ -1436,8 +1473,9 @@ function processFrame(
         performance.now() - inferenceStartMs,
         60,
       );
-      inferenceLabel.textContent = inferenceMessage(
-        meanDurationMs(inferenceSamplesMs),
+      writeReadout(
+        inferenceLabel,
+        inferenceMessage(meanDurationMs(inferenceSamplesMs)),
       );
 
       const present = isFacePresent(result);
@@ -1471,10 +1509,12 @@ function processFrame(
         const matrixData = result.facialTransformationMatrixes[0]?.data;
         const pose =
           matrixData === undefined ? null : eulerFromMatrix(matrixData);
-        headPoseLabel.textContent =
+        writeReadout(
+          headPoseLabel,
           pose === null
             ? "Head pose: no valid measurement"
-            : `Head pose, pitch: ${pose.pitchDeg.toFixed(0)}°, yaw: ${pose.yawDeg.toFixed(0)}°, roll: ${pose.rollDeg.toFixed(0)}°`;
+            : `Head pose, pitch: ${pose.pitchDeg.toFixed(0)}°, yaw: ${pose.yawDeg.toFixed(0)}°, roll: ${pose.rollDeg.toFixed(0)}°`,
+        );
         const gate = poseValidity(pose);
         gateLabel.textContent = poseValidityMessage(gate);
 
@@ -1483,10 +1523,12 @@ function processFrame(
           const leftEye = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
           const rightEar = rightEye === null ? null : eyeAspectRatio(rightEye);
           const leftEar = leftEye === null ? null : eyeAspectRatio(leftEye);
-          earLabel.textContent =
+          writeReadout(
+            earLabel,
             rightEar === null || leftEar === null
               ? "Eye aspect ratio: no valid measurement"
-              : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`;
+              : `Eye aspect ratio, right: ${rightEar.toFixed(2)}, left: ${leftEar.toFixed(2)}`,
+          );
           meanEar =
             rightEar === null || leftEar === null
               ? null
@@ -1506,10 +1548,12 @@ function processFrame(
             canvas.width,
             canvas.height,
           );
-          apertureLabel.textContent =
+          writeReadout(
+            apertureLabel,
             rightMm === null || leftMm === null
               ? "Eyelid aperture: no valid measurement"
-              : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`;
+              : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`,
+          );
 
           const rightPx = aperturePx(
             face,
@@ -1546,22 +1590,24 @@ function processFrame(
           );
           const fmt = (v: number) =>
             v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
-          gazeLabel.textContent =
+          writeReadout(
+            gazeLabel,
             rightOffset === null || leftOffset === null
               ? "Iris offset: no valid measurement"
-              : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`;
+              : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`,
+          );
 
           const meanOffset = meanIrisOffset(rightOffset, leftOffset);
           frameMeanOffset = meanOffset;
           frameOnScreen = meanOffset === null ? null : isOnScreen(meanOffset);
-          quadrantLabel.textContent = lookingTowardMessage(meanOffset);
+          writeReadout(quadrantLabel, lookingTowardMessage(meanOffset));
         } else {
           // The gate refused: numbers pause, the gap is honest, the
           // pose stays visible so you can see your way back.
-          earLabel.textContent = "Eye aspect ratio: no valid measurement";
-          apertureLabel.textContent = "Eyelid aperture: no valid measurement";
-          gazeLabel.textContent = "Iris offset: no valid measurement";
-          quadrantLabel.textContent = "Looking toward: no valid measurement";
+          writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
+          writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
+          writeReadout(gazeLabel, "Iris offset: no valid measurement");
+          writeReadout(quadrantLabel, "Looking toward: no valid measurement");
         }
 
         const project = (landmarks: readonly { x: number; y: number }[]) =>
@@ -1584,7 +1630,7 @@ function processFrame(
           const eyelidDots = project(
             pickPoints(face, [...RIGHT_EYE_INDICES, ...LEFT_EYE_INDICES]),
           );
-          drawDots(canvasContext, eyelidDots, 2, "#ffffff");
+          drawDots(canvasContext, eyelidDots, 1, "#ffffff");
 
           const irisColor = "#ff9100";
           for (const ring of [
@@ -1601,15 +1647,15 @@ function processFrame(
           const centers = project(
             pickPoints(face, [RIGHT_IRIS_CENTER_INDEX, LEFT_IRIS_CENTER_INDEX]),
           );
-          drawDots(canvasContext, centers, 2, irisColor);
+          drawDots(canvasContext, centers, 1.5, irisColor);
         }
       } else {
         // No face: the numbers must vanish, not go stale.
-        earLabel.textContent = "Eye aspect ratio: no valid measurement";
-        apertureLabel.textContent = "Eyelid aperture: no valid measurement";
-        headPoseLabel.textContent = "Head pose: no valid measurement";
-        gazeLabel.textContent = "Iris offset: no valid measurement";
-        quadrantLabel.textContent = "Looking toward: no valid measurement";
+        writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
+        writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
+        writeReadout(headPoseLabel, "Head pose: no valid measurement");
+        writeReadout(gazeLabel, "Iris offset: no valid measurement");
+        writeReadout(quadrantLabel, "Looking toward: no valid measurement");
         gateLabel.textContent = "";
       }
 
@@ -1657,8 +1703,11 @@ function processFrame(
       // bridged a lost face would be an invented stillness.
       if (smoothedGaze.smoothed === null) {
         gazeSamples = [];
-        gazeStateLabel.textContent = "Gaze state: no valid measurement";
-        fixationStatsLabel.textContent = "Fixations in the last 10 s: none yet";
+        writeReadout(gazeStateLabel, "Gaze state: no valid measurement");
+        writeReadout(
+          fixationStatsLabel,
+          "Fixations in the last 10 s: none yet",
+        );
       } else {
         gazeSamples = pushBounded(
           gazeSamples,
@@ -1679,10 +1728,12 @@ function processFrame(
         // Fixating right now means the newest fixation reaches the
         // newest sample. "Moving" covers a saccade in flight and the
         // first not-yet-long-enough moments of the next stillness.
-        gazeStateLabel.textContent =
+        writeReadout(
+          gazeStateLabel,
           lastFixation !== undefined && lastFixation.endMs === nowMs
             ? `Gaze state: fixating for ${((lastFixation.endMs - lastFixation.startMs) / 1000).toFixed(1)} s`
-            : "Gaze state: moving";
+            : "Gaze state: moving",
+        );
 
         // The statistics include the still-growing fixation at its
         // length so far: a panel that waits for the end lags the eye.
@@ -1690,10 +1741,12 @@ function processFrame(
         frameFixationStats = stats;
         frameFixating =
           lastFixation !== undefined && lastFixation.endMs === nowMs;
-        fixationStatsLabel.textContent =
+        writeReadout(
+          fixationStatsLabel,
           stats === null
             ? "Fixations in the last 10 s: none yet"
-            : `Fixations in the last 10 s: ${String(stats.count)}, duration mean ${stats.meanMs.toFixed(0)} ms, median ${stats.medianMs.toFixed(0)} ms, longest ${stats.longestMs.toFixed(0)} ms`;
+            : `Fixations in the last 10 s: ${String(stats.count)}, duration mean ${stats.meanMs.toFixed(0)} ms, median ${stats.medianMs.toFixed(0)} ms, longest ${stats.longestMs.toFixed(0)} ms`,
+        );
       }
 
       // While the heatmap overlay is up, every trusted frame adds one
@@ -1766,10 +1819,12 @@ function processFrame(
       );
       const personalMm = personalThresholdMm(baselineState);
       const secondsLeft = learningSecondsLeft(baselineState, nowMs);
-      baselineLabel.textContent =
+      writeReadout(
+        baselineLabel,
         baselineState.kind === "ready" && personalMm !== null
           ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
-          : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`;
+          : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
+      );
 
       const blinkCountBefore = blinkState.blinkCount;
       const wasOpen = blinkState.eye !== "closed";
@@ -1802,7 +1857,10 @@ function processFrame(
           }));
         const shape = analyzeClosing(window);
         if (shape !== null) {
-          blinkShapeLabel.textContent = `Last blink shape: amplitude ${shape.amplitudeMm.toFixed(1)} mm, peak closing ${shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
+          writeReadout(
+            blinkShapeLabel,
+            `Last blink shape: amplitude ${shape.amplitudeMm.toFixed(1)} mm, peak closing ${shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${shape.amplitudeOverVelocityMs.toFixed(0)} ms`,
+          );
         }
 
         sessionStartMs ??= nowMs;
@@ -1823,7 +1881,7 @@ function processFrame(
         );
       }
       if (!blinkMeasurable) {
-        blinkLabel.textContent = fpsGateMessage(fps);
+        writeReadout(blinkLabel, fpsGateMessage(fps));
       } else {
         const ratePerMin = gatedBlinkRatePerMin(fps, rateState, nowMs);
         const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
@@ -1835,7 +1893,10 @@ function processFrame(
             ? "rate: measuring..."
             : `rate: ${ratePerMin.toFixed(0)}/min`,
         );
-        blinkLabel.textContent = `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`;
+        writeReadout(
+          blinkLabel,
+          `${parts[0] ?? ""} (${parts.slice(1).join(", ")})`,
+        );
       }
 
       // Roadmap amendment 5: the long closure detector no longer
@@ -1882,8 +1943,10 @@ function processFrame(
       if (frozenShutBaselineMm === null) {
         // An asserted zero built on frames the detector never saw
         // would break the null-never-zero rule: say why instead.
-        longClosureLabel.textContent =
-          "Long closures: waiting for the baseline";
+        writeReadout(
+          longClosureLabel,
+          "Long closures: waiting for the baseline",
+        );
       } else {
         const ongoingMs = ongoingClosureMs(longClosureState, nowMs);
         const longClosureParts = [
@@ -1898,10 +1961,12 @@ function processFrame(
             `last: ${longClosureState.lastLongClosureDurationMs.toFixed(0)} ms`,
           );
         }
-        longClosureLabel.textContent =
+        writeReadout(
+          longClosureLabel,
           longClosureParts.length > 1
             ? `${longClosureParts[0] ?? ""} (${longClosureParts.slice(1).join(", ")})`
-            : (longClosureParts[0] ?? "");
+            : (longClosureParts[0] ?? ""),
+        );
       }
 
       // PERCLOS rides the same trusted aperture feed as the blink
@@ -1915,10 +1980,12 @@ function processFrame(
         frozenShutBaselineMm,
       );
       const perclos = perclosValue(perclosState, nowMs);
-      perclosLabel.textContent =
+      writeReadout(
+        perclosLabel,
         perclos === null
           ? "PERCLOS (eyes closed share, last 60 s): measuring..."
-          : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`;
+          : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`,
+      );
 
       // One typed row per second. The assembler's identity shape is
       // the honesty here: every field must be supplied, so a metric
@@ -1957,10 +2024,12 @@ function processFrame(
         sessionStartedAtEpochMs ??= Date.now();
         exportButton.disabled = featureRecords.length === 0;
         exportBlinksButton.disabled = blinkEvents.length === 0;
-        featureLabel.textContent =
+        writeReadout(
+          featureLabel,
           featureRecords.length >= 3600
             ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
-            : `Feature records: ${String(featureRecords.length)} this session (about one per second)`;
+            : `Feature records: ${String(featureRecords.length)} this session (about one per second)`,
+        );
 
         // The score reads the last minute of rows, selected by
         // TIMESTAMP inside core: a row-count window would bridge a
@@ -1974,12 +2043,14 @@ function processFrame(
         // the caveat travels WITH the number so a screenshot cannot
         // separate them, and directly beneath in smaller type honours
         // that while letting the number actually be the headline.
-        scoreLabel.textContent =
+        writeReadout(
+          scoreLabel,
           breakdown !== null
             ? `Alertness score: ${String(breakdown.score)} / 100`
             : noFaceNow === false
               ? "Alertness score: no face in frame"
-              : "Alertness score: measuring...";
+              : "Alertness score: measuring...",
+        );
 
         // The panel speaks only when a score exists: with no score
         // there is no arithmetic to explain, and an empty list under
@@ -2021,10 +2092,12 @@ function processFrame(
         .filter((value): value is number => value !== null);
       const cvPx = coefficientOfVariation(pxSeries);
       const cvMm = coefficientOfVariation(mmSeries);
-      stabilityLabel.textContent =
+      writeReadout(
+        stabilityLabel,
         cvPx === null || cvMm === null
           ? "Aperture stability: measuring..."
-          : `Aperture stability over 10 s, px CV: ${(cvPx * 100).toFixed(1)}%, mm CV: ${(cvMm * 100).toFixed(1)}%`;
+          : `Aperture stability over 10 s, px CV: ${(cvPx * 100).toFixed(1)}%, mm CV: ${(cvMm * 100).toFixed(1)}%`,
+      );
       if (sparkContext !== null) {
         sparkContext.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
         for (const segment of sparklineSegments(
@@ -2155,7 +2228,7 @@ graphStyles.textContent =
   // sized to 640 px. An even split of a 1280 column leaves about 630
   // per side once the gap is taken, which would shrink the picture.
   " .top-row { display: grid; gap: 16px; align-items: start;" +
-  "   grid-template-columns: 55fr 45fr; margin-top: 16px; }" +
+  "   grid-template-columns: 55fr 45fr; }" +
   " .top-row[hidden] { display: none; }" +
   // Below this the columns stack, and Source comes first because
   // nothing else on the page does anything until a source is running.
@@ -2190,7 +2263,35 @@ graphStyles.textContent =
   // The sleepiness options, one per row. Option 9 is 54 characters and
   // will not share a line with anything.
   " .kss-option { display: block; width: 100%; text-align: left;" +
-  "   margin: 3px 0; }";
+  "   margin: 3px 0; }" +
+  // 7. Bullets indented every blink and pushed most of them onto two
+  // lines. The list is already visually a list.
+  " .blink-log { list-style: none; padding: 0; margin: 8px 0 0 0;" +
+  "   max-height: 190px; overflow-y: auto; font-size: 12px; }" +
+  " .blink-log li { margin: 2px 0; }" +
+  // 8. Labels stay light, the measurements are bold. Split at the first
+  // colon at render time rather than in the message functions, so the
+  // tested strings in core are untouched.
+  " .value { font-weight: 600; }" +
+  // 9. Boxes hold their height as content changes, so the page does not
+  // jump every time a readout gains or loses a line. They can still
+  // grow past it; this is a floor, not a ceiling.
+  " .top-row .box { min-height: 132px; }" +
+  " .row .box { min-height: 230px; }" +
+  " #live-signals { min-height: 210px; }" +
+  // 2. Native form controls render differently in every browser, which
+  // is what made Chrome and Safari look like different products. This
+  // is not a design system, it is the cheap 90 per cent of one: one
+  // accent colour and one button shape, no dependency.
+  " input[type=checkbox] { accent-color: #1a73e8; width: 14px;" +
+  "   height: 14px; margin: 0 6px 0 0; vertical-align: -2px; }" +
+  " button { font: inherit; font-size: 13px; padding: 5px 12px;" +
+  "   border: 1px solid #c6c6c6; border-radius: 6px; background: #fff;" +
+  "   color: #1a1a1a; cursor: pointer; }" +
+  " button:hover:not(:disabled) { background: #f2f2f2; }" +
+  " button:disabled { color: #9a9a9a; background: #f5f5f5;" +
+  "   cursor: default; }" +
+  " label { font-size: 14px; }";
 document.head.append(graphStyles);
 
 const graphStrip = document.createElement("div");
@@ -2351,9 +2452,11 @@ const liveSignalsBox = box("Live signals", graphStrip, signalsFooter);
 // side once the gap is taken, which would shrink the picture.
 const topRow = document.createElement("div");
 topRow.className = "top-row";
-const leftColumn = document.createElement("div");
-leftColumn.append(alertnessBox, sessionBox);
-topRow.append(sourceBox, leftColumn);
+const rightColumn = document.createElement("div");
+rightColumn.append(alertnessBox, sessionBox);
+topRow.append(sourceBox, rightColumn);
+
+liveSignalsBox.id = "live-signals";
 
 const measurementRow = document.createElement("div");
 measurementRow.className = "row";
@@ -2374,10 +2477,17 @@ contentBox.append(topRow, liveSignalsBox, measurementRow);
 // down. The cost is fewer pixels per second of history, which over a
 // ten second window does not matter.
 function sizeGraphsToBox(): void {
-  const width = Math.max(
-    320,
-    Math.floor(graphStrip.clientWidth || contentBox.clientWidth || 1280),
-  );
+  // Measured from the BOX's content width, not the column's. The
+  // strip has no width of its own, so falling back to the column gave
+  // a buffer wider than the space it is drawn into, and the trace ran
+  // off the left edge.
+  const available = liveSignalsBox.clientWidth;
+  const style = window.getComputedStyle(liveSignalsBox);
+  const inner =
+    available -
+    parseFloat(style.paddingLeft || "0") -
+    parseFloat(style.paddingRight || "0");
+  const width = Math.max(320, Math.floor(inner || 1200));
   for (const graph of [
     sparkCanvas,
     gazeTraceHorizontalCanvas,
@@ -2386,6 +2496,7 @@ function sizeGraphsToBox(): void {
     if (graph.width !== width) {
       graph.width = width;
     }
+    graph.style.width = "100%";
     graph.classList.add("graph");
   }
 }
@@ -2413,6 +2524,28 @@ for (const [element, initial] of [
   [featureLabel, "Feature records: none yet (about one per second)"],
 ] as const) {
   element.textContent = initial;
+}
+
+// Labels light, measurements bold. Done here rather than in the
+// message functions because those are tested constants and the tests
+// assert whole sentences; this is a rendering concern and belongs at
+// the rendering edge.
+//
+// Splitting on the FIRST colon works because every readout is written
+// as "Label: value". A line with no colon is left alone rather than
+// guessed at.
+function writeReadout(element: HTMLElement, text: string): void {
+  const at = text.indexOf(": ");
+  if (at === -1) {
+    element.textContent = text;
+    return;
+  }
+  const label = document.createElement("span");
+  label.textContent = text.slice(0, at + 2);
+  const value = document.createElement("span");
+  value.className = "value";
+  value.textContent = text.slice(at + 2);
+  element.replaceChildren(label, value);
 }
 
 navBar.append(title, linkedInLink);
