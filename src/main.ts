@@ -121,6 +121,14 @@ import {
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
 import { startFrameLoop } from "./io/frameLoop";
+import { loadVideoFile, unloadVideoFile } from "./io/videoFile";
+import type { FrameClockState, FrameSource } from "./core/frameClock";
+import {
+  acceptFrame,
+  frameTimestampMs,
+  sourceMetadataRows,
+  startFrameClock,
+} from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import {
   drawDots,
@@ -191,6 +199,30 @@ video.muted = true;
 
 const canvas = document.createElement("canvas");
 let canvasContext: CanvasRenderingContext2D | null = null;
+
+// Where frames come from, and therefore which clock times them.
+let frameSource: FrameSource = "camera";
+let frameClock: FrameClockState = startFrameClock();
+let loadedClipName: string | null = null;
+
+// Uploading a clip runs it through the same pipeline as the camera,
+// which is what makes an offline dataset measurable by this instrument
+// at all. Accept only video, so the picker does not offer a photo.
+const clipInput = document.createElement("input");
+clipInput.type = "file";
+clipInput.accept = "video/*";
+clipInput.setAttribute("data-testid", "clip-input");
+const clipLabel = document.createElement("label");
+// Its own line. Inline, it collided with the Start camera button and
+// the first letter sat underneath it.
+Object.assign(clipLabel.style, { display: "block", margin: "8px 0" });
+clipLabel.append("Or measure a recorded clip: ", clipInput);
+clipInput.addEventListener("change", () => {
+  const file = clipInput.files?.[0];
+  if (file !== undefined) {
+    void beginVideoFile(file);
+  }
+});
 
 // People expect to see themselves as a mirror shows them.
 let mirrored = true;
@@ -312,58 +344,76 @@ function setState(next: CameraState): void {
   render();
 }
 
+// Everything a new session must forget. Shared by the camera and the
+// file paths, because a reset that is right for one and half-applied
+// to the other is exactly the bug that carried one session's last
+// blink duration into the next session's score.
+function resetSession(): void {
+  // Light, distance and even the person may have changed.
+  baselineState = null;
+  rateState = null;
+  blinkEvents = [];
+  sessionStartMs = null;
+  gazeSmoothing = null;
+  gazeTraces = emptyGazeTraces();
+  gazeSamples = [];
+  perclosState = emptyPerclos();
+  longClosureState = initialLongClosureState;
+  frozenShutBaselineMm = null;
+  alertState = initialAlertState;
+  featureRecords = [];
+  lastRecordAtMs = null;
+  exportButton.disabled = true;
+  sessionStartedAtEpochMs = null;
+  kssBefore = null;
+  kssAfter = null;
+  featureLabel.textContent = "";
+  scoreLabel.textContent = "";
+  panelSummaryLabel.textContent = "";
+  panelList.replaceChildren();
+  // Review found this missing: without it the previous session's
+  // last blink duration still charged the new session's score,
+  // possibly a different person's blink entirely.
+  blinkState = initialBlinkState;
+  blinkLogList.replaceChildren();
+  captureState = null;
+  calibrationRequested = false;
+  calibrationOverlay.hidden = true;
+  heatmapOpen = false;
+  heatmapOverlay.hidden = true;
+  heatmapGrid = emptyGrid();
+  scanpathSamples = [];
+  scanpathSlider.hidden = true;
+  // A new source starts a new time axis. Carrying the old clock
+  // forward would reject every frame of a clip that starts at zero.
+  frameClock = startFrameClock();
+  frameTimestampsMs = [];
+  refreshReplayButton();
+}
+
+function fitCanvasTo(widthPx: number, heightPx: number): void {
+  const display = displaySize(widthPx, heightPx, 640);
+  if (display !== null) {
+    canvas.width = display.width;
+    canvas.height = display.height;
+  }
+  canvasContext = canvas.getContext("2d");
+}
+
 async function beginCamera(deviceId?: string): Promise<void> {
   setState({ kind: "requesting" });
   stopCamera(video);
+  unloadVideoFile(video);
   try {
     const frame = await startCamera(video, deviceId);
-    const display = displaySize(frame.widthPx, frame.heightPx, 640);
-    if (display !== null) {
-      canvas.width = display.width;
-      canvas.height = display.height;
-    }
-    canvasContext = canvas.getContext("2d");
+    frameSource = "camera";
+    loadedClipName = null;
+    fitCanvasTo(frame.widthPx, frame.heightPx);
     resolutionLabel.textContent = `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`;
-    // A fresh camera start restarts the baseline and the rate window:
-    // light, distance and even the person may have changed.
-    baselineState = null;
-    rateState = null;
-    blinkEvents = [];
-    sessionStartMs = null;
-    gazeSmoothing = null;
-    gazeTraces = emptyGazeTraces();
-    gazeSamples = [];
-    perclosState = emptyPerclos();
-    longClosureState = initialLongClosureState;
-    frozenShutBaselineMm = null;
-    alertState = initialAlertState;
-    featureRecords = [];
-    lastRecordAtMs = null;
-    exportButton.disabled = true;
-    sessionStartedAtEpochMs = null;
-    kssBefore = null;
-    kssAfter = null;
+    resetSession();
     askKss("Before you begin: how sleepy do you feel?", (rating) => {
       kssBefore = rating;
     });
-    featureLabel.textContent = "";
-    scoreLabel.textContent = "";
-    panelSummaryLabel.textContent = "";
-    panelList.replaceChildren();
-    // Review found this missing: without it the previous session's
-    // last blink duration still charged the new session's score,
-    // possibly a different person's blink entirely.
-    blinkState = initialBlinkState;
-    blinkLogList.replaceChildren();
-    captureState = null;
-    calibrationRequested = false;
-    calibrationOverlay.hidden = true;
-    heatmapOpen = false;
-    heatmapOverlay.hidden = true;
-    heatmapGrid = emptyGrid();
-    scanpathSamples = [];
-    scanpathSlider.hidden = true;
-    refreshReplayButton();
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
@@ -379,6 +429,37 @@ async function beginCamera(deviceId?: string): Promise<void> {
     }
   } catch {
     // Device listing failed. The camera still runs, the picker stays hidden.
+  }
+}
+
+// A recorded clip through the same pipeline as the live camera. Same
+// video element, same landmarker, same measurements, same CSV. The one
+// thing that changes is the clock, and that is why frameSource exists.
+//
+// No KSS prompt here, unlike the camera path. Asking a person watching
+// a recording how sleepy THEY feel would attach the wrong label to the
+// wrong face. A clip's label belongs to whoever was recorded, and it
+// comes from the dataset rather than from the viewer.
+async function beginVideoFile(file: File): Promise<void> {
+  setState({ kind: "requesting" });
+  stopCamera(video);
+  try {
+    const clip = await loadVideoFile(video, file);
+    frameSource = "file";
+    loadedClipName = clip.name;
+    fitCanvasTo(clip.widthPx, clip.heightPx);
+    const duration = Number.isFinite(clip.durationSeconds)
+      ? `${clip.durationSeconds.toFixed(1)} s`
+      : "unknown length";
+    resolutionLabel.textContent = `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}`;
+    resetSession();
+    setState({ kind: "running" });
+    void ensureLandmarker();
+  } catch (error: unknown) {
+    frameSource = "camera";
+    const reason =
+      error instanceof Error ? error.message : "That file could not be read.";
+    setState({ kind: "clipFailed", reason });
   }
 }
 
@@ -845,10 +926,10 @@ function askKss(
 }
 
 function exportSession(): void {
-  const csv = serializeRecords(
-    featureRecords,
-    kssMetadataRows(kssBefore, kssAfter),
-  );
+  const csv = serializeRecords(featureRecords, [
+    ...sourceMetadataRows(frameSource, loadedClipName),
+    ...kssMetadataRows(kssBefore, kssAfter),
+  ]);
   if (csv === null) {
     return;
   }
@@ -972,7 +1053,23 @@ let gazeSamples: GazeSample[] = [];
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
 
-startFrameLoop((nowMs) => {
+startFrameLoop((wallClockMs) => {
+  // The pipeline's clock. Live from a camera that is the wall clock,
+  // and the wall clock is right because the camera and the room share
+  // it. A recorded clip does not share it, so a clip is timed by its
+  // own position. Everything below this line reads nowMs and therefore
+  // needs no knowledge of which source it came from.
+  const nowMs = frameTimestampMs(frameSource, wallClockMs, video.currentTime);
+
+  const clockStep = acceptFrame(frameClock, nowMs);
+  frameClock = clockStep.state;
+  if (!clockStep.accepted) {
+    // The same decoded frame offered to two display ticks, or a seek
+    // backwards. Processing it again would count it twice in every
+    // rolling window: blink rate, PERCLOS, the baseline, all of them.
+    return;
+  }
+
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
   const fps = measureFps(frameTimestampsMs);
@@ -987,7 +1084,11 @@ startFrameLoop((nowMs) => {
 
     if (landmarker !== null) {
       const inferenceStartMs = performance.now();
-      const result = landmarker.detectForVideo(video, nowMs);
+      // MediaPipe wants a strictly increasing clock of its own, and
+      // uses it only to order frames internally. The wall clock is
+      // always that, and it survives a switch from camera to file,
+      // which a media clock restarting at zero would not.
+      const result = landmarker.detectForVideo(video, wallClockMs);
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
         performance.now() - inferenceStartMs,
@@ -1655,6 +1756,7 @@ cameraLine.append(mirrorLabel, resolutionLabel);
 contentBox.append(
   title,
   startButton,
+  clipLabel,
   picker,
   canvas,
   cameraLine,
