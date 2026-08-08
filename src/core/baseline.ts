@@ -1,5 +1,7 @@
 import {
   BASELINE_LEARN_MS,
+  BASELINE_MEDIAN_CEILING_FACTOR,
+  BASELINE_MEDIAN_PERCENTILE,
   BASELINE_MIN_SAMPLES,
   BASELINE_PERCENTILE,
   BASELINE_RECENT_CAP,
@@ -13,6 +15,17 @@ import { percentile } from "./statistics";
 // Learned over thirty seconds, then allowed to rise but never fall,
 // so a drooping lid, the very thing later phases want to notice,
 // cannot quietly lower the bar that would expose it.
+//
+// Fix #126 added a ceiling to the rise. Never falling is right; being
+// able to rise without limit was not, because the baseline is a p90
+// and a p90 is what a brief excursion moves. The ceiling is a
+// multiple of the window's MEDIAN, which a brief excursion barely
+// touches, so the two together say: the bar may climb when the eye
+// genuinely opens wider, and may not climb because the eye was
+// surprised for two seconds.
+//
+// The ceiling blocks rises only. It never forces a fall, or a
+// drooping lid would lower its own bar through the back door.
 export type BaselineState =
   | { kind: "learning"; startedAtMs: number; samples: number[] }
   | { kind: "ready"; baselineMm: number; recent: number[] };
@@ -34,7 +47,7 @@ export function baselineStep(
       elapsed >= BASELINE_LEARN_MS &&
       samples.length >= BASELINE_MIN_SAMPLES
     ) {
-      const baselineMm = percentile(samples, BASELINE_PERCENTILE);
+      const baselineMm = boundedBaseline(samples);
       if (baselineMm !== null) {
         return { kind: "ready", baselineMm, recent: [] };
       }
@@ -48,13 +61,26 @@ export function baselineStep(
   const recent = pushBounded(state.recent, apertureMm, BASELINE_RECENT_CAP);
   let baselineMm = state.baselineMm;
   if (recent.length >= BASELINE_RISE_MIN_SAMPLES) {
-    const candidate = percentile(recent, BASELINE_PERCENTILE);
-    // The rule of this whole increment: max, never min.
+    const candidate = boundedBaseline(recent);
+    // The rule of this whole increment: max, never min. The ceiling
+    // is inside `candidate`, so a bounded rise that is no longer a
+    // rise simply does not happen, and nothing ever falls.
     if (candidate !== null && candidate > baselineMm) {
       baselineMm = candidate;
     }
   }
   return { kind: "ready", baselineMm, recent };
+}
+
+// The p90 of a window, held under a multiple of that window's own
+// median. Null only when the window is empty.
+function boundedBaseline(samples: readonly number[]): number | null {
+  const wide = percentile(samples, BASELINE_PERCENTILE);
+  const middle = percentile(samples, BASELINE_MEDIAN_PERCENTILE);
+  if (wide === null || middle === null) {
+    return wide;
+  }
+  return Math.min(wide, middle * BASELINE_MEDIAN_CEILING_FACTOR);
 }
 
 export function personalThresholdMm(state: BaselineState): number | null {

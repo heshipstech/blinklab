@@ -73,6 +73,24 @@ export const BASELINE_THRESHOLD_FRACTION = 0.5;
 export const BASELINE_RECENT_CAP = 600;
 export const BASELINE_RISE_MIN_SAMPLES = 300;
 
+// The ratchet's ceiling, fix #126. The baseline is a p90, and a p90
+// is exactly what a brief excursion moves: sixty frames of surprise
+// in a six hundred frame window lift it a long way, and since the
+// baseline never falls, that lift lasts the whole session. Once half
+// the baseline exceeds the resting aperture, the blink line sits
+// ABOVE the open eye, every closure is timed from a crossing that
+// happened at rest, durations inflate and shapes flatten. That is
+// what the owner's own session did: a 10.7 mm baseline over a 5.25 mm
+// resting eye.
+//
+// The MEDIAN of the same window barely moves under a brief
+// excursion, which is what makes it a good ceiling. At 1.4 the blink
+// line can never exceed seventy percent of the typical open
+// aperture, while an ordinary session's p90 to median ratio is about
+// 1.12, so nothing is constrained where nothing was broken.
+export const BASELINE_MEDIAN_CEILING_FACTOR = 1.4;
+export const BASELINE_MEDIAN_PERCENTILE = 50;
+
 // Beyond these head angles, eye landmarks foreshorten and occlude
 // enough that measurements would be guesses. Symmetric on purpose,
 // so axis sign conventions never matter to the gate.
