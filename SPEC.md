@@ -79,6 +79,32 @@ Increment 6.7 writes a session to a file, which is where this project's data bec
 - **Session-level facts are comment lines, not columns.** The KSS answers (6.8) are written above the header as `# kss_before: N (anchor text)` and `# kss_after: ...`, or `skipped`. A per-session value must never become a per-second column: repeated three thousand times it would let a model treat one answer as three thousand independent observations. A reader skips these with pandas' `comment="#"`. Both lines are always present when the increment is available, because "asked and declined" is data and an absent line is not.
 - Non-finite numbers (NaN, the infinities) are written as empty fields. The FeatureRecord schema refuses them upstream, so one reaching the serialiser means something broke; writing the word "NaN" would be worse than useless, since pandas reads it as a missing value and a broken computation would become indistinguishable from an honest "not measured".
 
+### The blink log export
+
+A second file, and deliberately separate. The per-second record answers
+"what were the eyes doing during this second". The blink log answers
+"when did each blink happen". Events cannot be squeezed into a
+per-second table without losing every blink after the first in any
+given second, and at a resting rate of fifteen a minute that is not
+rare.
+
+- Columns, in order: `startFrame`, `endFrame`, `atMs`, `durationMs`,
+  `amplitudeMm`, `peakClosingVelocityMmPerS`, `amplitudeOverVelocityMs`.
+- **The frame numbers are the reason it exists.** A human annotator
+  marks blinks BY FRAME, so a comparison against ground truth has to
+  happen in frames. Milliseconds cannot substitute, because our clock
+  and theirs agree only if the frame rate is exactly what both assumed.
+- `startFrame` and `endFrame` are **empty for a live camera**, where a
+  frame number means nothing to anyone. They are populated for a clip.
+- Same encoding rules as the per-second file: RFC 4180, CRLF endings,
+  and an empty field means NOT MEASURED rather than zero. A blink whose
+  shape could not be analysed writes empty amplitude and velocity, never
+  zero, because a blink of zero amplitude is a real and very different
+  claim about somebody's eyelid.
+- A session with no blinks exports nothing rather than a lone header,
+  for the same reason the per-second file does.
+- Carries the same `source`, `clip` and coverage metadata block.
+
 The file is written to the user's own device through the browser's download path. There is no server, and the export does not change the project's privacy stance.
 
 ## Conventions

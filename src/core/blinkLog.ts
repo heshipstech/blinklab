@@ -8,6 +8,14 @@ export type BlinkEvent = {
   atMs: number;
   durationMs: number;
   shape: BlinkShape | null;
+  // Which frames the closure spanned. Null for a live camera, where
+  // "frame 900" means nothing to anyone. For a clip they are the whole
+  // point: a human annotator marks blinks BY FRAME NUMBER, so a
+  // comparison against ground truth can only happen in those terms.
+  // Milliseconds cannot substitute, because the annotator's clock and
+  // ours agree only if the frame rate is exactly what both assumed.
+  startFrame: number | null;
+  endFrame: number | null;
 };
 
 export function appendEvent(
@@ -27,4 +35,59 @@ export function formatBlinkEvent(
       ? "shape unavailable"
       : `${event.shape.amplitudeMm.toFixed(1)} mm at ${event.shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${event.shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
   return `${relativeS} s, ${event.durationMs.toFixed(0)} ms, ${shapeText}`;
+}
+
+// The columns of the blink log export. Deliberately separate from the
+// per-second FeatureRecord CSV, because a blink is an EVENT and a
+// second is an interval, and squeezing events into a per-second table
+// loses every blink after the first in any given second.
+export const BLINK_CSV_COLUMNS = [
+  "startFrame",
+  "endFrame",
+  "atMs",
+  "durationMs",
+  "amplitudeMm",
+  "peakClosingVelocityMmPerS",
+  "amplitudeOverVelocityMs",
+] as const;
+
+function cell(value: number | null | undefined): string {
+  // Same rule as the per-second export: an empty field means NOT
+  // MEASURED, never zero. A blink whose shape could not be analysed
+  // must not read as a blink of zero amplitude.
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "";
+  }
+  return String(value);
+}
+
+/**
+ * Serialise the blink log, one row per blink.
+ *
+ * Returns null when there are no blinks, rather than a lone header. A
+ * header with no rows claims a session in which blinks were looked for
+ * and none found, which is a different fact from no session at all,
+ * and the per-second exporter makes the same refusal for the same
+ * reason.
+ */
+export function serialiseBlinkEvents(
+  events: readonly BlinkEvent[],
+  metadataRows: readonly string[] = [],
+): string | null {
+  if (events.length === 0) return null;
+  const lines = [...metadataRows, BLINK_CSV_COLUMNS.join(",")];
+  for (const event of events) {
+    lines.push(
+      [
+        cell(event.startFrame),
+        cell(event.endFrame),
+        cell(event.atMs),
+        cell(event.durationMs),
+        cell(event.shape?.amplitudeMm),
+        cell(event.shape?.peakClosingVelocityMmPerS),
+        cell(event.shape?.amplitudeOverVelocityMs),
+      ].join(","),
+    );
+  }
+  return lines.join("\r\n") + "\r\n";
 }

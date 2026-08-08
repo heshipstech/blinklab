@@ -86,6 +86,7 @@ import { replayIndex, sliderTime } from "./core/replay";
 import {
   appendEvent,
   formatBlinkEvent,
+  serialiseBlinkEvents,
   type BlinkEvent,
 } from "./core/blinkLog";
 import { analyzeClosing } from "./core/blinkShape";
@@ -216,6 +217,11 @@ let loadedClipName: string | null = null;
 let measurementMode: MeasurementMode = "live";
 let framesMeasured = 0;
 let loadedClipDurationSeconds: number | null = null;
+let currentFrameIndex: number | null = null;
+// The frame on which the eyelid first crossed the blink line. Held
+// here rather than in the reducer, which is pure and knows nothing
+// about frames.
+let closureStartFrame: number | null = null;
 
 // Uploading a clip runs it through the same pipeline as the camera,
 // which is what makes an offline dataset measurable by this instrument
@@ -429,6 +435,7 @@ function resetSession(): void {
   featureRecords = [];
   lastRecordAtMs = null;
   exportButton.disabled = true;
+  exportBlinksButton.disabled = true;
   sessionStartedAtEpochMs = null;
   kssBefore = null;
   kssAfter = null;
@@ -457,6 +464,8 @@ function resetSession(): void {
   // dangerous: a clip's first blink shape was computed from the
   // PREVIOUS session's aperture trace and exported as this clip's.
   framesMeasured = 0;
+  currentFrameIndex = null;
+  closureStartFrame = null;
   stabilitySamples = [];
   earSamples = [];
   blinkShapeLabel.textContent = "";
@@ -571,7 +580,7 @@ async function beginVideoFile(file: File): Promise<void> {
           const clockStep = acceptFrame(frameClock, nowMs);
           frameClock = clockStep.state;
           if (!clockStep.accepted) return;
-          processFrame(nowMs, performance.now());
+          processFrame(nowMs, performance.now(), index);
           // Every fifteenth frame, roughly twice a second of wall time.
           // Writing it on every frame costs a layout for a number
           // nobody can read that fast.
@@ -1129,6 +1138,37 @@ const exportButton = document.createElement("button");
 exportButton.textContent = "Export CSV";
 exportButton.hidden = true;
 exportButton.disabled = true;
+// A second export, and a separate one on purpose. The per-second file
+// answers "what were the eyes doing during this second". This one
+// answers "when did each blink happen". Squeezing events into a
+// per-second table loses every blink after the first in any given
+// second, and at a resting rate of fifteen a minute that is not rare.
+//
+// The frame numbers are why this exists at all. A human annotator marks
+// blinks BY FRAME, so any comparison against ground truth has to happen
+// in frames. Milliseconds cannot substitute: our clock and theirs agree
+// only if the frame rate is exactly what both assumed.
+const exportBlinksButton = document.createElement("button");
+exportBlinksButton.textContent = "Export blink log";
+exportBlinksButton.disabled = true;
+exportBlinksButton.setAttribute("data-testid", "export-blinks");
+exportBlinksButton.addEventListener("click", () => {
+  const csv = serialiseBlinkEvents(blinkEvents, [
+    ...sourceMetadataRows(frameSource, loadedClipName),
+    ...coverageMetadataRows(
+      measurementMode,
+      framesMeasured,
+      loadedClipDurationSeconds,
+    ),
+  ]);
+  if (csv === null) return;
+  const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("Z", "");
+  downloadTextFile(`blinklab-blinks-${stamp}.csv`, csv, "text/csv");
+});
+
 exportButton.addEventListener("click", () => {
   // The after answer is asked once, on the first export, so the
   // question arrives when the session is actually over rather than
@@ -1245,8 +1285,17 @@ let inferenceSamplesMs: number[] = [];
 // clock: the wall clock live, the clip's own media time for a file.
 // wallClockMs is kept separately because MediaPipe wants a strictly
 // increasing number of its own that survives a change of source.
-function processFrame(nowMs: number, wallClockMs: number): void {
+function processFrame(
+  nowMs: number,
+  wallClockMs: number,
+  // Which frame of the source this is. A clip counts from zero and the
+  // number means something to an annotator; a camera counts frames
+  // since the session began and it means nothing to anyone, which is
+  // why it is written to the blink log only for clips.
+  frameIndex: number | null = null,
+): void {
   framesMeasured += 1;
+  currentFrameIndex = frameIndex;
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
   const fps = measureFps(frameTimestampsMs);
@@ -1596,6 +1645,7 @@ function processFrame(nowMs: number, wallClockMs: number): void {
           : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`;
 
       const blinkCountBefore = blinkState.blinkCount;
+      const wasOpen = blinkState.eye !== "closed";
       const blinkMeasurable = measurableAtFps(fps);
       blinkState = blinkStep(
         blinkState,
@@ -1604,6 +1654,9 @@ function processFrame(nowMs: number, wallClockMs: number): void {
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       rateState ??= startRate(nowMs);
+      if (wasOpen && blinkState.eye === "closed") {
+        closureStartFrame = currentFrameIndex;
+      }
       if (blinkState.blinkCount > blinkCountBefore) {
         rateState = recordBlink(rateState, nowMs);
 
@@ -1630,7 +1683,10 @@ function processFrame(nowMs: number, wallClockMs: number): void {
           atMs: nowMs,
           durationMs: blinkState.lastBlinkDurationMs ?? 0,
           shape,
+          startFrame: closureStartFrame,
+          endFrame: currentFrameIndex,
         });
+        closureStartFrame = null;
         blinkLogList.replaceChildren(
           ...[...blinkEvents].reverse().map((event) => {
             const item = document.createElement("li");
@@ -1773,6 +1829,7 @@ function processFrame(nowMs: number, wallClockMs: number): void {
         // from timestamps, never from row counts.
         sessionStartedAtEpochMs ??= Date.now();
         exportButton.disabled = featureRecords.length === 0;
+        exportBlinksButton.disabled = blinkEvents.length === 0;
         featureLabel.textContent =
           featureRecords.length >= 3600
             ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
@@ -1984,6 +2041,7 @@ contentBox.append(
   alertBanner,
   featureLabel,
   exportButton,
+  exportBlinksButton,
   kssPanel,
   blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
