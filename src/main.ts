@@ -758,6 +758,19 @@ async function beginVideoFile(file: File): Promise<void> {
         summary.frameIntervalSeconds === null
           ? "unknown rate"
           : `${(1 / summary.frameIntervalSeconds).toFixed(1)} frames per second`;
+      if (summary.frameIntervalSeconds === null) {
+        // The frame rate could not be established, so there is no
+        // honest schedule to step on. Refusing beats the old fallback,
+        // which assumed 60 fps and therefore visited every frame of a
+        // 30 fps clip twice while reporting a perfectly ordinary
+        // looking result.
+        setState({
+          kind: "clipFailed",
+          reason:
+            "Could not work out this clip's frame rate, so it cannot be measured frame by frame. Try re-saving it as a constant frame rate MP4.",
+        });
+        return;
+      }
       if (summary.framesMeasured === 0) {
         // Zero is not a result, it is a failure, and reporting it in
         // the same sentence as a real measurement is the same
