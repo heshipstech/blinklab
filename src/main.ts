@@ -71,7 +71,7 @@ import {
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
-import { demoNoticeText } from "./core/notice";
+import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -408,6 +408,19 @@ function render(): void {
     recorder.button.hidden = state.kind !== "running";
   }
   startButton.hidden = state.kind === "running" || state.kind === "requesting";
+
+  // Whole boxes rather than their contents. Before the boxes existed
+  // each readout hid itself, and two were simply missed: the frame
+  // counter and the blink log export sat on an unstarted page, the
+  // counter cheerfully reporting the DISPLAY's refresh rate as though
+  // it were the instrument's. Hiding the container cannot forget a
+  // child, which is the point of doing it here.
+  //
+  // Source stays, because it is how a session begins.
+  videoArea.hidden = state.kind !== "running";
+  alertnessBox.hidden = state.kind !== "running";
+  measurementRow.hidden = state.kind !== "running";
+  selfRow.hidden = state.kind !== "running";
 }
 
 function setState(next: CameraState): void {
@@ -1842,12 +1855,18 @@ function processFrame(
         const breakdown = scoreRecords(featureRecords);
         const noFaceNow =
           featureRecords[featureRecords.length - 1]?.faceDetected;
+        // The number and its caveat are separated into two lines, one
+        // large and one small, rather than run together in one long
+        // sentence where neither reads. Increment 6.9's rule was that
+        // the caveat travels WITH the number so a screenshot cannot
+        // separate them, and directly beneath in smaller type honours
+        // that while letting the number actually be the headline.
         scoreLabel.textContent =
           breakdown !== null
-            ? `Alertness score: ${String(breakdown.score)} / 100 (demo, not a safety or medical device)`
+            ? `Alertness score: ${String(breakdown.score)} / 100`
             : noFaceNow === false
-              ? "Alertness score: no face in frame (demo, not a safety or medical device)"
-              : "Alertness score: measuring... (demo, not a safety or medical device)";
+              ? "Alertness score: no face in frame"
+              : "Alertness score: measuring...";
 
         // The panel speaks only when a score exists: with no score
         // there is no arithmetic to explain, and an empty list under
@@ -1975,7 +1994,50 @@ graphStyles.textContent =
   // full width strip and the notice fall short of the window edge.
   // The centred column keeps its own padding so it stays readable
   // on a narrow window once the body margin is gone.
-  " body { margin: 0; }";
+  // An explicit background and text colour, which the page never had.
+  // Without them the browser paints its own canvas from the viewer's
+  // system theme while the text stays black, so on a machine set to
+  // dark mode the whole page rendered black on black. Nobody noticed
+  // for six phases because it was just legible enough to squint at.
+  //
+  // Fixed rather than made theme-aware on purpose: this page's job
+  // includes being screenshotted and filmed, and a demo that looks
+  // different depending on the viewer's settings is a demo you cannot
+  // reason about.
+  " body { margin: 0; background: #ffffff; color: #1a1a1a;" +
+  "   font-family: system-ui, -apple-system, sans-serif; }" +
+  // The box system. Three tiers, and the tiers are the point: the
+  // score is the claim, the measurements are the evidence, and the
+  // instrument's own health is neither. Before this every readout had
+  // the same visual weight, so a stranger could not tell in two
+  // seconds which number the project is actually about.
+  //
+  // Rules live here rather than in inline styles because an inline
+  // `display` beats the `hidden` attribute, which is how three empty
+  // canvases once appeared above an unstarted page.
+  " .box { border: 1px solid #d4d4d4; border-radius: 8px;" +
+  "   padding: 12px 16px; margin: 0 0 16px 0; background: #fbfbfb; }" +
+  " .box[hidden] { display: none; }" +
+  " .box > h2 { font-size: 12px; text-transform: uppercase;" +
+  "   letter-spacing: 0.08em; color: #666; margin: 0 0 8px 0;" +
+  "   font-weight: 600; }" +
+  " .box p { margin: 4px 0; }" +
+  // Tier 2 sits three across on a wide window and stacks on a narrow
+  // one. auto-fit with a minimum keeps that behaviour without a media
+  // query having to guess a breakpoint.
+  " .row { display: grid; gap: 16px;" +
+  "   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));" +
+  "   align-items: start; }" +
+  // display:grid beats the `hidden` attribute, exactly as an inline
+  // display would, so hidden has to be restored explicitly.
+  " .row[hidden] { display: none; }" +
+  // The headline. The only large type on the page.
+  " .headline { font-size: 26px; font-weight: 700; margin: 0 0 6px 0;" +
+  "   line-height: 1.25; }" +
+  // Tier 3 is deliberately quieter than the measurements above it.
+  " .quiet { font-size: 12px; color: #555; }" +
+  " .quiet p { margin: 2px 0; }" +
+  " .caveat { font-size: 12px; color: #666; margin: 0 0 10px 0; }";
 document.head.append(graphStyles);
 
 const graphStrip = document.createElement("div");
@@ -1987,11 +2049,11 @@ graphStrip.append(
 
 // Everything else lives in one centred column. On a wide monitor the
 // readouts used to hug the far left, which meant reading them turned
-// the head while the instrument was measuring; 1200 pixels brings
+// the head while the instrument was measuring; 1280 pixels brings
 // them near the middle, where the gaze angle is small.
 const contentBox = document.createElement("div");
 Object.assign(contentBox.style, {
-  maxWidth: "1200px",
+  maxWidth: "1280px",
   margin: "0 auto",
   padding: "0 16px",
   boxSizing: "border-box",
@@ -2006,46 +2068,116 @@ Object.assign(cameraLine.style, {
 });
 cameraLine.append(mirrorLabel, resolutionLabel);
 
-contentBox.append(
-  title,
+// The boxes. Each one answers a different question, and grouping them
+// is what lets a stranger read the page without being told where to
+// look. Assembling them here, in one place, also means the page's
+// structure is legible in the source rather than scattered.
+function box(heading: string, ...children: Element[]): HTMLDivElement {
+  const element = document.createElement("div");
+  element.className = "box";
+  const title = document.createElement("h2");
+  title.textContent = heading;
+  element.append(title, ...children);
+  return element;
+}
+
+const sourceBox = box(
+  "Source",
   startButton,
   clipLabel,
   stepLabel,
   stopClipButton,
   picker,
-  canvas,
-  cameraLine,
-  modelStatus,
   status,
+  modelStatus,
+);
+
+// The picture is not in a box. It is the thing being measured rather
+// than a measurement, and a heading above it would be noise.
+const videoArea = document.createElement("div");
+videoArea.append(canvas, cameraLine);
+
+// Always present, never conditional, never dismissible. It sits inside
+// the same box as the number so a screenshot of one carries the other.
+const scoreCaveat = document.createElement("p");
+scoreCaveat.className = "caveat";
+scoreCaveat.textContent = demoNoticeShort();
+
+const alertnessBox = box(
+  "Alertness",
   scoreLabel,
+  scoreCaveat,
   panelSummaryLabel,
   panelList,
-  fpsLabel,
-  inferenceLabel,
-  earLabel,
+  alertBanner,
+);
+scoreLabel.className = "headline";
+
+const blinksBox = box(
+  "Blinks",
+  blinkLabel,
+  baselineLabel,
+  blinkShapeLabel,
+  blinkLogList,
+);
+
+const eyesBox = box(
+  "Eyes",
   apertureLabel,
+  earLabel,
   stabilityLabel,
-  headPoseLabel,
+  perclosLabel,
+  longClosureLabel,
+);
+
+// Head pose and the pose gate live with gaze rather than with the
+// instrument readouts, because they explain why the gaze lines above
+// them go quiet. Next to "frames per second" they would explain
+// nothing.
+const gazeBox = box(
+  "Gaze",
   gazeLabel,
   quadrantLabel,
   gazeStateLabel,
   fixationStatsLabel,
+  headPoseLabel,
+  gateLabel,
   calibrateButton,
   heatmapButton,
   replayButton,
-  gateLabel,
-  blinkLabel,
-  baselineLabel,
-  blinkShapeLabel,
-  perclosLabel,
-  longClosureLabel,
-  alertBanner,
+);
+
+const measurementRow = document.createElement("div");
+measurementRow.className = "row";
+measurementRow.append(blinksBox, eyesBox, gazeBox);
+
+const sessionBox = box(
+  "Session",
   featureLabel,
   exportButton,
   exportBlinksButton,
   kssPanel,
-  blinkLogList,
   ...(recorder !== null ? [recorder.button] : []),
+);
+sessionBox.classList.add("quiet");
+
+// Two things only. Putting frames per second beside blink rate implies
+// they are the same kind of fact, and they are not: one describes the
+// eyes, the other describes the tool looking at them.
+const instrumentBox = box("Instrument", fpsLabel, inferenceLabel);
+instrumentBox.classList.add("quiet");
+
+const selfRow = document.createElement("div");
+selfRow.className = "row";
+selfRow.append(sessionBox, instrumentBox);
+
+contentBox.append(
+  title,
+  sourceBox,
+  videoArea,
+  alertnessBox,
+  measurementRow,
+  selfRow,
 );
 
 // The graph canvases carry their own pixel buffers, and the drawing

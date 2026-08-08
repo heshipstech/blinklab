@@ -16,3 +16,18 @@ export const DEMO_NOTICE =
 export function demoNoticeText(): string {
   return DEMO_NOTICE;
 }
+
+// The short form, for standing beside the score. It is a separate
+// tested constant rather than a substring of the long one, because the
+// two say different amounts and a substring would break silently the
+// moment anyone rewords the sentence it was cut from.
+//
+// It must still carry the two claims that matter most: this is a demo,
+// and it is not a medical device. Everything else can live in the full
+// notice at the top of the page, which is always visible anyway.
+export const DEMO_NOTICE_SHORT =
+  "Demo, not a safety or medical device. Not diagnostic.";
+
+export function demoNoticeShort(): string {
+  return DEMO_NOTICE_SHORT;
+}
