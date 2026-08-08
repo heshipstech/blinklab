@@ -4,6 +4,7 @@ import { EYES_SHUT_FRACTION } from "../../src/core/longClosure";
 import perclosSource from "../../src/core/perclos.ts?raw";
 import {
   emptyPerclos,
+  PERCLOS_STALE_MS,
   PERCLOS_CLOSED_FRACTION,
   PERCLOS_MIN_OBSERVED_MS,
   perclosStep,
@@ -118,6 +119,87 @@ describe("the observation minimum", () => {
 
   it("returns null for an empty state", () => {
     expect(perclosValue(emptyPerclos(), 0)).toBeNull();
+  });
+});
+
+describe("a window that stopped receiving samples, fix #122", () => {
+  // The owner's own recording caught this: they left the frame after
+  // a closure and PERCLOS climbed from 20.5 to 22.1 percent across
+  // eight seconds with faceDetected false throughout. No new
+  // evidence, a rising number, because the OPEN samples aged out of
+  // the window first and left the closed ones behind.
+  function seatedThenGone(): PerclosState {
+    let state = emptyPerclos();
+    let t = 0;
+    // Fifty seconds awake, then ten seconds of closure, the shape
+    // that loads the window with closed samples.
+    for (let i = 0; i < 50 * 30; i++) {
+      state = perclosStep(state, t, OPEN_MM, BASELINE_MM);
+      t += DT_MS;
+    }
+    for (let i = 0; i < 10 * 30; i++) {
+      state = perclosStep(state, t, CLOSED_MM, BASELINE_MM);
+      t += DT_MS;
+    }
+    return state;
+  }
+
+  it("refuses rather than drifting once the samples stop", () => {
+    const state = seatedThenGone();
+    const lastSampleMs = 60 * 30 * DT_MS - DT_MS;
+    // Still answering while the samples are fresh.
+    expect(perclosValue(state, lastSampleMs)).not.toBeNull();
+    // Ten seconds later, with nobody in the chair, it must refuse
+    // instead of reporting a number that has been climbing on its
+    // own the whole time.
+    expect(perclosValue(state, lastSampleMs + 10000)).toBeNull();
+  });
+
+  it("proves the drift it exists to prevent", () => {
+    // Without the staleness rule this is what the owner saw: the
+    // same state, no new samples, and a rising answer. The test
+    // reaches past the guard by asking within the stale window.
+    const state = seatedThenGone();
+    const lastSampleMs = 60 * 30 * DT_MS - DT_MS;
+    const atRest = perclosValue(state, lastSampleMs) ?? 0;
+    const twoSecondsLater =
+      perclosValue(state, lastSampleMs + PERCLOS_STALE_MS) ?? 0;
+    expect(twoSecondsLater).toBeGreaterThan(atRest);
+  });
+
+  it("runs the staleness boundary trio", () => {
+    const state = seatedThenGone();
+    const lastSampleMs = 60 * 30 * DT_MS - DT_MS;
+    expect(
+      perclosValue(state, lastSampleMs + PERCLOS_STALE_MS - 1),
+    ).not.toBeNull();
+    expect(perclosValue(state, lastSampleMs + PERCLOS_STALE_MS)).not.toBeNull();
+    expect(perclosValue(state, lastSampleMs + PERCLOS_STALE_MS + 1)).toBeNull();
+  });
+
+  it("resumes the moment samples return", () => {
+    let state = seatedThenGone();
+    const lastSampleMs = 60 * 30 * DT_MS - DT_MS;
+    const goneMs = lastSampleMs + 10000;
+    expect(perclosValue(state, goneMs)).toBeNull();
+    state = perclosStep(state, goneMs + DT_MS, OPEN_MM, BASELINE_MM);
+    expect(perclosValue(state, goneMs + DT_MS)).not.toBeNull();
+  });
+
+  it("does not refuse during an ordinary long closure", () => {
+    // Closed eyes still produce an aperture reading, so a genuine
+    // closure keeps the samples flowing and must keep answering.
+    let state = emptyPerclos();
+    let t = 0;
+    for (let i = 0; i < 30 * 30; i++) {
+      state = perclosStep(state, t, OPEN_MM, BASELINE_MM);
+      t += DT_MS;
+    }
+    for (let i = 0; i < 20 * 30; i++) {
+      state = perclosStep(state, t, CLOSED_MM, BASELINE_MM);
+      t += DT_MS;
+    }
+    expect(perclosValue(state, t - DT_MS)).toBeGreaterThan(0.3);
   });
 });
 
