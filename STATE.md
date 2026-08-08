@@ -1,5 +1,5 @@
 Last increment: 7.3, DATASETS.md and the licensing gate, which returned NO
-Last commit: on branch feat/7.3-datasets-gate, pull request pending
+Last commit: squash merge of pull request #143 on 2026-08-08
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing, awaiting a decision on the gate
 Next increment: undecided, because 7.3's gate failed and rows 7.4 to 7.7 are held for replanning under amendment 7. Two tracks are described in DATASETS.md. Track A, validating blink detection against the GPL3 blink-annotated benchmark set, needs no permission from anyone and can start whenever. Track B, a drowsiness classifier on UTA-RLDD, is defensible but the dataset carries no licence at all, so it is the maintainer's judgement call and is tracked in issue #142. Both tracks need 7.0, video upload mode, which is not built.
