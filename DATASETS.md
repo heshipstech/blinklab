@@ -71,7 +71,32 @@ ground truth is a real, publishable result, and it is the one external check thi
 project can run today with nothing to ask and nobody to email. It does not need a
 drowsiness label because it is not a drowsiness claim.
 
-**Part two, which is a judgement call and carries residual risk.** UTA-RLDD is
+**Part two is now settled, and the answer is yes.** On 8 August 2026 the
+maintainer emailed Professor Vassilis Athitsos, the senior author and
+head of the lab that released UTA-RLDD, describing the exact proposed
+use: compute per-second numeric features locally, publish only those
+numbers and evaluation metrics, publish no frames or images of any
+kind, keep subject identifiers pseudonymous, cite the CVPR Workshops
+2019 paper, and disclose that the project is connected to a commercial
+venture. He replied the same day granting permission to publish the
+features and any associated results.
+
+That reply is kept privately by the maintainer rather than reproduced
+here. Permission to publish derived features is not permission to
+publish someone's correspondence, and asking for one does not grant the
+other.
+
+What the permission does and does not change is worth being exact
+about. It resolves the absence of a licence, which was the whole
+objection: there is now an explicit grant from the rights holder for
+this specific use. It does not dissolve the safeguards below, and they
+stay in force, because the participants recorded themselves and the
+terms they agreed to are published nowhere, so no author can grant
+rights over a face beyond what its owner allowed. Numbers only, never a
+frame, pseudonymous identifiers, source video deleted once features are
+computed, and the 2019 paper cited prominently.
+
+**The original counter-case, kept on the record.** UTA-RLDD is
 the only dataset with the video, the labels and the subject identity this project
 needs, and its problem is an absence of terms rather than a restriction. The
 supporting evidence is unusually good for an unlicensed dataset: the authors call
@@ -88,9 +113,13 @@ commercial context is less sympathetic than a university one. The realistic bad
 outcome is not a lawsuit but a takedown request and public embarrassment on a
 repository attached to a startup.
 
-Because that risk lands on the project's owner rather than on the code, part two
-is recorded here as a recommendation and not as a decision. The decision, and the
-resulting ROADMAP amendment, are tracked in
+That counter-case was written before the permission arrived and is left
+standing deliberately, because a decision that only records the
+reasoning which supported it is not a record of a decision. The risk it
+describes was real when it was written, and the permission is what
+retired it.
+
+The decision and its amendment are tracked in
 [issue #142](https://github.com/heshipstech/blinklab/issues/142).
 
 ## The central finding
@@ -254,11 +283,16 @@ from primary sources, all pointing one way:
 That last point is the crux. The proposed Phase 7 artefact is the same class of
 thing the dataset's own creators already published openly and permissively.
 
-Two honest complications. The videos were self-recorded by each participant on
-their own phone, so first-instance copyright vested in the participants, and the
-lab's rights came through a consent form whose terms are not published anywhere.
-That caps how much comfort any permission email could give, because the authors
-may not hold the rights to grant. Separately, the site states that only 36 of 60
+**Written permission was granted on 8 August 2026** by Professor Vassilis
+Athitsos, the senior author, for exactly the use proposed here: publishing
+derived numeric features and evaluation results. The absence of a licence is
+therefore no longer the obstacle it was.
+
+One honest complication survives that permission. The videos were self-recorded
+by each participant on their own phone, so first-instance copyright vested in
+the participants, and the lab's rights came through a consent form whose terms
+are not published anywhere. No author can grant rights over a face beyond what
+its owner allowed, which is why the safeguards below are not relaxed. Separately, the site states that only 36 of 60
 participants agreed to have their faces published, and the mapping is not
 released, so **no frame from this dataset may ever be published**.
 
