@@ -22,9 +22,10 @@ async function uploadGeneratedClip(
   page: import("@playwright/test").Page,
   fileName: string,
   frameCount = 20,
+  frameGapMs = 100,
 ): Promise<void> {
   await page.evaluate(
-    async ([name, width, height, frames]) => {
+    async ([name, width, height, frames, gap]) => {
       const canvas = document.createElement("canvas");
       canvas.width = width as number;
       canvas.height = height as number;
@@ -55,7 +56,7 @@ async function uploadGeneratedClip(
         context.fillStyle = frame % 2 === 0 ? "#202020" : "#d0d0d0";
         context.fillRect(0, 0, width as number, height as number);
         track.requestFrame();
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, gap as number));
       }
 
       await new Promise<void>((resolve) => {
@@ -77,7 +78,7 @@ async function uploadGeneratedClip(
       input.files = transfer.files;
       input.dispatchEvent(new Event("change", { bubbles: true }));
     },
-    [fileName, CLIP_WIDTH, CLIP_HEIGHT, frameCount] as const,
+    [fileName, CLIP_WIDTH, CLIP_HEIGHT, frameCount, frameGapMs] as const,
   );
 }
 
@@ -178,40 +179,37 @@ test("a file the browser cannot decode fails as a clip, not as a camera", async 
   expect(await failure.textContent()).not.toContain("camera");
 });
 
-test("stepping measures every frame, however slow the model is", async ({
-  page,
-}) => {
-  // The reason 7.4 exists. Watching a clip measures it at whatever rate
-  // the model manages on this machine: in CI that was one frame in
-  // nineteen, because inference took 3230 ms against a clip running at
-  // 10 frames per second. Stepping pauses the clip for each frame, so
-  // the count depends on the file rather than on the hardware. Slow, so
-  // the clip is deliberately short.
+test("stepping measures every frame of a fast clip", async ({ page }) => {
+  // THE REGRESSION TEST. The previous version of this test used a 10
+  // frames per second clip, and at 100 ms between frames nothing could
+  // slip through the old play-and-pause stepper, so it passed while the
+  // stepper was measuring barely half of a real recording.
+  //
+  // The owner's own 60 fps clip is what exposed it: 12,626 frames in
+  // the file, 6,655 measured, and the app reported "measured every
+  // frame". Worse, the shortfall tracked how busy the machine was,
+  // which is the exact dependence stepping exists to remove.
+  //
+  // So this clip pushes frames as fast as the browser will take them,
+  // and the assertion is on the COUNT, not on a rate. Anything that
+  // lets a frame slip fails here.
   test.setTimeout(300_000);
   await page.goto("./");
   await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
 
-  // Stepping is the default, and that is itself worth asserting: a
-  // measuring instrument should be correct unless told otherwise.
   await expect(page.getByTestId("step-toggle")).toBeChecked();
 
-  const FRAMES = 8;
-  await uploadGeneratedClip(page, "stepped-clip.webm", FRAMES);
+  const FRAMES = 40;
+  await uploadGeneratedClip(page, "fast-clip.webm", FRAMES, 16);
 
-  await expect(
-    page.getByText("Measuring every frame", { exact: false }),
-  ).toBeVisible({ timeout: 60_000 });
-
-  const finished = page.getByText("Measured every frame:", { exact: false });
+  const finished = page.getByText("Measured", { exact: false });
   await expect(finished).toBeVisible({ timeout: 240_000 });
 
-  // The load bearing number. Watching this clip in CI would report one
-  // or two frames; stepping must report essentially all of them. The
-  // range is loose at the top because an encoder may emit a duplicate
-  // or a trailing frame, and tight at the bottom because that is where
-  // the bug being fixed lives.
   const text = (await finished.textContent()) ?? "";
-  const measured = Number(/(\d+)/.exec(text)?.[1] ?? Number.NaN);
+  const measured = Number(/Measured (\d+)/.exec(text)?.[1] ?? Number.NaN);
+
+  // Within one frame of what was pushed. The old stepper returned
+  // roughly half on a clip this fast.
   expect(measured).toBeGreaterThanOrEqual(FRAMES - 1);
-  expect(measured).toBeLessThanOrEqual(FRAMES + 3);
+  expect(measured).toBeLessThanOrEqual(FRAMES + 1);
 });
