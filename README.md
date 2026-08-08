@@ -31,6 +31,35 @@ This project's rule is that a limitation you know about belongs in the open.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
 - An uploaded clip can be measured two ways and the file records which. Stepped, the default, seeks to every frame in turn and waits for the measurement, so the result depends on the recording rather than on your computer. Watched plays in real time and is capped by how fast the model runs, so a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate, and the app reports the rate it detected so you can check it against a clip you know.
 
+## Does it give the same answer twice?
+
+A measuring instrument that answers differently on different computers is
+not measuring the thing. So the same 70 second recording was run through
+two browser engines on one machine, stepping every frame:
+
+|                     | Chrome     | Safari     |
+| ------------------- | ---------- | ---------- |
+| Frames measured     | 4,202      | 4,203      |
+| Frame rate detected | 59.99      | 60.00      |
+| Long closures found | 1          | 1          |
+| PERCLOS peak        | 34.3%      | 34.5%      |
+| Eyes shut           | 49 to 58 s | 49 to 58 s |
+
+The file contains 4,202 frames. **Blink rate per minute was identical in
+both browsers to the last decimal**, across all 71 seconds. Eyelid
+aperture differed by 0.02 mm on average and the learned personal
+baseline by 0.4 percent, which is what sampling a frame a fraction
+earlier during a blink costs.
+
+This is worth stating because the first version of stepped measurement
+failed it badly, and failed it invisibly. It played the clip and paused
+on each frame, which cannot outrun a video advancing in real time, so it
+measured 6,655 frames of a 12,626 frame recording and reported "measured
+every frame". How many it lost depended on how busy the machine was. The
+current version seeks to each frame instead and does not care.
+
+Safari's extra frame was the final one counted twice, which is fixed.
+
 ## Privacy
 
 Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend, no analytics and no telemetry. The CSV export writes a file to your own disk and uploads nothing.
