@@ -237,6 +237,23 @@ export async function stepThroughVideo(
       ? landing.mediaTimeSeconds
       : index * step;
 
+    // The last frame, twice. Near the end of a clip the schedule can
+    // aim at a target that is still inside the duration but lands on
+    // the final frame again, and counting it a second time makes the
+    // instrument claim more frames than the file contains. Safari did
+    // this on a real 4,202 frame recording and reported 4,203.
+    //
+    // Only checked when the landing is exact, because an inexact
+    // landing reports the target rather than the frame and would stop
+    // the run at the first repeat that was not one.
+    if (
+      landing.exact &&
+      lastMediaTimeSeconds !== null &&
+      mediaTimeSeconds <= lastMediaTimeSeconds
+    ) {
+      break;
+    }
+
     await onFrame({ mediaTimeSeconds, index });
     lastMediaTimeSeconds = mediaTimeSeconds;
     index += 1;
