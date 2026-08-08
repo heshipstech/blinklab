@@ -42,34 +42,64 @@ const SEEK_TIMEOUT_MS = 2000;
 // Sampled to learn the clip's frame interval before stepping begins.
 const CALIBRATION_FRAMES = 5;
 
-function nextFrame(
+// How long to let the frame callback answer after `seeked` has
+// already fired, before settling for the less precise reading.
+const FRAME_GRACE_MS = 60;
+
+// Seeking, and finding out where we landed.
+//
+// Two signals can tell us a seek finished, and browsers disagree about
+// which arrives. requestVideoFrameCallback carries the frame's true
+// media time, which is what we want. The `seeked` event carries no
+// frame information but is more reliably delivered on a paused video.
+// So both are awaited and the better answer is preferred, rather than
+// depending on one and hanging when it does not come.
+type SeekLanding = {
+  mediaTimeSeconds: number;
+  exact: boolean;
+};
+
+function seekTo(
   video: VideoWithFrameCallback,
+  timeSeconds: number,
   timeoutMs = SEEK_TIMEOUT_MS,
-): Promise<number | null> {
+): Promise<SeekLanding | null> {
   return new Promise((resolve) => {
     let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      resolve(null);
-    }, timeoutMs);
+    let seekedFired = false;
 
-    video.requestVideoFrameCallback((_nowMs, metadata) => {
+    function finish(landing: SeekLanding | null): void {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve(metadata.mediaTime);
-    });
-  });
-}
+      video.removeEventListener("seeked", onSeeked);
+      resolve(landing);
+    }
 
-async function seekTo(
-  video: VideoWithFrameCallback,
-  timeSeconds: number,
-): Promise<number | null> {
-  const pending = nextFrame(video);
-  video.currentTime = timeSeconds;
-  return pending;
+    // A little grace after `seeked` so the frame callback, which knows
+    // the true media time, gets a chance to win before falling back to
+    // currentTime, which only reports where we aimed.
+    function onSeeked(): void {
+      seekedFired = true;
+      setTimeout(() => {
+        finish({ mediaTimeSeconds: video.currentTime, exact: false });
+      }, FRAME_GRACE_MS);
+    }
+
+    const timer = setTimeout(() => {
+      finish(
+        seekedFired
+          ? { mediaTimeSeconds: video.currentTime, exact: false }
+          : null,
+      );
+    }, timeoutMs);
+
+    video.addEventListener("seeked", onSeeked);
+    video.requestVideoFrameCallback((_nowMs, metadata) => {
+      finish({ mediaTimeSeconds: metadata.mediaTime, exact: true });
+    });
+    video.currentTime = timeSeconds;
+  });
 }
 
 /**
@@ -86,8 +116,9 @@ async function measureFrameInterval(
   const times: number[] = [];
   let probe = 0;
   for (let attempt = 0; attempt < CALIBRATION_FRAMES * 2; attempt += 1) {
-    const mediaTime = await seekTo(video, probe);
-    if (mediaTime === null) break;
+    const landing = await seekTo(video, probe);
+    if (landing === null) break;
+    const mediaTime = landing.mediaTimeSeconds;
     const newest = times.at(-1);
     if (newest === undefined || mediaTime > newest) {
       times.push(mediaTime);
@@ -160,8 +191,9 @@ export async function stepThroughVideo(
     }
     if (duration !== null && target > duration) break;
 
-    const mediaTimeSeconds = await seekTo(video, target);
-    if (mediaTimeSeconds === null) break;
+    const landing = await seekTo(video, target);
+    if (landing === null) break;
+    const mediaTimeSeconds = landing.mediaTimeSeconds;
 
     if (
       lastMediaTimeSeconds !== null &&

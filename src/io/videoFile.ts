@@ -34,6 +34,11 @@ export async function loadVideoFile(
   const url = URL.createObjectURL(file);
   currentObjectUrl = url;
   video.srcObject = null;
+  // Safari will not fetch a video's data until something asks for it,
+  // and a stepped run never plays, so every seek stalled waiting for
+  // bytes that were never requested. The owner's first Safari run
+  // measured zero frames because of this. "auto" says fetch it now.
+  video.preload = "auto";
   video.src = url;
 
   await new Promise<void>((resolve, reject) => {
@@ -53,9 +58,14 @@ export async function loadVideoFile(
       );
     }
     function cleanup(): void {
+      video.removeEventListener("canplay", onLoaded);
       video.removeEventListener("loadedmetadata", onLoaded);
       video.removeEventListener("error", onError);
     }
+    // canplay rather than loadedmetadata: metadata gives dimensions
+    // and duration, but a stepped run needs actual frame data, and
+    // starting to seek before any exists is what stalled Safari.
+    video.addEventListener("canplay", onLoaded);
     video.addEventListener("loadedmetadata", onLoaded);
     video.addEventListener("error", onError);
   });

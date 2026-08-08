@@ -26,6 +26,17 @@ export default defineConfig({
         },
       },
     },
+    // WebKit joined after a bug that only Safari had: a stepped clip
+    // measured zero frames there while Chromium measured every one.
+    // A chromium-only suite could never have caught it, and the owner
+    // found it by hand. Camera tests stay chromium-only, since WebKit
+    // has no fake camera flag, so the clip tests are the ones that run
+    // here and clips are exactly where the difference lives.
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+      testMatch: /videoFile\.spec\.ts/,
+    },
   ],
   webServer: {
     // Build first, every time: the test must see the current code,

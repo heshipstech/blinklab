@@ -598,6 +598,19 @@ async function beginVideoFile(file: File): Promise<void> {
         summary.frameIntervalSeconds === null
           ? "unknown rate"
           : `${(1 / summary.frameIntervalSeconds).toFixed(1)} frames per second`;
+      if (summary.framesMeasured === 0) {
+        // Zero is not a result, it is a failure, and reporting it in
+        // the same sentence as a real measurement is the same
+        // dishonesty as claiming every frame was measured. Safari did
+        // exactly this on the owner's machine: "Measured 0 frames"
+        // read like an outcome rather than the breakage it was.
+        setState({
+          kind: "clipFailed",
+          reason:
+            "No frames could be read from this clip. The file loaded, but seeking through it produced nothing. Try another browser, or re-save the clip as MP4.",
+        });
+        return;
+      }
       status.textContent = summary.stoppedEarly
         ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
         : `Measured ${String(summary.framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.`;
