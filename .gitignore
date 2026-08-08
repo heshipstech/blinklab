@@ -50,3 +50,8 @@ __pycache__/
 *.mkv
 blinklab-session-*.csv
 recordings/
+
+# Except the synthetic test clip, which is generated from a recorded
+# command and contains nothing but a test pattern. See
+# test/fixtures/README.md.
+!test/fixtures/*.mp4

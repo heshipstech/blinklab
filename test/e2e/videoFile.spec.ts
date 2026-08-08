@@ -18,69 +18,14 @@ import { expect, test } from "@playwright/test";
 const CLIP_WIDTH = 320;
 const CLIP_HEIGHT = 240;
 
-async function uploadGeneratedClip(
-  page: import("@playwright/test").Page,
-  fileName: string,
-  frameCount = 20,
-  frameGapMs = 100,
-): Promise<void> {
-  await page.evaluate(
-    async ([name, width, height, frames, gap]) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = width as number;
-      canvas.height = height as number;
-      const maybeContext = canvas.getContext("2d");
-      if (maybeContext === null) throw new Error("no 2d context");
-      // Re-bound after the guard so the narrowing survives into the
-      // draw closure below, which TypeScript will not do for a
-      // hoisted function declaration.
-      const context = maybeContext;
-
-      // captureStream(0) emits nothing on its own, so each frame is
-      // pushed by hand at a known interval. That makes the clip a
-      // genuine 10 frames per second, which matters: 10 is far below
-      // any display refresh rate, so a frame rate readout near 10 can
-      // only have come from the clip's own decoded frames.
-      const stream = canvas.captureStream(0);
-      const [track] = stream.getVideoTracks() as [
-        CanvasCaptureMediaStreamTrack,
-      ];
-      const chunks: Blob[] = [];
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
-      recorder.addEventListener("dataavailable", (event) => {
-        chunks.push(event.data);
-      });
-      recorder.start();
-
-      for (let frame = 0; frame < (frames as number); frame += 1) {
-        context.fillStyle = frame % 2 === 0 ? "#202020" : "#d0d0d0";
-        context.fillRect(0, 0, width as number, height as number);
-        track.requestFrame();
-        await new Promise((resolve) => setTimeout(resolve, gap as number));
-      }
-
-      await new Promise<void>((resolve) => {
-        recorder.addEventListener("stop", () => {
-          resolve();
-        });
-        recorder.stop();
-      });
-
-      const file = new File([new Blob(chunks, { type: "video/webm" })], name, {
-        type: "video/webm",
-      });
-      const transfer = new DataTransfer();
-      transfer.items.add(file);
-      const input = document.querySelector<HTMLInputElement>(
-        '[data-testid="clip-input"]',
-      );
-      if (input === null) throw new Error("no clip input on the page");
-      input.files = transfer.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    },
-    [fileName, CLIP_WIDTH, CLIP_HEIGHT, frameCount, frameGapMs] as const,
-  );
-}
+// A committed fixture rather than a clip built in the browser. The
+// previous version recorded a canvas through MediaRecorder, which works
+// on a developer's Mac and does not exist at all in WebKit on Linux, so
+// the cross-browser tests could never run in continuous integration.
+// See test/fixtures/README.md for how it is generated and why 60 frames
+// per second is the point.
+const FIXTURE = "test/fixtures/clip-60fps-60frames.mp4";
+const FIXTURE_FRAMES = 60;
 
 test("a recorded clip loads and runs through the same pipeline", async ({
   page,
@@ -101,14 +46,14 @@ test("a recorded clip loads and runs through the same pipeline", async ({
   // Stepping has its own test below.
   await page.getByTestId("step-toggle").uncheck();
 
-  await uploadGeneratedClip(page, "sample-clip.webm");
+  await page.getByTestId("clip-input").setInputFiles(FIXTURE);
 
   // The clip is decoded and described by name and true dimensions.
   // Reaching this line means loadVideoFile resolved on loadedmetadata,
   // so the browser really parsed the container.
   await expect(
     page.getByText(
-      `Clip: sample-clip.webm, ${String(CLIP_WIDTH)} x ${String(CLIP_HEIGHT)} pixels`,
+      `Clip: clip-60fps-60frames.mp4, ${String(CLIP_WIDTH)} x ${String(CLIP_HEIGHT)} pixels`,
       { exact: false },
     ),
   ).toBeVisible({ timeout: 30_000 });
@@ -199,8 +144,7 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
 
   await expect(page.getByTestId("step-toggle")).toBeChecked();
 
-  const FRAMES = 40;
-  await uploadGeneratedClip(page, "fast-clip.webm", FRAMES, 16);
+  await page.getByTestId("clip-input").setInputFiles(FIXTURE);
 
   const finished = page.getByText("Measured", { exact: false });
   await expect(finished).toBeVisible({ timeout: 240_000 });
@@ -210,6 +154,6 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
 
   // Within one frame of what was pushed. The old stepper returned
   // roughly half on a clip this fast.
-  expect(measured).toBeGreaterThanOrEqual(FRAMES - 1);
-  expect(measured).toBeLessThanOrEqual(FRAMES + 1);
+  expect(measured).toBeGreaterThanOrEqual(FIXTURE_FRAMES - 1);
+  expect(measured).toBeLessThanOrEqual(FIXTURE_FRAMES + 1);
 });
