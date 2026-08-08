@@ -83,15 +83,18 @@ export function frameTimestampMs(
  * and an analysis that cannot tell them apart will eventually average
  * across both.
  *
- * A clip name is written verbatim, including any newline someone put
- * in a filename, so the comment prefix is repeated on every line. A
- * bare newline here would end the comment and inject a data row.
+ * Any line break in a filename is flattened to a space, because a
+ * break would end the comment and the rest of the name would parse as
+ * a data row. All three kinds are flattened, not only newline: a bare
+ * carriage return is a line break to a CSV reader too, and this
+ * project's own Python loader reads the file in universal newline
+ * mode, where a lone \r ends the line exactly as \n does.
  */
 export function sourceMetadataRows(
   source: FrameSource,
   clipName: string | null,
 ): string[] {
-  const safeName = (clipName ?? "").replace(/\r?\n/g, " ");
+  const safeName = (clipName ?? "").replace(/\r\n|\r|\n/g, " ");
   return [
     `# source: ${source}`,
     `# clip: ${source === "file" && safeName !== "" ? safeName : "none"}`,

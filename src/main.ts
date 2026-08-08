@@ -120,7 +120,12 @@ import {
 } from "./io/calibrationStore";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
-import { startFrameLoop } from "./io/frameLoop";
+import type { VideoFrameLoop } from "./io/frameLoop";
+import {
+  startFrameLoop,
+  startVideoFrameLoop,
+  supportsVideoFrameCallback,
+} from "./io/frameLoop";
 import { loadVideoFile, unloadVideoFile } from "./io/videoFile";
 import type { FrameClockState, FrameSource } from "./core/frameClock";
 import {
@@ -219,9 +224,29 @@ Object.assign(clipLabel.style, { display: "block", margin: "8px 0" });
 clipLabel.append("Or measure a recorded clip: ", clipInput);
 clipInput.addEventListener("change", () => {
   const file = clipInput.files?.[0];
+  // Cleared so that picking the SAME file again fires another change
+  // event. Without this a clip that failed, or one that finished and
+  // needs a second run, cannot be retried without reloading the page.
+  clipInput.value = "";
   if (file !== undefined) {
     void beginVideoFile(file);
   }
+});
+
+// The per-decoded-frame loop belongs to whichever clip is loaded, so
+// it is stopped whenever the source changes or the clip ends.
+let clipLoop: VideoFrameLoop | null = null;
+
+// A finished clip must stop claiming to be running. Every readout
+// would otherwise freeze on its last value while the page still says
+// the session is live, and the export button would sit there beside a
+// number that stopped being true.
+video.addEventListener("ended", () => {
+  if (frameSource !== "file") return;
+  clipLoop?.stop();
+  clipLoop = null;
+  status.textContent =
+    "The clip finished. Export the CSV, or pick another clip.";
 });
 
 // People expect to see themselves as a mirror shows them.
@@ -388,6 +413,12 @@ function resetSession(): void {
   // forward would reject every frame of a clip that starts at zero.
   frameClock = startFrameClock();
   frameTimestampsMs = [];
+  // Review found these two missed, and the new clock made the omission
+  // dangerous: a clip's first blink shape was computed from the
+  // PREVIOUS session's aperture trace and exported as this clip's.
+  stabilitySamples = [];
+  earSamples = [];
+  blinkShapeLabel.textContent = "";
   refreshReplayButton();
 }
 
@@ -443,7 +474,21 @@ async function beginCamera(deviceId?: string): Promise<void> {
 async function beginVideoFile(file: File): Promise<void> {
   setState({ kind: "requesting" });
   stopCamera(video);
+  clipLoop?.stop();
+  clipLoop = null;
   try {
+    // Refuse rather than mislead. Without a per-decoded-frame callback
+    // the only available clock is an interpolated currentTime, which
+    // would make a 10 frame per second clip report the display's rate
+    // and sail through the frame rate gate that exists to refuse
+    // sources too coarse to see a blink. Wrong numbers are worse than
+    // no numbers.
+    if (!supportsVideoFrameCallback(video)) {
+      throw new Error(
+        "This browser cannot measure a clip accurately, because it cannot report individual video frames. Try Chrome, Edge or Safari. The live camera still works here.",
+      );
+    }
+
     const clip = await loadVideoFile(video, file);
     frameSource = "file";
     loadedClipName = clip.name;
@@ -454,9 +499,28 @@ async function beginVideoFile(file: File): Promise<void> {
     resolutionLabel.textContent = `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}`;
     resetSession();
     setState({ kind: "running" });
-    void ensureLandmarker();
+
+    // Awaited, not fired and forgotten. The model takes seconds to
+    // fetch and initialise, and the clip is still paused until it is
+    // ready, so no part of the recording is consumed unmeasured.
+    status.textContent = "Loading the model before the clip starts...";
+    await ensureLandmarker();
+    status.textContent = "";
+
+    clipLoop = startVideoFrameLoop(video, (mediaTimeSeconds) => {
+      const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
+      const clockStep = acceptFrame(frameClock, nowMs);
+      frameClock = clockStep.state;
+      if (!clockStep.accepted) return;
+      processFrame(nowMs, performance.now());
+    });
+
+    await video.play();
   } catch (error: unknown) {
     frameSource = "camera";
+    loadedClipName = null;
+    clipLoop?.stop();
+    clipLoop = null;
     const reason =
       error instanceof Error ? error.message : "That file could not be read.";
     setState({ kind: "clipFailed", reason });
@@ -950,7 +1014,12 @@ exportButton.addEventListener("click", () => {
   // The after answer is asked once, on the first export, so the
   // question arrives when the session is actually over rather than
   // interrupting it.
-  if (kssAfter === null) {
+  // Never on a clip. The camera path already skips the "before"
+  // question for this reason and the "after" question was missed:
+  // asking whoever is watching a recording how sleepy THEY feel would
+  // write the viewer's answer into the file as the recorded person's
+  // label, which is the exact mislabelling a dataset exists to avoid.
+  if (kssAfter === null && frameSource === "camera") {
     askKss("How sleepy do you feel now?", (rating) => {
       kssAfter = rating;
       exportSession();
@@ -1053,23 +1122,11 @@ let gazeSamples: GazeSample[] = [];
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
 
-startFrameLoop((wallClockMs) => {
-  // The pipeline's clock. Live from a camera that is the wall clock,
-  // and the wall clock is right because the camera and the room share
-  // it. A recorded clip does not share it, so a clip is timed by its
-  // own position. Everything below this line reads nowMs and therefore
-  // needs no knowledge of which source it came from.
-  const nowMs = frameTimestampMs(frameSource, wallClockMs, video.currentTime);
-
-  const clockStep = acceptFrame(frameClock, nowMs);
-  frameClock = clockStep.state;
-  if (!clockStep.accepted) {
-    // The same decoded frame offered to two display ticks, or a seek
-    // backwards. Processing it again would count it twice in every
-    // rolling window: blink rate, PERCLOS, the baseline, all of them.
-    return;
-  }
-
+// One frame, already accepted by the clock. nowMs is the pipeline's
+// clock: the wall clock live, the clip's own media time for a file.
+// wallClockMs is kept separately because MediaPipe wants a strictly
+// increasing number of its own that survives a change of source.
+function processFrame(nowMs: number, wallClockMs: number): void {
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
   const fps = measureFps(frameTimestampsMs);
@@ -1311,7 +1368,16 @@ startFrameLoop((wallClockMs) => {
           gazeSamples,
           { timestampMs: nowMs, offset: smoothedGaze.smoothed },
           1200,
-        ).filter((sample) => nowMs - sample.timestampMs <= SPARK_WINDOW_MS);
+        ).filter(
+          // Two sided on purpose. The old one sided test asked only
+          // whether a sample was too OLD, which is a subtraction, and a
+          // subtraction changes sign when the clock restarts at zero for
+          // a new clip. Every stale sample then read as negative age and
+          // survived forever. A sample from the future is not a sample.
+          (sample) =>
+            sample.timestampMs <= nowMs &&
+            nowMs - sample.timestampMs <= SPARK_WINDOW_MS,
+        );
         const fixations = detectFixations(gazeSamples);
         const lastFixation = fixations[fixations.length - 1];
         // Fixating right now means the newest fixation reaches the
@@ -1627,7 +1693,16 @@ startFrameLoop((wallClockMs) => {
         stabilitySamples,
         { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
         1200,
-      ).filter((sample) => nowMs - sample.timestampMs <= SPARK_WINDOW_MS);
+      ).filter(
+        // Two sided on purpose. The old one sided test asked only
+        // whether a sample was too OLD, which is a subtraction, and a
+        // subtraction changes sign when the clock restarts at zero for
+        // a new clip. Every stale sample then read as negative age and
+        // survived forever. A sample from the future is not a sample.
+        (sample) =>
+          sample.timestampMs <= nowMs &&
+          nowMs - sample.timestampMs <= SPARK_WINDOW_MS,
+      );
       const pxSeries = stabilitySamples
         .map((sample) => sample.px)
         .filter((value): value is number => value !== null);
@@ -1706,7 +1781,7 @@ startFrameLoop((wallClockMs) => {
       );
     }
   }
-});
+}
 
 // The graph strip sits at the very top and spans the whole window,
 // so one screenshot of the top of the page carries the traces plus
@@ -1820,3 +1895,14 @@ app.append(
   heatmapOverlay,
 );
 render();
+
+// The display loop drives the camera. A clip is driven by its own
+// decoded frames instead, so this returns early in file mode rather
+// than sampling an interpolated currentTime sixty times a second.
+startFrameLoop((wallClockMs) => {
+  if (frameSource === "file") return;
+  const clockStep = acceptFrame(frameClock, wallClockMs);
+  frameClock = clockStep.state;
+  if (!clockStep.accepted) return;
+  processFrame(wallClockMs, wallClockMs);
+});

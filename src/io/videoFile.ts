@@ -60,8 +60,13 @@ export async function loadVideoFile(
     video.addEventListener("error", onError);
   });
 
-  await video.play();
-
+  // Deliberately NOT played here. The landmarker takes seconds to
+  // download and initialise, and a clip playing during that wait loses
+  // its opening seconds with no way to get them back. A live camera
+  // can afford it because the person keeps sitting there. A recording
+  // cannot: the head of the data is simply gone, and the exported CSV
+  // is short at the start with nothing saying why. The caller starts
+  // playback once the model is ready.
   return {
     widthPx: video.videoWidth,
     heightPx: video.videoHeight,

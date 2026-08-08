@@ -21,9 +21,20 @@ describe("acceptFrame", () => {
     expect(second.state.lastAcceptedMs).toBe(133);
   });
 
-  it("rejects the same timestamp twice, which is the duplicate frame", () => {
-    // A 30 fps clip offers the same decoded frame to two 60 Hz ticks.
-    // Counting it twice would double it in every rolling window.
+  it("rejects the same timestamp twice", () => {
+    // Correcting a claim this test used to make. It said a 30 fps clip
+    // offers the same decoded frame to two 60 Hz display ticks, and
+    // that a media clock would show them as one timestamp. That is
+    // false: video.currentTime is INTERPOLATED during playback, so it
+    // reads a different value on every tick. Review proved it on a
+    // real 10 fps clip, where 482 display ticks produced 482 distinct
+    // timestamps for 21 decoded frames. The fix was to stop sampling
+    // currentTime at all and drive clips from requestVideoFrameCallback,
+    // whose mediaTime IS frame quantised.
+    //
+    // The gate still earns its place. A frame callback repeats the same
+    // mediaTime when playback stalls or pauses, and a repeated
+    // timestamp must never be counted twice in a rolling window.
     const first = acceptFrame(startFrameClock(), 100);
     const second = acceptFrame(first.state, 100);
     expect(second.accepted).toBe(false);
@@ -50,8 +61,9 @@ describe("acceptFrame", () => {
   });
 
   it("keeps rejecting duplicates without drifting the accepted time", () => {
-    // Six 60 Hz ticks over three 30 fps frames: accept, reject, accept,
-    // reject, accept, reject. The clock must land on the third frame.
+    // A stalled clip: each media time is delivered twice before the
+    // next frame decodes. The clock must land on the third frame, not
+    // somewhere between.
     let state = startFrameClock();
     const offered = [0, 0, 33.3, 33.3, 66.6, 66.6];
     const accepted: number[] = [];
@@ -120,6 +132,16 @@ describe("sourceMetadataRows", () => {
       "# source: file",
       "# clip: none",
     ]);
+  });
+
+  it("flattens a bare carriage return, not only a newline", () => {
+    // Review found this gap. The old pattern was /\r?\n/, which leaves
+    // a lone \r untouched, and a lone \r ends a line for a CSV reader
+    // and for Python's universal newline mode, so this project's own
+    // loader would refuse the file it had just written.
+    const rows = sourceMetadataRows("file", "evil\r1,2,3");
+    expect(rows[1]).toBe("# clip: evil 1,2,3");
+    expect(rows[1]).not.toContain("\r");
   });
 
   it("flattens a newline in a filename so it cannot inject a data row", () => {

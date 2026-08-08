@@ -34,7 +34,15 @@ async function uploadGeneratedClip(
       // hoisted function declaration.
       const context = maybeContext;
 
-      const stream = canvas.captureStream(30);
+      // captureStream(0) emits nothing on its own, so each frame is
+      // pushed by hand at a known interval. That makes the clip a
+      // genuine 10 frames per second, which matters: 10 is far below
+      // any display refresh rate, so a frame rate readout near 10 can
+      // only have come from the clip's own decoded frames.
+      const stream = canvas.captureStream(0);
+      const [track] = stream.getVideoTracks() as [
+        CanvasCaptureMediaStreamTrack,
+      ];
       const chunks: Blob[] = [];
       const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
       recorder.addEventListener("dataavailable", (event) => {
@@ -42,19 +50,12 @@ async function uploadGeneratedClip(
       });
       recorder.start();
 
-      // Alternating fills, so the encoder has real frame differences to
-      // write and cannot collapse the clip to a single still.
-      await new Promise<void>((resolve) => {
-        let drawn = 0;
-        function draw(): void {
-          context.fillStyle = drawn % 2 === 0 ? "#202020" : "#d0d0d0";
-          context.fillRect(0, 0, width as number, height as number);
-          drawn += 1;
-          if (drawn < 30) requestAnimationFrame(draw);
-          else resolve();
-        }
-        draw();
-      });
+      for (let frame = 0; frame < 20; frame += 1) {
+        context.fillStyle = frame % 2 === 0 ? "#202020" : "#d0d0d0";
+        context.fillRect(0, 0, width as number, height as number);
+        track.requestFrame();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
 
       await new Promise<void>((resolve) => {
         recorder.addEventListener("stop", () => {
@@ -82,6 +83,9 @@ async function uploadGeneratedClip(
 test("a recorded clip loads and runs through the same pipeline", async ({
   page,
 }) => {
+  // Generating the clip takes two seconds, and the landmarker fetches
+  // about fifteen megabytes before playback may start.
+  test.setTimeout(180_000);
   await page.goto("./");
   await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
 
@@ -108,17 +112,35 @@ test("a recorded clip loads and runs through the same pipeline", async ({
     page.getByRole("button", { name: "Calibrate gaze" }),
   ).toBeVisible({ timeout: 30_000 });
 
-  // Frames are flowing: the loop is accepting this source's timestamps
-  // rather than rejecting every one of them as a duplicate.
+  // The load bearing assertion, and the one that replaced a weak
+  // predecessor. The old test only checked that the frame rate label
+  // had stopped saying "measuring...", which the display loop
+  // satisfies on its own before a clip is ever picked, so deleting the
+  // line that makes clip playback work still left the suite green.
+  //
+  // The inference readout is written ONLY inside processFrame, and in
+  // file mode processFrame is reachable only from the per decoded
+  // frame callback. A millisecond figure here therefore proves a real
+  // frame of this clip reached the model.
+  await expect(page.getByText(/Inference time: \d+ ms/)).toBeVisible({
+    timeout: 60_000,
+  });
+
+  // Playing to the end proves the rest of the chain: the model
+  // finished loading, playback started only afterwards, and the clip
+  // was consumed rather than abandoned.
   await expect(
-    page.getByText("Frames per second:", { exact: false }),
-  ).toBeVisible();
-  await expect(async () => {
-    const label = await page
-      .getByText("Frames per second:", { exact: false })
-      .textContent();
-    expect(label).not.toContain("measuring...");
-  }).toPass({ timeout: 20_000 });
+    page.getByText("The clip finished", { exact: false }),
+  ).toBeVisible({ timeout: 60_000 });
+
+  // Deliberately NOT asserted: that the frame rate readout matches the
+  // clip's 10 frames per second. On a CI machine the model runs on the
+  // CPU and takes seconds per frame, so a clip playing in real time is
+  // measured at whatever rate inference manages, not at its own. That
+  // is honest behaviour rather than a bug, since the readout describes
+  // frames actually MEASURED and the frame rate gate then refuses a
+  // rate too coarse to see a blink. It is also why a batch runner must
+  // step a clip frame by frame instead of playing it.
 });
 
 test("a file the browser cannot decode fails as a clip, not as a camera", async ({
