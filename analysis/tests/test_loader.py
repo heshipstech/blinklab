@@ -152,7 +152,7 @@ class TestTheSourceOfASession:
         assert session.metadata["source"] == "camera"
         assert session.metadata["clip"] == "none"
 
-    def test_an_older_export_simply_has_no_source(self, tmp_path: Path) -> None:
+    def test_an_older_export_has_no_source(self, tmp_path: Path) -> None:
         # Sessions exported before 7.0 carry no source rows. They must
         # still load, and must not silently claim to be either kind.
         text = HEADER + "\r\n" + a_row(1000) + "\r\n" + a_row(2000) + "\r\n"
