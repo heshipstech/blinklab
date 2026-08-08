@@ -30,6 +30,20 @@ export const PERCLOS_CLOSED_FRACTION = EYES_SHUT_FRACTION;
 // enough reality to summarize. Fifteen seconds of valid span.
 export const PERCLOS_MIN_OBSERVED_MS = 15000;
 
+// How stale the newest sample may be before the value is refused.
+// A window that has stopped receiving samples is not measuring any
+// more, and worse, its ratio DRIFTS on its own: no new evidence
+// arrives, the older samples age out of the window one by one, and
+// if the last thing seen was a closure the closed share climbs
+// toward one while nobody is in the chair. Confirmed in the owner's
+// own recording, where PERCLOS rose from 20.5 to 22.1 percent across
+// eight seconds in which faceDetected was false throughout.
+//
+// Two seconds is generous enough to ride out a blink, a dropped
+// frame or a moment of pose refusal, and short enough that the drift
+// stays under half a percent before the value is withdrawn.
+export const PERCLOS_STALE_MS = 2000;
+
 type ClosureSample = {
   timestampMs: number;
   closed: boolean;
@@ -80,6 +94,12 @@ export function perclosValue(
     return null;
   }
   if (last.timestampMs - first.timestampMs < PERCLOS_MIN_OBSERVED_MS) {
+    return null;
+  }
+  // Nothing recent means nothing to report. Without this the ratio
+  // keeps answering, and keeps rising, long after the eyes it
+  // describes have left the frame.
+  if (nowMs - last.timestampMs > PERCLOS_STALE_MS) {
     return null;
   }
   let closedCount = 0;
