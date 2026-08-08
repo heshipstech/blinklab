@@ -114,11 +114,35 @@ function seekTo(
  * actually produces. Returns null when the clip is too short or the
  * samples disagree, and the caller then falls back to a nominal rate.
  */
+/**
+ * Where the clip's timeline actually begins.
+ *
+ * Not always zero. A file remuxed from another container can carry a
+ * start offset: one corpus clip here begins at 1.633 seconds, and
+ * seeking to zero on it lands before the video exists. Every frame
+ * request then fails, calibration reports an unknown rate, and the run
+ * burns its budget on empty time before giving up. `seekable` is the
+ * browser's own answer to "what can I ask for".
+ */
+function timelineStart(video: VideoWithFrameCallback): number {
+  if (video.seekable.length === 0) return 0;
+  const start = video.seekable.start(0);
+  return Number.isFinite(start) ? start : 0;
+}
+
+function timelineEnd(video: VideoWithFrameCallback): number | null {
+  if (video.seekable.length > 0) {
+    const end = video.seekable.end(video.seekable.length - 1);
+    if (Number.isFinite(end)) return end;
+  }
+  return Number.isFinite(video.duration) ? video.duration : null;
+}
+
 async function measureFrameInterval(
   video: VideoWithFrameCallback,
 ): Promise<number | null> {
   const times: number[] = [];
-  let probe = 0;
+  let probe = timelineStart(video);
   for (let attempt = 0; attempt < CALIBRATION_FRAMES * 2; attempt += 1) {
     const landing = await seekTo(video, probe);
     if (landing === null) break;
@@ -195,16 +219,15 @@ export async function stepThroughVideo(
   // fallback errs fast.
   const step = interval ?? 1 / 60;
 
+  // Where this clip's timeline begins, which is not always zero.
+  const origin = timelineStart(video);
+
   let index = 0;
   let lastMediaTimeSeconds: number | null = null;
-  // Deliberately NOT read once before the loop. A browser can report a
-  // short duration while a clip is still buffering and revise it
-  // upward later, and reading it once froze that early guess into the
-  // stop condition. WebKit on a Linux runner did exactly this and
-  // stopped at 27 frames of 60, three times in a row, because 27
-  // frames was as far as the duration it had first reported.
-  const remaining = (): number | null =>
-    Number.isFinite(video.duration) ? video.duration : null;
+  // The end is re-read on every frame rather than captured once. A
+  // browser can report a short duration while a clip is still buffering
+  // and revise it upward later, and freezing that early guess into the
+  // stop condition once cut a run off at 27 frames of 60.
 
   // Driven by frame INDEX, not by whatever time a seek reports landing
   // on. Every browser can be asked for frame k; not every browser will
@@ -222,11 +245,12 @@ export async function stepThroughVideo(
       };
     }
 
-    // The middle of frame `index`'s window. Aiming at an edge is what
-    // makes a seek ambiguous between two frames.
-    const target = (index + 0.5) * step;
-    const duration = remaining();
-    if (duration !== null && target > duration) break;
+    // The middle of frame `index`'s window, measured from where the
+    // clip's timeline actually starts. Aiming at an edge is what makes
+    // a seek ambiguous between two frames.
+    const target = origin + (index + 0.5) * step;
+    const end = timelineEnd(video);
+    if (end !== null && target > end) break;
 
     const landing = await seekTo(video, target);
     if (landing === null) break;
