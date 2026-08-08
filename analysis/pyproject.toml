@@ -1,0 +1,28 @@
+[project]
+name = "blinklab-analysis"
+version = "0.1.0"
+description = "The honest evaluation track: statistics over sessions the browser recorded."
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2",
+    "matplotlib>=3.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 79
+target-version = "py312"
+
+[tool.ruff.lint]
+# Errors, warnings, isort, bugbear, comprehensions, pyupgrade, and the
+# pandas gotchas. The house rule from 0.3 carried into Python: the
+# linter is a contract, not a suggestion.
+select = ["E", "W", "F", "I", "B", "C4", "UP", "PD"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
