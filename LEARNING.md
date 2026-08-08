@@ -645,3 +645,17 @@ So blinks get their own file, one row per blink. The thing that makes it worth b
 Two smaller decisions follow the rules the per-second file already set. The frame columns are empty for a live camera, because "frame 900" of a webcam session means nothing to anyone and writing a number there would invite somebody to compare it with something. And a blink whose shape could not be analysed writes empty amplitude, never zero, because zero amplitude is not a missing measurement, it is a claim that the eyelid did not move.
 
 Verified on a real recording rather than asserted: seven blinks across forty seconds, and each frame span agrees with its own duration column. A 133 millisecond blink spans frames 374 to 382, which is eight frames, which is exactly 133 milliseconds at sixty frames per second. That internal consistency is the check that the two numbers came from the same reality.
+
+## The boxed layout, and a bug that six phases of screenshots hid
+
+The concept here is that the arrangement of a page is a claim about what matters, and a page where everything looks equally important claims that nothing does.
+
+Every readout had the same visual weight. The alertness score, which is the entire point of the project, sat in the same size and colour as the frame counter. A stranger watching a demo could not tell in two seconds which number the instrument is actually about, and that is a layout problem rather than a wording one.
+
+The fix is three tiers rather than five equal boxes. The score is the only large text on the page. The measurements sit under it in three boxes of equal weight, Blinks and Eyes and Gaze. The instrument's own reports on itself, frames per second and inference time, go last in smaller grey type, because putting frames per second beside blink rate implies they are the same kind of fact and they are not: one describes the eyes and the other describes the tool looking at them.
+
+Two placements were arguable and both are recorded so they can be argued with. PERCLOS went with Eyes rather than Blinks, because it describes the eyelid's state over time rather than counting events. Head pose and the pose gate went with Gaze rather than with the instrument readouts, because they explain why the gaze lines above them go quiet, and next to frames per second they would explain nothing.
+
+Doing the inventory found two readouts that appeared before a session started, the frame counter and the blink log export. The frame counter is the worse of the two: with no camera running it was measuring the DISPLAY's refresh rate and printing it as the instrument's frame rate. Both were simply missing from a long list of individual hide rules, which is the failure mode of hiding children one at a time. Whole boxes are hidden now, and a container cannot forget a child.
+
+The larger find was accidental and had been there since the first phase. The page set no background colour and no text colour, so the browser painted its own canvas from the viewer's system theme while the text stayed black. On a machine in dark mode the entire page rendered black on black. Six phases of screenshots went past, several of them examined closely by two of us, and neither noticed because it was just legible enough to squint at. The page now sets both explicitly rather than adapting to the theme, because this page's job includes being filmed, and a demo that looks different depending on the viewer's settings is a demo you cannot reason about.
