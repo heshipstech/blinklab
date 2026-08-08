@@ -308,6 +308,37 @@ mirrorToggle.addEventListener("change", () => {
 mirrorLabel.append(mirrorToggle, " Mirror");
 mirrorLabel.hidden = true;
 
+// The tracking overlays, off by default.
+//
+// They exist to prove the model has found your eyes, which is a real
+// job and the reason manual check 53 asks you to watch them. But they
+// sit on top of a face, and a face with dots drawn on it is not what
+// anyone wants to look at in a demo. Off by default, one click away
+// when you need to check the model rather than watch the person.
+let showEyeMarkers = false;
+const eyeMarkerToggle = document.createElement("input");
+eyeMarkerToggle.type = "checkbox";
+eyeMarkerToggle.checked = showEyeMarkers;
+eyeMarkerToggle.setAttribute("data-testid", "eye-markers");
+eyeMarkerToggle.addEventListener("change", () => {
+  showEyeMarkers = eyeMarkerToggle.checked;
+});
+const eyeMarkerLabel = document.createElement("label");
+eyeMarkerLabel.append(eyeMarkerToggle, " Eye markers");
+eyeMarkerLabel.hidden = true;
+
+let showFaceMesh = false;
+const faceMeshToggle = document.createElement("input");
+faceMeshToggle.type = "checkbox";
+faceMeshToggle.checked = showFaceMesh;
+faceMeshToggle.setAttribute("data-testid", "face-mesh");
+faceMeshToggle.addEventListener("change", () => {
+  showFaceMesh = faceMeshToggle.checked;
+});
+const faceMeshLabel = document.createElement("label");
+faceMeshLabel.append(faceMeshToggle, " Face mesh");
+faceMeshLabel.hidden = true;
+
 const resolutionLabel = document.createElement("p");
 resolutionLabel.hidden = true;
 
@@ -370,6 +401,8 @@ function render(): void {
   status.textContent = cameraStateMessage(state);
   canvas.hidden = state.kind !== "running";
   mirrorLabel.hidden = state.kind !== "running";
+  eyeMarkerLabel.hidden = state.kind !== "running";
+  faceMeshLabel.hidden = state.kind !== "running";
   resolutionLabel.hidden = state.kind !== "running";
   inferenceLabel.hidden = state.kind !== "running";
   earLabel.hidden = state.kind !== "running";
@@ -1472,24 +1505,35 @@ function processFrame(
             ),
           );
 
-        const eyelidDots = project(
-          pickPoints(face, [...RIGHT_EYE_INDICES, ...LEFT_EYE_INDICES]),
-        );
-        drawDots(canvasContext, eyelidDots, 2, "#ffffff");
-
-        const irisColor = "#ff9100";
-        for (const ring of [RIGHT_IRIS_RING_INDICES, LEFT_IRIS_RING_INDICES]) {
-          drawRing(
-            canvasContext,
-            project(pickPoints(face, ring)),
-            1.5,
-            irisColor,
-          );
+        // The mesh draws first so the eye markers, which are the ones
+        // you actually read, sit on top of it rather than under.
+        if (showFaceMesh) {
+          drawDots(canvasContext, project(face), 1, "rgba(120, 144, 156, 0.7)");
         }
-        const centers = project(
-          pickPoints(face, [RIGHT_IRIS_CENTER_INDEX, LEFT_IRIS_CENTER_INDEX]),
-        );
-        drawDots(canvasContext, centers, 2, irisColor);
+
+        if (showEyeMarkers) {
+          const eyelidDots = project(
+            pickPoints(face, [...RIGHT_EYE_INDICES, ...LEFT_EYE_INDICES]),
+          );
+          drawDots(canvasContext, eyelidDots, 2, "#ffffff");
+
+          const irisColor = "#ff9100";
+          for (const ring of [
+            RIGHT_IRIS_RING_INDICES,
+            LEFT_IRIS_RING_INDICES,
+          ]) {
+            drawRing(
+              canvasContext,
+              project(pickPoints(face, ring)),
+              1.5,
+              irisColor,
+            );
+          }
+          const centers = project(
+            pickPoints(face, [RIGHT_IRIS_CENTER_INDEX, LEFT_IRIS_CENTER_INDEX]),
+          );
+          drawDots(canvasContext, centers, 2, irisColor);
+        }
       } else {
         // No face: the numbers must vanish, not go stale.
         earLabel.textContent = "Eye aspect ratio: no valid measurement";
@@ -2066,7 +2110,7 @@ Object.assign(cameraLine.style, {
   gap: "16px",
   alignItems: "baseline",
 });
-cameraLine.append(mirrorLabel, resolutionLabel);
+cameraLine.append(mirrorLabel, eyeMarkerLabel, faceMeshLabel, resolutionLabel);
 
 // The boxes. Each one answers a different question, and grouping them
 // is what lets a stranger read the page without being told where to
