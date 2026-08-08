@@ -1,5 +1,5 @@
-Last increment: 7.0, video file upload mode, pull request pending
-Last commit: on branch feat/7.0-video-upload
+Last increment: 7.0, video file upload mode, merged via pull request #146
+Last commit: squash merge of pull request #146 on 2026-08-08
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing, between increments
 Next increment: Track A, blink detection measured against the GPL3 blink-annotated benchmark set. This replaces 7.4 to 7.7 as written, under ROADMAP amendment 7, because 7.3's licensing gate returned no. Track B, a drowsiness classifier on UTA-RLDD, stays a maintainer decision and is tracked in issue #142.

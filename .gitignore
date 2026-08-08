@@ -36,3 +36,17 @@ analysis/.venv/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+
+# Personal recordings and exports, added in 7.0.
+# Video upload mode means clips of real faces now get dragged near this
+# folder, and an exported CSV is measurements of somebody's eyes. Both
+# are personal data, this repository is public, and git history keeps a
+# file even after a later commit deletes it. So they are refused at the
+# door rather than cleaned up afterwards.
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+blinklab-session-*.csv
+recordings/
