@@ -21,9 +21,10 @@ const CLIP_HEIGHT = 240;
 async function uploadGeneratedClip(
   page: import("@playwright/test").Page,
   fileName: string,
+  frameCount = 20,
 ): Promise<void> {
   await page.evaluate(
-    async ([name, width, height]) => {
+    async ([name, width, height, frames]) => {
       const canvas = document.createElement("canvas");
       canvas.width = width as number;
       canvas.height = height as number;
@@ -50,7 +51,7 @@ async function uploadGeneratedClip(
       });
       recorder.start();
 
-      for (let frame = 0; frame < 20; frame += 1) {
+      for (let frame = 0; frame < (frames as number); frame += 1) {
         context.fillStyle = frame % 2 === 0 ? "#202020" : "#d0d0d0";
         context.fillRect(0, 0, width as number, height as number);
         track.requestFrame();
@@ -76,7 +77,7 @@ async function uploadGeneratedClip(
       input.files = transfer.files;
       input.dispatchEvent(new Event("change", { bubbles: true }));
     },
-    [fileName, CLIP_WIDTH, CLIP_HEIGHT] as const,
+    [fileName, CLIP_WIDTH, CLIP_HEIGHT, frameCount] as const,
   );
 }
 
@@ -94,6 +95,10 @@ test("a recorded clip loads and runs through the same pipeline", async ({
   // that has no camera.
   const input = page.getByTestId("clip-input");
   await expect(input).toBeAttached();
+
+  // This test covers the WATCHED path, so the step toggle comes off.
+  // Stepping has its own test below.
+  await page.getByTestId("step-toggle").uncheck();
 
   await uploadGeneratedClip(page, "sample-clip.webm");
 
@@ -171,4 +176,42 @@ test("a file the browser cannot decode fails as a clip, not as a camera", async 
   });
   await expect(failure).toBeVisible({ timeout: 30_000 });
   expect(await failure.textContent()).not.toContain("camera");
+});
+
+test("stepping measures every frame, however slow the model is", async ({
+  page,
+}) => {
+  // The reason 7.4 exists. Watching a clip measures it at whatever rate
+  // the model manages on this machine: in CI that was one frame in
+  // nineteen, because inference took 3230 ms against a clip running at
+  // 10 frames per second. Stepping pauses the clip for each frame, so
+  // the count depends on the file rather than on the hardware. Slow, so
+  // the clip is deliberately short.
+  test.setTimeout(300_000);
+  await page.goto("./");
+  await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
+
+  // Stepping is the default, and that is itself worth asserting: a
+  // measuring instrument should be correct unless told otherwise.
+  await expect(page.getByTestId("step-toggle")).toBeChecked();
+
+  const FRAMES = 8;
+  await uploadGeneratedClip(page, "stepped-clip.webm", FRAMES);
+
+  await expect(
+    page.getByText("Measuring every frame", { exact: false }),
+  ).toBeVisible({ timeout: 60_000 });
+
+  const finished = page.getByText("Measured every frame:", { exact: false });
+  await expect(finished).toBeVisible({ timeout: 240_000 });
+
+  // The load bearing number. Watching this clip in CI would report one
+  // or two frames; stepping must report essentially all of them. The
+  // range is loose at the top because an encoder may emit a duplicate
+  // or a trailing frame, and tight at the bottom because that is where
+  // the bug being fixed lives.
+  const text = (await finished.textContent()) ?? "";
+  const measured = Number(/(\d+)/.exec(text)?.[1] ?? Number.NaN);
+  expect(measured).toBeGreaterThanOrEqual(FRAMES - 1);
+  expect(measured).toBeLessThanOrEqual(FRAMES + 3);
 });

@@ -59,6 +59,48 @@ export function acceptFrame(
 
 export type FrameSource = "camera" | "file";
 
+// How a clip was measured. A clip that was watched is measured at
+// whatever rate the model managed on that machine; a clip that was
+// stepped is measured completely. The difference decides whether a
+// result is a property of the file or a property of the laptop, so it
+// belongs in the file rather than in somebody's memory.
+export type MeasurementMode = "live" | "played" | "stepped";
+
+/**
+ * The metadata rows recording how completely a session was measured.
+ *
+ * Without these, a CSV from a slow machine that saw one frame in
+ * nineteen is indistinguishable from one that saw every frame. Both
+ * look like honest per-second records, and averaging across them
+ * silently mixes two different measurements.
+ *
+ * frames_measured is written for every mode, because "how many frames
+ * did this instrument actually look at" is a fair question of a live
+ * session too.
+ */
+export function coverageMetadataRows(
+  mode: MeasurementMode,
+  framesMeasured: number,
+  durationSeconds: number | null,
+): string[] {
+  const duration =
+    durationSeconds === null || !Number.isFinite(durationSeconds)
+      ? "unknown"
+      : durationSeconds.toFixed(3);
+  const rate =
+    durationSeconds !== null &&
+    Number.isFinite(durationSeconds) &&
+    durationSeconds > 0
+      ? (framesMeasured / durationSeconds).toFixed(2)
+      : "unknown";
+  return [
+    `# measurement_mode: ${mode}`,
+    `# frames_measured: ${String(framesMeasured)}`,
+    `# clip_duration_s: ${duration}`,
+    `# measured_fps: ${rate}`,
+  ];
+}
+
 /**
  * The timestamp a frame should carry, given where it came from.
  *
