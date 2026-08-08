@@ -29,7 +29,7 @@ This project's rule is that a limitation you know about belongs in the open.
 - The instrument reads fully shut eyes as roughly a third of the open baseline rather than zero, so the literature's usual PERCLOS threshold does not transfer and ours is adjusted to the instrument. This is documented rather than hidden.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
-- An uploaded clip is measured while it plays, so a machine whose model runs slower than the clip's frame rate measures fewer of its frames. The frame rate readout describes frames actually measured rather than frames the file contains, and the frame rate gate refuses blink numbers when that is too coarse, so the instrument does not hide it. It does mean the same clip can yield different data on different machines, which is [issue #145](https://github.com/heshipstech/blinklab/issues/145).
+- An uploaded clip can be measured two ways and the file records which. Stepped, the default, walks every frame and pauses for the measurement, so the result depends on the recording rather than on your computer. Watched plays in real time and is capped by how fast the model runs, about 73 milliseconds per frame on the development laptop, so a 30 frames per second clip watched in real time loses more than half its frames. Watching is offered because stepping is unpleasant to film, and every export states its mode, the frames measured and the resulting rate so the two can never be confused.
 
 ## Privacy
 
