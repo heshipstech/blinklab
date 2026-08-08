@@ -165,15 +165,64 @@ const demoNotice = document.createElement("p");
 demoNotice.dataset.testid = "demo-notice";
 demoNotice.textContent = demoNoticeText();
 Object.assign(demoNotice.style, {
-  background: "#eaeaea",
+  background: "#f5c518",
   // The text colour is set explicitly rather than inherited: on a
-  // fixed light background an inherited colour would follow the
-  // page or the reader's dark mode and could end up light on light.
+  // fixed background an inherited colour would follow the page or the
+  // reader's dark mode and could end up unreadable. Near-black on
+  // yellow rather than the white the mockup showed, because white on
+  // yellow is poor contrast and this is the one line on the page that
+  // must be readable by everyone.
   color: "#1a1a1a",
-  padding: "10px 16px",
-  margin: "0 0 12px 0",
+  padding: "8px 16px",
+  margin: "0",
   textAlign: "center",
   fontWeight: "normal",
+  fontSize: "12px",
+  lineHeight: "1.4",
+});
+
+// The top bar. Holds the name and one outbound link, nothing else. It
+// deliberately does not stick: this page gets screenshotted and filmed,
+// and fixed chrome eats vertical space on a laptop for no measurement
+// benefit.
+const navBar = document.createElement("div");
+Object.assign(navBar.style, {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px",
+  maxWidth: "1280px",
+  margin: "0 auto",
+  padding: "12px 16px",
+  boxSizing: "border-box",
+});
+
+const linkedInLink = document.createElement("a");
+linkedInLink.href = "https://www.linkedin.com/in/eivinasnorusaitis";
+linkedInLink.textContent = "in /eivinasnorusaitis";
+linkedInLink.target = "_blank";
+// noopener stops the opened page from reaching back into this one
+// through window.opener, which matters more than usual here because
+// this page's whole claim is that nothing leaves the device.
+linkedInLink.rel = "noopener noreferrer";
+Object.assign(linkedInLink.style, {
+  fontSize: "13px",
+  color: "#0a66c2",
+  textDecoration: "none",
+});
+
+// One strip for everything the app needs to say out loud: camera and
+// clip failures, clip progress, the model breaking its contract, and
+// the long closure alert. It collapses to nothing when silent, because
+// a permanently blank bar reads as broken on an idle page.
+const statusBanner = document.createElement("div");
+statusBanner.dataset.testid = "status-banner";
+statusBanner.id = "status-banner";
+Object.assign(statusBanner.style, {
+  maxWidth: "1280px",
+  margin: "0 auto",
+  padding: "0 16px",
+  boxSizing: "border-box",
 });
 
 const startButton = document.createElement("button");
@@ -305,6 +354,7 @@ mirrorToggle.checked = mirrored;
 mirrorToggle.addEventListener("change", () => {
   mirrored = mirrorToggle.checked;
 });
+mirrorLabel.style.whiteSpace = "nowrap";
 mirrorLabel.append(mirrorToggle, " Mirror");
 mirrorLabel.hidden = true;
 
@@ -324,6 +374,7 @@ eyeMarkerToggle.addEventListener("change", () => {
   showEyeMarkers = eyeMarkerToggle.checked;
 });
 const eyeMarkerLabel = document.createElement("label");
+eyeMarkerLabel.style.whiteSpace = "nowrap";
 eyeMarkerLabel.append(eyeMarkerToggle, " Eye markers");
 eyeMarkerLabel.hidden = true;
 
@@ -336,6 +387,7 @@ faceMeshToggle.addEventListener("change", () => {
   showFaceMesh = faceMeshToggle.checked;
 });
 const faceMeshLabel = document.createElement("label");
+faceMeshLabel.style.whiteSpace = "nowrap";
 faceMeshLabel.append(faceMeshToggle, " Face mesh");
 faceMeshLabel.hidden = true;
 
@@ -398,66 +450,75 @@ const status = document.createElement("p");
 let state: CameraState = { kind: "idle" };
 
 function render(): void {
+  const running = state.kind === "running";
   status.textContent = cameraStateMessage(state);
-  canvas.hidden = state.kind !== "running";
-  mirrorLabel.hidden = state.kind !== "running";
-  eyeMarkerLabel.hidden = state.kind !== "running";
-  faceMeshLabel.hidden = state.kind !== "running";
-  resolutionLabel.hidden = state.kind !== "running";
-  inferenceLabel.hidden = state.kind !== "running";
-  earLabel.hidden = state.kind !== "running";
-  apertureLabel.hidden = state.kind !== "running";
-  stabilityLabel.hidden = state.kind !== "running";
-  headPoseLabel.hidden = state.kind !== "running";
-  gazeLabel.hidden = state.kind !== "running";
-  quadrantLabel.hidden = state.kind !== "running";
-  gazeStateLabel.hidden = state.kind !== "running";
-  fixationStatsLabel.hidden = state.kind !== "running";
-  calibrateButton.hidden = state.kind !== "running";
-  heatmapButton.hidden = state.kind !== "running";
-  replayButton.hidden = state.kind !== "running";
-  gateLabel.hidden = state.kind !== "running";
-  blinkLabel.hidden = state.kind !== "running";
-  baselineLabel.hidden = state.kind !== "running";
-  blinkShapeLabel.hidden = state.kind !== "running";
-  perclosLabel.hidden = state.kind !== "running";
-  longClosureLabel.hidden = state.kind !== "running";
-  if (state.kind !== "running") {
+
+  // Readouts stay on the page at idle, showing their own
+  // "measuring..." and "no valid measurement" lines. The line count
+  // therefore never changes as values arrive, so nothing reflows
+  // during the first minute, which is exactly when someone is deciding
+  // whether to trust what they are reading.
+
+  // The picture. An empty canvas is a blank rectangle that reads as a
+  // failure, so it is the one thing genuinely hidden.
+  canvas.hidden = !running;
+  mirrorLabel.hidden = !running;
+  eyeMarkerLabel.hidden = !running;
+  faceMeshLabel.hidden = !running;
+  resolutionLabel.hidden = !running;
+
+  // The traces, same reason: three empty strips look broken.
+  sparkCanvas.hidden = !running;
+  gazeTraceHorizontalCanvas.hidden = !running;
+  gazeTraceVerticalCanvas.hidden = !running;
+
+  // Left alone this reports the DISPLAY's refresh rate as though it
+  // were the instrument's, which is a wrong number rather than a
+  // missing one.
+  if (!running) {
+    fpsLabel.textContent = "";
+    inferenceLabel.textContent = "";
+  }
+
+  // Buttons are DISABLED rather than hidden. A greyed "Calibrate gaze"
+  // says the feature exists and is not available yet; a missing one
+  // says nothing at all.
+  // Calibrate is available whenever a source runs, so render owns it
+  // outright. The other four have their own conditions, an export needs
+  // records, the heatmap needs a profile, the replay needs a scanpath,
+  // and the frame loop sets those while running. Here they are only
+  // forced off, never on, or this would overrule them.
+  calibrateButton.disabled = !running;
+  if (!running) {
+    for (const button of [
+      heatmapButton,
+      replayButton,
+      exportButton,
+      exportBlinksButton,
+    ]) {
+      button.disabled = true;
+    }
+  }
+  if (recorder !== null) {
+    recorder.button.disabled = !running;
+  }
+
+  // A question, not a readout.
+  if (!running) {
+    kssPanel.hidden = true;
     alertBanner.hidden = true;
   }
-  featureLabel.hidden = state.kind !== "running";
-  exportButton.hidden = state.kind !== "running";
-  if (state.kind !== "running") {
-    kssPanel.hidden = true;
-  }
-  scoreLabel.hidden = state.kind !== "running";
-  panelSummaryLabel.hidden = state.kind !== "running";
-  panelList.hidden = state.kind !== "running";
-  blinkLogList.hidden = state.kind !== "running";
-  sparkCanvas.hidden = state.kind !== "running";
-  gazeTraceHorizontalCanvas.hidden = state.kind !== "running";
-  gazeTraceVerticalCanvas.hidden = state.kind !== "running";
-  if (recorder !== null) {
-    recorder.button.hidden = state.kind !== "running";
-  }
-  startButton.hidden = state.kind === "running" || state.kind === "requesting";
 
-  // Whole boxes rather than their contents. Before the boxes existed
-  // each readout hid itself, and two were simply missed: the frame
-  // counter and the blink log export sat on an unstarted page, the
-  // counter cheerfully reporting the DISPLAY's refresh rate as though
-  // it were the instrument's. Hiding the container cannot forget a
-  // child, which is the point of doing it here.
-  //
-  // Source stays, because it is how a session begins.
-  videoArea.hidden = state.kind !== "running";
-  alertnessBox.hidden = state.kind !== "running";
-  measurementRow.hidden = state.kind !== "running";
-  selfRow.hidden = state.kind !== "running";
+  startButton.hidden = running || state.kind === "requesting";
 }
 
 function setState(next: CameraState): void {
   state = next;
+  // Sized after the page is in the document, because the box has no
+  // width until it is laid out.
+  sizeGraphsToBox();
+  window.addEventListener("resize", sizeGraphsToBox);
+
   render();
 }
 
@@ -725,26 +786,17 @@ picker.addEventListener("change", () => {
 
 const fpsLabel = document.createElement("p");
 const inferenceLabel = document.createElement("p");
-inferenceLabel.hidden = true;
 const earLabel = document.createElement("p");
-earLabel.hidden = true;
 const apertureLabel = document.createElement("p");
-apertureLabel.hidden = true;
 
 // The lean in, lean out experiment, live: both apertures' coefficient
 // of variation over the last 10 seconds, side by side.
 const stabilityLabel = document.createElement("p");
-stabilityLabel.hidden = true;
 const headPoseLabel = document.createElement("p");
-headPoseLabel.hidden = true;
 const gazeLabel = document.createElement("p");
-gazeLabel.hidden = true;
 const quadrantLabel = document.createElement("p");
-quadrantLabel.hidden = true;
 const gazeStateLabel = document.createElement("p");
-gazeStateLabel.hidden = true;
 const fixationStatsLabel = document.createElement("p");
-fixationStatsLabel.hidden = true;
 
 // The calibration capture screen: a dark overlay, one moving dot,
 // click anywhere to cancel. A profile solved in an earlier visit
@@ -753,7 +805,7 @@ let calibrationProfile: CalibrationProfile | null = loadCalibrationProfile();
 const calibrateButton = document.createElement("button");
 calibrateButton.textContent =
   calibrationProfile === null ? "Calibrate gaze" : "Recalibrate gaze";
-calibrateButton.hidden = true;
+calibrateButton.disabled = true;
 let calibrationRequested = false;
 let captureState: CalibrationCapture | null = null;
 calibrateButton.addEventListener("click", () => {
@@ -803,7 +855,7 @@ calibrationOverlay.addEventListener("click", () => {
 // profile's first live consumer, raw offsets have no screen meaning,
 // so the button stays disabled until a profile exists.
 const heatmapButton = document.createElement("button");
-heatmapButton.hidden = true;
+heatmapButton.disabled = true;
 function refreshHeatmapButton(): void {
   heatmapButton.disabled = calibrationProfile === null;
   heatmapButton.textContent =
@@ -842,7 +894,7 @@ const SCANPATH_SAMPLE_CAP = 18000;
 // spirit like the heatmap grid.
 const SCANPATH_SCREEN_DISPERSION = 0.05;
 const replayButton = document.createElement("button");
-replayButton.hidden = true;
+replayButton.disabled = true;
 function refreshReplayButton(): void {
   replayButton.disabled = scanpathSamples.length < 2;
   replayButton.textContent =
@@ -1068,21 +1120,17 @@ const gateLabel = document.createElement("p");
 gateLabel.hidden = true;
 
 const blinkLabel = document.createElement("p");
-blinkLabel.hidden = true;
 let blinkState = initialBlinkState;
 
 const baselineLabel = document.createElement("p");
-baselineLabel.hidden = true;
 let baselineState: BaselineState | null = null;
 let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
 const perclosLabel = document.createElement("p");
-perclosLabel.hidden = true;
 let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
-longClosureLabel.hidden = true;
 let longClosureState = initialLongClosureState;
 // The shut-line BASELINE freezes at the FIRST ready baseline, and
 // both shut-line consumers, the long closure detector and PERCLOS,
@@ -1101,6 +1149,7 @@ let frozenShutBaselineMm: number | null = null;
 // display window. The frame loop owns its visibility while the
 // camera runs; render() only forces it hidden when the camera stops.
 const alertBanner = document.createElement("p");
+alertBanner.className = "alert";
 alertBanner.setAttribute("role", "alert");
 alertBanner.hidden = true;
 Object.assign(alertBanner.style, {
@@ -1114,7 +1163,6 @@ let alertState = initialAlertState;
 // The 6.4 feature vector: one typed row per second, the raw material
 // for the 6.5 score and the 6.7 export. A bounded hour of rows.
 const featureLabel = document.createElement("p");
-featureLabel.hidden = true;
 // The 6.7 export: one session becomes one file, on this device only.
 // The 6.8 self report: the project's first LABEL, asked at the start
 // of a session and again at export. Skipping is a real answer and is
@@ -1133,15 +1181,35 @@ function askKss(
   onAnswer: (r: KssRating | null) => void,
 ): void {
   kssPrompt.textContent = question;
+
+  // The answer stays on screen after choosing, as a single disabled
+  // button. It goes into the exported file, so being able to see what
+  // you actually answered is part of trusting the data. Hiding it
+  // leaves you with a number in a CSV and no memory of the question.
+  const settle = (label: string): void => {
+    const answered = document.createElement("button");
+    answered.className = "kss-option";
+    answered.textContent = label;
+    answered.disabled = true;
+    kssButtons.replaceChildren(answered);
+  };
+
   const choose = (rating: KssRating | null): void => {
-    kssPanel.hidden = true;
+    const step = KSS_SCALE.find((s) => s.rating === rating);
+    settle(
+      step === undefined ? "Skipped" : `${String(step.rating)} ${step.label}`,
+    );
     onAnswer(rating);
   };
+
   kssButtons.replaceChildren(
     ...KSS_SCALE.map((step) => {
       const button = document.createElement("button");
+      button.className = "kss-option";
+      // The published wording, never abbreviated. "6" means nothing
+      // without "Some signs of sleepiness", so a dropdown that hides
+      // the anchors would change what the scale measures.
       button.textContent = `${String(step.rating)} ${step.label}`;
-      button.style.display = "block";
       button.addEventListener("click", () => {
         choose(step.rating);
       });
@@ -1149,8 +1217,8 @@ function askKss(
     }),
   );
   const skip = document.createElement("button");
+  skip.className = "kss-option";
   skip.textContent = "Skip";
-  skip.style.display = "block";
   skip.addEventListener("click", () => {
     choose(null);
   });
@@ -1183,7 +1251,7 @@ function exportSession(): void {
 const exportButton = document.createElement("button");
 exportButton.textContent = "Export CSV";
 exportButton.setAttribute("data-testid", "export-csv");
-exportButton.hidden = true;
+exportButton.disabled = true;
 exportButton.disabled = true;
 // A second export, and a separate one on purpose. The per-second file
 // answers "what were the eyes doing during this second". This one
@@ -1237,14 +1305,11 @@ exportButton.addEventListener("click", () => {
 // The 6.5 demo score, one glanceable number with its audit trail
 // close behind (6.6). The disclaimer is part of the line, always.
 const scoreLabel = document.createElement("p");
-scoreLabel.hidden = true;
 scoreLabel.style.fontWeight = "bold";
 // The 6.6 contribution panel: the score's own arithmetic, shown.
 const panelSummaryLabel = document.createElement("p");
-panelSummaryLabel.hidden = true;
 const panelList = document.createElement("ul");
 panelList.setAttribute("aria-label", "Score contributions");
-panelList.hidden = true;
 let featureRecords: FeatureRecord[] = [];
 let lastRecordAtMs: number | null = null;
 // The frame clock is milliseconds since page load, which is right
@@ -1260,7 +1325,6 @@ const blinkLogList = document.createElement("ul");
 blinkLogList.setAttribute("aria-label", "Blink events");
 blinkLogList.style.maxHeight = "160px";
 blinkLogList.style.overflowY = "auto";
-blinkLogList.hidden = true;
 let blinkEvents: BlinkEvent[] = [];
 let sessionStartMs: number | null = null;
 type StabilitySample = {
@@ -1346,10 +1410,15 @@ function processFrame(
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
   const fps = measureFps(frameTimestampsMs);
+  // Only while a session runs. Off duty this loop is still ticking at
+  // the DISPLAY's refresh rate, and printing that as the instrument's
+  // frame rate is a wrong number rather than a missing one.
   fpsLabel.textContent =
-    fps === null
-      ? "Frames per second: measuring..."
-      : `Frames per second: ${String(Math.round(fps))}`;
+    state.kind !== "running"
+      ? ""
+      : fps === null
+        ? "Frames per second: measuring..."
+        : `Frames per second: ${String(Math.round(fps))}`;
 
   if (state.kind === "running" && canvasContext !== null) {
     const transform = frameTransform(mirrored, canvas.width);
@@ -2081,7 +2150,47 @@ graphStyles.textContent =
   // Tier 3 is deliberately quieter than the measurements above it.
   " .quiet { font-size: 12px; color: #555; }" +
   " .quiet p { margin: 2px 0; }" +
-  " .caveat { font-size: 12px; color: #666; margin: 0 0 10px 0; }";
+  " .caveat { font-size: 12px; color: #666; margin: 0 0 10px 0; }" +
+  // Source takes the wider side because it holds the video, which is
+  // sized to 640 px. An even split of a 1280 column leaves about 630
+  // per side once the gap is taken, which would shrink the picture.
+  " .top-row { display: grid; gap: 16px; align-items: start;" +
+  "   grid-template-columns: 55fr 45fr; margin-top: 16px; }" +
+  " .top-row[hidden] { display: none; }" +
+  // Below this the columns stack, and Source comes first because
+  // nothing else on the page does anything until a source is running.
+  " @media (max-width: 900px) { .top-row { grid-template-columns: 1fr; } }" +
+  // Boxes in one row match height. A tall blink log therefore stretches
+  // its neighbours rather than leaving a ragged edge.
+  " .row > .box { height: 100%; box-sizing: border-box; }" +
+  " .button-row { display: flex; flex-wrap: wrap; gap: 8px;" +
+  "   margin-top: 8px; }" +
+  " .signals-footer { display: flex; flex-wrap: wrap; gap: 16px;" +
+  "   align-items: center; justify-content: space-between;" +
+  "   margin-top: 8px; }" +
+  " .legend { display: flex; flex-wrap: wrap; gap: 14px;" +
+  "   font-size: 12px; color: #555; }" +
+  " .legend-item { display: inline-flex; align-items: center; gap: 6px; }" +
+  " .swatch { width: 10px; height: 10px; border-radius: 50%;" +
+  "   display: inline-block; }" +
+  " .instrument-line { display: flex; gap: 16px; font-size: 12px;" +
+  "   color: #555; }" +
+  " .instrument-line p { margin: 0; }" +
+  // The alert is a detected EVENT, not a judgement about a person, so
+  // it is allowed to be loud in a way the score deliberately is not.
+  " .alert { border-left: 3px solid #c62828; padding-left: 10px; }" +
+  // The banner carries no padding of its own and its children carry
+  // their own margins, so when every child is empty the whole strip
+  // collapses to nothing without anyone having to remember to hide it.
+  // This replaced a computed hidden flag that went stale: status text
+  // is written from a dozen places that do not call render(), so the
+  // banner stayed invisible while the app was talking.
+  " #status-banner > p { margin: 10px 0 0 0; }" +
+  " #status-banner > p:empty { display: none; }" +
+  // The sleepiness options, one per row. Option 9 is 54 characters and
+  // will not share a line with anything.
+  " .kss-option { display: block; width: 100%; text-align: left;" +
+  "   margin: 3px 0; }";
 document.head.append(graphStyles);
 
 const graphStrip = document.createElement("div");
@@ -2106,6 +2215,7 @@ Object.assign(contentBox.style, {
 // describe the camera feed, and separating them cost a whole row.
 const cameraLine = document.createElement("div");
 Object.assign(cameraLine.style, {
+  flexWrap: "wrap",
   display: "flex",
   gap: "16px",
   alignItems: "baseline",
@@ -2125,6 +2235,57 @@ function box(heading: string, ...children: Element[]): HTMLDivElement {
   return element;
 }
 
+// Always present, never conditional, never dismissible. It sits inside
+// the same box as the number so a screenshot of one carries the other.
+const scoreCaveat = document.createElement("p");
+scoreCaveat.className = "caveat";
+scoreCaveat.textContent = demoNoticeShort();
+
+// The two exports and the development-only fixture recorder share a
+// row rather than stacking, since they are all "take something away
+// with you".
+const exportRow = document.createElement("div");
+exportRow.className = "button-row";
+exportRow.append(
+  exportButton,
+  exportBlinksButton,
+  ...(recorder !== null ? [recorder.button] : []),
+);
+
+const gazeButtonRow = document.createElement("div");
+gazeButtonRow.className = "button-row";
+gazeButtonRow.append(calibrateButton, heatmapButton, replayButton);
+
+// The legend, because three coloured lines with no key are decoration
+// rather than information. Grey always means raw and orange always
+// means smoothed across both gaze traces, so three entries covers five
+// lines honestly.
+function legendItem(colour: string, text: string): HTMLSpanElement {
+  const item = document.createElement("span");
+  item.className = "legend-item";
+  const swatch = document.createElement("span");
+  swatch.className = "swatch";
+  swatch.style.background = colour;
+  item.append(swatch, document.createTextNode(text));
+  return item;
+}
+
+const legend = document.createElement("div");
+legend.className = "legend";
+legend.append(
+  legendItem("#00b0ff", "Eye aspect ratio"),
+  legendItem("#546e7a", "Gaze, raw"),
+  legendItem("#ff9100", "Gaze, smoothed"),
+);
+
+const instrumentLine = document.createElement("div");
+instrumentLine.className = "instrument-line";
+instrumentLine.append(fpsLabel, inferenceLabel);
+
+const signalsFooter = document.createElement("div");
+signalsFooter.className = "signals-footer";
+signalsFooter.append(legend, instrumentLine);
+
 const sourceBox = box(
   "Source",
   startButton,
@@ -2132,20 +2293,9 @@ const sourceBox = box(
   stepLabel,
   stopClipButton,
   picker,
-  status,
-  modelStatus,
+  canvas,
+  cameraLine,
 );
-
-// The picture is not in a box. It is the thing being measured rather
-// than a measurement, and a heading above it would be noise.
-const videoArea = document.createElement("div");
-videoArea.append(canvas, cameraLine);
-
-// Always present, never conditional, never dismissible. It sits inside
-// the same box as the number so a screenshot of one carries the other.
-const scoreCaveat = document.createElement("p");
-scoreCaveat.className = "caveat";
-scoreCaveat.textContent = demoNoticeShort();
 
 const alertnessBox = box(
   "Alertness",
@@ -2153,9 +2303,10 @@ const alertnessBox = box(
   scoreCaveat,
   panelSummaryLabel,
   panelList,
-  alertBanner,
 );
 scoreLabel.className = "headline";
+
+const sessionBox = box("Session", featureLabel, exportRow, kssPanel);
 
 const blinksBox = box(
   "Blinks",
@@ -2186,50 +2337,47 @@ const gazeBox = box(
   fixationStatsLabel,
   headPoseLabel,
   gateLabel,
-  calibrateButton,
-  heatmapButton,
-  replayButton,
+  gazeButtonRow,
 );
+
+// The live traces, plus the two numbers describing how well they are
+// being captured. Frame rate and inference time are not measurements
+// of the eyes, but they ARE measurements of the signal on this strip,
+// so they belong beside it rather than in a box of their own.
+const liveSignalsBox = box("Live signals", graphStrip, signalsFooter);
+
+// Source sits in the wider column because it holds the video, which is
+// sized to 640 px. An even split of a 1280 column leaves about 630 per
+// side once the gap is taken, which would shrink the picture.
+const topRow = document.createElement("div");
+topRow.className = "top-row";
+const leftColumn = document.createElement("div");
+leftColumn.append(alertnessBox, sessionBox);
+topRow.append(sourceBox, leftColumn);
 
 const measurementRow = document.createElement("div");
 measurementRow.className = "row";
-measurementRow.append(blinksBox, eyesBox, gazeBox);
+measurementRow.append(gazeBox, eyesBox, blinksBox);
 
-const sessionBox = box(
-  "Session",
-  featureLabel,
-  exportButton,
-  exportBlinksButton,
-  kssPanel,
-  ...(recorder !== null ? [recorder.button] : []),
-);
-sessionBox.classList.add("quiet");
-
-// Two things only. Putting frames per second beside blink rate implies
-// they are the same kind of fact, and they are not: one describes the
-// eyes, the other describes the tool looking at them.
-const instrumentBox = box("Instrument", fpsLabel, inferenceLabel);
-instrumentBox.classList.add("quiet");
-
-const selfRow = document.createElement("div");
-selfRow.className = "row";
-selfRow.append(sessionBox, instrumentBox);
-
-contentBox.append(
-  title,
-  sourceBox,
-  videoArea,
-  alertnessBox,
-  measurementRow,
-  selfRow,
-);
+contentBox.append(topRow, liveSignalsBox, measurementRow);
 
 // The graph canvases carry their own pixel buffers, and the drawing
-// code reads canvas.width for its coordinates, so widening the
-// buffer to the window genuinely redraws at full width instead of
-// stretching a 640 pixel image across the screen.
-function sizeGraphsToWindow(): void {
-  const width = Math.max(320, Math.floor(window.innerWidth));
+// code reads canvas.width for its coordinates, so widening the buffer
+// genuinely redraws at that width instead of stretching a 640 pixel
+// image across the space.
+//
+// Sized to the box rather than the window now. The traces used to span
+// the whole window so one screenshot of the top of the page carried
+// them plus the readouts; with the boxed layout the top of the page
+// carries the score, the source and the video instead, which is a
+// better screenshot, and the traces are supporting evidence further
+// down. The cost is fewer pixels per second of history, which over a
+// ten second window does not matter.
+function sizeGraphsToBox(): void {
+  const width = Math.max(
+    320,
+    Math.floor(graphStrip.clientWidth || contentBox.clientWidth || 1280),
+  );
   for (const graph of [
     sparkCanvas,
     gazeTraceHorizontalCanvas,
@@ -2241,12 +2389,39 @@ function sizeGraphsToWindow(): void {
     graph.classList.add("graph");
   }
 }
-sizeGraphsToWindow();
-window.addEventListener("resize", sizeGraphsToWindow);
+
+// Every readout starts with the same sentence it will show when a
+// measurement is refused, so the page at idle looks like the page
+// running, minus the numbers. The line count never changes as values
+// arrive, which is what stops the layout reflowing through the first
+// minute while somebody is deciding whether to trust it.
+for (const [element, initial] of [
+  [scoreLabel, "Alertness score: measuring..."],
+  [panelSummaryLabel, "Nothing is costing points."],
+  [earLabel, "Eye aspect ratio: no valid measurement"],
+  [apertureLabel, "Eyelid aperture: no valid measurement"],
+  [stabilityLabel, "Aperture stability: measuring..."],
+  [perclosLabel, "PERCLOS (eyes closed share, last 60 s): measuring..."],
+  [longClosureLabel, "Long closures: waiting for the baseline"],
+  [gazeLabel, "Iris offset: no valid measurement"],
+  [quadrantLabel, "Looking toward: no valid measurement"],
+  [gazeStateLabel, "Gaze state: no valid measurement"],
+  [fixationStatsLabel, "Fixations in the last 10 s: none yet"],
+  [headPoseLabel, "Head pose: no valid measurement"],
+  [blinkLabel, "Blinks: 0"],
+  [baselineLabel, "Personal blink threshold: not learned yet"],
+  [featureLabel, "Feature records: none yet (about one per second)"],
+] as const) {
+  element.textContent = initial;
+}
+
+navBar.append(title, linkedInLink);
+statusBanner.append(status, modelStatus, alertBanner);
 
 app.append(
-  graphStrip,
   demoNotice,
+  navBar,
+  statusBanner,
   contentBox,
   calibrationOverlay,
   heatmapOverlay,
