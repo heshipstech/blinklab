@@ -147,12 +147,15 @@ const demoNotice = document.createElement("p");
 demoNotice.dataset.testid = "demo-notice";
 demoNotice.textContent = demoNoticeText();
 Object.assign(demoNotice.style, {
-  border: "2px solid #b26500",
-  background: "#fff3e0",
+  background: "#eaeaea",
+  // The text colour is set explicitly rather than inherited: on a
+  // fixed light background an inherited colour would follow the
+  // page or the reader's dark mode and could end up light on light.
   color: "#1a1a1a",
-  padding: "10px 12px",
+  padding: "10px 16px",
   margin: "0 0 12px 0",
-  fontWeight: "bold",
+  textAlign: "center",
+  fontWeight: "normal",
 });
 
 const startButton = document.createElement("button");
@@ -1131,7 +1134,7 @@ startFrameLoop((nowMs) => {
         const eyelidDots = project(
           pickPoints(face, [...RIGHT_EYE_INDICES, ...LEFT_EYE_INDICES]),
         );
-        drawDots(canvasContext, eyelidDots, 2, "#00e676");
+        drawDots(canvasContext, eyelidDots, 2, "#ffffff");
 
         const irisColor = "#ff9100";
         for (const ring of [RIGHT_IRIS_RING_INDICES, LEFT_IRIS_RING_INDICES]) {
@@ -1613,7 +1616,12 @@ startFrameLoop((nowMs) => {
 // A stylesheet rule stacks them AND keeps hidden meaning hidden.
 const graphStyles = document.createElement("style");
 graphStyles.textContent =
-  ".graph { display: block; } .graph[hidden] { display: none; }";
+  ".graph { display: block; } .graph[hidden] { display: none; }" +
+  // The body's default margin leaves a strip down each side, so the
+  // full width strip and the notice fall short of the window edge.
+  // The centred column keeps its own padding so it stays readable
+  // on a narrow window once the body margin is gone.
+  " body { margin: 0; }";
 document.head.append(graphStyles);
 
 const graphStrip = document.createElement("div");
@@ -1631,15 +1639,25 @@ const contentBox = document.createElement("div");
 Object.assign(contentBox.style, {
   maxWidth: "1200px",
   margin: "0 auto",
+  padding: "0 16px",
+  boxSizing: "border-box",
 });
+// The mirror toggle and the resolution readout share one line: both
+// describe the camera feed, and separating them cost a whole row.
+const cameraLine = document.createElement("div");
+Object.assign(cameraLine.style, {
+  display: "flex",
+  gap: "16px",
+  alignItems: "baseline",
+});
+cameraLine.append(mirrorLabel, resolutionLabel);
+
 contentBox.append(
-  demoNotice,
   title,
   startButton,
   picker,
   canvas,
-  mirrorLabel,
-  resolutionLabel,
+  cameraLine,
   modelStatus,
   status,
   scoreLabel,
@@ -1677,7 +1695,7 @@ contentBox.append(
 // buffer to the window genuinely redraws at full width instead of
 // stretching a 640 pixel image across the screen.
 function sizeGraphsToWindow(): void {
-  const width = Math.max(320, Math.floor(window.innerWidth) - 16);
+  const width = Math.max(320, Math.floor(window.innerWidth));
   for (const graph of [
     sparkCanvas,
     gazeTraceHorizontalCanvas,
@@ -1692,5 +1710,11 @@ function sizeGraphsToWindow(): void {
 sizeGraphsToWindow();
 window.addEventListener("resize", sizeGraphsToWindow);
 
-app.append(graphStrip, contentBox, calibrationOverlay, heatmapOverlay);
+app.append(
+  graphStrip,
+  demoNotice,
+  contentBox,
+  calibrationOverlay,
+  heatmapOverlay,
+);
 render();
