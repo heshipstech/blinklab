@@ -197,7 +197,14 @@ export async function stepThroughVideo(
 
   let index = 0;
   let lastMediaTimeSeconds: number | null = null;
-  const duration = Number.isFinite(video.duration) ? video.duration : null;
+  // Deliberately NOT read once before the loop. A browser can report a
+  // short duration while a clip is still buffering and revise it
+  // upward later, and reading it once froze that early guess into the
+  // stop condition. WebKit on a Linux runner did exactly this and
+  // stopped at 27 frames of 60, three times in a row, because 27
+  // frames was as far as the duration it had first reported.
+  const remaining = (): number | null =>
+    Number.isFinite(video.duration) ? video.duration : null;
 
   // Driven by frame INDEX, not by whatever time a seek reports landing
   // on. Every browser can be asked for frame k; not every browser will
@@ -218,6 +225,7 @@ export async function stepThroughVideo(
     // The middle of frame `index`'s window. Aiming at an edge is what
     // makes a seek ambiguous between two frames.
     const target = (index + 0.5) * step;
+    const duration = remaining();
     if (duration !== null && target > duration) break;
 
     const landing = await seekTo(video, target);
