@@ -4,7 +4,11 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/", "public/mediapipe-wasm/"] },
+  // analysis/.venv holds installed Python packages, some of which ship their own
+  // JavaScript (matplotlib's web backend). Linting a dependency's vendored code
+  // is meaningless, and it only passed in CI because the checks job never
+  // creates the virtual environment.
+  { ignores: ["dist/", "public/mediapipe-wasm/", "analysis/.venv/"] },
   js.configs.recommended,
   tseslint.configs.recommended,
   { languageOptions: { globals: globals.browser } },
