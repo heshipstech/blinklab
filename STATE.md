@@ -67,8 +67,8 @@ For reference, what the script does under the hood:
 4. Report recall, precision and F1 overall, then per clip, then split
    by the glasses flag, since strong prescription lenses are this
    project's documented weak spot and one clip is annotated for it.
-Ground truth totals to check against: 8 clips, 408 annotated blinks,
-71,354 frames.
+   Ground truth totals to check against: 8 clips, 408 annotated blinks,
+   71,354 frames.
 
 ## Rules that still apply
 
