@@ -1,7 +1,8 @@
 Last increment: the Track A correction, on branch `docs/track-a-corrected`
 Last commit: squash merge of pull request #172 on 2026-08-09
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: nothing. Track A is DONE and measured twice.
+Currently working: nothing. Track A is DONE and measured twice. The
+write up is in pull request #173, open and not yet merged.
 
 ## Track A result, 9 August 2026, corrected
 
@@ -23,38 +24,60 @@ Full output in `docs/eyeblink8-result.txt`, written up in the README.
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
 F1**, which was written on branch `docs/track-a-result` and never
 merged. The cause was in this repository, not in the corpus.
-`BLINK_LOG_CAP` was 50 and fed a ring buffer that dropped from the
-front. The same list was both the on screen panel and the exported
+`BLINK_LOG_CAP` was 50. It fed a fixed length list that threw away the
+OLDEST entry whenever a new one arrived (a ring buffer). The same list was both the on screen panel and the exported
 record, so the export inherited a display limit. Two clips run past 50
 blinks, 88 and 72 annotated, and their opening stretches were deleted
-before the file was written. Fixed in pull request #172: the cap is now
-`BLINK_LOG_DISPLAY_CAP` (50, panel only) and `BLINK_LOG_RECORD_CAP`
-(20000, the record), and the export prints a WARNING header line when
-rows are missing. Those two clips moved 55.7% to 89.8% and 58.3% to
-91.7%. The other six barely moved.
+before the file was written. Fixed in pull request #172. The cap is now
+two caps: `BLINK_LOG_DISPLAY_CAP` (50, panel only) and
+`BLINK_LOG_RECORD_CAP` (20000, the record). The export prints a WARNING
+header line when rows are missing. Those two clips moved 55.7% to 89.8%
+and 58.3% to 91.7%, which is 30 and 24 blinks recovered, 54 in total.
+That is the entire move from 284 to 338. Every other clip found exactly
+the same number of blinks in both runs.
+
+CAVEAT when comparing the two runs. They were built from different
+commits, so this is not one line changed. Five of the six shorter clips
+shifted a blink edge by a frame or two, or split one detection into
+two. The cap cannot explain that, because none of those clips reach 50
+blinks. The frame rate is not the cause either: `measured_fps` is 30.00
+in both runs for all eight clips. The recall attribution above is
+nevertheless exact. Fixing the cap also surfaced 8 more invented
+blinks, 45 to 53, seven of them in the two recovered clips.
 
 The glasses claim from the first write up is WITHDRAWN, not reversed.
 It rested on 83.7% for the one glasses clip against 67.9% for the seven
 without, but both truncated clips sat in the group without glasses. The
-corrected split is 83.7% with against 82.7% without. One clip of 43
-blinks settles nothing either way.
+corrected split is 83.7% recall with against 82.7% without, and 83.7%
+precision with against 86.8% without. Recall is one point apart,
+precision is three points apart the other way. One clip of 43 blinks
+settles nothing either way, so report BOTH halves or neither.
 
-What the audit established, so nobody re-litigates it:
+What the audit established, so nobody argues it again:
 
-- The corpus is not the problem. 737 lost frames, 1.011% of the corpus,
-  12 freezes across 3 clips. Only 8 of 408 blinks contain a lost frame,
-  each losing one, and 6 of those 8 were detected. Ceiling explanatory
-  power: 2 misses. Zero non-frontal frames. Zero blinks under 4 frames.
-  Downsampling 4x changed blink signal strength by 2.7%.
-- 87.9% of the remaining misses contain at least one frame the human
-  marked fully closed. That is the real weakness.
-- Double counting is NOT fixed. 39 of the first run's 45 false
-  positives sat on top of a real blink, median length 2 frames. A
-  refractory period is the planned next fix.
+- The corpus is not the problem. 737 lost frames, 12 freezes across 3
+  clips. 737 of 71,354 frames is 1.03%, so say 1.0%; an earlier note
+  said 1.011% and that does not divide. Only 8 of 408 blinks contain a
+  lost frame, each losing one, and 6 of those 8 were detected. At the
+  very most, the lost frames explain 2 of the misses. In every frame
+  the person faces the camera. No blink is shorter than 4 frames.
+  Shrinking the video to a quarter of its size changed how strong a
+  blink looks by 2.7%, so the picture is not too small.
+- 55 of the 70 corrected misses, 78.6%, contain at least one frame the
+  human marked fully closed. That is the real weakness. An earlier note
+  said 87.9%; that was 109 of 124, and 124 is the FIRST run's miss
+  count, so it was measuring the defect. Recomputed on the corrected
+  misses using `Blink.fully_closed_frames` from
+  `analysis/blinklab/eyeblink8.py`.
+- Double counting is NOT fixed. 45 of the corrected run's 53 invented
+  blinks sit on top of a real blink, and half are 3 frames or shorter.
+  The planned next fix is a refractory period, which is a short window
+  after a blink in which a second blink cannot be reported.
 - Do NOT apply exclusions to flatter the score. Dropping long closures
-  gives 83.3%, also dropping partial blinks gives 86.8%, and one notch
-  further reaches 92.8% by deleting the blinks we missed. That is the
-  reductio. None of them go in the README.
+  raises recall, dropping partial blinks raises it again, and one notch
+  further you are deleting the blinks we missed. That last step shows
+  where this reasoning ends up, and it is plainly cheating. The README
+  prints none of those numbers, deliberately.
 
 ## If you are a fresh context, read this first
 
@@ -62,7 +85,7 @@ What the audit established, so nobody re-litigates it:
 
 The corpus runner drives a preview server on port 4173. A LEFTOVER
 server from an earlier run keeps that port and serves the OLD BUNDLE
-while answering HTTP 200 to everything. Nothing looks broken. On
+It answers every request with a success code, so nothing looks broken. On
 9 August this produced a fake result of 69.1% from code that had
 already been fixed.
 
@@ -83,14 +106,23 @@ does not announce itself, and the number it gives you is plausible.
 
 ### Throughput, corrected
 
-**A full corpus run takes about 16 minutes, not 2.4 hours.** This file
-used to claim 8.4 frames per second and a 2.4 hour run. That figure was
-measured on one clip under a debugger and was roughly nine times too
-slow. It mattered: it made the corpus look like an overnight job, it
-made DROZY look like a twenty hour job, and the owner was close to
-rescoping the evaluation plan around a cost that does not exist. Check
-a throughput figure against a real end to end run before planning
-around it.
+**About 58 frames per second. A full corpus run takes about 20
+minutes, not 2.4 hours.** This file used to claim 8.4 frames per second
+and a 2.4 hour run. That figure was measured on one clip under a
+debugger and was roughly seven times too slow.
+
+It mattered. It made the corpus look like an overnight job, and DROZY
+look like a twenty hour one. The owner was close to cutting down the
+whole evaluation plan around a cost that does not exist.
+
+The 58 figure is measured from the run's own file timestamps, not
+back-solved from a guess. Clips 2 to 8 of the capfix run are 55,572
+frames written between 09:51:36 and 10:07:30. That is 954 seconds and
+58.25 frames per second. Per clip the rate runs 56.9 to 58.9. Check a
+throughput figure against a real end to end run before planning around
+it, and check it the same way:
+
+    stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" <measured-dir>/*.blinks.csv
 
 Do not conclude a run is stuck because nothing has appeared after a few
 minutes. It writes nothing until a clip finishes, and the longest clip,
@@ -152,7 +184,8 @@ For reference, what the script does under the hood:
 
 ## Rules that still apply
 
-Never push to main. Branch, pull request, green CI, then merge. Run
+Never push to main. Branch, pull request, green CI (continuous
+integration, the checks GitHub runs on every pull request), then merge. Run
 lint, typecheck, `npm test`, `npm run e2e` and, in `analysis/`, both
 `ruff check` and `pytest` before opening anything.
 
@@ -161,7 +194,7 @@ boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 442 unit tests, 7 end to end tests across two browser
-engines, 61 Python tests plus 2 skipped
+engines, 61 Python tests passed plus 2 skipped
 
 ## DROZY, which is also ready
 
@@ -173,14 +206,18 @@ by the owner.
 
 Only `KSS.txt` has been extracted so far, deliberately, to avoid
 competing for disk with the corpus run. It is 14 rows of 3, one row per
-subject, one column per test, KSS 1 to 9 with `0` meaning the session
-never happened.
+subject, one column per test, KSS (Karolinska Sleepiness Scale) 1 to 9,
+with `0` meaning the session never happened.
 
 The DROZY arithmetic was rewritten with the corrected throughput. 36
-clips of about ten minutes is roughly 648,000 frames, which at the real
-rate of about 74 frames per second is roughly 2.4 hours, not the twenty
-hours this file used to claim. Two minutes from each clip is about
-129,600 frames and roughly half an hour.
+clips of about ten minutes, at 30 frames per second, is roughly 648,000
+frames. At about 58 frames per second that is roughly 3.1 hours, not
+the twenty hours this file used to claim. Two minutes from each clip is
+about 129,600 frames and roughly 37 minutes.
+
+**Both figures assume DROZY runs at the same speed as Eyeblink8, and
+that DROZY is 30 frames per second. Nobody has measured either one.
+Measure a DROZY clip before planning around these numbers.**
 
 Still prefer the two minute window, but for the right reason. The KSS
 rating is a single number for the whole session, so a two minute window

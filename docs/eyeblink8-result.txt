@@ -1,11 +1,12 @@
 BLINK DETECTION vs Eyeblink8 ground truth
 
 Measured 9 August 2026 on a verified build. This REPLACES an earlier
-result of recall 69.6%, precision 86.3%, F1 77.1%, which was produced
-before the blink log defect of pull request #172 was fixed.
-That defect deleted the opening blinks of any clip past 50 blinks
-before the file was written, so two clips here were scored against a
-truncated record. See the README for the plain English account.
+result of recall 69.6%, precision 86.3%, F1 77.1%. That earlier result
+was produced before pull request #172 fixed the blink log defect. The
+defect deleted the opening blinks of any clip holding more than 50
+blinks, before the file was written. So two clips here were scored
+against a record that was missing its start. See the README for the
+plain English account.
 
 8 clips, 408 annotated blinks, 391 detected
 
@@ -14,6 +15,7 @@ truncated record. See the README for the plain English account.
   F1         84.6%
 
 Per clip
+  gl = the person in the clip wears glasses.
   clip                   gl   true  found  miss  false   recall     prec
   26122013_223310_cam      -    38     28    10      5    73.7%    84.8%
   26122013_224532_cam      -    88     79     9      3    89.8%    96.3%
@@ -42,9 +44,26 @@ Totals: 71,356 frames measured against 71,354 annotated. Two clips gave
 one frame more than their annotation file lists. Every other clip is
 exact.
 
-The two clips the defect had truncated are 26122013_224532_cam, which
-moved from 55.7% recall to 89.8%, and 27122013_153916_cam, which moved
-from 58.3% to 91.7%. The other six moved by little or not at all.
+The two clips the defect cut short are 26122013_224532_cam, which moved
+from 55.7% recall to 89.8%, and 27122013_153916_cam, which moved from
+58.3% to 91.7%. That is 30 and 24 blinks recovered, 54 in total, which
+is the entire move from 284 found to 338. Every other clip found
+exactly the same number of blinks in both runs.
+
+CAVEAT. The two runs were built from different commits, so they are not
+one measurement with a single line changed. Five of the six shorter
+clips shifted a blink edge by a frame or two, or split one detection
+into two. The blink log cap cannot explain that, because none of those
+clips reach 50 blinks. The frame rate is not the cause either:
+measured_fps is 30.00 in both runs for all eight clips. The recall
+attribution above is nevertheless exact.
+
+Two further figures computed from these files:
+  55 of the 70 misses, 78.6%, contain at least one frame the human
+    marked fully closed.
+  45 of the 53 invented blinks sit on top of a real blink, and half of
+    them are 3 frames long or shorter. That is double counting, not
+    invention from nothing. Not yet fixed.
 
 The superseded result, kept here so the correction can be checked:
 
