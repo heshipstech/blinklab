@@ -11,7 +11,7 @@ test("the calibration flow opens on dot 1 of 9 and cancels cleanly", async ({
 }) => {
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Eye-tracking demo" }),
+    page.getByRole("heading", { name: "Alertness measurement demo" }),
   ).toBeVisible();
 
   // The fake permission flag grants this without any prompt.
