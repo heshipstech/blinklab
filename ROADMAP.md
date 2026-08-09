@@ -113,9 +113,9 @@ Accepted on 2026-07-28, before any code:
 ## Phase 8. Making it public and durable
 
 - [ ] 8.1 (moved to 7.0, see amendments)
-- [ ] 8.2 ARCHITECTURE.md with a module diagram and the data flow. Done when a newcomer understands it in 5 minutes.
+- [x] 8.2 ARCHITECTURE.md with a module diagram and the data flow. Done when a newcomer understands it in 5 minutes.
 - [ ] 8.3 CHANGELOG.md, semantic version tags, first GitHub Release v0.1.0. Check: release workflow.
-- [ ] 8.4 MODEL_CARD.md: what it measures, what it does not, where it fails, who it fails for.
+- [x] 8.4 MODEL_CARD.md: what it measures, what it does not, where it fails, who it fails for.
 - [ ] 8.5 Dependabot and a basic security policy. Check: automated dependency pull requests appear.
 - [ ] 8.6 Test coverage reporting with a floor on `core/`, starting at 70 percent. Check: CI gate.
 - [ ] 8.7 Performance budget check in CI: bundle size gate in CI, inference time measured locally and recorded (CI machines have no camera and vary in speed). Check: CI gate plus documented local numbers.
