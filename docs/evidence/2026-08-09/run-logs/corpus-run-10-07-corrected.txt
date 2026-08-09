@@ -1,0 +1,12 @@
+8 clips to measure
+
+[1/8] 26122013_223310_cam  Measured 15784 frames at 30.0 frames per second, in 267 s. Che  [4.5 min]
+[2/8] 26122013_224532_cam  Measured 11182 frames at 30.0 frames per second, in 190 s. Che  [3.2 min]
+[3/8] 26122013_230103_cam  Measured 9216 frames at 30.0 frames per second, in 157 s. Chec  [2.6 min]
+[4/8] 26122013_230654_cam  Measured 5405 frames at 30.0 frames per second, in 94 s. Check  [1.6 min]
+[5/8] 27122013_151644_cam  Measured 10663 frames at 30.0 frames per second, in 181 s. Che  [3.0 min]
+[6/8] 27122013_152435_cam  Measured 5134 frames at 30.0 frames per second, in 89 s. Check  [1.5 min]
+[7/8] 27122013_153916_cam  Measured 9077 frames at 30.0 frames per second, in 155 s. Chec  [2.6 min]
+[8/8] 27122013_154548_cam  Measured 4895 frames at 30.0 frames per second, in 85 s. Check  [1.4 min]
+
+done. 8 measured, 0 failed.
