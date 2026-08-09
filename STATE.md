@@ -1,9 +1,54 @@
-Last increment: the deterministic clock (#189) and the refractory
-period (#190), which closed issues #174 and #176
-Last commit: squash merge of pull request #190 on 2026-08-09
+Last increment: the overnight run of 9 to 10 August 2026. DROZY was
+measured for the first time, and the two defects it exposed were fixed.
+Last commit: squash merge of pull request #198 on 2026-08-10
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: nothing. Track A is DONE and the number now REPEATS.
-The write up is on this page and in the README.
+Currently working: nothing.
+
+## Where things stand, 10 August 2026
+
+Track A is DONE and its number REPEATS. Track B, the sleepiness
+question, has been measured once and its result is NOT published.
+
+MERGED overnight: #194 the DROZY analysis code and its pre-registration
+plus MODEL_CARD.md and ARCHITECTURE.md (roadmap 8.2 and 8.4 done), #196
+the exclusion bias report, #197 the frame count guard (closed #193),
+#198 the loud frame rate refusal (closed #192).
+
+OPEN AND WAITING FOR THE OWNER: pull request #195, which rebuilds the
+miss table and moves a published figure from 78.6% to 72.0%. It was not
+merged because the owner asked to see number changes first. The headline
+recall, precision and F1 are untouched by it.
+
+### The DROZY result, held deliberately
+
+Measured, analysed, and NOT in this repository. The owner asked to see
+the first sleepiness result before anyone else does. The analysis is
+reproducible with:
+
+    cd analysis
+    PYTHONPATH="$PWD" .venv/bin/python tools/analyse_drozy.py \
+        "$DATASETS/drozy-measured" <path-to-KSS.txt>
+
+What can be said here without publishing the finding: 20 of 36 sessions
+were analysable, and the plan in docs/drozy-analysis-plan.md was
+committed before any correlation existed, so the result can be checked
+against a plan that could not have been written to fit it.
+
+THE EXCLUSION IS NOT RANDOM. DROZY's own README says the 15 fps
+recordings are "tests 2 and 3 of subjects 1->8, because of a recording
+bug occurring in darkness", and those are the sleep deprived sessions.
+The excluded 16 average KSS 6.38 against 4.60 for the analysed 20, and
+every KSS 9 sits in the excluded group. Any conclusion drawn from the
+remainder is a conclusion about a sample missing the top of the scale.
+
+The 16 cannot be recovered. DROZY carries no blink ground truth, its
+manual and automatic annotations being 68 point face landmarks, and
+recovering the sessions would mean lowering the 25 fps floor, which is
+not on the table.
+
+Derived DROZY video is DELETED per the DATASETS.md safeguard. Numbers
+only remain, 692 KB. A re-run needs a re-extract and re-transcode from
+DROZY.zip, about 8 minutes.
 
 ## The datasets folder
 
