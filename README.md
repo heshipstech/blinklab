@@ -31,6 +31,109 @@ This project's rule is that a limitation you know about belongs in the open.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
 - An uploaded clip can be measured two ways and the file records which. Stepped, the default, seeks to every frame in turn and waits for the measurement, so the result depends on the recording rather than on your computer. Watched plays in real time and is capped by how fast the model runs, so a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate, and the app reports the rate it detected so you can check it against a clip you know.
 
+## Does it find the blinks a human found?
+
+The first time anything here has been measured against somebody else's
+work. Eight webcam recordings from the Eyeblink8 benchmark, 71,354
+frames, in which a person marked every blink by hand. 408 of them.
+
+|              | First answer, wrong | Corrected               |
+| ------------ | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | **338 of 408**          |
+| Recall       | 69.6%               | **82.8%**               |
+| Precision    | 86.3% (45 invented) | **86.4%** (53 invented) |
+| F1           | 77.1%               | **84.6%**               |
+
+Recall is the share of the human's blinks that were found. Precision is
+the share of this app's detections that were real. F1 is the two of them
+combined into one number, so a detector cannot look good by being timid
+or by firing constantly.
+
+Two columns are here because the first answer was wrong, and it was
+wrong because of a defect in this app rather than anything about the
+recordings. The first write up of this result lives on branch
+`docs/track-a-result` and never reached this page. Both numbers are
+printed because a project that shows you only its final answer has told
+you less than one that shows you the wrong turn.
+
+**The defect, in plain English.** The app keeps a list of the blinks it
+has found, and that one list was doing two jobs. It was the list you
+read on screen, trimmed to the newest fifty so the panel stays short,
+and it was also the record written into the exported file. So trimming
+for the reader trimmed the measurement. Two of the eight clips run past
+fifty blinks, 88 and 72 of them, and the opening stretch of each was
+deleted before the file existed. Nothing announced it. The score came
+back looking like a detector that could not find blinks it had in fact
+found and then thrown away. There are two lists now, one for the screen
+and one for the record, and the exported file compares its own rows
+against the detector's own count and prints a warning line at the top if
+any are missing. Fixed in pull request #172.
+
+**Read the corrected number as a fair result and still a losing one.**
+It misses roughly one blink in six. Published detectors on this same
+benchmark report F1 figures in the low nineties, so this instrument is
+closer than it was and is not there.
+
+Per clip recall now runs from 67.7% to 91.7%. The two truncated clips
+moved from 55.7% to 89.8% and from 58.3% to 91.7%. The other six moved
+little or not at all, which is the signature of a fault that only bit
+long recordings.
+
+The recordings were audited before any of this was blamed on them. Three
+of the eight have brief freezes that lose frames, 737 frames in all,
+which is 1.011% of the corpus. Only 8 of the 408 blinks contain a lost
+frame, each losing exactly one, and 6 of those 8 were detected anyway.
+So the recordings can explain at most 2 of the 70 remaining misses. No
+frame in any of the eight files is non-frontal, no annotated blink is
+shorter than 4 frames, and shrinking the video by four times changed the
+blink signal strength by 2.7%. The corpus is not the excuse.
+
+**A claim from the first write up is withdrawn.** It said the one clip
+whose subject wears glasses scored 83.7% recall against 67.9% for the
+seven without, and read that as evidence against this project's own
+warning about prescription lenses. The gap was an artefact of the
+defect: both truncated clips sat in the group without glasses, which
+dragged that group's average down. On the corrected run the split is
+83.7% with glasses against 82.7% without. That is one point of
+difference resting on a single clip of 43 blinks, and it settles nothing
+in either direction. So the claim is withdrawn rather than reversed.
+This project has no evidence yet about what glasses do to blink
+detection.
+
+There is a version of this result that reads better, and it is not
+printed here. Leave out the blinks the human marked as long closures and
+recall reads 83.3%. Leave out the partial blinks as well and it reads
+86.8%. Carry the same reasoning one step further and it reaches 92.8%,
+by leaving out the blinks the detector missed. Every step sounds
+defensible on its own and the last one is plainly cheating, which is why
+none of them are above.
+
+Where it still fails has a shape. 87.9% of the blinks it misses contain
+at least one frame the human marked as fully closed. These are not faint
+or borderline blinks. They are ordinary ones where this app's eyelid
+measurement did not dip far enough to count. That is a real weakness and
+understanding it is the next question.
+
+The invented blinks have a shape too. In the first run, 39 of the 45
+false detections landed on top of a real blink rather than on an open
+eye, with a middle length of 2 frames. That is one blink counted twice,
+not a blink imagined from nothing. A refractory period, a short window
+after a blink in which a second one cannot be reported, should remove
+most of them. It is planned and it is not built, so the precision above
+is the precision without it.
+
+The rules for what counts as a correct detection were fixed before any
+result was seen, and are in `analysis/blinklab/blink_match.py`. Matching
+is one to one, so a detector that fired constantly would score badly
+rather than perfectly. Counts are pooled across clips rather than rates
+averaged, so a 30 blink clip does not weigh the same as an 88 blink one.
+Every clip was measured frame by frame and the counts checked against
+the source: 71,356 frames measured against 71,354 annotated, because two
+clips gave one frame more than their annotation file lists.
+
+Full output, including the superseded numbers, in
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+
 ## Does it give the same answer twice?
 
 A measuring instrument that answers differently on different computers is
@@ -66,7 +169,7 @@ Everything runs in your browser. No video, image or measurement ever leaves your
 
 ## Status
 
-Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 424 unit tests, 5 end to end tests and 54 Python tests, all green on every pull request.
+Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 442 unit tests, 7 end to end tests and 61 Python tests, all green on every pull request.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records roughly forty public datasets assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
