@@ -1,5 +1,6 @@
 import {
   APERTURE_HYSTERESIS_FRACTION,
+  BLINK_REFRACTORY_MS,
   MAX_BLINK_DURATION_MS,
 } from "./constants";
 
@@ -29,6 +30,10 @@ export type BlinkState = {
   armed: boolean;
   // The closed phase length of the most recent completed blink.
   lastBlinkDurationMs: number | null;
+  // When the most recent COUNTED blink ended. A closure finishing
+  // within BLINK_REFRACTORY_MS of this is the tail of that blink
+  // rather than a new one, and is not counted again. See #176.
+  lastBlinkEndedAtMs: number | null;
 };
 
 export const initialBlinkState: BlinkState = {
@@ -37,6 +42,7 @@ export const initialBlinkState: BlinkState = {
   closedAtMs: null,
   armed: false,
   lastBlinkDurationMs: null,
+  lastBlinkEndedAtMs: null,
 };
 
 export function blinkStep(
@@ -65,10 +71,19 @@ export function blinkStep(
     state.eye === "closed" && state.closedAtMs !== null
       ? nowMs - state.closedAtMs
       : null;
-  const completedBlink =
+  const shapedLikeABlink =
     closedDurationMs !== null &&
     closedDurationMs <= MAX_BLINK_DURATION_MS &&
     state.armed;
+  // The refractory period. An eyelid cannot open and shut twice this
+  // fast, so a closure finishing this soon after the last counted
+  // blink is the same blink reported twice. It is dropped rather than
+  // counted, and it does not refresh the timer, so a burst of chatter
+  // cannot walk the window forward and swallow a genuine later blink.
+  const withinRefractory =
+    state.lastBlinkEndedAtMs !== null &&
+    nowMs - state.lastBlinkEndedAtMs < BLINK_REFRACTORY_MS;
+  const completedBlink = shapedLikeABlink && !withinRefractory;
   return {
     eye: "open",
     blinkCount: state.blinkCount + (completedBlink ? 1 : 0),
@@ -78,5 +93,6 @@ export function blinkStep(
       completedBlink && closedDurationMs !== null
         ? closedDurationMs
         : state.lastBlinkDurationMs,
+    lastBlinkEndedAtMs: completedBlink ? nowMs : state.lastBlinkEndedAtMs,
   };
 }

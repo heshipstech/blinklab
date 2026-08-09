@@ -65,6 +65,39 @@ export const BLINK_LOG_DISPLAY_CAP = 50;
 // exported file, because a measurement that loses data has to say so.
 export const BLINK_LOG_RECORD_CAP = 20000;
 
+// The refractory period of #176. A completed closure is not counted if
+// it ends within this long of the previous counted blink ending.
+//
+// The problem it solves: one blink is sometimes reported as two. During
+// a single closure the aperture can rise back over the threshold for a
+// frame or two and dip again, and the detector sees two closures. On
+// the Eyeblink8 benchmark this produced 111 false alarms, of which 103
+// landed on top of a blink the human had marked and 98 were three
+// frames long or shorter. They were not blinks imagined from nothing,
+// they were the tail end of real ones counted a second time.
+//
+// WHERE 150 COMES FROM, and it is not from the benchmark. Deliberate
+// rapid blinking tops out around five blinks a second, so the shortest
+// interval a person can produce on purpose is about 200 ms. 150 sits
+// below that, so it cannot suppress even a subject blinking as fast as
+// they are able. Spontaneous blinking is an order of magnitude slower
+// again. The number was chosen from what an eyelid can do, then the
+// benchmark was re-run to see what it bought, in that order.
+//
+// STATED PLAINLY: this was introduced AFTER seeing the benchmark
+// result. The rule is physiological rather than fitted, and it was not
+// adjusted afterwards to improve the score, but it was not
+// pre-registered either and it would be dishonest to imply otherwise.
+//
+// Why not fix it by moving the REOPEN line instead: that design was
+// tried for #114 and adversarial review killed it three ways. Band time
+// corrupted durations, the latch had no time bound, and chatter could
+// swallow real blinks. See the comment at the top of core/blink.ts. A
+// refractory period changes only whether a SECOND count is allowed, and
+// never when a closure begins or ends, so every duration keeps its 4.3
+// definition.
+export const BLINK_REFRACTORY_MS = 150;
+
 // The squint separation of 4.7. A blink's closed phase is brief,
 // yours measured 133 and 117 ms. Beyond half a second below the
 // threshold, the eye is not blinking, it is closed, a different
