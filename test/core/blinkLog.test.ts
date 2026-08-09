@@ -30,15 +30,16 @@ describe("appendEvent, the event reducer", () => {
   });
 
   // The regression. This is the defect that cost the first external
-  // validation 58 detections: a session past the DISPLAY cap kept only
-  // its most recent fifty blinks, and the export inherited that. Two
-  // Eyeblink8 clips ran to 88 and 72 blinks, so their opening stretches
-  // were deleted before the file was written, and the missing rows read
-  // as a detector that had failed to find them.
+  // validation 63 rows of its record: a session past the DISPLAY cap
+  // kept only its most recent fifty blinks, and the export inherited
+  // that. THREE Eyeblink8 clips made more than fifty detections, so
+  // their opening stretches were deleted before the file was written.
+  // 54 of the 63 deleted rows were real blinks, and those missing rows
+  // read as a detector that had failed to find them.
   //
   // Written against the display cap rather than a literal 50, so it
   // keeps testing the right thing if that number is ever tuned.
-  it("keeps every blink past the display cap, which is the 58 blink bug", () => {
+  it("keeps every blink past the display cap, the 63 dropped row bug", () => {
     let events: BlinkEvent[] = [];
     const past = BLINK_LOG_DISPLAY_CAP * 2;
     for (let i = 0; i < past; i++) {
