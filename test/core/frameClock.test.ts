@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   acceptFrame,
+  checkStepping,
   coverageMetadataRows,
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
   steppingProgress,
+  steppingWarning,
 } from "../../src/core/frameClock";
 
 describe("acceptFrame", () => {
@@ -238,5 +240,55 @@ describe("steppingProgress", () => {
   it("switches from seconds to minutes rather than saying 300 s", () => {
     expect(steppingProgress(100, 10, 200, 30_000)).toContain("min left");
     expect(steppingProgress(100, 100, 200, 30_000)).toContain("30 s left");
+  });
+});
+
+describe("checkStepping, did the stepper visit frames twice", () => {
+  it("is happy when every sought frame was a new one", () => {
+    expect(checkStepping(3600, 3600, 120).kind).toBe("ok");
+  });
+
+  // THE REAL CASE. DROZY clip 1-2 is 15 frames per second. Calibration
+  // produced a 30 fps interval, so the stepper sought 3600 frames and
+  // only 1800 were new. The status line reported "3600 frames at 30.0
+  // frames per second" and hid the fault. Issue #193.
+  it("catches a 15 fps clip stepped at a 30 fps interval", () => {
+    const check = checkStepping(3600, 1800, 120);
+    expect(check.kind).toBe("duplicateVisits");
+    if (check.kind !== "duplicateVisits") throw new Error("expected a warning");
+    expect(check.sought).toBe(3600);
+    expect(check.measured).toBe(1800);
+    // The rate that is TRUE, from frames actually measured over the
+    // clip's own duration, not from the interval that was wrong.
+    expect(check.trueRate).toBeCloseTo(15, 5);
+  });
+
+  it("tolerates the odd duplicate seek without crying wolf", () => {
+    // A seek landing on the frame already showing is possible once
+    // calibration has succeeded. One in a hundred is luck, not a fault.
+    expect(checkStepping(3600, 3580, 120).kind).toBe("ok");
+  });
+
+  it("says nothing useful is known when the duration is missing", () => {
+    const check = checkStepping(3600, 1800, null);
+    if (check.kind !== "duplicateVisits") throw new Error("expected a warning");
+    expect(check.trueRate).toBeNull();
+  });
+
+  it("does not fire on an empty run, which is a different failure", () => {
+    expect(checkStepping(0, 0, 120).kind).toBe("ok");
+  });
+
+  it("names both counts and the true rate in the warning", () => {
+    const text = steppingWarning(checkStepping(3600, 1800, 120));
+    expect(text).toContain("3600");
+    expect(text).toContain("1800");
+    expect(text).toContain("15.0 frames per second");
+    // The reader must not be left thinking their data is ruined.
+    expect(text).toContain("exported file");
+  });
+
+  it("says nothing at all when there is nothing to say", () => {
+    expect(steppingWarning({ kind: "ok" })).toBe("");
   });
 });

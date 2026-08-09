@@ -193,3 +193,74 @@ export function sourceMetadataRows(
     `# clip: ${source === "file" && safeName !== "" ? safeName : "none"}`,
   ];
 }
+
+/**
+ * Did the stepper visit frames it had already measured?
+ *
+ * Two counts exist for one run. The stepper counts frames it SOUGHT TO.
+ * The pipeline counts frames it actually MEASURED, after this module's
+ * clock rejected repeats. In a healthy run they are the same number.
+ *
+ * When they are not, the calibrated step interval is smaller than the
+ * clip's true frame period, so the stepper lands on the same decoded
+ * frame more than once. That is not noise, it is the interval being
+ * wrong, and it means the RATE derived from that interval is wrong too.
+ *
+ * Measured on DROZY, 10 August 2026: a 15 frames per second recording
+ * stepped at a 30 fps interval sought 3600 frames and measured 1800,
+ * and the status line reported "3600 frames at 30.0 frames per second"
+ * because it printed the stepper's count and the calibrated rate. The
+ * exported file was correct throughout. Only the operator was misled,
+ * and that is what masked issue #192 for an hour. See #193.
+ *
+ * The tolerance is deliberately tight. A seek landing on the frame
+ * already showing is possible but rare once calibration has succeeded,
+ * so anything worse than a couple of frames in a hundred is the
+ * interval being wrong rather than luck.
+ */
+export const STEPPING_DUPLICATE_TOLERANCE = 0.98;
+
+export type SteppingCheck =
+  | { kind: "ok" }
+  | {
+      kind: "duplicateVisits";
+      sought: number;
+      measured: number;
+      // What the frame rate really was, given how many frames were
+      // measured over the clip's own duration. This is the number to
+      // trust, not the one derived from the calibrated interval.
+      trueRate: number | null;
+    };
+
+export function checkStepping(
+  sought: number,
+  measured: number,
+  durationSeconds: number | null,
+): SteppingCheck {
+  if (sought <= 0 || measured >= sought * STEPPING_DUPLICATE_TOLERANCE) {
+    return { kind: "ok" };
+  }
+  const trueRate =
+    durationSeconds !== null &&
+    Number.isFinite(durationSeconds) &&
+    durationSeconds > 0
+      ? measured / durationSeconds
+      : null;
+  return { kind: "duplicateVisits", sought, measured, trueRate };
+}
+
+/** What to tell the operator when the stepper visited frames twice. */
+export function steppingWarning(check: SteppingCheck): string {
+  if (check.kind === "ok") return "";
+  const rate =
+    check.trueRate === null
+      ? "unknown"
+      : `${check.trueRate.toFixed(1)} frames per second`;
+  return (
+    `This clip was stepped at the wrong interval. ` +
+    `${String(check.sought)} frames were sought but only ` +
+    `${String(check.measured)} were new, so the rest were the same frame ` +
+    `visited twice. The clip's real rate is ${rate}. ` +
+    `The exported file records the measured count and is correct.`
+  );
+}

@@ -138,11 +138,13 @@ import type { FrameClockState, FrameSource } from "./core/frameClock";
 import type { MeasurementMode } from "./core/frameClock";
 import {
   acceptFrame,
+  checkStepping,
   coverageMetadataRows,
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
   steppingProgress,
+  steppingWarning,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import {
@@ -795,9 +797,22 @@ async function beginVideoFile(file: File): Promise<void> {
         });
         return;
       }
+      // Report the count that MEANS something. `summary.framesMeasured`
+      // is how many frames the stepper sought to; `framesMeasured` is
+      // how many the pipeline actually measured after duplicates were
+      // rejected. They agree in a healthy run and diverge when the
+      // calibrated interval is wrong, and printing the larger one told
+      // the operator a comfortable number while hiding the fault. #193.
+      const stepping = checkStepping(
+        summary.framesMeasured,
+        framesMeasured,
+        loadedClipDurationSeconds,
+      );
+      const warning =
+        stepping.kind === "ok" ? "" : ` ${steppingWarning(stepping)}`;
       status.textContent = summary.stoppedEarly
-        ? `Stopped after ${String(summary.framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
-        : `Measured ${String(summary.framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.`;
+        ? `Stopped after ${String(framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
+        : `Measured ${String(framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.${warning}`;
       return;
     }
 
