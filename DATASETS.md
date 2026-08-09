@@ -122,6 +122,21 @@ retired it.
 The decision and its amendment are tracked in
 [issue #142](https://github.com/heshipstech/blinklab/issues/142).
 
+**Part three, added 9 August 2026: DROZY is permitted too, and it is the
+better dataset for this.** Professor Jacques Verly granted written permission
+on 8 August for the same shape of use. That matters more than the UTA-RLDD
+permission, because DROZY carries **real Karolinska Sleepiness Scale ratings**,
+self reported by each subject immediately before each recording, and UTA-RLDD
+does not. Rows 7.5 to 7.7 need a genuine sleepiness label, and this is the only
+permitted dataset that has one. The full record, including the misunderstanding
+about MIT that had to be corrected first and the citation the permission
+requires, is under the DROZY heading below.
+
+So the gate answer above stands as written and is now historical: no dataset
+clears all four bars **on its licence alone**. Two now clear them on licence
+plus written permission from the rights holder, which is a different thing and
+is recorded as such.
+
 ## The central finding
 
 The openly licensed drowsiness datasets are the ones without video, and the
@@ -181,7 +196,11 @@ contradictory answers about them.
 
 ### DROZY, University of Liege
 
-The best labels in existence for this problem, and unusable.
+The best labels in existence for this problem. Unusable on its licence
+alone, and USABLE since 8 August 2026 under written permission from its
+senior author. The licence reading below is kept in full, because the
+permission was granted on the strength of understanding exactly what the
+licence did and did not forbid.
 
 DROZY is the only candidate carrying **real KSS**, one to nine, self reported by
 the subject immediately before each ten minute test. Fourteen subjects, three
@@ -214,6 +233,49 @@ general exception applies only where rights have not been expressly reserved.
 DROZY is not closed forever. Term 2 shows ULg-INTELSIG grants written approvals,
 so a written permission would settle it. Without one, DROZY-derived results do
 not belong in a public repository.
+
+#### Permission granted, 8 August 2026
+
+**That permission now exists, so everything above this heading is history
+rather than a live blocker.** It is kept because the reasoning that led to
+asking is worth more than the answer, and because a reader deserves to see
+what was weighed rather than only what was concluded.
+
+- **Who.** Professor Jacques Verly, University of Liege, senior author of the
+  DROZY database and named in its licence agreement.
+- **When.** 8 August 2026, by email, in reply to a request describing exactly
+  what this project intended to do.
+- **What was described to him.** Computing per-second numeric features from the
+  video locally, then publishing those numbers and the resulting evaluation
+  metrics in a public repository. Never a frame, never the video.
+- **What he granted.** The use as described, in writing, with one condition:
+  that the database and its paper are cited wherever results appear in any
+  form.
+- **The correction that followed.** His reply asked about the project's
+  connection with MIT. He had read "MIT licensed" as the institution rather
+  than the software licence of that name. The owner replied on 9 August 2026
+  stating plainly that there is no connection to MIT and that the reference was
+  to the open source licence. **This matters more than it looks.** Term 4 is a
+  non-commercial clause, and the reason it bit this project at all is that the
+  MIT licence grants everyone downstream commercial use. A permission resting
+  on a misunderstanding of that exact point would have been worth very little,
+  so it was corrected before any DROZY data was measured.
+- **The email itself is not in this repository**, and will not be. It is
+  private correspondence. What is recorded here is who, when, the scope, and
+  the condition.
+
+**The required citation, wherever any DROZY-derived number appears:**
+
+> Quentin Massoz, Thomas Langohr, Clementine Francois and Jacques G. Verly.
+> "The ULg Multimodality Drowsiness Database (called DROZY) and Examples of
+> Use." IEEE Winter Conference on Applications of Computer Vision (WACV), 2016.
+
+**The safeguards below are not relaxed by the permission**, and they are the
+same ones recorded for UTA-RLDD. Numbers only, never a frame. Pseudonymous
+subject identifiers. Source video deleted once features are computed. The
+reason they stand is that the people in these recordings agreed to be filmed
+by a university laboratory, and no author can grant rights over somebody's
+face beyond what its owner allowed.
 
 ### NITYMED, University of the Peloponnese
 
