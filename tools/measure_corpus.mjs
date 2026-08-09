@@ -28,9 +28,16 @@
 //   ls dist/assets/index-*.js
 //   curl -s http://localhost:4173/blinklab/ | grep -o 'index-[^"]*\.js'
 //
-// Slow by design. Every frame is sought and measured, so a thirty
-// minute corpus takes hours. Progress is printed per clip so a stalled
-// run is visible rather than merely quiet.
+// Slow by design. Every frame is sought and measured, so this runs
+// slower than the clip plays. Measured on 9 August 2026: about 58
+// frames per second, so the eight clip Eyeblink8 corpus of roughly
+// 71,000 frames takes about 20 minutes. An earlier comment here said
+// "hours", from a much lower estimate that was never re-measured, and
+// that figure made a 20 minute rerun look like an overnight job. Time
+// it again rather than trusting this line.
+//
+// Progress is printed per clip so a stalled run is visible rather than
+// merely quiet.
 
 import { readdir, mkdir, writeFile, readFile } from "node:fs/promises";
 import { join, basename } from "node:path";

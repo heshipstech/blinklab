@@ -280,8 +280,20 @@ At the top of the repository:
     npm test
     npm run e2e
     npm run format:check
+    npm run build
 
-In `analysis/`: `ruff check .` and `pytest`.
+In `analysis/`, all three:
+
+    .venv/bin/ruff check .
+    .venv/bin/ruff format --check .
+    .venv/bin/python -m pytest
+
+This list is the same set the continuous integration workflow runs, and
+it was checked against `.github/workflows/ci.yml` rather than
+remembered. It used to be shorter than that workflow in three places,
+which is the worst shape for a gate list to be in: you run everything
+it says, you believe you are done, and the machine disagrees with you
+afterwards.
 
 `npm run format:check` is the one people forget. It runs Prettier over
 the Markdown files as well as the code, and it failed on 9 August after
