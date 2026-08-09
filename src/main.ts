@@ -34,7 +34,11 @@ import {
   startRate,
   type BlinkRateState,
 } from "./core/blinkRate";
-import { fpsGateMessage, measurableAtFps } from "./core/fpsGate";
+import {
+  clipRefusedMessage,
+  fpsGateMessage,
+  measurableAtFps,
+} from "./core/fpsGate";
 import {
   CALIBRATION_TARGETS,
   captureStep,
@@ -305,6 +309,10 @@ let frameClock: FrameClockState = startFrameClock();
 let loadedClipName: string | null = null;
 let measurementMode: MeasurementMode = "live";
 let framesMeasured = 0;
+// How many frames the blink gate ACCEPTED. Zero after a whole clip means
+// the frame rate never once cleared the floor, which is a refusal and not
+// a failure, and the two must not read the same. Issue #192.
+let framesBlinkMeasurable = 0;
 let loadedClipDurationSeconds: number | null = null;
 let currentFrameIndex: number | null = null;
 // The frame on which the eyelid first crossed the blink line. Held
@@ -615,6 +623,7 @@ function resetSession(): void {
   // dangerous: a clip's first blink shape was computed from the
   // PREVIOUS session's aperture trace and exported as this clip's.
   framesMeasured = 0;
+  framesBlinkMeasurable = 0;
   currentFrameIndex = null;
   closureStartFrame = null;
   stabilitySamples = [];
@@ -810,9 +819,22 @@ async function beginVideoFile(file: File): Promise<void> {
       );
       const warning =
         stepping.kind === "ok" ? "" : ` ${steppingWarning(stepping)}`;
+      // A clip where the gate never opened gets its own sentence. The
+      // per-frame message is one line of body text and is invisible next
+      // to a status line reading "Measured 3600 frames". #192.
+      const refused =
+        framesMeasured > 0 && framesBlinkMeasurable === 0
+          ? ` ${clipRefusedMessage(
+              loadedClipDurationSeconds !== null &&
+                loadedClipDurationSeconds > 0
+                ? framesMeasured / loadedClipDurationSeconds
+                : null,
+              framesMeasured,
+            )}`
+          : "";
       status.textContent = summary.stoppedEarly
         ? `Stopped after ${String(framesMeasured)} frames. Export the CSV to keep what was measured, or pick another clip.`
-        : `Measured ${String(framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.${warning}`;
+        : `Measured ${String(framesMeasured)} frames at ${rate}, in ${String(tookSeconds)} s. Check that rate against your clip. Export the CSV, or pick another clip.${warning}${refused}`;
       return;
     }
 
@@ -1909,6 +1931,7 @@ function processFrame(
       const blinkCountBefore = blinkState.blinkCount;
       const wasOpen = blinkState.eye !== "closed";
       const blinkMeasurable = measurableAtFps(fps);
+      if (blinkMeasurable) framesBlinkMeasurable += 1;
       blinkState = blinkStep(
         blinkState,
         nowMs,

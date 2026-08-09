@@ -6,7 +6,11 @@ import {
   startRate,
 } from "../../src/core/blinkRate";
 import { MIN_BLINK_FPS } from "../../src/core/constants";
-import { fpsGateMessage, measurableAtFps } from "../../src/core/fpsGate";
+import {
+  clipRefusedMessage,
+  fpsGateMessage,
+  measurableAtFps,
+} from "../../src/core/fpsGate";
 
 describe("measurableAtFps", () => {
   it("runs the boundary trio at the minimum", () => {
@@ -51,5 +55,39 @@ describe("fpsGateMessage", () => {
 
   it("explains an unknown fps readably", () => {
     expect(fpsGateMessage(null).length).toBeGreaterThan(10);
+  });
+});
+
+describe("clipRefusedMessage, a whole clip below the floor", () => {
+  // THE REAL CASE. 16 of 36 DROZY sessions were recorded at 15 frames
+  // per second, so blink detection never once opened on them. The batch
+  // reported "36 measured, 0 failed" and produced no blink data for
+  // nearly half the set. Issue #192.
+  it("says a refusal is not a failure, and names the rate", () => {
+    const text = clipRefusedMessage(15, 1800);
+    expect(text).toContain("refusal rather than a failure");
+    expect(text).toContain("15.0 frames per second");
+    expect(text).toContain("1800");
+  });
+
+  it("names the floor it did not clear", () => {
+    expect(clipRefusedMessage(15, 1800)).toContain(String(MIN_BLINK_FPS));
+  });
+
+  it("says the rest of the export is still good", () => {
+    // Otherwise a reader throws away a file that is largely fine.
+    expect(clipRefusedMessage(15, 1800)).toContain("still valid");
+  });
+
+  it("names the other measurements that ride the same gate", () => {
+    // PERCLOS and long closures were silent too, and a message that
+    // mentions only blinks leaves the reader hunting for those.
+    const text = clipRefusedMessage(15, 1800);
+    expect(text).toContain("Eye closure share");
+    expect(text).toContain("long closures");
+  });
+
+  it("copes when the frame rate could not be established at all", () => {
+    expect(clipRefusedMessage(null, 900)).toContain("could not be established");
   });
 });
