@@ -39,9 +39,15 @@ watched all of them and marked every blink by hand. They marked 408
 blinks. This app was given the same clips and had to find the same
 blinks.
 
-The set holds 71,354 frames, counting the rows of the annotation files
-that came with the clips. Other sources give other totals for this same
-set, so this page says which count it used.
+Frame totals for this set differ between sources, so here is the rule
+this page uses. Each annotation file numbers its frames from zero. Take
+the highest number in each file, add one, then add up the eight clips.
+That gives 71,354, and 71,354 is the figure used everywhere below.
+
+That is not the number of annotation rows. Only 70,992 rows carry an
+annotation. The 362 frame numbers in between have no row at all. The
+people who published the clips print 70,992 on their own site. So a
+reader who checks will meet two different totals, and this is why.
 
 |              | First answer, wrong | Corrected               |
 | ------------ | ------------------- | ----------------------- |
@@ -90,44 +96,67 @@ prints a warning on the first line. Fixed in pull request #172.
 
 **The corrected number is honest, and it is still not good enough.** It
 misses roughly one blink in six. Other people have measured their own
-detectors on these same clips, and here is what they report.
+detectors on these same eight clips. Here is what they report.
 
-| who                                                                                        | year | where                                              | F1    |
-| ------------------------------------------------------------------------------------------ | ---- | -------------------------------------------------- | ----- |
-| [Drutarovsky and Fogelton](https://link.springer.com/chapter/10.1007/978-3-319-16199-0_31) | 2014 | ECCV workshops, Springer LNCS 8927, 436 to 448     | 82.0% |
-| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2016.03.011)                        | 2016 | Computer Vision and Image Understanding 148        | 91.6% |
-| [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05  | 95.2% |
-| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177 | 91.3% |
-| **this app**                                                                               | 2026 | this page                                          | 84.6% |
+| who                                                                                        | year | where                                                                             | F1    |
+| ------------------------------------------------------------------------------------------ | ---- | --------------------------------------------------------------------------------- | ----- |
+| [Drutarovsky and Fogelton](https://link.springer.com/chapter/10.1007/978-3-319-16199-0_31) | 2014 | ECCV workshops, Springer Lecture Notes in Computer Science 8927, pages 436 to 448 | 82.0% |
+| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2016.03.011)                        | 2016 | Computer Vision and Image Understanding 148                                       | 91.6% |
+| [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05                                 | 95.2% |
+| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177                                | 91.3% |
+| [Al-gawwam and Benaissa](https://www.mdpi.com/2078-2489/9/4/93)                            | 2018 | Information, volume 9, article 93                                                 | 97.7% |
+| **this app**                                                                               | 2026 | this page                                                                         | 84.6% |
 
-ECCV is the European Conference on Computer Vision. The 2014 paper
-prints precision 79.0% and recall 85.27% and no F1, so the 82.0% above
-was worked out from those two numbers here. The other three print F1
-themselves.
+ECCV is the European Conference on Computer Vision. Not one of those
+five figures was simply copied out of the paper it sits beside, so here
+is where each one actually came from. A reader deserves to know which of
+them this page could check and which it could not.
 
-So published scores on these clips run from about 82% to about 95%, and
-this app sits near the bottom of that spread. It is above the oldest of
-them and below every modern one.
+- **2014.** The paper is behind a paywall and was not read here, so this
+  number is second hand. A
+  [later paper](https://www.scitepress.org/papers/2017/61727/61727.pdf)
+  quotes it as 79% precision and 85.27% recall on these clips. The 82.0%
+  is those two numbers put together here.
+- **2016 and 2018, both by Fogelton and Benesova.** Both papers are
+  behind a paywall and were not read here. Fogelton is the person who
+  published these clips, and he prints both scores himself in a table on
+  [his own project site](https://www.blinkingmatters.com/research). That
+  is first hand from the author, and it is not the paper.
+- **Soukupova and Cech.** The report is free to read. It is a thesis by
+  Soukupova, with Cech as her advisor. It prints three methods. The best
+  of the three scores precision 94.3% and recall 96.2% on these clips,
+  and the report prints no F1. The 95.2% is those two numbers put
+  together here.
+- **Al-gawwam and Benaissa.** The paper is free to read. It prints
+  precision 96.65% and recall 98.78% on these clips, and no F1. The
+  97.7% is those two numbers put together here.
 
-Only those four are listed because only those four were read in full.
-Other papers report scores on these clips as well. Several of those
-numbers could only be found quoted inside somebody else's summary table,
-not in the paper itself, so they are not on this page.
+So across these five, published scores on these clips run from about 82%
+to about 98%. This app sits near the bottom. It is above the oldest of
+them and below every later one. Lean on that oldest number least. It is
+the only one on this list that came from a third party rather than from
+the people who did the work.
+
+Those five are not the whole literature. Other papers report scores on
+these clips too, and no attempt was made here to find all of them.
 
 **Read that gap as real but rough.** Every paper counts blinks its own
-way. Fogelton scores each eye separately, so his blink total for these
-clips is 804 and not 408, and he counts a fast double blink as one.
-Soukupova and Cech report the best point on their own curve, chosen on
-the test data itself. Fogelton published these clips, and he writes on
-his own site that comparing across papers is "not valid", because the
-annotation and the scoring differ between them. That warning is from the
-person who owns the benchmark, so it is quoted here rather than buried.
+way, so that column is not five runs of one test.
 
-**One more warning.** Some published scores on these clips are near 98%.
-Those are measured per frame, not per blink. They ask "were the eyes shut
-in this frame". This app is measured per blink, one detection matched to
-one mark a human made. The two are not the same test and the numbers
-cannot be put side by side.
+- Fogelton scores each eye on its own. His blink total for these clips
+  is 804 and not 408, and he counts a fast double blink as one.
+- Soukupova and Cech report the best point on their own curve, and they
+  picked that point on the test data itself.
+- Al-gawwam and Benaissa count a detection as correct when its peak
+  falls inside the blink the human marked. A wrong edge costs them
+  nothing. The rule on this page is stricter than that.
+- Fogelton published these clips, and he writes on his own site that
+  this kind of comparison is "not valid", because the annotation and the
+  scoring differ between papers. That warning comes from the person who
+  owns the benchmark, so it is quoted here rather than buried.
+
+None of that closes a gap of ten points or more. It means the gap should
+be read as a direction and not as a decimal.
 
 Per clip recall now runs from 67.7% to 91.7%. The whole gain sits in the
 two clips the defect had cut short. One moved from 55.7% to 89.8% and
@@ -184,9 +213,10 @@ clips.
 
 Averaged over the eight clips, blink strength went **up** by 2.7%. It
 did not fall. The eight clips do not agree with each other. Five rose,
-two fell a little, and one did not move at all. Averaging neighbouring
-pixels together removes more noise than it removes signal, which is why
-throwing away 94 pixels in every 100 left the blink no harder to see.
+two fell a little, and one did not move at all. The likely reason is
+that averaging neighbouring pixels together removes more noise than it
+removes signal. That is an explanation offered here. It is not something
+this check measured.
 
 Two things that result does not show. The eye boxes were shrunk, not the
 whole video. And it measures the pixels of the clips, not this app. It
@@ -280,7 +310,12 @@ clips gave one frame more than their file lists. Every other clip
 matched exactly.
 
 Full output, including the superseded numbers, in
-[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt). Two lines in
+that file are older than this page and disagree with it. It still says
+the third capped clip lost its first row, and it still says 45 of the 53
+sit on a real blink with half of them 3 frames long or shorter. This
+page carries the corrected wording. That file has not been rewritten
+yet.
 
 ## Does it give the same answer twice?
 
