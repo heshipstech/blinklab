@@ -1,42 +1,25 @@
 BLINK DETECTION vs Eyeblink8 ground truth
 
-Measured 9 August 2026 on a verified build. This REPLACES an earlier
-result of recall 69.6%, precision 86.3%, F1 77.1%. That earlier result
-was produced before pull request #172 fixed the blink log defect. The
-defect deleted the earliest rows from any clip where the app made more
-than 50 detections, before the file was written. That hit three clips.
-In two of them the deleted rows were real blinks, so those two were
-scored against a record that was missing its start. See the README for
-the plain English account.
+8 clips, 408 annotated blinks, 430 detected
 
-THE LAST DIGIT DOES NOT REPEAT. This is one run, not a fixed value. The
-same clip re-measured on the same computer and the same build gives a
-different answer. One of the eight clips went from 7 false alarms to 9.
-Carried into the totals below that reads 86.0% precision and 84.4% F1
-instead of 86.4% and 84.6%. Recall stayed 82.8% in every re-run. Read
-the last digit of precision and F1 as approximate.
-
-8 clips, 408 annotated blinks, 391 detected
-
-  Recall     82.8%   (338 of 408 found)
-  Precision  86.4%   (53 invented)
-  F1         84.6%
+  Recall     87.7%   (358 of 408 found)
+  Precision  83.3%   (72 invented)
+  F1         85.4%
 
 Per clip
-  gl = the person in the clip wears glasses.
   clip                   gl   true  found  miss  false   recall     prec
-  26122013_223310_cam      -    38     28    10      5    73.7%    84.8%
-  26122013_224532_cam      -    88     79     9      3    89.8%    96.3%
-  26122013_230103_cam      -    65     44    21      1    67.7%    97.8%
-  26122013_230654_cam      -    31     23     8      1    74.2%    95.8%
-  27122013_151644_cam      -    30     26     4      7    86.7%    78.8%
-  27122013_152435_cam      -    41     36     5     16    87.8%    69.2%
-  27122013_153916_cam      -    72     66     6     13    91.7%    83.5%
-  27122013_154548_cam    yes    43     36     7      7    83.7%    83.7%
+  26122013_223310_cam      -    38     31     7      3    81.6%    91.2%
+  26122013_224532_cam      -    88     80     8     12    90.9%    87.0%
+  26122013_230103_cam      -    65     50    15      1    76.9%    98.0%
+  26122013_230654_cam      -    31     25     6      0    80.6%   100.0%
+  27122013_151644_cam      -    30     28     2     15    93.3%    65.1%
+  27122013_152435_cam      -    41     37     4     21    90.2%    63.8%
+  27122013_153916_cam      -    72     69     3     15    95.8%    82.1%
+  27122013_154548_cam    yes    43     38     5      5    88.4%    88.4%
 
 Split by glasses
-  with glasses    1 clip(s), recall 83.7%, precision 83.7%
-  without         7 clip(s), recall 82.7%, precision 86.8%
+  with glasses    1 clip(s), recall 88.4%, precision 88.4%
+  without         7 clip(s), recall 87.7%, precision 82.7%
 
 Coverage
   26122013_223310_cam    measured   15784, annotated   15783
@@ -48,41 +31,50 @@ Coverage
   27122013_153916_cam    measured    9077, annotated    9077
   27122013_154548_cam    measured    4895, annotated    4895
 
-Totals: 71,356 frames measured against 71,354 annotated. Two clips gave
-one frame more than their annotation file lists. Every other clip is
-exact.
+HOW TO REPRODUCE THIS EXACTLY
 
-The two clips the defect cut short are 26122013_224532_cam, which moved
-from 55.7% recall to 89.8%, and 27122013_153916_cam, which moved from
-58.3% to 91.7%. That is 30 and 24 blinks recovered, 54 in total, which
-is the entire move from 284 found to 338. Every other clip found
-exactly the same number of blinks in both runs.
+    cd analysis
+    PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
+        "$DATASETS/eyeblink8/eyeblink8" \
+        "$DATASETS/eyeblink8-measured-refractory"
 
-CAVEAT. The two runs were built from different commits, so they are not
-one measurement with a single line changed. Four of the six shorter
-clips shifted a blink edge by a frame or two, or split one detection
-into two. Two report exactly the same blink timings. The blink log cap
-counted detections, not annotated blinks, so it also bit
-27122013_152435_cam, which made exactly 50 detections and lost the
-opening rows of its log. How many is not recoverable, because the
-capped export is the only surviving record of that run. What is certain
-is that the rows it lost were false positives, so no recall figure
-changes. The frame rate is not the cause either:
-measured_fps is 30.00 in both runs for all eight clips. The recall
-attribution above is nevertheless exact.
+THIS RUN REPEATS. Measuring one clip three times produces identical
+files, byte for byte. No earlier figure on this page did, and that is
+the most important property of this run. Before pull request #189 the
+app handed the face model a wall clock reading, and the model uses the
+gap between readings when it follows a face from frame to frame, so how
+busy the computer was leaked into the measurement.
 
-Two further figures computed from these files:
-  55 of the 70 misses, 78.6%, contain at least one frame the human
-    marked fully closed.
-  38 of the 53 invented blinks sit on top of a real blink, counted the
-    strict way: take the detection exactly as reported, widen nothing,
-    and ask whether it shares at least one frame with a blink the human
-    marked. Allowing this project's own four frame tolerance raises it
-    to 45. The stricter number is printed first because that tolerance
-    exists to stop a correct detection being punished over an edge, and
-    reusing it to decide what a WRONG detection sat on is a different
-    act. Either way it is double counting, not invention from nothing.
-    Not yet fixed. See issue #176.
+THREE PUBLISHED NUMBERS, ALL KEPT
+
+  69.6% recall, F1 77.1   the export deleted its own rows (#172)
+  82.8% recall, F1 84.6   export fixed, clock still wobbled (#173)
+  87.7% recall, F1 85.4   clock fixed (#189), double counting cut (#190)
+
+Precision fell from 86.4% to 83.3% between the second and the third and
+that is not a regression. The deterministic clock made the detector more
+sensitive: 20 more real blinks found, and far more of the same blink
+reported twice. The refractory period of #190 then removed 39 of those
+false alarms at ZERO cost to recall.
+
+THE REMAINING 72 FALSE ALARMS
+
+  45 of 72 sit on a real blink under the strict rule, no widening.
+  64 of 72 under the four frame tolerance rule.
+  61 of 72 are three frames long or shorter.
+
+They are the same phenomenon as the ones removed: fragments of real
+blinks, sitting further than 150 ms from the blink they belong to.
+Raising the refractory period to 300 ms would catch most of them. It
+stays at 150, which is below the ~200 ms a person can produce
+deliberately. A constant chosen to improve a score on a benchmark
+already read is fitting, not measuring.
+
+NOT REBUILT FOR THIS RUN
+
+The per-miss table describes the SECOND run's 70 misses, not this run's
+50. The "78.6% of misses were fully closed" figure comes from that older
+table. Issue #179.
 
 The superseded result, kept here so the correction can be checked:
 

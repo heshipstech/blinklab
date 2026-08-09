@@ -29,7 +29,7 @@ This project's rule is that a limitation you know about belongs in the open.
 - The instrument reads fully shut eyes as roughly a third of the open baseline rather than zero, so the literature's usual PERCLOS threshold does not transfer and ours is adjusted to the instrument. This is documented rather than hidden.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
-- An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. It still does not give exactly the same answer twice. The section below on the Eyeblink8 clips says by how much. Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
+- An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. Until pull request #189 it still did not give exactly the same answer twice, because the face model was handed a wall clock reading and uses the gap between readings to follow a face. It now measures the same clip identically, byte for byte. Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
 
 ## Does it find the blinks a human found?
 
@@ -49,12 +49,12 @@ annotation. The 362 frame numbers in between have no row at all. The
 people who published the clips print 70,992 on their own site. So a
 reader who checks will meet two different totals, and this is why.
 
-|              | First answer, wrong | Corrected               |
-| ------------ | ------------------- | ----------------------- |
-| Blinks found | 284 of 408          | **338 of 408**          |
-| Recall       | 69.6%               | **82.8%**               |
-| Precision    | 86.3% (45 invented) | **86.4%** (53 invented) |
-| F1           | 77.1%               | **84.6%**               |
+|              | First answer        | Export fixed        | Now                     |
+| ------------ | ------------------- | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | 338 of 408          | **358 of 408**          |
+| Recall       | 69.6%               | 82.8%               | **87.7%**               |
+| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | **83.3%** (72 invented) |
+| F1           | 77.1%               | 84.6%               | **85.4%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
 is the share of the app's detections that were real. F1 is the two
@@ -62,23 +62,28 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-The corrected run invents more blinks, 53 against 45, and does not
-score worse on precision. That is because it makes many more detections
-in total, so the invented ones are a smaller share of them.
+**There are three columns because this page got the number wrong twice,
+and both times the fault was in this app rather than in the clips.**
+Every column stays. A project that shows you only its final answer
+tells you less than one that also shows you the road there.
 
-**One caveat about the last digit.** These are one run, not a fixed
-value. The same clip measured again on the same computer with the same
-build does not give exactly the same answer. Re-measuring one of the
-eight clips changed its false alarms from 7 to 9. Carried into the
-totals that reads 86.0% precision and 84.4% F1 instead of 86.4% and
-84.6%. Recall did not move in any re-run. Read the last digit of
-precision and F1 as approximate, and read recall as solid.
+- **The first answer, 69.6%.** The app was deleting its own results
+  before writing them out. It found blinks and then threw them away.
+  The defect is described below and was fixed in pull request #172.
+- **The second, 82.8%.** Correct as far as it went, and **it did not
+  repeat**. Measuring the same clip twice gave two different answers,
+  because the app handed the face model a wall clock reading, so how
+  busy the computer was leaked into the measurement. Fixed in pull
+  request #189.
+- **The third, 87.7%.** The first figure on this page that gives the
+  same answer twice. Measuring one clip three times now produces
+  identical files, byte for byte.
 
-There are two columns because the first answer was wrong. It was wrong
-because of a defect in this app. The clips were not the cause. The
-first write up of this result was never published on this page. Both
-numbers stay here. A project that shows you only its final answer tells
-you less than one that also shows you its wrong turn.
+Precision fell from 86.4% to 83.3% between the second column and the
+third, and that is not a step backwards. Making the measurement
+repeatable made the app more sensitive: it found 20 more real blinks
+and also reported far more of the same blink twice. Most of that
+double counting was then removed, which is the next section.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
@@ -95,7 +100,7 @@ against the number of blinks the app found. If any are missing, it
 prints a warning on the first line. Fixed in pull request #172.
 
 **The corrected number is honest, and it is still not good enough.** It
-misses roughly one blink in six. Other people have measured their own
+misses roughly one blink in eight. Other people have measured their own
 detectors on these same eight clips. Here is what they report.
 
 | who                                                                                        | year | where                                                                             | F1    |
@@ -105,7 +110,7 @@ detectors on these same eight clips. Here is what they report.
 | [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05                                 | 95.2% |
 | [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177                                | 91.3% |
 | [Al-gawwam and Benaissa](https://www.mdpi.com/2078-2489/9/4/93)                            | 2018 | Information, volume 9, article 93                                                 | 97.7% |
-| **this app**                                                                               | 2026 | this page                                                                         | 84.6% |
+| **this app**                                                                               | 2026 | this page                                                                         | 85.4% |
 
 ECCV is the European Conference on Computer Vision. Not one of those
 five figures was simply copied out of the paper it sits beside, so here
@@ -252,13 +257,16 @@ on its own. That last step shows where this reasoning ends up, and it is
 plainly cheating. So none of those numbers are on this page, including
 the two a reader might have accepted.
 
-**The misses have a pattern.** 55 of the 70 missed blinks, 78.6%,
-contain at least one frame the human marked as fully closed. These are
+**The misses have a pattern.** 55 of the 70 missed blinks in the middle
+column, 78.6%, contained at least one frame the human marked as fully
+closed. That table has not been rebuilt for the 50 misses in the current
+column, so treat the share as indicative rather than current. Issue
+#179. These are
 not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness. Finding out why is the next question.
 
-**The invented blinks have a pattern too.** 38 of the 53 land on top of
+**The invented blinks have a pattern too.** 45 of the 72 land on top of
 a real blink rather than on an open eye. That is one blink counted
 twice, not a blink imagined from nothing.
 
@@ -268,18 +276,38 @@ widen nothing. If it shares at least one frame with a blink the human
 marked, it landed on a real blink. Anyone can check that against the
 clips' own annotation files.
 
-There is a second and looser rule, and it gives 45 of the 53. Widen the
+There is a second and looser rule, and it gives 64 of the 72. Widen the
 detection by four frames at each end first, then ask the same question.
 Four frames is about 130 milliseconds at 30 frames per second, and it is
 the slack this project already allows itself when deciding which
 detections count as correct. That slack exists to stop a correct
 detection being punished for disagreeing about an edge. Reusing it to
 decide what a wrong detection sat on is a different act, so the stricter
-38 is the number printed first. Both are here because 45 is the
-flattering one and hiding it would be its own kind of dishonesty. Seven
-detections sit between the two counts. All seven are short, and all
-seven lie within four frames of a real blink. Five are in one clip and
-two are in another.
+45 is the number printed first. Both are here because 64 is the
+flattering one and hiding it would be its own kind of dishonesty.
+
+**Most of this double counting has been removed, and the rest is left
+on purpose.** During one closure the eyelid measurement can rise back
+over the line for a frame or two and dip again, and the app counts two
+blinks. There are now 111 fewer chances of that: a completed closure is
+not counted if it ends within 150 milliseconds of the previous one,
+because an eyelid cannot open and shut twice that fast. That removed 39
+false alarms and **cost no recall at all**, which is the number that
+decides whether a rule like this is a fix or a way of hiding misses.
+
+Where 150 comes from matters more than the number. Deliberate rapid
+blinking tops out near five a second, so the shortest gap a person can
+produce on purpose is about 200 milliseconds. 150 sits below that, so it
+cannot suppress even someone blinking as fast as they are able. It was
+chosen from what an eyelid can do, and then the benchmark was re-run to
+see what it bought, in that order. It was introduced after this result
+was first seen, which is worth saying plainly, and it has not been
+adjusted since to improve the score.
+
+Raising it to 300 would catch most of the remaining 72. It stays at 150.
+A number chosen to improve a score on a benchmark already read is
+fitting, not measuring, and this page has a section above about exactly
+that temptation.
 
 8 of the 53 are more than four frames away from any blink the human
 marked. That count is the same under both rules, and it is the one the
@@ -332,12 +360,20 @@ two browser engines on one machine, stepping every frame:
 | Eyes shut           | 49 to 58 s | 49 to 58 s |
 
 The file contains 4,202 frames. **Blink rate per minute was identical in
-both browsers to the last decimal**, across all 71 seconds. That is one
-70 second clip and it is not the whole story. On the eight clips above
-the app does not repeat itself exactly from one run to the next. See the
-caveat about the last digit. Eyelid aperture differed by 0.02 mm on
-average and the learned personal baseline by 0.4 percent, which is what
-sampling a frame a fraction earlier during a blink costs.
+both browsers to the last decimal**, across all 71 seconds. Eyelid
+aperture differed by 0.02 mm on average and the learned personal
+baseline by 0.4 percent, which is what sampling a frame a fraction
+earlier during a blink costs.
+
+For a while that claim was true across browsers and false across runs.
+The same clip measured twice on the SAME browser gave two different
+answers, because the app was handing the face model a wall clock
+reading, and the face model uses the gap between readings when it
+follows a face from frame to frame. So how busy the computer happened to
+be leaked into the measurement. That is the exact dependence stepping
+exists to remove, and it survived here for months because every frame
+was still being measured. Fixed in pull request #189. Measuring one clip
+three times now produces identical files, byte for byte.
 
 This is worth stating because the first version of stepped measurement
 failed it badly, and failed it invisibly. It played the clip and paused

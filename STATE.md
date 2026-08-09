@@ -1,9 +1,9 @@
-Last increment: the Track A correction, merged as pull requests #172
-and #173
-Last commit: squash merge of pull request #173 on 2026-08-09
+Last increment: the deterministic clock (#189) and the refractory
+period (#190), which closed issues #174 and #176
+Last commit: squash merge of pull request #190 on 2026-08-09
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: nothing. Track A is DONE and measured twice. The
-write up is on this page and in the README.
+Currently working: nothing. Track A is DONE and the number now REPEATS.
+The write up is on this page and in the README.
 
 ## The datasets folder
 
@@ -18,33 +18,45 @@ Check it before running anything else:
 
     ls "$DATASETS"
 
-You should see `eyeblink8`, `eyeblink8-mp4`, `eyeblink8-measured` and
-`eyeblink8-measured-capfix`. If you do not, the commands below will fail with
+You should see `eyeblink8`, `eyeblink8-mp4` and four measured folders:
+`eyeblink8-measured` (the first run, defective export),
+`eyeblink8-measured-capfix` (export fixed, clock still wobbling),
+`eyeblink8-measured-clockfix` (clock fixed, double counting exposed) and
+`eyeblink8-measured-refractory` (CURRENT). If you do not, the commands below will fail with
 "No such file or directory", and the fix is this line, not the command.
 
-## Track A result, 9 August 2026, corrected
+## Track A result, 9 August 2026, current
 
-Eight Eyeblink8 clips, 408 human-marked blinks, 391 detected.
+Eight Eyeblink8 clips, 408 human-marked blinks, 430 detected.
 
-    Recall     82.8%   (338 of 408 found)
-    Precision  86.4%   (53 invented)
-    F1         84.6%
+    Recall     87.7%   (358 of 408 found)
+    Precision  83.3%   (72 invented)
+    F1         85.4%
 
-THE LAST DIGIT DOES NOT REPEAT. This is one run, not a fixed value. The
-same clip re-measured on the same computer and the same build gives a
-different answer. One of the eight clips went from 7 false alarms to 9.
-Carried into the totals that reads 86.0% precision and 84.4% F1 instead
-of 86.4% and 84.6%. Recall stayed 82.8% in every re-run. Treat the last
-digit of precision and F1 as approximate, and do not compare a future
-run against these to one decimal.
+THIS ONE REPEATS. Measuring one clip three times produces identical
+files, byte for byte. That was not true of any earlier figure on this
+page, and it is the single most important thing about this run.
+
+Three numbers have been published for this benchmark and all three
+belong in the record:
+
+    69.6% recall, F1 77.1   the export was deleting its own rows (#172)
+    82.8% recall, F1 84.6   export fixed, clock still wobbled (#173)
+    87.7% recall, F1 85.4   clock fixed (#189), double counting cut (#190)
+
+Precision fell from 86.4% to 83.3% between the second and the third.
+That is not a regression. The deterministic clock made the detector more
+sensitive: 20 more real blinks found, and far more of the same blink
+reported twice. The refractory period then removed 39 of those false
+alarms at ZERO cost to recall.
 
 Coverage: 71,356 frames measured against 71,354 annotated. Two clips
 gave one frame more than their annotation file lists. Every other clip
 is exact.
 
 Measured from
-`$DATASETS/eyeblink8-measured-capfix`.
-The earlier run is kept for comparison at `.../eyeblink8-measured`.
+`$DATASETS/eyeblink8-measured-refractory`.
+All three earlier runs are kept for comparison beside it.
 Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
@@ -79,10 +91,12 @@ recovered clips.
 The glasses claim from the first write up is WITHDRAWN, not reversed.
 It rested on 83.7% for the one glasses clip against 67.9% for the seven
 without, but both truncated clips sat in the group without glasses. The
-corrected split is 83.7% recall with against 82.7% without, and 83.7%
-precision with against 86.8% without. Recall is one point apart,
-precision is three points apart the other way. One clip of 43 blinks
-settles nothing either way, so report BOTH halves or neither.
+split on the CURRENT run is 88.4% recall with glasses against 87.7%
+without, and 88.4% precision with against 82.7% without. Recall is
+under a point apart, and precision now favours the glasses clip, which
+is the opposite of what the earlier run showed and just as meaningless.
+One clip of 43 blinks settles nothing either way, so report BOTH halves
+or neither.
 
 What the audit established, so nobody argues it again:
 
@@ -103,16 +117,22 @@ What the audit established, so nobody argues it again:
   shorter than 4 frames. Shrinking the video to a quarter of its size
   changed how strong a blink looks by 2.7%, so the picture is not too
   small.
-- 55 of the 70 corrected misses, 78.6%, contain at least one frame the
+- 55 of the 70 misses of the SECOND run, 78.6%, contain at least one frame the
   human marked fully closed. That is the real weakness. An earlier note
   said 87.9%; that was 109 of 124, and 124 is the FIRST run's miss
   count, so it was measuring the defect. Recomputed on the corrected
   misses using `Blink.fully_closed_frames` from
-  `analysis/blinklab/eyeblink8.py`.
-- Double counting is NOT fixed. 45 of the corrected run's 53 invented
-  blinks sit on top of a real blink, and half are 3 frames or shorter.
-  The planned next fix is a refractory period, which is a short window
-  after a blink in which a second blink cannot be reported.
+  `analysis/blinklab/eyeblink8.py`. NOT rebuilt for the current run's
+  50 misses. Issue #179.
+- Double counting is PARTLY fixed, by the refractory period of #190. A
+  closure is not counted if it ends within 150 ms of the previous
+  counted blink, because an eyelid cannot open and shut twice that
+  fast. That removed 39 false alarms and cost no recall. 72 remain, of
+  which 45 still sit on a real blink under the strict rule and 61 are
+  3 frames or shorter. Raising 150 would catch most of them and it
+  STAYS at 150: a constant chosen to improve a score on a benchmark
+  already read is fitting, not measuring. The remainder is a
+  segmentation fault needing its own investigation.
 - Do NOT apply exclusions to flatter the score. Dropping long closures
   raises recall, dropping partial blinks raises it again, and one notch
   further you are deleting the blinks we missed. That last step shows
