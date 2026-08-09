@@ -38,9 +38,11 @@ export const OFF_SCREEN_OFFSET_THRESHOLD = 0.18;
 // 63 rows. 54 of the 63 sat on a blink the human had marked, so the
 // score that came back read as a detector missing blinks it had in
 // fact found. The other 9 were false alarms. The third clip,
-// 27122013_152435_cam, made exactly fifty detections and lost only its
-// opening one. That one was a false alarm, so no recall figure changes
-// for that clip.
+// 27122013_152435_cam, also filled its fifty row export. What it lost
+// there was false alarms, not blinks the human had marked, so no recall
+// figure changes for that clip. The 63 is the corrected run's
+// detections across these three clips minus the fifty rows each capped
+// export was holding.
 //
 // This comment used to say 58 detections from two clips. Both numbers
 // were wrong. 58 came from the old miss table, where it counted

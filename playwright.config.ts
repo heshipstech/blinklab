@@ -63,8 +63,22 @@ export default defineConfig({
   ],
   webServer: {
     // Build first, every time: the test must see the current code,
-    // never yesterday's dist folder. strictPort so a busy 4173 fails
-    // loudly instead of silently testing some other server.
+    // never yesterday's dist folder.
+    //
+    // Read `reuseExistingServer` below before trusting that. On CI
+    // (continuous integration, the checks GitHub runs on every pull
+    // request) it is false, so this command always runs, and
+    // `--strictPort` does make a busy 4173 fail loudly.
+    //
+    // On a laptop it is TRUE, and then this comment used to be wrong.
+    // If any server already answers on 4173, Playwright skips this
+    // command completely. No build runs, `--strictPort` never gets a
+    // chance to complain, and the suite quietly tests whatever that
+    // other server is serving. That happened on 9 August 2026: the
+    // suite passed against a bundle several hours old. It is issue
+    // #175. So before trusting a local end to end pass, compare the
+    // served bundle name against `dist/assets`, the way STATE.md
+    // describes under "The stale server trap".
     command: "npm run build && npm run preview -- --strictPort",
     url: "http://localhost:4173/blinklab/",
     reuseExistingServer: !process.env.CI,
