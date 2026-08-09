@@ -5,6 +5,23 @@ Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing. Track A is DONE and measured twice. The
 write up is on this page and in the README.
 
+## The datasets folder
+
+The corpus and the measurements are not in this repository. They sit in a
+`datasets` folder beside the folder this repository was cloned into. Every
+command on this page writes that folder as `$DATASETS`. Set it once per shell,
+to wherever it is on your own machine:
+
+    export DATASETS="/PATH/TO/datasets"
+
+Check it before running anything else:
+
+    ls "$DATASETS"
+
+You should see `eyeblink8`, `eyeblink8-mp4`, `eyeblink8-measured` and
+`eyeblink8-measured-capfix`. If you do not, the commands below will fail with
+"No such file or directory", and the fix is this line, not the command.
+
 ## Track A result, 9 August 2026, corrected
 
 Eight Eyeblink8 clips, 408 human-marked blinks, 391 detected.
@@ -26,7 +43,7 @@ gave one frame more than their annotation file lists. Every other clip
 is exact.
 
 Measured from
-`/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8-measured-capfix`.
+`$DATASETS/eyeblink8-measured-capfix`.
 The earlier run is kept for comparison at `.../eyeblink8-measured`.
 Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
@@ -154,7 +171,7 @@ minutes. It writes nothing until a clip finishes, and the longest clip,
 ### Checking and restarting a run
 
     cat /tmp/corpus.log
-    ls "/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8-measured-capfix/"
+    ls "$DATASETS/eyeblink8-measured-capfix/"
 
 It writes two CSVs per clip, `<name>.blinks.csv` and
 `<name>.seconds.csv`, into that folder. It needs `npm run preview --
@@ -169,15 +186,15 @@ Do the bundle check above first. Then restart it with:
 
     npm run build && npm run preview -- --strictPort &
     node tools/measure_corpus.mjs \
-      "/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8-mp4" \
-      "/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8-measured-capfix"
+      "$DATASETS/eyeblink8-mp4" \
+      "$DATASETS/eyeblink8-measured-capfix"
 
 ## How the Track A number is produced
 
     cd analysis
     PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
-      "/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8/eyeblink8" \
-      "/Users/evannorus/Desktop/blinklab build/datasets/eyeblink8-measured-capfix"
+      "$DATASETS/eyeblink8/eyeblink8" \
+      "$DATASETS/eyeblink8-measured-capfix"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table
