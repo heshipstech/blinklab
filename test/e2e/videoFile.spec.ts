@@ -34,7 +34,9 @@ test("a recorded clip loads and runs through the same pipeline @chromium-only", 
   // about fifteen megabytes before playback may start.
   test.setTimeout(180_000);
   await page.goto("./");
-  await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Eye-tracking demo" }),
+  ).toBeVisible();
 
   // The upload control is offered without starting a camera at all,
   // which is the point: a dataset clip must be measurable on a machine
@@ -98,7 +100,9 @@ test("a file the browser cannot decode fails as a clip, not as a camera", async 
   page,
 }) => {
   await page.goto("./");
-  await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Eye-tracking demo" }),
+  ).toBeVisible();
 
   // A text file wearing a video name. The decoder will refuse it.
   await page.evaluate(() => {
@@ -140,7 +144,9 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
   // lets a frame slip fails here.
   test.setTimeout(300_000);
   await page.goto("./");
-  await expect(page.getByRole("heading", { name: "blinklab" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Eye-tracking demo" }),
+  ).toBeVisible();
 
   await expect(page.getByTestId("step-toggle")).toBeChecked();
 
