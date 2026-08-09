@@ -32,6 +32,25 @@ before any KSS value was consulted. See issue #192.
 What survives: **20 sessions, 13 subjects, KSS 2 to 8.** Five subjects
 have more than one usable session.
 
+**The exclusion is not random with respect to the label, and this was
+discovered after the plan was written.** DROZY's own README says the
+15 fps recordings are "tests 2 and 3 of subjects 1->8, because of a
+recording bug occurring in darkness". Tests 2 and 3 are the sleep
+deprived ones. So the sessions this instrument cannot measure are
+systematically the sleepier ones: the excluded 16 average **KSS 6.38**
+against **4.60** for the analysed 20, a gap of 1.78 points, and every
+KSS 9 in the dataset sits in the excluded group.
+
+This is recorded here rather than quietly absorbed, because it changes
+how the result must be read. A null result on this sample is a null
+result on a set missing the top of the scale, which is weaker evidence
+than a null result on the whole of it. The analysis prints this bias
+above its own correlations so a reader meets it first.
+
+Nothing about the plan was changed in response. The features, the
+statistic, the correction, the controls and the decision rule are as
+they were. Only the caveat is new.
+
 Each session contributes one two minute window, seconds 60 to 180 of the
 recording, transcoded to H.264 without resizing. The window is identical
 for every subject, so recording length cannot masquerade as a signal.

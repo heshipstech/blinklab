@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import random
+from statistics import mean
 
 from blinklab.drozy import (
     FEATURE_LABELS,
@@ -142,6 +143,38 @@ def main() -> int:
     print(f"  subjects            {len(subjects)}")
     print(f"  KSS range           {min(kss_values)} to {max(kss_values)}")
     print()
+
+    # THE EXCLUSION IS NOT RANDOM WITH RESPECT TO THE LABEL, and that
+    # decides how the whole result should be read. DROZY's own README
+    # says the 15 fps recordings are "tests 2 and 3 of subjects 1->8,
+    # because of a recording bug occurring in darkness". Tests 2 and 3
+    # are the sleep deprived ones, so the sessions this instrument
+    # cannot measure are systematically the sleepier ones. A null result
+    # on the remainder is a null result on a sample missing the top of
+    # the scale, which is a weaker statement than a null result on the
+    # whole of it.
+    if excluded:
+        excluded_kss = [s.kss for s in excluded]
+        gap = mean(excluded_kss) - mean(kss_values)
+        print("EXCLUSION BIAS, read this before the correlations")
+        print(
+            f"  analysed  n={len(usable):<3} mean KSS {mean(kss_values):.2f}"
+            f"  range {min(kss_values)} to {max(kss_values)}"
+        )
+        print(
+            f"  excluded  n={len(excluded):<3} mean KSS "
+            f"{mean(excluded_kss):.2f}"
+            f"  range {min(excluded_kss)} to {max(excluded_kss)}"
+        )
+        print(f"  the excluded sessions are {gap:+.2f} KSS points sleepier")
+        if gap > 0.5:
+            print(
+                "  So this is NOT a random half. Whatever is reported below\n"
+                "  is measured on a sample that is missing the sleepiest\n"
+                "  sessions, and a null result here is correspondingly\n"
+                "  weaker evidence than a null result on the full set."
+            )
+        print()
 
     print("PRIMARY, Spearman against KSS across sessions")
     print(
