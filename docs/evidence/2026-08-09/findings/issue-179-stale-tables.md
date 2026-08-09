@@ -70,10 +70,12 @@ has not been done. This repository is public and MIT licensed, so a wrong answer
 here is not cheap to undo, because git keeps every file forever.
 
 The other two tables do not have this problem. `eyeblink8_false_positives.csv`
-holds the app's own false detections, and its only annotation derived column is a
-distance in frames to the nearest marked blink. `eyeblink8_clip_summary.csv`
-holds per clip counts, which the repository already publishes in
-`docs/eyeblink8-result.txt`.
+holds the app's own false detections, one row each. Five of its twenty columns
+are derived from the corpus: `overlapsNF`, `startTimeSeconds`, the two
+`maxInterFrameGap` columns and `framesToNearestAnnotatedBlink`. Each of those is
+one number about one detection the app made, and together they cannot rebuild the
+marked blink intervals. `eyeblink8_clip_summary.csv` holds per clip counts, which
+the repository already publishes in `docs/eyeblink8-result.txt`.
 
 The miss table can be rebuilt whenever the licence question is answered. The
 corpus is a free download and the script is here. From the analysis folder:

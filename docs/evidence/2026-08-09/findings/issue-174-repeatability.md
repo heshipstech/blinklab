@@ -70,16 +70,24 @@ row per second. Compare them with `diff` and the moved edges are visible.
 ## A correction to the issue text
 
 Issue #174 describes two extra folders, `mixA` and `mixC`, as "two whole extra
-corpus runs made the same day". They are not. Every one of their eight files was
-compared byte for byte against the published run. Seven of the eight are
-identical in both folders, and all sixteen files in each folder carry one single
-timestamp, while a real corpus run writes staggered ones over about twenty
+corpus runs made the same day". They are not.
+
+Each folder holds sixteen files, two for each of the eight clips. All sixteen
+were compared byte for byte against the published run. In both folders fourteen
+of the sixteen are identical to it. The two that differ are both for the same
+clip, `27122013_154548_cam`. Every file in each folder also carries one single
+timestamp, while a real corpus run writes timestamps staggered over about twenty
 minutes.
 
 So `mixA` and `mixC` are copies of the published run with one clip swapped in.
 `mixA` holds re-run A, `mixC` holds re-run C. They were built to feed the
 evaluator, and they are not evidence of anything the three re-run folders do not
 already show. They were left out of this folder for that reason.
+
+One more sentence in the issue is wrong for the same reason. It said `mixC`
+matches the published run on 7 of the 8 clips and `mixA` does not. Both match on
+7 of the 8. They differ from each other only in which re-run of the eighth clip
+they carry.
 
 The honest statement is that one clip out of eight has been tested for
 repeatability. The other seven have never been tested at all. That is worse news

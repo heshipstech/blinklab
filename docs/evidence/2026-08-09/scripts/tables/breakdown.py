@@ -11,11 +11,8 @@ from blinklab.blink_log import load_blink_log
 from blinklab.blink_match import Interval, match_blinks
 from blinklab.eyeblink8 import load_annotation
 
-OUT = Path(
-    "/private/tmp/claude-<uid>/-Users-USER-Desktop-blinklab-build-blinklab-"
-    "-claude-worktrees-wizardly-antonelli-b714b5/"
-    "7006f1da-78ea-4625-9788-9e5db47d9c21/scratchpad"
-)
+# The folder autopsy.py wrote the three tables to. Same value as in that file.
+OUT = Path("/PATH/TO/output-folder")
 CORPUS = Path("/PATH/TO/blinklab build/datasets/eyeblink8/eyeblink8")
 MEASURED = Path("/PATH/TO/blinklab build/datasets/eyeblink8-measured")
 

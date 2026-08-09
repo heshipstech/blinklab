@@ -5,8 +5,8 @@ laptop that was never in version control and could have been deleted at any time
 This folder is that evidence, curated and moved into the repository, so the six
 issues keep working after the laptop folder is gone.
 
-The original folder was 342 MB. This folder is 37 files and about 340 KB. The
-section
+The original folder was 342 MB. This folder is 37 files and about 257 KB. Git
+stores it compressed, at about 86 KB. The section
 [What was left out](#what-was-left-out) says what went and why.
 
 ## Read this first
@@ -151,13 +151,27 @@ The original folder was 342 MB. Everything below was excluded on purpose.
 The six issues cite four workflow journals as their evidence. A journal is the
 full transcript of an agent working session.
 
-They were read before this decision was made. They contain no image, no video, no
-email address and no key or token. But they do contain a great deal about one
-working day on one laptop: quoted messages from the maintainer, an audit of
-promises he made and did not keep, private correspondence with a named professor
-at another university, unanswered decisions, local machine state, and the
-contents of private notes. That is personal content, and this repository is
-public.
+They were read before this decision was made. They carry no key and no token. They
+carry a great deal of personal content. Counted across the four journals:
+
+| what is in them                                       | how often   |
+| ----------------------------------------------------- | ----------- |
+| the maintainer's macOS account name inside file paths | 5,489 times |
+| the maintainer's personal email address               | present     |
+| the name of a professor at another university         | 14 times    |
+| a picture, stored inside the text as encoded data     | 1           |
+
+The picture is worth its own sentence, because it is the one thing that would
+have broken a rule outright. One sub-agent transcript inside
+`wf_6866333f-dc5/` holds a JPEG of 111,410 bytes, 750 by 1,624 pixels, encoded as
+text so that nothing on disk looks like an image file. `DATASETS.md` allows
+numbers and never a frame. A transcript that quietly carries a picture cannot be
+published under that rule, and no search for image files would have found it.
+
+Beyond those counts the journals hold a great deal about one working day on one
+laptop: quoted messages from the maintainer, an audit of promises he made and did
+not keep, private correspondence with that professor, unanswered decisions, local
+machine state, and the contents of private notes. This repository is public.
 
 The rule applied here is simple and it is applied to all four journals equally:
 **no agent transcript is committed.** The findings the six issues rest on were
@@ -200,14 +214,22 @@ script first.
 Three checks were run over every file before it was committed here.
 
 **No frames.** `DATASETS.md` is strict about this. For every corpus the rule is
-numbers only, never a frame. Every file in this folder was checked and every one
-is plain text. There is no image and no video anywhere in it.
+numbers only, never a frame. Every byte of every file in this folder was counted.
+Every one is a plain readable character. Not one byte is above 127, so no
+picture, no video and no encoded picture can be hiding in here. You can repeat
+that check yourself from the top of the repository:
+
+```
+find docs/evidence -type f -print0 | xargs -0 cat | LC_ALL=C tr -d '\000-\177' | wc -c
+```
+
+It should print `0`.
 
 **No personal paths.** The account name of the machine these files came from
-appears nowhere. Home folder paths were replaced with `~`. Project folder paths
-were replaced with `/PATH/TO/`. Temporary session folders were replaced with
-`<scratch folder>`. This is why the scripts need a path edited before they run.
-No email address, key or token appears in any file.
+appears nowhere. Project folder paths were replaced with `/PATH/TO/`. Temporary
+session folders were replaced with `/PATH/TO/output-folder`. Home folder paths
+were replaced with `~`, which names no person. This is why the scripts need a
+path edited before they run. No email address, key or token appears in any file.
 
 **One file held back on licence grounds.** `eyeblink8_misses.csv` is not
 committed. Its rows are the blink intervals a human marked in the Eyeblink8
@@ -219,12 +241,38 @@ done. This repository is public and MIT licensed, and git keeps every file
 forever, so the reversible choice was taken. The script that rebuilds the table
 is here, and the command is above.
 
-The other files pass that same test. The `repeatability/` files and the false
-alarm table are this project's own measurements, not corpus content. The clip
-summary is per clip counts, which `docs/eyeblink8-result.txt` already publishes.
+The other files pass that same test, and here is the exact reason for each.
 
-## Still to do
+- The `repeatability/` files are this app's own output. Nothing in them comes
+  from the corpus except the clip name.
+- `eyeblink8_false_positives.csv` has one row per detection the app made in
+  error. The rows are the app's own. Five of its twenty columns are derived from
+  the corpus: `overlapsNF`, `startTimeSeconds`, the two
+  `maxInterFrameGap` columns and `framesToNearestAnnotatedBlink`. Each is a
+  single number about one of the app's own detections. Together they cannot
+  rebuild the marked blink intervals, which is what the licence question is
+  about.
+- `eyeblink8_clip_summary.csv` is per clip counts. `docs/eyeblink8-result.txt`
+  on main already publishes the same kind of counts for the same eight clips.
 
-The six issues still cite absolute paths on one laptop. They need rewriting to
-point at this folder instead. That is a separate change to the issue text, and it
-has not been made yet.
+## What each issue used to cite, and what it cites now
+
+The six issues were filed pointing at a folder on one laptop. Their Evidence
+sections were rewritten to point here instead. This table is the record of that
+move, so a reader can check it.
+
+| issue | it used to point at                                                           | it now points at                                                      |
+| ----- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| #174  | two workflow journals, `scratchpad/detA/`, `detB/`, `detC/`, `mixA/`, `mixC/` | `findings/issue-174-repeatability.md`, `repeatability/`               |
+| #175  | one workflow journal, `/tmp/corpus.log`, `/tmp/corpus-rerun2.log`             | `findings/issue-175-stale-server.md`, `run-logs/`                     |
+| #176  | one workflow journal, `scratchpad/eyeblink8_false_positives.csv`              | `findings/issue-176-double-counting.md`, `tables/`, `scripts/replay/` |
+| #177  | two workflow journals, and paths inside one home folder                       | `findings/issue-177-broken-python-environment.md`                     |
+| #178  | one workflow journal                                                          | `findings/issue-178-max-blink-duration.md`, `scripts/replay/`         |
+| #179  | one workflow journal, `scratchpad/eyeblink8_misses.csv` and its two siblings  | `findings/issue-179-stale-tables.md`, `tables/`, `scripts/tables/`    |
+
+Two things changed in the issue text beyond the paths.
+
+1. #174 dropped its claim that `mixA` and `mixC` are two extra corpus runs. They
+   are not. See `findings/issue-174-repeatability.md`.
+2. #179 points at the script that rebuilds `eyeblink8_misses.csv` rather than at
+   the table, because the table is held back on licence grounds.

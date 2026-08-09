@@ -4,11 +4,8 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-OUT = Path(
-    "/private/tmp/claude-<uid>/-Users-USER-Desktop-blinklab-build-blinklab-"
-    "-claude-worktrees-wizardly-antonelli-b714b5/"
-    "7006f1da-78ea-4625-9788-9e5db47d9c21/scratchpad"
-)
+# The folder autopsy.py wrote the three tables to. Same value as in that file.
+OUT = Path("/PATH/TO/output-folder")
 TRUNCATED = {"26122013_224532_cam": 4434, "27122013_153916_cam": 3287}
 
 misses = list(csv.DictReader((OUT / "eyeblink8_misses.csv").open()))

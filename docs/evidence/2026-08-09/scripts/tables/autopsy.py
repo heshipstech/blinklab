@@ -13,11 +13,9 @@ from blinklab.eyeblink8 import load_annotation
 
 CORPUS = Path("/PATH/TO/blinklab build/datasets/eyeblink8/eyeblink8")
 MEASURED = Path("/PATH/TO/blinklab build/datasets/eyeblink8-measured")
-OUT = Path(
-    "/private/tmp/claude-<uid>/-Users-USER-Desktop-blinklab-build-blinklab-"
-    "-claude-worktrees-wizardly-antonelli-b714b5/"
-    "7006f1da-78ea-4625-9788-9e5db47d9c21/scratchpad"
-)
+# Where the three tables are written. This ran in a scratch folder, so point
+# it at any folder you can write to. Do not point it inside the repository.
+OUT = Path("/PATH/TO/output-folder")
 
 INSTRUMENT_FPS = 30.0
 
