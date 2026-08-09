@@ -63,18 +63,26 @@ one measurement with a single line changed. Four of the six shorter
 clips shifted a blink edge by a frame or two, or split one detection
 into two. Two report exactly the same blink timings. The blink log cap
 counted detections, not annotated blinks, so it also bit
-27122013_152435_cam, which made exactly 50 detections and lost its
-first one. That one was a false positive. The frame rate is not the
-cause either:
+27122013_152435_cam, which made exactly 50 detections and lost the
+opening rows of its log. How many is not recoverable, because the
+capped export is the only surviving record of that run. What is certain
+is that the rows it lost were false positives, so no recall figure
+changes. The frame rate is not the cause either:
 measured_fps is 30.00 in both runs for all eight clips. The recall
 attribution above is nevertheless exact.
 
 Two further figures computed from these files:
   55 of the 70 misses, 78.6%, contain at least one frame the human
     marked fully closed.
-  45 of the 53 invented blinks sit on top of a real blink, and half of
-    them are 3 frames long or shorter. That is double counting, not
-    invention from nothing. Not yet fixed.
+  38 of the 53 invented blinks sit on top of a real blink, counted the
+    strict way: take the detection exactly as reported, widen nothing,
+    and ask whether it shares at least one frame with a blink the human
+    marked. Allowing this project's own four frame tolerance raises it
+    to 45. The stricter number is printed first because that tolerance
+    exists to stop a correct detection being punished over an edge, and
+    reusing it to decide what a WRONG detection sat on is a different
+    act. Either way it is double counting, not invention from nothing.
+    Not yet fixed. See issue #176.
 
 The superseded result, kept here so the correction can be checked:
 
