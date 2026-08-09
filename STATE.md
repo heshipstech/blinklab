@@ -53,15 +53,16 @@ cause was in this repository, not in the corpus. `BLINK_LOG_CAP` was 50.
 It fed a fixed length list that threw away the OLDEST entry whenever a
 new one arrived (a ring buffer). The same list was both the on screen
 panel and the exported record, so the export inherited a display limit.
-Two clips run past 50 blinks, 88 and 72 annotated, and their opening
-stretches were deleted before the file was written. Fixed in pull
-request #172. The cap is now two caps:
+Three clips made more than 50 detections, so their opening stretches
+were deleted before the file was written. That was 63 rows, and 54 of
+the 63 were real blinks. Fixed in pull request #172. The cap is now two
+caps:
 `BLINK_LOG_DISPLAY_CAP` (50, panel only) and `BLINK_LOG_RECORD_CAP`
 (20000, the record). The export prints a WARNING header line when rows
-are missing. Those two clips moved 55.7% to 89.8% and 58.3% to 91.7%,
-which is 30 and 24 blinks recovered, 54 in total. That is the entire
-move from 284 to 338. Every other clip found exactly the same number of
-blinks in both runs.
+are missing. Two of those three clips moved 55.7% to 89.8% and 58.3% to
+91.7%, which is 30 and 24 blinks recovered, 54 in total. That is the
+entire move from 284 to 338. Every other clip found exactly the same
+number of blinks in both runs.
 
 CAVEAT when comparing the two runs. They were built from different
 commits, so this is not one line changed. Four of the six shorter clips
@@ -122,9 +123,24 @@ What the audit established, so nobody argues it again:
 
 ### The stale server trap, which cost a day
 
+This is issue #175. Read it before any corpus run.
+
 The corpus runner drives a preview server on port 4173. A LEFTOVER
-server from an earlier run keeps that port and serves the OLD BUNDLE.
-It answers every request with a success code, so nothing looks broken.
+server from an earlier run keeps that port and serves the OLD BUNDLE. A
+bundle is the single JavaScript file the build produces, and its name
+changes whenever the code changes.
+
+Here is the trap, step by step.
+
+- The leftover server is already holding port 4173.
+- Your `npm run preview -- --strictPort` sees the port is taken, so it
+  refuses to start and exits. That is what the flag is for.
+- The leftover server is still there and still answering. So
+  `curl http://localhost:4173/blinklab/` returns HTTP 200 (hypertext
+  transfer protocol, and 200 is the code for success).
+- The runner measures the old code for twenty minutes and hands you a
+  confident, plausible, wrong number.
+
 On 9 August this produced a fake result of 69.1% from code that had
 already been fixed.
 
@@ -135,13 +151,18 @@ serves, and REFUSE to measure on a mismatch.
     ls dist/assets/index-*.js
     curl -s http://localhost:4173/blinklab/ | grep -o 'index-[^"]*\.js'
 
-If those two disagree, kill whatever holds the port and start the
-preview again:
+Run both lines and read both answers. If the two names disagree, or if
+the second line prints nothing at all, do not measure. Kill whatever
+holds the port and start the preview again:
 
     lsof -ti tcp:4173 | xargs kill
 
 Do this every time, not only when a number looks wrong. A stale bundle
-does not announce itself, and the number it gives you is plausible.
+does not announce itself, and the number it gives you is plausible. The
+two run logs from that day are committed at
+`docs/evidence/2026-08-09/run-logs/`. Open them side by side. One
+measured the wrong code and one measured the right code, and nothing in
+either file tells you which.
 
 ### Throughput, corrected
 
@@ -170,24 +191,47 @@ minutes. It writes nothing until a clip finishes, and the longest clip,
 
 ### Checking and restarting a run
 
-    cat /tmp/corpus.log
     ls "$DATASETS/eyeblink8-measured-capfix/"
 
 It writes two CSVs per clip, `<name>.blinks.csv` and
-`<name>.seconds.csv`, into that folder. It needs `npm run preview --
---strictPort` alive on port 4173; if that died, the run failed and the
-log will say so.
+`<name>.seconds.csv`, into that folder.
 
-If you do need to know it is alive, run one clip by hand and watch the
+DO NOT read `/tmp/corpus.log`. This page used to point at it. That file
+is the CONTAMINATED first run of 9 August, the one that measured the
+stale bundle, so it describes a result the project has retracted. Give
+every run its own new log file and put the time in the name. Both logs
+from that day are committed at
+`docs/evidence/2026-08-09/run-logs/`, and the corrected one is
+`corpus-run-10-07-corrected.txt`.
+
+A DEAD PREVIEW SERVER DOES NOT FAIL LOUDLY. This page used to say that
+if the preview server died, the run failed and the log said so. That is
+wrong, and believing it cost a day. What really happens is the stale
+server trap above, which is issue #175: a leftover server holds port
+4173, `npm run preview -- --strictPort` refuses to start and exits, and
+curl to 4173 still answers HTTP 200 from the OLD server. So the run
+does not fail. It finishes, and it measures the wrong code. The bundle
+check above is the only thing that catches this. Run it every time.
+
+If you want to know a run is alive, run one clip by hand and watch the
 status line: it reports "Measuring every frame: N done, P% of the clip"
 and updates twice a second.
 
-Do the bundle check above first. Then restart it with:
+To restart a run:
 
-    npm run build && npm run preview -- --strictPort &
+    npm run build
+    npm run preview -- --strictPort &
+    # Now do the bundle check above. Only if it agrees:
     node tools/measure_corpus.mjs \
       "$DATASETS/eyeblink8-mp4" \
-      "$DATASETS/eyeblink8-measured-capfix"
+      "$DATASETS/eyeblink8-measured-capfix" \
+      > "/tmp/corpus-$(date +%m%d-%H%M).log" 2>&1
+
+The build is on its OWN line on purpose. This page used to write
+`npm run build && npm run preview -- --strictPort &`, where the `&`
+backgrounds the WHOLE chain, build included. The shell then returns at
+once, a failed build looks the same as a slow one, and you can start
+measuring before anything has been built.
 
 ## How the Track A number is produced
 
@@ -225,9 +269,26 @@ For reference, what the script does under the hood:
 ## Rules that still apply
 
 Never push to main. Branch, pull request, green CI (continuous
-integration, the checks GitHub runs on every pull request), then merge. Run
-lint, typecheck, `npm test`, `npm run e2e` and, in `analysis/`, both
-`ruff check` and `pytest` before opening anything.
+integration, the checks GitHub runs on every pull request), then merge.
+Run every gate below before opening anything. CI enforces all of them,
+so a gate you skip here fails there instead.
+
+At the top of the repository:
+
+    npm run lint
+    npm run typecheck
+    npm test
+    npm run e2e
+    npm run format:check
+
+In `analysis/`: `ruff check .` and `pytest`.
+
+`npm run format:check` is the one people forget. It runs Prettier over
+the Markdown files as well as the code, and it failed on 9 August after
+a paragraph was rewrapped. Prettier reads any line that starts with a
+number and a full stop as a numbered list, so a line beginning "50."
+turned a paragraph into a list and the check went red. Nobody had
+changed a word. `npm run format` fixes it.
 
 Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #107 (backwards timestamps), #108 (log.md backfill), #115

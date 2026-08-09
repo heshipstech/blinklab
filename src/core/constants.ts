@@ -32,11 +32,22 @@ export const OFF_SCREEN_OFFSET_THRESHOLD = 0.18;
 // is what broke the first external validation. A panel that shows the
 // last fifty blinks is a reasonable panel. A recorded measurement that
 // silently deletes its oldest rows is not a measurement. The single
-// number did both jobs, so the export inherited the panel's limit: two
-// Eyeblink8 clips ran past fifty blinks and their opening stretches,
-// 58 real detections, were dropped before the file was written. The
+// number did both jobs, so the export inherited the panel's limit.
+// THREE Eyeblink8 clips made more than fifty detections, so their
+// opening stretches were dropped before the file was written. That was
+// 63 rows. 54 of the 63 sat on a blink the human had marked, so the
 // score that came back read as a detector missing blinks it had in
-// fact found.
+// fact found. The other 9 were false alarms. The third clip,
+// 27122013_152435_cam, made exactly fifty detections and lost only its
+// opening one. That one was a false alarm, so no recall figure changes
+// for that clip.
+//
+// This comment used to say 58 detections from two clips. Both numbers
+// were wrong. 58 came from the old miss table, where it counted
+// annotated blinks blamed on the cap rather than detections, which is a
+// different kind of thing, and it counted four too many. Re-checked on
+// 9 August 2026 against docs/eyeblink8-result.txt and
+// docs/evidence/2026-08-09/tables/eyeblink8_clip_summary.csv.
 //
 // So there are two numbers now, and they are different KINDS of thing.
 

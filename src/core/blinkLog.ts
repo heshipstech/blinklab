@@ -31,7 +31,9 @@ export function appendEvent(
  * Separate from the record on purpose. Trimming for the reader is a
  * display decision and belongs at the display, not in the thing being
  * recorded, and collapsing the two is the exact mistake that cost the
- * first external validation 58 detections.
+ * first external validation 63 rows across three clips, 54 of them real
+ * blinks. The full account, with the numbers checked, is the blink log
+ * comment in `constants.ts`.
  */
 export function eventsForDisplay(
   events: readonly BlinkEvent[],

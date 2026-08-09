@@ -10,7 +10,7 @@ One or two sentences.
 - [ ] Pure logic lives in `core` and imports nothing from the browser
 - [ ] New or updated automated test that would fail without this change
 - [ ] Boundary cases covered
-- [ ] All local gates pass: lint, typecheck, test, build
+- [ ] All local gates pass: lint, typecheck, test, build, format:check
 - [ ] STATE.md and ROADMAP.md updated
 - [ ] LEARNING.md has the plain English note
 - [ ] No commented out code, no TODO without a linked issue

@@ -6,8 +6,27 @@
 // reimplementation.
 //
 // Usage:
-//   npm run build && npm run preview -- --strictPort &
+//   npm run build
+//   npm run preview -- --strictPort &
+//   # Check the served bundle before measuring. See below.
 //   node tools/measure_corpus.mjs <clips-dir> <output-dir>
+//
+// The build is on its OWN line on purpose. This note used to read
+// `npm run build && npm run preview -- --strictPort &`, where the `&`
+// backgrounds the WHOLE chain, build included, so the shell returns
+// before anything is built.
+//
+// THIS SCRIPT MEASURES WHATEVER ANSWERS ON PORT 4173. It does not check
+// that the server is serving the code you built, and that is issue
+// #175. If a leftover server from an earlier run already holds the
+// port, `npm run preview -- --strictPort` refuses to start and exits,
+// while the old server keeps answering with HTTP 200. Nothing looks
+// broken and this script measures the wrong code for twenty minutes.
+// So compare the built bundle name against the served one first, and
+// refuse to measure on a mismatch:
+//
+//   ls dist/assets/index-*.js
+//   curl -s http://localhost:4173/blinklab/ | grep -o 'index-[^"]*\.js'
 //
 // Slow by design. Every frame is sought and measured, so a thirty
 // minute corpus takes hours. Progress is printed per clip so a stalled
