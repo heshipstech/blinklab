@@ -1,8 +1,9 @@
-Last increment: the Track A correction, on branch `docs/track-a-corrected`
-Last commit: squash merge of pull request #172 on 2026-08-09
+Last increment: the Track A correction, merged as pull requests #172
+and #173
+Last commit: squash merge of pull request #173 on 2026-08-09
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: nothing. Track A is DONE and measured twice. The
-write up is in pull request #173, open and not yet merged.
+write up is on this page and in the README.
 
 ## Track A result, 9 August 2026, corrected
 
@@ -30,19 +31,20 @@ The earlier run is kept for comparison at `.../eyeblink8-measured`.
 Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
-F1**, which was written on branch `docs/track-a-result` and never
-merged. The cause was in this repository, not in the corpus.
-`BLINK_LOG_CAP` was 50. It fed a fixed length list that threw away the
-OLDEST entry whenever a new one arrived (a ring buffer). The same list was both the on screen panel and the exported
-record, so the export inherited a display limit. Two clips run past 50
-blinks, 88 and 72 annotated, and their opening stretches were deleted
-before the file was written. Fixed in pull request #172. The cap is now
-two caps: `BLINK_LOG_DISPLAY_CAP` (50, panel only) and
-`BLINK_LOG_RECORD_CAP` (20000, the record). The export prints a WARNING
-header line when rows are missing. Those two clips moved 55.7% to 89.8%
-and 58.3% to 91.7%, which is 30 and 24 blinks recovered, 54 in total.
-That is the entire move from 284 to 338. Every other clip found exactly
-the same number of blinks in both runs.
+F1**, which was written in a first draft that was never merged. The
+cause was in this repository, not in the corpus. `BLINK_LOG_CAP` was
+50. It fed a fixed length list that threw away the OLDEST entry
+whenever a new one arrived (a ring buffer). The same list was both the
+on screen panel and the exported record, so the export inherited a
+display limit. Two clips run past 50 blinks, 88 and 72 annotated, and
+their opening stretches were deleted before the file was written. Fixed
+in pull request #172. The cap is now two caps:
+`BLINK_LOG_DISPLAY_CAP` (50, panel only) and `BLINK_LOG_RECORD_CAP`
+(20000, the record). The export prints a WARNING header line when rows
+are missing. Those two clips moved 55.7% to 89.8% and 58.3% to 91.7%,
+which is 30 and 24 blinks recovered, 54 in total. That is the entire
+move from 284 to 338. Every other clip found exactly the same number of
+blinks in both runs.
 
 CAVEAT when comparing the two runs. They were built from different
 commits, so this is not one line changed. Four of the six shorter clips
@@ -69,19 +71,20 @@ What the audit established, so nobody argues it again:
 - The corpus is not the problem. 787 lost frames across 174 gaps, and
   every one of the 8 clips loses some. STATE THE RULE WITH THE NUMBER,
   because publishing a number without its rule is what went wrong here.
-  THE RULE: read each clip's own `.txt` timestamp file, round every gap
-  between two kept frames to a whole number of frame lengths at 30
-  frames per second, and count anything above one as lost. Checkable
-  with `analysis/tools/audit_frame_loss.py`. 787 of 71,354 frames is
-  1.10%, so say 1.1%. Earlier notes said 737 frames and 1.011%; no
-  single rule produces 737 together with "3 clips", so both are
-  retired. 12 gaps are half a second or longer, they sit in 3 clips,
-  and they hold 611 of the 787. At the very most the lost frames
-  explain 4 of the 70 misses, counting a blink as touched when a gap
-  falls anywhere from one frame before its start to its last frame. In
-  every frame the person faces the camera. No blink is shorter than 4
-  frames. Shrinking the video to a quarter of its size changed how
-  strong a blink looks by 2.7%, so the picture is not too small.
+  THE RULE. Read each clip's own `.txt` timestamp file. At 30 frames
+  per second one frame lasts 0.033 seconds. Round every gap between two
+  kept frames to a whole number of frame lengths. Anything above one is
+  a lost frame. Checkable with `analysis/tools/audit_frame_loss.py`.
+  787 of 71,354 frames is 1.10%, so say 1.1%. Earlier notes said 737
+  frames and 1.011%; no single rule produces 737 together with "3
+  clips", so both are retired. 12 gaps are half a second or longer,
+  they sit in 3 clips, and they hold 611 of the 787. At the very most
+  the lost frames explain 4 of the 70 misses. A blink counts as touched
+  when a gap falls anywhere from one frame before it starts to its last
+  frame. In every frame the person faces the camera. No blink is
+  shorter than 4 frames. Shrinking the video to a quarter of its size
+  changed how strong a blink looks by 2.7%, so the picture is not too
+  small.
 - 55 of the 70 corrected misses, 78.6%, contain at least one frame the
   human marked fully closed. That is the real weakness. An earlier note
   said 87.9%; that was 109 of 124, and 124 is the FIRST run's miss
@@ -103,9 +106,9 @@ What the audit established, so nobody argues it again:
 ### The stale server trap, which cost a day
 
 The corpus runner drives a preview server on port 4173. A LEFTOVER
-server from an earlier run keeps that port and serves the OLD BUNDLE
-It answers every request with a success code, so nothing looks broken. On
-9 August this produced a fake result of 69.1% from code that had
+server from an earlier run keeps that port and serves the OLD BUNDLE.
+It answers every request with a success code, so nothing looks broken.
+On 9 August this produced a fake result of 69.1% from code that had
 already been fixed.
 
 The check that catches it: after `npm run build`, compare the bundle
@@ -130,9 +133,10 @@ minutes, not 2.4 hours.** This file used to claim 8.4 frames per second
 and a 2.4 hour run. That figure was measured on one clip under a
 debugger and was roughly seven times too slow.
 
-It mattered. It made the corpus look like an overnight job, and DROZY
-look like a twenty hour one. The owner was close to cutting down the
-whole evaluation plan around a cost that does not exist.
+It mattered. It made the corpus look like an overnight job. It made
+DROZY, the next dataset, look like a twenty hour one. The owner was
+close to cutting down the whole evaluation plan around a cost that does
+not exist.
 
 The 58 figure is measured from the run's own file timestamps, not
 back-solved from a guess. Clips 2 to 8 of the capfix run are 55,572
@@ -161,7 +165,7 @@ If you do need to know it is alive, run one clip by hand and watch the
 status line: it reports "Measuring every frame: N done, P% of the clip"
 and updates twice a second.
 
-Restart it with, after the bundle check above:
+Do the bundle check above first. Then restart it with:
 
     npm run build && npm run preview -- --strictPort &
     node tools/measure_corpus.mjs \

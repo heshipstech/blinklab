@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/heshipstech/blinklab/actions/workflows/ci.yml/badge.svg)](https://github.com/heshipstech/blinklab/actions/workflows/ci.yml)
 
-A browser based eye signal laboratory. It reads your webcam locally and turns what your eyes are doing into numbers you can audit: blinks, eyelid aperture in millimetres, gaze regions, fixations, PERCLOS (the share of a minute your eyes spend closed), and an explainable alertness score.
+A browser based eye signal laboratory. It reads your webcam locally. It turns what your eyes are doing into numbers you can audit: blinks, eyelid aperture in millimetres, gaze regions, fixations, PERCLOS (the share of a minute your eyes spend closed), and an explainable alertness score.
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. All processing happens in your browser and no data leaves your device.**
 
@@ -29,7 +29,7 @@ This project's rule is that a limitation you know about belongs in the open.
 - The instrument reads fully shut eyes as roughly a third of the open baseline rather than zero, so the literature's usual PERCLOS threshold does not transfer and ours is adjusted to the instrument. This is documented rather than hidden.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
-- An uploaded clip can be measured two ways and the file records which. Stepped, the default, seeks to every frame in turn and waits for the measurement, so which frames it measures depends on the recording rather than on your computer. It still does not give exactly the same answer twice, and the section below on the Eyeblink8 clips says by how much. Watched plays in real time and is capped by how fast the model runs, so a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate, and the app reports the rate it detected so you can check it against a clip you know.
+- An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. It still does not give exactly the same answer twice. The section below on the Eyeblink8 clips says by how much. Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
 
 ## Does it find the blinks a human found?
 
@@ -52,9 +52,9 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-The corrected run invents more blinks, 53 against 45, and still scores
-slightly better on precision. That is because it makes many more
-detections in total, so the invented ones are a smaller share of them.
+The corrected run invents more blinks, 53 against 45, and does not
+score worse on precision. That is because it makes many more detections
+in total, so the invented ones are a smaller share of them.
 
 **One caveat about the last digit.** These are one run, not a fixed
 value. The same clip measured again on the same computer with the same
@@ -65,11 +65,10 @@ totals that reads 86.0% precision and 84.4% F1 instead of 86.4% and
 precision and F1 as approximate, and read recall as solid.
 
 There are two columns because the first answer was wrong. It was wrong
-because of a defect in this app. The clips were not the cause. The first
-write up of this result lives on branch `docs/track-a-result` and never
-reached this page. Both numbers stay here. A project that shows you only
-its final answer tells you less than one that also shows you its wrong
-turn.
+because of a defect in this app. The clips were not the cause. The
+first write up of this result was never published on this page. Both
+numbers stay here. A project that shows you only its final answer tells
+you less than one that also shows you its wrong turn.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
