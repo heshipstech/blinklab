@@ -156,7 +156,7 @@ if (app === null) {
 }
 
 const title = document.createElement("h1");
-title.textContent = "Eye-tracking demo";
+title.textContent = "Alertness measurement demo";
 
 // The permanent notice, 6.9. Present before the camera starts, never
 // dismissible, and above everything so it cannot be scrolled past
@@ -2291,7 +2291,8 @@ graphStyles.textContent =
   // fill, because a filled bar would read as a second banner.
   " #page-footer { border-top: 1px solid #e4e4e4; background: #ffffff;" +
   "   padding-top: 12px; padding-bottom: 12px; }" +
-  " #page-footer p { margin: 0; font-size: 12px; color: #666; }" +
+  " #page-footer p { margin: 0; font-size: 12px; color: #666;" +
+  "   text-align: center; }" +
   " .box > h2 { font-size: 12px; text-transform: uppercase;" +
   "   letter-spacing: 0.08em; color: #666; margin: 0 0 8px 0;" +
   "   font-weight: 600; }" +
