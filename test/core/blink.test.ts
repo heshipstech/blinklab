@@ -236,3 +236,82 @@ describe("blink timing against the recorded fixture", () => {
     expect(durations).toEqual([133, 117]);
   });
 });
+
+describe("the refractory period of #176", () => {
+  const OPEN = 10;
+  const SHUT = 1;
+  const THRESHOLD = 5;
+
+  // Drive the detector through a closure and a reopen.
+  const blink = (
+    state: BlinkState,
+    startMs: number,
+    closedMs: number,
+  ): BlinkState => {
+    let next = blinkStep(state, startMs, SHUT, THRESHOLD);
+    next = blinkStep(next, startMs + closedMs, SHUT, THRESHOLD);
+    return blinkStep(next, startMs + closedMs, OPEN, THRESHOLD);
+  };
+
+  // THE REGRESSION. On the Eyeblink8 benchmark one blink was often
+  // reported as two: the aperture rose over the threshold for a frame
+  // or two mid-closure and dipped again. 103 of 111 false alarms sat
+  // on top of a blink the human had marked.
+  it("counts one blink when a closure is split in two", () => {
+    let state = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    state = blink(state, 100, 120); // a real blink, ends at 220
+    expect(state.blinkCount).toBe(1);
+    state = blink(state, 240, 60); // the fragment, ends at 300
+    expect(state.blinkCount).toBe(1);
+  });
+
+  it("counts both when they are far enough apart to be real", () => {
+    let state = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    state = blink(state, 100, 120); // ends at 220
+    state = blink(state, 400, 120); // ends at 520, well clear
+    expect(state.blinkCount).toBe(2);
+  });
+
+  // 150 ms is below the ~200 ms a person can manage deliberately, so
+  // the fastest real blinking anyone can produce must still count.
+  it("does not suppress deliberate rapid blinking at five a second", () => {
+    let state = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    let at = 0;
+    for (let i = 0; i < 5; i += 1) {
+      state = blink(state, at, 80);
+      at += 200;
+    }
+    expect(state.blinkCount).toBe(5);
+  });
+
+  // The failure mode a naive implementation has: if a suppressed
+  // closure refreshed the timer, a stream of chatter would push the
+  // window forward forever and a genuine later blink would never be
+  // counted.
+  it("chatter cannot walk the window forward and swallow a real blink", () => {
+    let state = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    state = blink(state, 0, 100); // counted, ends at 100
+    expect(state.blinkCount).toBe(1);
+    // Four fragments, each inside the window of the one before it.
+    let at = 120;
+    for (let i = 0; i < 4; i += 1) {
+      state = blink(state, at, 20);
+      at += 30;
+    }
+    // Still one, and the timer still points at the blink that ended
+    // at 100, so a blink at 260 is 160 ms clear and must count.
+    expect(state.blinkCount).toBe(1);
+    state = blink(state, 240, 20);
+    expect(state.blinkCount).toBe(2);
+  });
+
+  it("leaves the reported duration of the counted blink alone", () => {
+    let state = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    state = blink(state, 100, 120);
+    expect(state.lastBlinkDurationMs).toBe(120);
+    state = blink(state, 240, 60);
+    // The fragment was not counted, so it must not overwrite the
+    // duration either. Every duration keeps its 4.3 definition.
+    expect(state.lastBlinkDurationMs).toBe(120);
+  });
+});
