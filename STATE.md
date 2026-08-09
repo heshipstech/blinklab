@@ -32,13 +32,13 @@ Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
 F1**, which was written in a first draft that was never merged. The
-cause was in this repository, not in the corpus. `BLINK_LOG_CAP` was
-50. It fed a fixed length list that threw away the OLDEST entry
-whenever a new one arrived (a ring buffer). The same list was both the
-on screen panel and the exported record, so the export inherited a
-display limit. Two clips run past 50 blinks, 88 and 72 annotated, and
-their opening stretches were deleted before the file was written. Fixed
-in pull request #172. The cap is now two caps:
+cause was in this repository, not in the corpus. `BLINK_LOG_CAP` was 50.
+It fed a fixed length list that threw away the OLDEST entry whenever a
+new one arrived (a ring buffer). The same list was both the on screen
+panel and the exported record, so the export inherited a display limit.
+Two clips run past 50 blinks, 88 and 72 annotated, and their opening
+stretches were deleted before the file was written. Fixed in pull
+request #172. The cap is now two caps:
 `BLINK_LOG_DISPLAY_CAP` (50, panel only) and `BLINK_LOG_RECORD_CAP`
 (20000, the record). The export prints a WARNING header line when rows
 are missing. Those two clips moved 55.7% to 89.8% and 58.3% to 91.7%,
