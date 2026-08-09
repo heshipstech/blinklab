@@ -3,10 +3,18 @@ BLINK DETECTION vs Eyeblink8 ground truth
 Measured 9 August 2026 on a verified build. This REPLACES an earlier
 result of recall 69.6%, precision 86.3%, F1 77.1%. That earlier result
 was produced before pull request #172 fixed the blink log defect. The
-defect deleted the opening blinks of any clip holding more than 50
-blinks, before the file was written. So two clips here were scored
-against a record that was missing its start. See the README for the
-plain English account.
+defect deleted the earliest rows from any clip where the app made more
+than 50 detections, before the file was written. That hit three clips.
+In two of them the deleted rows were real blinks, so those two were
+scored against a record that was missing its start. See the README for
+the plain English account.
+
+THE LAST DIGIT DOES NOT REPEAT. This is one run, not a fixed value. The
+same clip re-measured on the same computer and the same build gives a
+different answer. One of the eight clips went from 7 false alarms to 9.
+Carried into the totals below that reads 86.0% precision and 84.4% F1
+instead of 86.4% and 84.6%. Recall stayed 82.8% in every re-run. Read
+the last digit of precision and F1 as approximate.
 
 8 clips, 408 annotated blinks, 391 detected
 
@@ -51,10 +59,13 @@ is the entire move from 284 found to 338. Every other clip found
 exactly the same number of blinks in both runs.
 
 CAVEAT. The two runs were built from different commits, so they are not
-one measurement with a single line changed. Five of the six shorter
+one measurement with a single line changed. Four of the six shorter
 clips shifted a blink edge by a frame or two, or split one detection
-into two. The blink log cap cannot explain that, because none of those
-clips reach 50 blinks. The frame rate is not the cause either:
+into two. Two report exactly the same blink timings. The blink log cap
+counted detections, not annotated blinks, so it also bit
+27122013_152435_cam, which made exactly 50 detections and lost its
+first one. That one was a false positive. The frame rate is not the
+cause either:
 measured_fps is 30.00 in both runs for all eight clips. The recall
 attribution above is nevertheless exact.
 

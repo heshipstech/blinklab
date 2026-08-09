@@ -29,7 +29,7 @@ This project's rule is that a limitation you know about belongs in the open.
 - The instrument reads fully shut eyes as roughly a third of the open baseline rather than zero, so the literature's usual PERCLOS threshold does not transfer and ours is adjusted to the instrument. This is documented rather than hidden.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
-- An uploaded clip can be measured two ways and the file records which. Stepped, the default, seeks to every frame in turn and waits for the measurement, so the result depends on the recording rather than on your computer. Watched plays in real time and is capped by how fast the model runs, so a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate, and the app reports the rate it detected so you can check it against a clip you know.
+- An uploaded clip can be measured two ways and the file records which. Stepped, the default, seeks to every frame in turn and waits for the measurement, so which frames it measures depends on the recording rather than on your computer. It still does not give exactly the same answer twice, and the section below on the Eyeblink8 clips says by how much. Watched plays in real time and is capped by how fast the model runs, so a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate, and the app reports the rate it detected so you can check it against a clip you know.
 
 ## Does it find the blinks a human found?
 
@@ -47,34 +47,43 @@ to find the same blinks.
 | F1           | 77.1%               | **84.6%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
-is the share of the app's detections that were real. F1, short for F1
-score, is the standard name for the two combined into one number. It
-only rises when both rise. So an app cannot look good by staying quiet,
-and it cannot look good by firing all the time.
+is the share of the app's detections that were real. F1 is the two
+numbers put together into one. It always sits close to the lower of the
+two. So an app cannot look good by staying quiet, and it cannot look
+good by firing all the time.
 
 The corrected run invents more blinks, 53 against 45, and still scores
 slightly better on precision. That is because it makes many more
 detections in total, so the invented ones are a smaller share of them.
 
+**One caveat about the last digit.** These are one run, not a fixed
+value. The same clip measured again on the same computer with the same
+build does not give exactly the same answer. Re-measuring one of the
+eight clips changed its false alarms from 7 to 9. Carried into the
+totals that reads 86.0% precision and 84.4% F1 instead of 86.4% and
+84.6%. Recall did not move in any re-run. Read the last digit of
+precision and F1 as approximate, and read recall as solid.
+
 There are two columns because the first answer was wrong. It was wrong
-because of a defect in this app. The clips were fine. The first write up
-of this result lives on branch `docs/track-a-result` and never reached
-this page. Both numbers stay here. A project that shows you only its
-final answer tells you less than one that also shows you its wrong turn.
+because of a defect in this app. The clips were not the cause. The first
+write up of this result lives on branch `docs/track-a-result` and never
+reached this page. Both numbers stay here. A project that shows you only
+its final answer tells you less than one that also shows you its wrong
+turn.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
-read on screen. To keep the panel short, it held only the newest fifty.
-It was also the record written into the exported file. So trimming for
-the reader trimmed the measurement. Two of the eight clips hold more
-than fifty blinks, 88 in one and 72 in the other. In both, the opening
-stretch of blinks was deleted before the file was written. Nothing
-announced it. The score then said the app had missed those blinks. It
-had not missed them. It found them, then threw them away. There are two
-lists now. One is for the screen and one is for the record. The exported
-file also counts its own rows and compares them against the number of
-blinks the app found. If any are missing, it prints a warning on the
-first line. Fixed in pull request #172.
+read on screen. To keep the panel short, it held only the newest fifty
+detections. It was also the record written into the exported file. So
+trimming for the reader trimmed the measurement. Two of the eight clips
+hold more than fifty blinks, 88 in one and 72 in the other. In both, the
+opening stretch of blinks was deleted before the file was written.
+Nothing announced it. The score then said the app had missed those
+blinks. It had not missed them. It found them, then threw them away.
+There are two lists now. One is for the screen and one is for the
+record. The exported file also counts its own rows and compares them
+against the number of blinks the app found. If any are missing, it
+prints a warning on the first line. Fixed in pull request #172.
 
 **The corrected number is honest, and it is still not good enough.** It
 misses roughly one blink in six. Other published detectors are measured
@@ -89,22 +98,34 @@ Every other clip found exactly the same number of blinks in both runs.
 
 **One caveat about comparing the two runs.** They were built from
 different commits, so they are not the same measurement with a single
-line changed. Five of the six shorter clips shifted the edges of a blink
-by a frame or two, or split one detection into two. The defect above
-cannot explain any of that, because none of those clips reach fifty
-blinks. What it does explain is the recall, exactly and entirely: 30
-recovered blinks in one clip, 24 in the other, and not one anywhere
-else. Fixing it also surfaced 8 more invented blinks, 45 to 53, and
-seven of those are in the two recovered clips.
+line changed. Four of the six shorter clips shifted the edges of a blink
+by a frame or two, or split one detection into two. The other two report
+exactly the same blink timings. One correction to the story above. The
+cap counted detections, not the human's blinks. A third clip made
+exactly fifty detections and lost its opening one too. That one was a
+false alarm, so it changes no recall figure on this page. What the
+defect explains is the recall, exactly and entirely: 30 recovered blinks
+in one clip, 24 in the other, and not one anywhere else. Fixing it also
+surfaced 8 more invented blinks, 45 to 53, and seven of those are in the
+two recovered clips.
 
 The clips were checked, frame by frame, before any of this was blamed on
-them. Three of the eight have brief freezes that lose frames, 737 frames
-in all, which is 1.0% of every frame in the set. Only 8 of the 408
-blinks contain a lost frame, each losing exactly one, and 6 of those 8
-were detected anyway. So the clips can explain at most 2 of the 70
-remaining misses. Three more checks came back clean. In all eight clips
-the person faces the camera in every single frame. No blink the human
-marked is shorter than 4 frames, so none of them are too quick to catch.
+them. The recordings freeze here and there and lose frames. Every clip
+ships a `.txt` file listing the time of each frame it kept, so anyone
+can count the losses. Here is the rule used. At 30 frames per second one
+frame lasts 0.033 seconds. Round each gap between two kept frames to a
+whole number of frame lengths. Anything above one is a lost frame. Under
+that rule the eight clips lose 787 frames between them, spread over 174
+gaps. That is 1.1% of every frame in the set. Twelve of those gaps are
+long freezes of half a second or more. Those twelve sit in three clips
+and hold 611 of the 787 lost frames. Very few gaps land inside a blink.
+At the very most the lost frames explain 4 of the 70 remaining misses.
+The script that counts all of this is
+[analysis/tools/audit_frame_loss.py](analysis/tools/audit_frame_loss.py),
+so you do not have to take the number on trust. Three more checks came
+back clean. In all eight clips the person faces the camera in every
+single frame. No blink the human marked is shorter than 4 frames, so
+none of them are too quick to catch.
 Shrinking the video to a quarter of its size changed how strong a blink
 looks by 2.7%, so the picture is not too small either. The clips are not
 the excuse.
@@ -175,17 +196,20 @@ two browser engines on one machine, stepping every frame:
 | Eyes shut           | 49 to 58 s | 49 to 58 s |
 
 The file contains 4,202 frames. **Blink rate per minute was identical in
-both browsers to the last decimal**, across all 71 seconds. Eyelid
-aperture differed by 0.02 mm on average and the learned personal
-baseline by 0.4 percent, which is what sampling a frame a fraction
-earlier during a blink costs.
+both browsers to the last decimal**, across all 71 seconds. That is one
+70 second clip and it is not the whole story. On the eight clips above
+the app does not repeat itself exactly from one run to the next. See the
+caveat about the last digit. Eyelid aperture differed by 0.02 mm on
+average and the learned personal baseline by 0.4 percent, which is what
+sampling a frame a fraction earlier during a blink costs.
 
 This is worth stating because the first version of stepped measurement
 failed it badly, and failed it invisibly. It played the clip and paused
 on each frame, which cannot outrun a video advancing in real time, so it
 measured 6,655 frames of a 12,626 frame recording and reported "measured
 every frame". How many it lost depended on how busy the machine was. The
-current version seeks to each frame instead and does not care.
+current version seeks to each frame instead, so it measures every frame
+however busy the machine is.
 
 Safari's extra frame was the final one counted twice, which is fixed.
 

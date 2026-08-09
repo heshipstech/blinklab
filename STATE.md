@@ -12,6 +12,14 @@ Eight Eyeblink8 clips, 408 human-marked blinks, 391 detected.
     Precision  86.4%   (53 invented)
     F1         84.6%
 
+THE LAST DIGIT DOES NOT REPEAT. This is one run, not a fixed value. The
+same clip re-measured on the same computer and the same build gives a
+different answer. One of the eight clips went from 7 false alarms to 9.
+Carried into the totals that reads 86.0% precision and 84.4% F1 instead
+of 86.4% and 84.6%. Recall stayed 82.8% in every re-run. Treat the last
+digit of precision and F1 as approximate, and do not compare a future
+run against these to one decimal.
+
 Coverage: 71,356 frames measured against 71,354 annotated. Two clips
 gave one frame more than their annotation file lists. Every other clip
 is exact.
@@ -37,13 +45,16 @@ That is the entire move from 284 to 338. Every other clip found exactly
 the same number of blinks in both runs.
 
 CAVEAT when comparing the two runs. They were built from different
-commits, so this is not one line changed. Five of the six shorter clips
+commits, so this is not one line changed. Four of the six shorter clips
 shifted a blink edge by a frame or two, or split one detection into
-two. The cap cannot explain that, because none of those clips reach 50
-blinks. The frame rate is not the cause either: `measured_fps` is 30.00
-in both runs for all eight clips. The recall attribution above is
-nevertheless exact. Fixing the cap also surfaced 8 more invented
-blinks, 45 to 53, seven of them in the two recovered clips.
+two. Two report exactly the same blink timings. The cap counted
+DETECTIONS, not annotated blinks, so it also bit `27122013_152435_cam`,
+which made exactly 50 detections and lost its first one. That one was a
+false positive, so no recall figure changes. The frame rate is not the
+cause either: `measured_fps` is 30.00 in both runs for all eight clips.
+The recall attribution above is nevertheless exact. Fixing the cap also
+surfaced 8 more invented blinks, 45 to 53, seven of them in the two
+recovered clips.
 
 The glasses claim from the first write up is WITHDRAWN, not reversed.
 It rested on 83.7% for the one glasses clip against 67.9% for the seven
@@ -55,14 +66,22 @@ settles nothing either way, so report BOTH halves or neither.
 
 What the audit established, so nobody argues it again:
 
-- The corpus is not the problem. 737 lost frames, 12 freezes across 3
-  clips. 737 of 71,354 frames is 1.03%, so say 1.0%; an earlier note
-  said 1.011% and that does not divide. Only 8 of 408 blinks contain a
-  lost frame, each losing one, and 6 of those 8 were detected. At the
-  very most, the lost frames explain 2 of the misses. In every frame
-  the person faces the camera. No blink is shorter than 4 frames.
-  Shrinking the video to a quarter of its size changed how strong a
-  blink looks by 2.7%, so the picture is not too small.
+- The corpus is not the problem. 787 lost frames across 174 gaps, and
+  every one of the 8 clips loses some. STATE THE RULE WITH THE NUMBER,
+  because publishing a number without its rule is what went wrong here.
+  THE RULE: read each clip's own `.txt` timestamp file, round every gap
+  between two kept frames to a whole number of frame lengths at 30
+  frames per second, and count anything above one as lost. Checkable
+  with `analysis/tools/audit_frame_loss.py`. 787 of 71,354 frames is
+  1.10%, so say 1.1%. Earlier notes said 737 frames and 1.011%; no
+  single rule produces 737 together with "3 clips", so both are
+  retired. 12 gaps are half a second or longer, they sit in 3 clips,
+  and they hold 611 of the 787. At the very most the lost frames
+  explain 4 of the 70 misses, counting a blink as touched when a gap
+  falls anywhere from one frame before its start to its last frame. In
+  every frame the person faces the camera. No blink is shorter than 4
+  frames. Shrinking the video to a quarter of its size changed how
+  strong a blink looks by 2.7%, so the picture is not too small.
 - 55 of the 70 corrected misses, 78.6%, contain at least one frame the
   human marked fully closed. That is the real weakness. An earlier note
   said 87.9%; that was 109 of 124, and 124 is the FIRST run's miss
