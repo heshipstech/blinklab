@@ -16,17 +16,18 @@
 // backgrounds the WHOLE chain, build included, so the shell returns
 // before anything is built.
 //
-// THIS SCRIPT MEASURES WHATEVER ANSWERS ON PORT 4173. It does not check
-// that the server is serving the code you built, and that is issue
-// #175. If a leftover server from an earlier run already holds the
-// port, `npm run preview -- --strictPort` refuses to start and exits,
-// while the old server keeps answering with HTTP 200. Nothing looks
-// broken and this script measures the wrong code for twenty minutes.
-// So compare the built bundle name against the served one first, and
-// refuse to measure on a mismatch:
+// This script used to measure WHATEVER answered on port 4173, without
+// checking that it was serving the code you built. On 9 August 2026 a
+// leftover server from the previous night held the port, so
+// `npm run preview -- --strictPort` exited, the old server kept
+// answering with HTTP 200, and twenty minutes went into measuring the
+// previous build. It returned a plausible number and was believed.
 //
-//   ls dist/assets/index-*.js
-//   curl -s http://localhost:4173/blinklab/ | grep -o 'index-[^"]*\.js'
+// It now refuses instead. Before anything is measured it compares the
+// bundle name in dist/assets against the one the served page actually
+// references. Vite puts a content hash in that name, so the two names
+// agreeing is cheap proof that the code is the same. See
+// tools/bundleGuard.mjs and issue #175.
 //
 // Slow by design. Every frame is sought and measured, so this runs
 // slower than the clip plays. Measured on 9 August 2026: about 58
@@ -41,7 +42,10 @@
 
 import { readdir, mkdir, writeFile, readFile } from "node:fs/promises";
 import { join, basename } from "node:path";
+import { fileURLToPath } from "node:url";
 import { webkit } from "@playwright/test";
+
+import { checkBundle } from "./bundleGuard.mjs";
 
 const [, , clipsDir, outDir] = process.argv;
 if (!clipsDir || !outDir) {
@@ -50,6 +54,55 @@ if (!clipsDir || !outDir) {
 }
 
 const URL = "http://localhost:4173/blinklab/";
+
+// The guard, before anything expensive. A run that measures the wrong
+// build costs twenty minutes AND produces a number nobody knows to
+// distrust, so this refuses rather than warns.
+// fileURLToPath, not URL.pathname. This repository lives under a folder
+// whose name contains a space, and pathname returns it percent encoded
+// as "blinklab%20build", which readdir cannot find. The guard then
+// reported "nothing is built" while dist sat right there, which would
+// have been a guard that blocks every honest run and teaches people to
+// work around it.
+const distDir = fileURLToPath(
+  new globalThis.URL("../dist/assets", import.meta.url),
+);
+let distFileNames;
+try {
+  distFileNames = await readdir(distDir);
+} catch {
+  console.error(
+    "Cannot read dist/assets. Run `npm run build` before measuring.",
+  );
+  process.exit(1);
+}
+
+let servedHtml;
+try {
+  const response = await fetch(URL);
+  if (!response.ok) {
+    console.error(
+      `The server on ${URL} answered ${String(response.status)}.\n` +
+        "Start it with `npm run preview -- --strictPort &` after building.",
+    );
+    process.exit(1);
+  }
+  servedHtml = await response.text();
+} catch {
+  console.error(
+    `Nothing answered on ${URL}.\n` +
+      "Start it with `npm run preview -- --strictPort &` after building.",
+  );
+  process.exit(1);
+}
+
+const guard = checkBundle({ distFileNames, html: servedHtml });
+if (!guard.ok) {
+  console.error(guard.message);
+  process.exit(1);
+}
+console.log(`Serving the build we made: ${guard.bundle}\n`);
+
 await mkdir(outDir, { recursive: true });
 
 const clips = (await readdir(clipsDir))
