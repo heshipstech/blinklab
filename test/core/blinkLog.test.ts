@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendEvent,
+  eventsForDisplay,
   formatBlinkEvent,
   serialiseBlinkEvents,
   BLINK_CSV_COLUMNS,
   type BlinkEvent,
 } from "../../src/core/blinkLog";
-import { BLINK_LOG_CAP } from "../../src/core/constants";
+import {
+  BLINK_LOG_DISPLAY_CAP,
+  BLINK_LOG_RECORD_CAP,
+} from "../../src/core/constants";
 
 function eventAt(atMs: number): BlinkEvent {
   return {
@@ -25,16 +29,102 @@ describe("appendEvent, the event reducer", () => {
     expect(events.map((e) => e.atMs)).toEqual([1000, 2000]);
   });
 
-  it("holds exactly the cap, then drops the oldest", () => {
+  // The regression. This is the defect that cost the first external
+  // validation 58 detections: a session past the DISPLAY cap kept only
+  // its most recent fifty blinks, and the export inherited that. Two
+  // Eyeblink8 clips ran to 88 and 72 blinks, so their opening stretches
+  // were deleted before the file was written, and the missing rows read
+  // as a detector that had failed to find them.
+  //
+  // Written against the display cap rather than a literal 50, so it
+  // keeps testing the right thing if that number is ever tuned.
+  it("keeps every blink past the display cap, which is the 58 blink bug", () => {
     let events: BlinkEvent[] = [];
-    for (let i = 0; i < BLINK_LOG_CAP; i++) {
+    const past = BLINK_LOG_DISPLAY_CAP * 2;
+    for (let i = 0; i < past; i++) {
       events = appendEvent(events, eventAt(i));
     }
-    expect(events.length).toBe(BLINK_LOG_CAP);
+    expect(events.length).toBe(past);
+    // The FIRST blink of the session is the one the old ring buffer
+    // dropped, so that is the one worth naming.
+    expect(events[0]?.atMs).toBe(0);
+    expect(events[events.length - 1]?.atMs).toBe(past - 1);
+  });
+
+  it("holds exactly the record cap, then drops the oldest", () => {
+    let events: BlinkEvent[] = [];
+    for (let i = 0; i < BLINK_LOG_RECORD_CAP; i++) {
+      events = appendEvent(events, eventAt(i));
+    }
+    expect(events.length).toBe(BLINK_LOG_RECORD_CAP);
     events = appendEvent(events, eventAt(999999));
-    expect(events.length).toBe(BLINK_LOG_CAP);
+    expect(events.length).toBe(BLINK_LOG_RECORD_CAP);
     expect(events[0]?.atMs).toBe(1);
     expect(events[events.length - 1]?.atMs).toBe(999999);
+  });
+});
+
+describe("eventsForDisplay, the reading tail", () => {
+  it("returns everything while the session is short", () => {
+    const events = [eventAt(1), eventAt(2)];
+    expect(eventsForDisplay(events)).toHaveLength(2);
+  });
+
+  it("returns the newest events once the session is long", () => {
+    let events: BlinkEvent[] = [];
+    for (let i = 0; i < BLINK_LOG_DISPLAY_CAP + 10; i++) {
+      events = appendEvent(events, eventAt(i));
+    }
+    const shown = eventsForDisplay(events);
+    expect(shown).toHaveLength(BLINK_LOG_DISPLAY_CAP);
+    // Trimmed from the front, so the reader sees the most recent.
+    expect(shown[0]?.atMs).toBe(10);
+    expect(shown[shown.length - 1]?.atMs).toBe(BLINK_LOG_DISPLAY_CAP + 9);
+  });
+
+  it("does not disturb the record it was given", () => {
+    let events: BlinkEvent[] = [];
+    for (let i = 0; i < BLINK_LOG_DISPLAY_CAP + 5; i++) {
+      events = appendEvent(events, eventAt(i));
+    }
+    eventsForDisplay(events);
+    expect(events).toHaveLength(BLINK_LOG_DISPLAY_CAP + 5);
+  });
+});
+
+describe("serialiseBlinkEvents, when rows went missing", () => {
+  it("says so, in the file, when fewer rows survived than were detected", () => {
+    const csv = serialiseBlinkEvents([eventAt(1), eventAt(2)], [], 60);
+    expect(csv).toContain(
+      "# WARNING: 58 earlier blinks were detected but are NOT in this file",
+    );
+    expect(csv).toContain("# blinks_detected: 60");
+    expect(csv).toContain("# blinks_recorded: 2");
+  });
+
+  it("stays quiet when the record is complete", () => {
+    const csv = serialiseBlinkEvents([eventAt(1), eventAt(2)], [], 2);
+    expect(csv).not.toContain("WARNING");
+  });
+
+  // A count BELOW the row count would mean the caller is confused, and
+  // inventing a negative loss would be worse than saying nothing.
+  it("stays quiet rather than reporting a negative loss", () => {
+    const csv = serialiseBlinkEvents([eventAt(1), eventAt(2)], [], 1);
+    expect(csv).not.toContain("WARNING");
+  });
+
+  it("stays quiet when no count was supplied", () => {
+    const csv = serialiseBlinkEvents([eventAt(1)]);
+    expect(csv).not.toContain("WARNING");
+  });
+
+  it("puts the warning above the column header, not inside the rows", () => {
+    const csv = serialiseBlinkEvents([eventAt(1)], ["# clip: a.mp4"], 9);
+    const lines = (csv ?? "").split("\r\n");
+    expect(lines[0]).toBe("# clip: a.mp4");
+    expect(lines[1]).toContain("WARNING");
+    expect(lines[4]).toBe(BLINK_CSV_COLUMNS.join(","));
   });
 });
 

@@ -28,9 +28,29 @@ export const CALIBRATION_SAMPLES_PER_TARGET = 30;
 // aways exceed it. Calibration at 5.4 will earn a better number.
 export const OFF_SCREEN_OFFSET_THRESHOLD = 0.18;
 
-// The blink event log of 4.8 keeps the most recent events only,
-// the oldest fall away silently once the cap is reached.
-export const BLINK_LOG_CAP = 50;
+// The blink event log of 4.8 had ONE cap serving two masters, and that
+// is what broke the first external validation. A panel that shows the
+// last fifty blinks is a reasonable panel. A recorded measurement that
+// silently deletes its oldest rows is not a measurement. The single
+// number did both jobs, so the export inherited the panel's limit: two
+// Eyeblink8 clips ran past fifty blinks and their opening stretches,
+// 58 real detections, were dropped before the file was written. The
+// score that came back read as a detector missing blinks it had in
+// fact found.
+//
+// So there are two numbers now, and they are different KINDS of thing.
+
+// What the on screen list shows. Purely a reading comfort, and it may
+// be changed freely, because nothing downstream depends on it.
+export const BLINK_LOG_DISPLAY_CAP = 50;
+
+// What the record holds. High enough that no plausible session reaches
+// it: at a resting rate near 12 blinks a minute this is about 27 hours
+// of continuous measurement. It is a ceiling on memory, not an
+// editorial choice, and unlike the old cap it cannot be reached
+// quietly. Anything lost past it is counted and declared in the
+// exported file, because a measurement that loses data has to say so.
+export const BLINK_LOG_RECORD_CAP = 20000;
 
 // The squint separation of 4.7. A blink's closed phase is brief,
 // yours measured 133 and 117 ms. Beyond half a second below the
