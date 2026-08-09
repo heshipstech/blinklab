@@ -1,0 +1,28 @@
+FALSE ALARMS THAT LAND ON A REAL BLINK
+
+53 false alarms in this run.
+
+  tolerance rule  45 of 53   (84.9%)   detection widened by 4 frames each end
+  strict rule     38 of 53   (71.7%)   detection not widened
+
+  41 of 53 are 3 frames long or shorter.
+
+Per clip
+  clip                    false  tolerance  strict
+  26122013_223310_cam         5          3       3
+  26122013_224532_cam         3          2       2
+  26122013_230103_cam         1          0       0
+  26122013_230654_cam         1          0       0
+  27122013_151644_cam         7          6       6
+  27122013_152435_cam        16         15      10
+  27122013_153916_cam        13         13      11
+  27122013_154548_cam         7          6       6
+
+Only the tolerance rule counts these, listed so the difference between the two rules is readable
+  27122013_153916_cam    frames 6765 to 6766
+  27122013_153916_cam    frames 9047 to 9048
+  27122013_152435_cam    frames 915 to 916
+  27122013_152435_cam    frames 1783 to 1784
+  27122013_152435_cam    frames 3823 to 3825
+  27122013_152435_cam    frames 4955 to 4956
+  27122013_152435_cam    frames 4979 to 4980

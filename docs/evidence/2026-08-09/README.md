@@ -5,9 +5,12 @@ laptop that was never in version control and could have been deleted at any time
 This folder is that evidence, curated and moved into the repository, so the six
 issues keep working after the laptop folder is gone.
 
-The original folder was 342 MB. This folder is 37 files and about 257 KB. Git
-stores it compressed, at about 86 KB. The section
-[What was left out](#what-was-left-out) says what went and why.
+The original folder was 342 MB. This folder is 42 files and about 290 KB. The
+section [What was left out](#what-was-left-out) says what went and why.
+
+Five of those files arrived later than the rest. They are two scripts and their
+saved output, added when three claims on the README turned out to have no
+reproducible number behind them.
 
 ## Read this first
 
@@ -76,6 +79,26 @@ Both describe the **first** corpus run, which has since been superseded. That is
 the whole point of issue #179. Keep them as the record of what the blink log cap
 fix changed. Do not read either as current.
 
+**A warning about the number 45.** `eyeblink8_false_positives.csv` has 45 data
+rows, because the first run made 45 false alarms in total. The README also prints
+a 45, and it is a different quantity: 45 of the corrected run's **53** false
+alarms land on a real blink under the looser of two rules. The two numbers are
+equal by coincidence. Counting the rows of this table does not confirm the
+README's 45, and anyone who tries it will appear to be right for the wrong
+reason. The README's figure comes from
+`scripts/checks/false_positive_overlap.py`, run against the corrected
+measurement.
+
+Two tables describe the **corrected** run and the corpus itself.
+
+| file                         | what it is                                                           |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `false_positive_overlap.txt` | how many of the 53 false alarms sit on a real blink, under two rules |
+| `resolution_snr.txt`         | blink strength against picture size, every reading and the average   |
+| `resolution_snr.json`        | the same readings as machine readable data                           |
+
+Each is the saved output of the matching script in `scripts/checks/`.
+
 Most rows of the false alarm table carry the label `double_fire_on_a_real_blink`.
 That is the evidence for issue #176.
 
@@ -91,7 +114,7 @@ having at all.
 | --------- | ------------------------------------------------------------------ |
 | `tables/` | builds the three analysis tables. Issue #179 asks for exactly this |
 | `replay/` | the Python reimplementation of the detector, and its experiments   |
-| `checks/` | three independent cross checks of the published numbers            |
+| `checks/` | five independent cross checks of the published numbers             |
 
 `scripts/tables/` holds `autopsy.py`, which builds the miss table,
 `breakdown.py`, which counts the causes, and `finalise.py`, which adds the cause
@@ -110,11 +133,41 @@ does not import the project's own matching code, `diffruns.py`, which compares
 two measurement folders detection by detection, and `gap_ceiling.py`, which puts
 a ceiling on how much of the miss rate dropped capture frames could explain.
 
-**Before running any script, edit the folder path at the top.** These were
-written on one laptop and they carry absolute paths. Every such path was replaced
-with `/PATH/TO/`, so the scripts will not run until you point them at your own
-copy of the `blinklab` folder and of the corpus. That was done on purpose. See
-[Licence and privacy](#licence-and-privacy).
+Two more sit beside them, and each one exists because the README made a claim
+with no saved script behind it.
+
+| script                      | the README sentence it makes checkable                                               |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `false_positive_overlap.py` | how many of the 53 false alarms land on a real blink, 38 or 45, and under which rule |
+| `resolution_snr.py`         | that shrinking the eye boxes changed blink strength by 2.7%, and in which direction  |
+
+Both print the rule beside the number, and both take their paths as command line
+arguments, so neither carries a path off anybody's machine. Their saved output is
+in `tables/`.
+
+```
+cd analysis
+PYTHONPATH="$PWD" .venv/bin/python \
+  ../docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py \
+  <corpus-root> <measured-dir>
+
+.venv/bin/python \
+  ../docs/evidence/2026-08-09/scripts/checks/resolution_snr.py \
+  <corpus-root> <output.json>
+```
+
+The corpus root is the folder holding the extracted Eyeblink8 clips. The measured
+directory is the folder of `.blinks.csv` files from a run. `resolution_snr.py`
+reads the video files and needs `numpy` and `imageio-ffmpeg`. It decodes only a
+small crop around the eyes, so all eight clips take about 15 seconds. It only
+reads, and it writes nothing into the corpus.
+
+**Before running any of the other scripts, edit the folder path at the top.**
+Those were written on one laptop and they carry absolute paths. Every such path
+was replaced with `/PATH/TO/`, so they will not run until you point them at your
+own copy of the `blinklab` folder and of the corpus. That was done on purpose.
+See [Licence and privacy](#licence-and-privacy). The two scripts above are the
+exception, because they take their paths as arguments instead.
 
 ### `run-logs/`, for issue #175
 
@@ -254,6 +307,16 @@ The other files pass that same test, and here is the exact reason for each.
   about.
 - `eyeblink8_clip_summary.csv` is per clip counts. `docs/eyeblink8-result.txt`
   on main already publishes the same kind of counts for the same eight clips.
+- `false_positive_overlap.txt` lists per clip counts and the frame numbers of
+  seven detections. Those seven are the app's own detections, not marks the human
+  made. The file says how many false alarms touch an annotated blink. It never
+  says where an annotated blink starts or ends, so the marked intervals cannot be
+  rebuilt from it.
+- `resolution_snr.txt` and `resolution_snr.json` are eight rows of summary
+  numbers about the pixels: a frame count, a typical eye width, and a handful of
+  blink strengths per clip. The script reads the corpus annotation to find the
+  eyes, and none of what it read survives into the saved output. No frame, no
+  crop and no blink interval is written out.
 
 ## What each issue used to cite, and what it cites now
 
