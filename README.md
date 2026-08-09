@@ -34,10 +34,20 @@ This project's rule is that a limitation you know about belongs in the open.
 ## Does it find the blinks a human found?
 
 This is the first time anything here has been measured against somebody
-else's work. Eyeblink8 is a public set of eight webcam clips, 71,354
-frames in total. A person watched all of them and marked every blink by
-hand. They marked 408 blinks. This app was given the same clips and had
-to find the same blinks.
+else's work. Eyeblink8 is a public set of eight webcam clips. A person
+watched all of them and marked every blink by hand. They marked 408
+blinks. This app was given the same clips and had to find the same
+blinks.
+
+Frame totals for this set differ between sources, so here is the rule
+this page uses. Each annotation file numbers its frames from zero. Take
+the highest number in each file, add one, then add up the eight clips.
+That gives 71,354, and 71,354 is the figure used everywhere below.
+
+That is not the number of annotation rows. Only 70,992 rows carry an
+annotation. The 362 frame numbers in between have no row at all. The
+people who published the clips print 70,992 on their own site. So a
+reader who checks will meet two different totals, and this is why.
 
 |              | First answer, wrong | Corrected               |
 | ------------ | ------------------- | ----------------------- |
@@ -85,9 +95,68 @@ against the number of blinks the app found. If any are missing, it
 prints a warning on the first line. Fixed in pull request #172.
 
 **The corrected number is honest, and it is still not good enough.** It
-misses roughly one blink in six. Other published detectors are measured
-on these same clips. They report F1 in the low nineties. This one is
-closer to them than it was. It has not caught them.
+misses roughly one blink in six. Other people have measured their own
+detectors on these same eight clips. Here is what they report.
+
+| who                                                                                        | year | where                                                                             | F1    |
+| ------------------------------------------------------------------------------------------ | ---- | --------------------------------------------------------------------------------- | ----- |
+| [Drutarovsky and Fogelton](https://link.springer.com/chapter/10.1007/978-3-319-16199-0_31) | 2014 | ECCV workshops, Springer Lecture Notes in Computer Science 8927, pages 436 to 448 | 82.0% |
+| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2016.03.011)                        | 2016 | Computer Vision and Image Understanding 148                                       | 91.6% |
+| [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05                                 | 95.2% |
+| [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177                                | 91.3% |
+| [Al-gawwam and Benaissa](https://www.mdpi.com/2078-2489/9/4/93)                            | 2018 | Information, volume 9, article 93                                                 | 97.7% |
+| **this app**                                                                               | 2026 | this page                                                                         | 84.6% |
+
+ECCV is the European Conference on Computer Vision. Not one of those
+five figures was simply copied out of the paper it sits beside, so here
+is where each one actually came from. A reader deserves to know which of
+them this page could check and which it could not.
+
+- **2014.** The paper is behind a paywall and was not read here, so this
+  number is second hand. A
+  [later paper](https://www.scitepress.org/papers/2017/61727/61727.pdf)
+  quotes it as 79% precision and 85.27% recall on these clips. The 82.0%
+  is those two numbers put together here.
+- **2016 and 2018, both by Fogelton and Benesova.** Both papers are
+  behind a paywall and were not read here. Fogelton is the person who
+  published these clips, and he prints both scores himself in a table on
+  [his own project site](https://www.blinkingmatters.com/research). That
+  is first hand from the author, and it is not the paper.
+- **Soukupova and Cech.** The report is free to read. It is a thesis by
+  Soukupova, with Cech as her advisor. It prints three methods. The best
+  of the three scores precision 94.3% and recall 96.2% on these clips,
+  and the report prints no F1. The 95.2% is those two numbers put
+  together here.
+- **Al-gawwam and Benaissa.** The paper is free to read. It prints
+  precision 96.65% and recall 98.78% on these clips, and no F1. The
+  97.7% is those two numbers put together here.
+
+So across these five, published scores on these clips run from about 82%
+to about 98%. This app sits near the bottom. It is above the oldest of
+them and below every later one. Lean on that oldest number least. It is
+the only one on this list that came from a third party rather than from
+the people who did the work.
+
+Those five are not the whole literature. Other papers report scores on
+these clips too, and no attempt was made here to find all of them.
+
+**Read that gap as real but rough.** Every paper counts blinks its own
+way, so that column is not five runs of one test.
+
+- Fogelton scores each eye on its own. His blink total for these clips
+  is 804 and not 408, and he counts a fast double blink as one.
+- Soukupova and Cech report the best point on their own curve, and they
+  picked that point on the test data itself.
+- Al-gawwam and Benaissa count a detection as correct when its peak
+  falls inside the blink the human marked. A wrong edge costs them
+  nothing. The rule on this page is stricter than that.
+- Fogelton published these clips, and he writes on his own site that
+  this kind of comparison is "not valid", because the annotation and the
+  scoring differ between papers. That warning comes from the person who
+  owns the benchmark, so it is quoted here rather than buried.
+
+None of that closes a gap of ten points or more. It means the gap should
+be read as a direction and not as a decimal.
 
 Per clip recall now runs from 67.7% to 91.7%. The whole gain sits in the
 two clips the defect had cut short. One moved from 55.7% to 89.8% and
@@ -100,13 +169,18 @@ different commits, so they are not the same measurement with a single
 line changed. Four of the six shorter clips shifted the edges of a blink
 by a frame or two, or split one detection into two. The other two report
 exactly the same blink timings. One correction to the story above. The
-cap counted detections, not the human's blinks. A third clip made
-exactly fifty detections and lost its opening one too. That one was a
-false alarm, so it changes no recall figure on this page. What the
-defect explains is the recall, exactly and entirely: 30 recovered blinks
-in one clip, 24 in the other, and not one anywhere else. Fixing it also
-surfaced 8 more invented blinks, 45 to 53, and seven of those are in the
-two recovered clips.
+cap counted detections, not the human's blinks. So it bit a third clip
+too, `27122013_152435_cam`, which filled all fifty rows of its export.
+How many rows that clip lost cannot be recovered. The capped export is
+the only surviving record of that run, and it holds fifty rows whatever
+number was cut from the front of it. What is certain is that the rows it
+lost were false alarms and not blinks the human had marked. That clip is
+scored as finding the same 36 blinks in both runs, so nothing the cap
+deleted cost it a single one. No recall figure on this page changes for
+it. What the defect explains is the recall, exactly and entirely: 30
+recovered blinks in one clip, 24 in the other, and not one anywhere
+else. Fixing it also surfaced 8 more invented blinks, 45 to 53, and
+seven of those are in the two recovered clips.
 
 The clips were checked, frame by frame, before any of this was blamed on
 them. The recordings freeze here and there and lose frames. Every clip
@@ -125,9 +199,35 @@ so you do not have to take the number on trust. Three more checks came
 back clean. In all eight clips the person faces the camera in every
 single frame. No blink the human marked is shorter than 4 frames, so
 none of them are too quick to catch.
-Shrinking the video to a quarter of its size changed how strong a blink
-looks by 2.7%, so the picture is not too small either. The clips are not
-the excuse.
+
+A small picture is not the excuse either, and here is the check with the
+rule that produces its number. Cut a small grey box around each eye on
+every frame, using the eye corners the human marked. Measure how far
+each frame differs from the middle open eye picture. Divide each blink's
+strongest frame by how much that measure wobbles on the frames that are
+not blinks. That is a blink's strength. Take the middle blink of each
+clip. Now shrink each eye box to a quarter of its width and a quarter of
+its height, which keeps one pixel in sixteen and throws away about 94 in
+every 100. Then work out the change per clip and average the eight
+clips.
+
+Averaged over the eight clips, blink strength went **up** by 2.7%. It
+did not fall. The eight clips do not agree with each other. Five rose,
+two fell a little, and one did not move at all. The likely reason is
+that averaging neighbouring pixels together removes more noise than it
+removes signal. That is an explanation offered here. It is not something
+this check measured.
+
+Two things that result does not show. The eye boxes were shrunk, not the
+whole video. And it measures the pixels of the clips, not this app. It
+rules out a picture too small to contain a blink. It does not show that
+this app's own eyelid measurement survives a smaller picture, which is a
+separate question and an open one. The script and every reading behind
+the figure are in
+[docs/evidence/2026-08-09/scripts/checks/resolution_snr.py](docs/evidence/2026-08-09/scripts/checks/resolution_snr.py)
+and
+[docs/evidence/2026-08-09/tables/resolution_snr.txt](docs/evidence/2026-08-09/tables/resolution_snr.txt).
+The clips are not the excuse.
 
 **A claim from the first write up is withdrawn.** One of the eight clips
 shows a person wearing glasses. The first write up said that clip scored
@@ -158,12 +258,44 @@ not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness. Finding out why is the next question.
 
-**The invented blinks have a pattern too.** 45 of the 53 land on top of
-a real blink rather than on an open eye, and half of them are 3 frames
-long or shorter. That is one blink counted twice, not a blink imagined
-from nothing. A refractory period, a short window after a blink in which
-a second one cannot be reported, should remove most of them. It is
-planned and it is not built.
+**The invented blinks have a pattern too.** 38 of the 53 land on top of
+a real blink rather than on an open eye. That is one blink counted
+twice, not a blink imagined from nothing.
+
+A number like that means nothing without the rule that produced it, so
+here is the rule. Take the detection exactly as the app reported it and
+widen nothing. If it shares at least one frame with a blink the human
+marked, it landed on a real blink. Anyone can check that against the
+clips' own annotation files.
+
+There is a second and looser rule, and it gives 45 of the 53. Widen the
+detection by four frames at each end first, then ask the same question.
+Four frames is about 130 milliseconds at 30 frames per second, and it is
+the slack this project already allows itself when deciding which
+detections count as correct. That slack exists to stop a correct
+detection being punished for disagreeing about an edge. Reusing it to
+decide what a wrong detection sat on is a different act, so the stricter
+38 is the number printed first. Both are here because 45 is the
+flattering one and hiding it would be its own kind of dishonesty. Seven
+detections sit between the two counts. All seven are short, and all
+seven lie within four frames of a real blink. Five are in one clip and
+two are in another.
+
+8 of the 53 are more than four frames away from any blink the human
+marked. That count is the same under both rules, and it is the one the
+argument actually rests on.
+
+41 of the 53 are three frames long or shorter. The rule there is to
+count from the detection's first frame to its last, including both, so
+frames 10 to 12 is three frames. This page used to say half of them were
+that short. That was wrong. The true share is higher.
+
+A refractory period, a short window after a blink in which a second one
+cannot be reported, should remove most of them. It is planned and it is
+not built. The script behind all of these counts is
+[docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py](docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py),
+and its output is
+[docs/evidence/2026-08-09/tables/false_positive_overlap.txt](docs/evidence/2026-08-09/tables/false_positive_overlap.txt).
 
 The rules for what counts as a correct detection were written down
 before any result was seen. They are in
@@ -178,7 +310,12 @@ clips gave one frame more than their file lists. Every other clip
 matched exactly.
 
 Full output, including the superseded numbers, in
-[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt). Two lines in
+that file are older than this page and disagree with it. It still says
+the third capped clip lost its first row, and it still says 45 of the 53
+sit on a real blink with half of them 3 frames long or shorter. This
+page carries the corrected wording. That file has not been rewritten
+yet.
 
 ## Does it give the same answer twice?
 
