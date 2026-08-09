@@ -1,5 +1,5 @@
 import type { BlinkShape } from "./blinkShape";
-import { BLINK_LOG_CAP } from "./constants";
+import { BLINK_LOG_DISPLAY_CAP, BLINK_LOG_RECORD_CAP } from "./constants";
 import { pushBounded } from "./ringBuffer";
 
 // The durable record of Phase 4: each completed blink as an event,
@@ -22,7 +22,23 @@ export function appendEvent(
   events: readonly BlinkEvent[],
   event: BlinkEvent,
 ): BlinkEvent[] {
-  return pushBounded(events, event, BLINK_LOG_CAP);
+  return pushBounded(events, event, BLINK_LOG_RECORD_CAP);
+}
+
+/**
+ * The slice the on screen list shows.
+ *
+ * Separate from the record on purpose. Trimming for the reader is a
+ * display decision and belongs at the display, not in the thing being
+ * recorded, and collapsing the two is the exact mistake that cost the
+ * first external validation 58 detections.
+ */
+export function eventsForDisplay(
+  events: readonly BlinkEvent[],
+): readonly BlinkEvent[] {
+  return events.length <= BLINK_LOG_DISPLAY_CAP
+    ? events
+    : events.slice(events.length - BLINK_LOG_DISPLAY_CAP);
 }
 
 export function formatBlinkEvent(
@@ -69,13 +85,31 @@ function cell(value: number | null | undefined): string {
  * and none found, which is a different fact from no session at all,
  * and the per-second exporter makes the same refusal for the same
  * reason.
+ *
+ * `blinksDetected` is the detector's own count, which is not the same
+ * number as the rows here and must not be assumed to be. When it is
+ * larger, rows were lost, and the file says so on its own face. The
+ * old export could not have said so, because it had no idea: a ring
+ * buffer that drops its oldest entry leaves nothing behind to count.
+ * That silence is why 69.6% was read as a detector's failure for a day
+ * rather than as a truncated file, so the declaration is the actual
+ * fix and the raised ceiling is only what makes it rare.
  */
 export function serialiseBlinkEvents(
   events: readonly BlinkEvent[],
   metadataRows: readonly string[] = [],
+  blinksDetected?: number,
 ): string | null {
   if (events.length === 0) return null;
-  const lines = [...metadataRows, BLINK_CSV_COLUMNS.join(",")];
+  const lostRows =
+    blinksDetected !== undefined && blinksDetected > events.length
+      ? [
+          `# WARNING: ${String(blinksDetected - events.length)} earlier blinks were detected but are NOT in this file`,
+          `# blinks_detected: ${String(blinksDetected)}`,
+          `# blinks_recorded: ${String(events.length)}`,
+        ]
+      : [];
+  const lines = [...metadataRows, ...lostRows, BLINK_CSV_COLUMNS.join(",")];
   for (const event of events) {
     lines.push(
       [

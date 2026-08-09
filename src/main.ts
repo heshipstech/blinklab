@@ -85,6 +85,7 @@ import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
   appendEvent,
+  eventsForDisplay,
   formatBlinkEvent,
   serialiseBlinkEvents,
   type BlinkEvent,
@@ -1327,14 +1328,21 @@ exportBlinksButton.textContent = "Export blink log";
 exportBlinksButton.disabled = true;
 exportBlinksButton.setAttribute("data-testid", "export-blinks");
 exportBlinksButton.addEventListener("click", () => {
-  const csv = serialiseBlinkEvents(blinkEvents, [
-    ...sourceMetadataRows(frameSource, loadedClipName),
-    ...coverageMetadataRows(
-      measurementMode,
-      framesMeasured,
-      loadedClipDurationSeconds,
-    ),
-  ]);
+  const csv = serialiseBlinkEvents(
+    blinkEvents,
+    [
+      ...sourceMetadataRows(frameSource, loadedClipName),
+      ...coverageMetadataRows(
+        measurementMode,
+        framesMeasured,
+        loadedClipDurationSeconds,
+      ),
+    ],
+    // The detector's own count, handed over so the file can compare it
+    // against its own rows and say so if any are missing. Nothing here
+    // trusts the row count to be the blink count.
+    blinkState.blinkCount,
+  );
   if (csv === null) return;
   const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
     .toISOString()
@@ -1904,7 +1912,8 @@ function processFrame(
         });
         closureStartFrame = null;
         blinkLogList.replaceChildren(
-          ...[...blinkEvents].reverse().map((event) => {
+          // The list shows a tail. The record above it keeps everything.
+          ...[...eventsForDisplay(blinkEvents)].reverse().map((event) => {
             const item = document.createElement("li");
             item.textContent = formatBlinkEvent(event, sessionStartMs ?? 0);
             return item;
