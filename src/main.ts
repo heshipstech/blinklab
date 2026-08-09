@@ -186,15 +186,12 @@ Object.assign(demoNotice.style, {
 // and fixed chrome eats vertical space on a laptop for no measurement
 // benefit.
 const navBar = document.createElement("div");
+navBar.className = "page-column";
 Object.assign(navBar.style, {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   gap: "16px",
-  maxWidth: "1280px",
-  margin: "0 auto",
-  padding: "12px 16px 16px 16px",
-  boxSizing: "border-box",
   borderBottom: "1px solid #e4e4e4",
 });
 
@@ -251,13 +248,15 @@ statusBanner.id = "status-banner";
 const bannerIdle = document.createElement("p");
 bannerIdle.className = "banner-idle";
 bannerIdle.textContent = "No alerts at this time.";
-Object.assign(statusBanner.style, {
-  maxWidth: "1280px",
-  boxSizing: "border-box",
-  // Matches the column's own side padding so its edges line up with
-  // the boxes below it rather than sitting proud of them.
-  width: "calc(100% - 32px)",
-});
+// The banner is a box, not a column, so it sits INSIDE a column rather
+// than being one. That is why its edges line up with the boxes below
+// it: the same `.page-column` rule sets both insets. It used to line up
+// because a hand-written `calc(100% - 32px)` subtracted the same number
+// the column happened to pad by, which is two places to change and one
+// of them silently wrong.
+const bannerColumn = document.createElement("div");
+bannerColumn.className = "page-column";
+bannerColumn.append(statusBanner);
 
 const startButton = document.createElement("button");
 startButton.textContent = "Start camera";
@@ -2240,6 +2239,34 @@ graphStyles.textContent =
   // own margin, so there is exactly one number to change.
   " #content { display: flex; flex-direction: column; gap: 16px;" +
   "   padding-bottom: 16px; }" +
+  // One rule for every full width strip on the page: the top bar, the
+  // status banner's wrapper, the boxes, and the footer. They line up
+  // with each other because they are the same rule, not because four
+  // numbers were kept in step by hand.
+  //
+  // The side padding is a gutter for narrow windows, not decoration.
+  // Once the window is wide enough to show the whole 1280 column AND a
+  // 16 pixel gutter either side, `margin: auto` is already providing
+  // that space, so the padding is doing nothing except making the
+  // column narrower than it says it is. Above 1312 pixels, which is
+  // 1280 plus both gutters, it is therefore removed and the boxes get
+  // the full 1280.
+  " .page-column { max-width: 1280px; margin-left: auto;" +
+  "   margin-right: auto; box-sizing: border-box;" +
+  "   padding-left: 16px; padding-right: 16px; }" +
+  " @media (min-width: 1312px) {" +
+  "   .page-column { padding-left: 0; padding-right: 0; } }" +
+  // The name is the only h1 on the page and the browser's default
+  // 0.67em margin on it, not the bar's padding, was most of why the top
+  // bar stood 99 pixels tall. Sized here so the bar's height is a
+  // decision rather than a leftover.
+  " .page-column > h1 { font-size: 22px; line-height: 1.3;" +
+  "   margin: 14px 0; }" +
+  // The page ends on a line rather than on nothing. Border only, no
+  // fill, because a filled bar would read as a second banner.
+  " #page-footer { border-top: 1px solid #e4e4e4; background: #ffffff;" +
+  "   padding-top: 12px; padding-bottom: 12px; }" +
+  " #page-footer p { margin: 0; font-size: 12px; color: #666; }" +
   " .box > h2 { font-size: 12px; text-transform: uppercase;" +
   "   letter-spacing: 0.08em; color: #666; margin: 0 0 8px 0;" +
   "   font-weight: 600; }" +
@@ -2361,12 +2388,7 @@ graphStrip.append(
 // them near the middle, where the gaze angle is small.
 const contentBox = document.createElement("div");
 contentBox.id = "content";
-Object.assign(contentBox.style, {
-  maxWidth: "1280px",
-  margin: "0 auto",
-  padding: "0 16px",
-  boxSizing: "border-box",
-});
+contentBox.className = "page-column";
 // The mirror toggle and the resolution readout share one line: both
 // describe the camera feed, and separating them cost a whole row.
 const cameraLine = document.createElement("div");
@@ -2607,6 +2629,17 @@ function writeReadout(element: HTMLElement, text: string): void {
 navBar.append(title, linkedInLink);
 statusBanner.append(bannerIdle, status, modelStatus, alertBanner);
 
+// The page used to stop dead at the last box, with the window's edge
+// doing the work a closing line should do. The 16 pixels above this
+// come from #content's own bottom padding, so the gap before the rule
+// is the same 16 the boxes use between themselves.
+const pageFooter = document.createElement("footer");
+pageFooter.id = "page-footer";
+pageFooter.className = "page-column";
+const footerLine = document.createElement("p");
+footerLine.textContent = "Eivinas Norusaitis, 2026";
+pageFooter.append(footerLine);
+
 // The idle line hides itself whenever a real message arrives, and the
 // strip turns orange only for an alert. Watched rather than computed,
 // because status text is written from a dozen places that do not call
@@ -2640,8 +2673,9 @@ refreshBanner();
 app.append(
   demoNotice,
   navBar,
-  statusBanner,
+  bannerColumn,
   contentBox,
+  pageFooter,
   calibrationOverlay,
   heatmapOverlay,
 );
