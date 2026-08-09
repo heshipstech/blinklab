@@ -8,7 +8,7 @@
 // README and an export is three different promises. Anyone rewording
 // it has to change it here, where the test states what it must say.
 export const DEMO_NOTICE =
-  "Demo, not a safety or medical device. This is a learning project. " +
+  "Demo, not a safety or medical device. " +
   "It is not for clinical, workplace or safety use, its numbers are not " +
   "diagnostic, and it has not been validated against any medical standard. " +
   "All processing happens in your browser and no data leaves your device.";

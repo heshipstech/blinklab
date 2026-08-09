@@ -71,7 +71,7 @@ import {
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
-import { demoNoticeShort, demoNoticeText } from "./core/notice";
+import { demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -156,7 +156,7 @@ if (app === null) {
 }
 
 const title = document.createElement("h1");
-title.textContent = "blinklab";
+title.textContent = "Eye-tracking demo";
 
 // The permanent notice, 6.9. Present before the camera starts, never
 // dismissible, and above everything so it cannot be scrolled past
@@ -1403,6 +1403,17 @@ let stabilitySamples: StabilitySample[] = [];
 
 // The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
 const SPARK_WINDOW_MS = 10000;
+
+// How many samples the traces keep. Derived from the window and a
+// generous frame rate rather than picked, because the old figure of
+// 1200 was picked for 60 frames per second and quietly stopped
+// covering the window when the loop ran faster. On a 120 Hz display
+// the loop ticks about 130 times a second, so 10 seconds needs 1300
+// samples and 1200 held only 9.2 of them. The trace then started
+// about 8 per cent in from the left edge and never reached it, which
+// looked like a drawing fault and was a storage one.
+const SPARK_MAX_FPS = 240;
+const SPARK_SAMPLE_CAP = (SPARK_WINDOW_MS / 1000) * SPARK_MAX_FPS;
 const SPARK_EAR_MAX = 0.6;
 const sparkCanvas = document.createElement("canvas");
 sparkCanvas.width = 640;
@@ -1847,7 +1858,7 @@ function processFrame(
       earSamples = pushBounded(
         earSamples,
         { timestampMs: nowMs, value: meanEar },
-        1200,
+        SPARK_SAMPLE_CAP,
       );
 
       baselineState = baselineStep(
@@ -2332,8 +2343,15 @@ graphStyles.textContent =
   // banner stayed invisible while the app was talking.
   // The strip is always there, bordered like every other section, so
   // an arriving alert changes its colour rather than the page's height.
+  // Centred in EVERY state, not only when idle. The strip holds four
+  // different children and they used to disagree with each other, so
+  // the line moved sideways depending on what the app happened to be
+  // saying. A bar that shifts as it speaks reads as a layout fault.
+  // The bottom margin is the same 16 the boxes use between themselves,
+  // because without it the strip sat directly on top of Source.
   " #status-banner { border: 1px solid #d4d4d4; border-radius: 8px;" +
-  "   background: #fff; padding: 10px 16px; margin: 16px auto 0 auto; }" +
+  "   background: #fff; padding: 10px 16px; margin: 16px auto 16px auto;" +
+  "   text-align: center; }" +
   " #status-banner > p { margin: 0; }" +
   " #status-banner > p:empty { display: none; }" +
   " #status-banner.alerting { background: #ffb300; border-color: #ef6c00; }" +
@@ -2346,9 +2364,13 @@ graphStyles.textContent =
   " .kss-grid { display: grid; gap: 6px;" +
   "   grid-template-columns: repeat(2, minmax(0, 1fr)); }" +
   " .kss-option { text-align: left; width: 100%; }" +
-  // Skip is not one of the nine, so it spans rather than pretending to
-  // be a tenth rating.
-  " .kss-option.skip { grid-column: 1 / -1; }" +
+  // Skip used to span the whole row, which put it below rating 9 and
+  // gave it more visual weight than any of the ratings it is not one
+  // of. Nine ratings in two columns leave the second column of the
+  // last row empty, so an ordinary cell drops Skip exactly there,
+  // directly under rating 8, filling the hole rather than adding a
+  // row.
+
   // 7. Bullets indented every blink and pushed most of them onto two
   // lines. The list is already visually a list.
   " .blink-log { list-style: none; padding: 0; margin: 8px 0 0 0;" +
@@ -2424,9 +2446,6 @@ function box(heading: string, ...children: Element[]): HTMLDivElement {
 
 // Always present, never conditional, never dismissible. It sits inside
 // the same box as the number so a screenshot of one carries the other.
-const scoreCaveat = document.createElement("p");
-scoreCaveat.className = "caveat";
-scoreCaveat.textContent = demoNoticeShort();
 
 // The two exports and the development-only fixture recorder share a
 // row rather than stacking, since they are all "take something away
@@ -2484,13 +2503,7 @@ const sourceBox = box(
   cameraLine,
 );
 
-const alertnessBox = box(
-  "Alertness",
-  scoreLabel,
-  scoreCaveat,
-  panelSummaryLabel,
-  panelList,
-);
+const alertnessBox = box("Alertness", scoreLabel, panelSummaryLabel, panelList);
 scoreLabel.className = "headline";
 
 const sessionBox = box("Session", featureLabel, exportRow, kssPanel);
