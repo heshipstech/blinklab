@@ -109,7 +109,11 @@ import {
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
 import { pushBounded } from "./core/ringBuffer";
-import { sparklineSegments, type TimedSample } from "./core/sparkline";
+import {
+  sparklineSegments,
+  withinWindow,
+  type TimedSample,
+} from "./core/sparkline";
 import { coefficientOfVariation } from "./core/statistics";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
@@ -1404,16 +1408,6 @@ let stabilitySamples: StabilitySample[] = [];
 // The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
 const SPARK_WINDOW_MS = 10000;
 
-// How many samples the traces keep. Derived from the window and a
-// generous frame rate rather than picked, because the old figure of
-// 1200 was picked for 60 frames per second and quietly stopped
-// covering the window when the loop ran faster. On a 120 Hz display
-// the loop ticks about 130 times a second, so 10 seconds needs 1300
-// samples and 1200 held only 9.2 of them. The trace then started
-// about 8 per cent in from the left edge and never reached it, which
-// looked like a drawing fault and was a storage one.
-const SPARK_MAX_FPS = 240;
-const SPARK_SAMPLE_CAP = (SPARK_WINDOW_MS / 1000) * SPARK_MAX_FPS;
 const SPARK_EAR_MAX = 0.6;
 const sparkCanvas = document.createElement("canvas");
 sparkCanvas.width = 640;
@@ -1724,13 +1718,16 @@ function processFrame(
         offset: IrisOffset | null,
         axis: "horizontal" | "vertical",
       ): TimedSample[] =>
-        pushBounded(
-          samples,
-          {
-            timestampMs: nowMs,
-            value: offset === null ? null : GAZE_TRACE_HALF - offset[axis],
-          },
-          1200,
+        withinWindow(
+          [
+            ...samples,
+            {
+              timestampMs: nowMs,
+              value: offset === null ? null : GAZE_TRACE_HALF - offset[axis],
+            },
+          ],
+          nowMs,
+          SPARK_WINDOW_MS,
         );
       gazeTraces = {
         rawH: pushTrace(gazeTraces.rawH, frameMeanOffset, "horizontal"),
@@ -1758,24 +1755,13 @@ function processFrame(
           "Fixations in the last 10 s: none yet",
         );
       } else {
-        gazeSamples = pushBounded(
-          gazeSamples,
-          { timestampMs: nowMs, offset: smoothedGaze.smoothed },
-          // The same cap the eye aspect ratio trace uses, and for the
-          // same reason. 1200 was chosen for 60 frames per second and
-          // silently stopped covering the 10 second window once the
-          // loop ran faster, so both gaze traces were cut short on the
-          // left exactly as the aspect ratio trace was.
-          SPARK_SAMPLE_CAP,
-        ).filter(
-          // Two sided on purpose. The old one sided test asked only
-          // whether a sample was too OLD, which is a subtraction, and a
-          // subtraction changes sign when the clock restarts at zero for
-          // a new clip. Every stale sample then read as negative age and
-          // survived forever. A sample from the future is not a sample.
-          (sample) =>
-            sample.timestampMs <= nowMs &&
-            nowMs - sample.timestampMs <= SPARK_WINDOW_MS,
+        gazeSamples = withinWindow(
+          [
+            ...gazeSamples,
+            { timestampMs: nowMs, offset: smoothedGaze.smoothed },
+          ],
+          nowMs,
+          SPARK_WINDOW_MS,
         );
         const fixations = detectFixations(gazeSamples);
         const lastFixation = fixations[fixations.length - 1];
@@ -1860,10 +1846,10 @@ function processFrame(
         }
       }
 
-      earSamples = pushBounded(
-        earSamples,
-        { timestampMs: nowMs, value: meanEar },
-        SPARK_SAMPLE_CAP,
+      earSamples = withinWindow(
+        [...earSamples, { timestampMs: nowMs, value: meanEar }],
+        nowMs,
+        SPARK_WINDOW_MS,
       );
 
       baselineState = baselineStep(
@@ -2125,19 +2111,13 @@ function processFrame(
         }
       }
 
-      stabilitySamples = pushBounded(
-        stabilitySamples,
-        { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
-        1200,
-      ).filter(
-        // Two sided on purpose. The old one sided test asked only
-        // whether a sample was too OLD, which is a subtraction, and a
-        // subtraction changes sign when the clock restarts at zero for
-        // a new clip. Every stale sample then read as negative age and
-        // survived forever. A sample from the future is not a sample.
-        (sample) =>
-          sample.timestampMs <= nowMs &&
-          nowMs - sample.timestampMs <= SPARK_WINDOW_MS,
+      stabilitySamples = withinWindow(
+        [
+          ...stabilitySamples,
+          { timestampMs: nowMs, px: stabilityPx, mm: stabilityMm },
+        ],
+        nowMs,
+        SPARK_WINDOW_MS,
       );
       const pxSeries = stabilitySamples
         .map((sample) => sample.px)
