@@ -1761,7 +1761,12 @@ function processFrame(
         gazeSamples = pushBounded(
           gazeSamples,
           { timestampMs: nowMs, offset: smoothedGaze.smoothed },
-          1200,
+          // The same cap the eye aspect ratio trace uses, and for the
+          // same reason. 1200 was chosen for 60 frames per second and
+          // silently stopped covering the 10 second window once the
+          // loop ran faster, so both gaze traces were cut short on the
+          // left exactly as the aspect ratio trace was.
+          SPARK_SAMPLE_CAP,
         ).filter(
           // Two sided on purpose. The old one sided test asked only
           // whether a sample was too OLD, which is a subtraction, and a
