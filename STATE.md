@@ -1,7 +1,28 @@
 Last increment: the boxed layout and its polish, merged as pull requests #159 to #165
 Last commit: squash merge of pull request #165 on 2026-08-08
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: Track A, the Eyeblink8 evaluation, running overnight
+Currently working: nothing. Track A is DONE and awaiting a decision.
+
+## Track A result, 9 August 2026
+
+Eight Eyeblink8 clips, 71,354 frames, 408 human-marked blinks.
+
+    Recall     69.6%   (284 of 408 found)
+    Precision  86.3%   (45 invented)
+    F1         77.1%
+
+Coverage exact: 71,354 measured against 71,354 annotated.
+
+Written up on branch `docs/track-a-result`, NOT MERGED. The owner asked
+to read the number before it goes public and agreed in advance that it
+gets published whatever it says. Full output in
+`docs/eyeblink8-result.txt` on that branch.
+
+Two findings worth more than the headline. Per clip recall ranges 55.7%
+to 87.8%, a spread too wide to be noise. And the single glasses clip
+scored 83.7% against 67.9% for the seven without, which is evidence
+against this project's own claim that prescription lenses degrade the
+signal: true of gaze, apparently not of blink detection.
 
 ## If you are a fresh context, read this first
 
