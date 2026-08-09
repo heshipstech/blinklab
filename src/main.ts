@@ -724,6 +724,13 @@ async function beginVideoFile(file: File): Promise<void> {
       // the output is a function of the file rather than of this
       // machine's speed. See issue #145.
       measurementMode = "stepped";
+      // MediaPipe refuses a timestamp that goes backwards, and a clip's
+      // media clock restarts at zero. So the clip's clock is lifted
+      // above anything already sent. The offset is constant for the
+      // whole clip, and the model reads the GAPS between timestamps
+      // rather than their absolute value, so lifting them changes
+      // nothing about the measurement while keeping it monotonic.
+      clipModelClockBaseMs = Math.ceil(performance.now()) + 1;
       clipStopRequested = false;
       stopClipButton.hidden = false;
       const startedAtMs = performance.now();
@@ -735,7 +742,7 @@ async function beginVideoFile(file: File): Promise<void> {
           const clockStep = acceptFrame(frameClock, nowMs);
           frameClock = clockStep.state;
           if (!clockStep.accepted) return;
-          processFrame(nowMs, performance.now(), index);
+          processFrame(nowMs, clipModelClockBaseMs + nowMs, index);
           // Every fifteenth frame, roughly twice a second of wall time.
           // Writing it on every frame costs a layout for a number
           // nobody can read that fast.
@@ -1461,16 +1468,34 @@ let gazeTraces = emptyGazeTraces();
 // capped to the same 10 second window as the traces.
 let gazeSamples: GazeSample[] = [];
 
+// Set when a clip starts. See the comment at the assignment.
+let clipModelClockBaseMs = 0;
+
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
 
 // One frame, already accepted by the clock. nowMs is the pipeline's
 // clock: the wall clock live, the clip's own media time for a file.
-// wallClockMs is kept separately because MediaPipe wants a strictly
-// increasing number of its own that survives a change of source.
+//
+// modelClockMs is the number handed to MediaPipe, and it is separate
+// because MediaPipe needs one that only ever increases, even across a
+// change of source. It used to be `performance.now()` in every mode,
+// on the stated belief that MediaPipe "uses it only to order frames
+// internally". That belief was wrong and it cost this project its
+// repeatability. In VIDEO running mode the model tracks a face from
+// frame to frame, and the GAP between timestamps is part of how it
+// does that. Handing it the wall clock while stepping a file fed the
+// speed of the computer straight into the measurement, which is the
+// exact dependence stepping exists to remove: every frame was
+// measured, but each frame was measured slightly differently
+// depending on how busy the machine was that second.
+//
+// Measured on 9 August 2026: three runs of one clip on one machine
+// gave the same 43 detections with three different sets of blink
+// timings. See issue #174.
 function processFrame(
   nowMs: number,
-  wallClockMs: number,
+  modelClockMs: number,
   // Which frame of the source this is. A clip counts from zero and the
   // number means something to an annotator; a camera counts frames
   // since the session began and it means nothing to anyone, which is
@@ -1504,7 +1529,7 @@ function processFrame(
       // uses it only to order frames internally. The wall clock is
       // always that, and it survives a switch from camera to file,
       // which a media clock restarting at zero would not.
-      const result = landmarker.detectForVideo(video, wallClockMs);
+      const result = landmarker.detectForVideo(video, modelClockMs);
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
         performance.now() - inferenceStartMs,
