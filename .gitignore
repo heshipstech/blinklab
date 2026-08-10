@@ -49,6 +49,7 @@ __pycache__/
 *.avi
 *.mkv
 blinklab-session-*.csv
+blinklab-blinks-*.csv
 recordings/
 
 # Except the synthetic test clip, which is generated from a recorded

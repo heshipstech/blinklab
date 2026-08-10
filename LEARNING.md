@@ -659,3 +659,21 @@ Two placements were arguable and both are recorded so they can be argued with. P
 Doing the inventory found two readouts that appeared before a session started, the frame counter and the blink log export. The frame counter is the worse of the two: with no camera running it was measuring the DISPLAY's refresh rate and printing it as the instrument's frame rate. Both were simply missing from a long list of individual hide rules, which is the failure mode of hiding children one at a time. Whole boxes are hidden now, and a container cannot forget a child.
 
 The larger find was accidental and had been there since the first phase. The page set no background colour and no text colour, so the browser painted its own canvas from the viewer's system theme while the text stayed black. On a machine in dark mode the entire page rendered black on black. Six phases of screenshots went past, several of them examined closely by two of us, and neither noticed because it was just legible enough to squint at. The page now sets both explicitly rather than adapting to the theme, because this page's job includes being filmed, and a demo that looks different depending on the viewer's settings is a demo you cannot reason about.
+
+## Fix, the export the privacy rule forgot
+
+The concept here is that a rule written for one thing does not extend itself to the second thing, and the only way to find out is to ask the machine rather than to read the rule.
+
+`.gitignore` refuses `blinklab-session-*.csv`, and the comment above it is good: an exported CSV is measurements of somebody's eyes, this repository is public, and git keeps a file even after a later commit deletes it, so it is refused at the door rather than cleaned up afterwards. That reasoning is exactly right.
+
+Increment 6.7 shipped one export. Then the blink log arrived as a second download, `blinklab-blinks-*.csv`, and nobody added a second pattern. From that day until the August 2026 audit, a user who exported their blink log into the project folder could have committed it. Nobody did. The exposure was real anyway.
+
+What makes this worth a note is how it was found and how badly it was missed. Five auditors read this repository against a privacy constraint. All five checked what leaves the device over the network, because that is the famous version of the question, and the telemetry finding came out of it. None asked what happens to the data that stays. The gap was found by a sixth agent whose only job was to ask what the audit had not looked at, and it took one command: `git check-ignore` on a filename the app actually produces.
+
+So the test does not re-implement git's glob rules. It reads the filenames `main.ts` downloads, hands each one to `git check-ignore`, and asks git, because a re-implementation is one more thing that can be wrong in the same direction as the bug it is checking for. It also carries a guard for itself: a name of the shape a future export would take, deliberately not ignored, must come back trackable. If that ever passes, the rest of the test has stopped meaning anything and is quietly agreeing with everything.
+
+Removing the one-line fix makes two of the eight tests fail, which was checked rather than assumed.
+
+Writing it cost twenty minutes rather than five, for a reason worth recording. The first draft resolved the repository root with `new URL("../../", import.meta.url).pathname`, which percent-encodes. This project lives in a folder called "blinklab build", so that returns "blinklab%20build" and every read fails with ENOENT. `fileURLToPath` is the fix. This is the second time that exact trap has cost this project time; the first was the corpus runner in August. The note is in the guard now, at the line that would otherwise invite it again.
+
+The general lesson is about the shape of the question. "Does data leave?" and "what happens to data that stays?" sound like the same question and are not, and asking only the first one is how a repository ends up with a carefully reasoned privacy rule that covers half of its own exports.
