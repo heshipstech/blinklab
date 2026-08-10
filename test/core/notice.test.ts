@@ -16,7 +16,13 @@ describe("the permanent demo notice", () => {
     expect(notice).toContain("not for clinical, workplace or safety use");
     expect(notice).toContain("not");
     expect(notice.toLowerCase()).toContain("diagnostic");
-    expect(notice).toContain("no data leaves your device");
+    expect(notice).toContain("never leave your browser");
+    // The claim that used to sit here was that nothing left the device
+    // at all. It was false: the vendored model reports its own usage to
+    // Google. The notice now names that rather than denying it, and
+    // this assertion is what stops the pleasanter sentence coming back.
+    // ADR-0004.
+    expect(notice).toContain("usage statistics to Google");
   });
 
   it("is one string, used everywhere, so the wording cannot drift", () => {
