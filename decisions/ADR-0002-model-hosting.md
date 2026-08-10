@@ -22,3 +22,10 @@ Option 3. The model is committed at `public/models/face_landmarker.task`. The WA
 - Good: zero runtime third party calls, reproducible builds pinned by git and the lockfile, offline development works.
 - Bad: the repo permanently carries a 3.7 MB binary, and model upgrades are manual, deliberate commits.
 - The deployed site grows by roughly 37 MB of model and WASM. A later ADR may prune unused WASM variants if the 8.7 size budget demands it.
+
+---
+
+**Superseded in part by ADR-0004 (2026-08-10).** The first good
+consequence below was never measured and is false: the vendored library
+makes a runtime call of its own. The hosting decision stands. Nothing
+above this line has been edited.

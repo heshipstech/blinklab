@@ -25,7 +25,7 @@ The result is a learning laboratory, not a product.
 
 - Not a medical device, not a safety product, not for clinical or workplace use.
 - Not a commercial product and not connected to any company codebase or dataset.
-- No user data leaves the browser. Ever. No backend, no analytics, no telemetry.
+- No user data leaves the browser. Ever. No backend and no analytics of ours. (The vendored face model sends its own usage statistics to Google, which no code here can currently prevent. Measured and recorded in ADR-0004. No user data is in it.)
 - Not optimised for accuracy over teachability. When a simple explainable method and a complex accurate one compete, choose the simple one and write down why.
 
 ## Success criteria

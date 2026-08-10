@@ -677,3 +677,17 @@ Removing the one-line fix makes two of the eight tests fail, which was checked r
 Writing it cost twenty minutes rather than five, for a reason worth recording. The first draft resolved the repository root with `new URL("../../", import.meta.url).pathname`, which percent-encodes. This project lives in a folder called "blinklab build", so that returns "blinklab%20build" and every read fails with ENOENT. `fileURLToPath` is the fix. This is the second time that exact trap has cost this project time; the first was the corpus runner in August. The note is in the guard now, at the line that would otherwise invite it again.
 
 The general lesson is about the shape of the question. "Does data leave?" and "what happens to data that stays?" sound like the same question and are not, and asking only the first one is how a repository ends up with a carefully reasoned privacy rule that covers half of its own exports.
+
+## Fix, saying the true thing instead of the pleasant one
+
+The concept here is that a claim nobody has measured is not a fact, it is a hope with good grammar, and the more central the claim the less likely anyone is to check it.
+
+Six places in this repository said the page sent nothing anywhere. The README twice, the model card twice, the project document, and the notice printed on the page itself. ADR-0002 named "zero runtime third party calls" as the first good consequence of vendoring the model, and that consequence was the main reason the decision was worth carrying a 3.7 MB binary in git forever.
+
+None of it had been measured. The August 2026 audit measured it: about sixty seconds after the face model is created, the bundled MediaPipe library posts to `odml.pa.googleapis.com` and gets a 200 back. It needs no detections at all, only for the model to exist. The payload is usage statistics, so no video, no image, no landmark and no measurement is in it, and the substance of the privacy stance survives. The sentences did not.
+
+What makes this worth a note is not the defect, which belongs to a dependency and which nobody here wrote. It is that the claim was the single most checkable statement in the project, and the easiest to falsify: open the network tab and wait a minute. Six documents asserted it and no test asserted it. The audit's own plan had a checklist item for runtime network calls, and it found this on the first attempt, which is the argument for having such a checklist at all.
+
+Two decisions inside the fix are worth keeping. The notice now names the reporting rather than denying it, which is a worse sentence to read and the only one that survives a reader checking. And the retired phrases are banned by a test rather than by anyone's memory, because "no telemetry" is a pleasant thing to write and somebody tidying the README next year would reach for it without knowing it had ever been measured. Writing about the history is still allowed, but the guard cannot tell a confession from a relapse, so the rule is to describe what the page used to deny rather than quote it back.
+
+ADR-0002 was not edited. An architecture decision record is a dated statement of what was decided and what was believed then, and rewriting one to match what was learned later destroys the only thing it is for. It carries a pointer to its successor below a line that says nothing above it changed, and ADR-0004 holds the measurement, the options and the open question of whether the call can be blocked at all.

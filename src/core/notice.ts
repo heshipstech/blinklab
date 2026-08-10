@@ -7,11 +7,21 @@
 // files, because a disclaimer that drifts between the page, the
 // README and an export is three different promises. Anyone rewording
 // it has to change it here, where the test states what it must say.
+//
+// The last sentence changed on 2026-08-10. It used to deny that
+// anything at all left the device, which was false. The August 2026
+// audit measured a POST to
+// odml.pa.googleapis.com sixty seconds after the face model loads,
+// from inside the vendored MediaPipe bundle, needing no detections.
+// No video, image, landmark or measurement is in it. The claim was
+// still false as written, so it says less and says it truthfully.
+// See ADR-0004.
 export const DEMO_NOTICE =
   "Demo, not a safety or medical device. " +
   "It is not for clinical, workplace or safety use, its numbers are not " +
   "diagnostic, and it has not been validated against any medical standard. " +
-  "All processing happens in your browser and no data leaves your device.";
+  "Your video and your measurements never leave your browser. The face " +
+  "model this page bundles does send anonymous usage statistics to Google.";
 
 export function demoNoticeText(): string {
   return DEMO_NOTICE;

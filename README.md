@@ -4,7 +4,7 @@
 
 A browser based eye signal laboratory. It reads your webcam locally. It turns what your eyes are doing into numbers you can audit: blinks, eyelid aperture in millimetres, gaze regions, fixations, PERCLOS (the share of a minute your eyes spend closed), and an explainable alertness score.
 
-> **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. All processing happens in your browser and no data leaves your device.**
+> **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
@@ -475,7 +475,9 @@ Safari's extra frame was the final one counted twice, which is fixed.
 
 ## Privacy
 
-Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend, no analytics and no telemetry. The CSV export writes a file to your own disk and uploads nothing.
+Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend and no analytics of ours. The CSV export writes a file to your own disk and uploads nothing.
+
+One exception, found by the August 2026 audit and stated here because it was claimed otherwise for two weeks. The vendored MediaPipe library sends a `POST` to `odml.pa.googleapis.com` about sixty seconds after the face model is created, with no detections needed. It is Google's own usage reporting, it is inside the dependency rather than in any code here, and its payload is usage statistics: no video, no image, no landmark, no measurement. This page previously denied any reporting of any kind, which was false. Whether it can be blocked without breaking the model is an open question, recorded in `decisions/ADR-0004-model-telemetry.md`.
 
 ## Status
 
