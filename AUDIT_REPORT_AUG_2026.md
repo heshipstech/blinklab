@@ -74,6 +74,32 @@ by discipline, not by the gate.
 mutations, 98 caught, 80.3 per cent. **All fifteen mutations that turned
 a refusal into a number were caught.**
 
+**The tests assert properties, not mocks.** Searched for `vi.mock`,
+`vi.fn`, `vi.spyOn`, `vi.stubGlobal`, `useFakeTimers`, jest and sinon
+across the whole tree: **zero hits.** Inputs are built from real
+arithmetic or from a parametric synthetic face generator. The only
+"fake" anywhere is a Chromium launch flag for the camera stream, which
+is a browser facility rather than a test double.
+
+**The `CV(mm) < CV(px)` assertion exists and passes.**
+`test/core/statistics.test.ts`, test named at line 44, assertion at line
+69, strengthened at lines 70 and 71. Seven synthetic distances from 350
+to 800 mm with the aperture held at 10 mm.
+
+An auditor challenged it as true by construction, and it is: the
+generator places the iris and the eyelid at the same depth, so the
+distance term cancels algebraically and the measured `cvMm` of 3.6e-15
+is floating-point rounding. **A skeptic refuted the finding**, on four
+grounds. That is what an answer key is, and the master prompt names
+"synthetic face at a known angle" as valid ground truth. It still guards
+against mutation: breaking the millimetre conversion fails eight tests.
+It is disclosed verbatim at `LEARNING.md:233` and scoped to "on
+synthetic data" at `ROADMAP.md:60`. And the real-world evidence is not
+only a manual note: `test/core/aperture.test.ts:76-96` runs 300 real
+recorded frames through `apertureMm`, and `test/MANUAL.md:22` records
+the measured result, pixels varying 39 to 46 per cent against
+millimetres at 13 to 17, about three to one.
+
 **The published headline reproduces exactly** from a reimplementation
 borrowing none of this project's code, and frame accounting matches the
 MP4 container atoms at 71,356.
@@ -142,6 +168,30 @@ problem that has become a credibility problem.**
 | 7   | The demo must never crash the page          | **Partial.** All five documented degraded states pass, observed in a browser. But `calibrationStore.ts` can blank the page, and any throw in `processFrame` ends the only frame loop permanently. |
 | 8   | Accessibility floor                         | **Substantially met.** Focus visible, fully keyboard operable, all text clears WCAG contrast. Missing: modal semantics, live regions, three text equivalents. Row 8.8 tracks these openly.        |
 | 13  | No company branding or positioning          | **Met** in every issue title, pull request title and published document. One evidence file names the old folder "Noddr Fun Build", where it is load-bearing for the finding it appears in.        |
+| —   | **Explainability over accuracy**            | **Met, and it defended the code.** No increment was found where a more accurate but less explainable method won.                                                                                  |
+
+### The explainability rule, which turned out to be a shield
+
+The master prompt says: "When a simple explainable method and a complex
+accurate one compete, choose the simple one and write down why."
+
+The audit looked for violations and found none. More interesting is what
+happened instead: **skeptics invoked this rule at least four times to
+knock findings down**, each time correctly.
+
+The peak-velocity estimator is a single finite difference, which an
+auditor called mathematically wrong. `blinkShape.ts:3` defines it
+operationally as "the fastest adjacent-sample drop on the way down", so
+the code computes exactly what it says it computes, `MODEL_CARD.md:27`
+labels it unvalidated, and no absolute value is published anywhere.
+Simple, explainable, honestly labelled, and the finding died.
+
+The same defence held for the 11.7 mm iris constant, the score's
+hand-chosen weights, and the hand-written rank statistics.
+
+**A rule that repeatedly defeats an auditor is a rule doing its job.**
+That is worth knowing, because this is one of the few rules in the master
+prompt that costs something to follow.
 
 ### The one that matters: runtime telemetry
 
@@ -286,6 +336,68 @@ leg.
 **Thirty of the hundred score points can be charged from a blink of
 unbounded age**, while the closure penalty is correctly windowed.
 
+### Blink closing velocity, examined in full
+
+The master prompt names this specifically, so here is the whole verdict.
+
+**The arithmetic is correct.** The sign is right, so a closing lid reads
+positive. Non-monotonic descents are handled: a rising interval inside
+the closure produces a negative slope that the maximum discards, giving
+the true steepest drop rather than an average across the span. Amplitude
+is anchored at the pre-closure maximum, not the window start. The unit
+algebra checks out: millimetres divided by millimetres-per-second gives
+seconds, and the amplitude-over-velocity ratio is reported in
+milliseconds correctly. Every degenerate case refuses rather than
+guesses: fewer than two samples, no descent, a non-advancing clock,
+backwards timestamps.
+
+**The sampling limit is real and quantified.** A blink's closing phase
+lasts roughly 50 to 100 ms; at 30 fps a frame arrives every 33 ms, so the
+phase is sampled two or three times. Simulated against two standard
+closing models over many random sampling phases, **the measured peak runs
+22 to 38 per cent below the true peak at 30 fps.** The same blink reads
+about 33 per cent faster at 60 fps than at 25. The amplitude-over-velocity
+ratio has a hard floor at exactly one frame interval.
+
+**Its consequence was measured, not assumed.** The attenuation is
+monotone, so it compresses contrast rather than scrambling order, and it
+moves the published Spearman correlations by about 0.04. No verdict
+changes.
+
+**And it is disclosed.** `blinkShape.ts:3` defines the quantity
+operationally as "the fastest adjacent-sample drop on the way down", so
+the sampling grid is written into the definition rather than hidden
+behind it. `MODEL_CARD.md:27` lists closing velocity as validated against
+"nothing external", result "unvalidated". No absolute millimetres-per-second
+figure is published anywhere in the repository.
+
+What is **not** written down is the magnitude. A reader learns the
+quantity is unvalidated but not that it under-reads by a quarter to a
+third at the frame rate most webcams deliver.
+
+### Magic numbers
+
+Every numeric constant affecting a measurement was inventoried and
+classified. Almost all carry a written origin, and `src/core/constants.ts`
+is mostly prose for exactly this reason.
+
+**The unexplained ones**, all low severity, none touching an exported
+value **[untested]**:
+
+- `gazeSmoothing.ts:14,19,23`. `MIN_CUTOFF_HZ` and `DERIVATIVE_CUTOFF_HZ`
+  are the One Euro filter paper's own defaults, and `SPEED_COEFFICIENT`
+  is its beta rescaled to offset units. **Literature values presented as
+  though invented here.** The smoother shapes the gaze offsets that feed
+  fixation detection.
+- `headPose.ts:16`, `GIMBAL_EPSILON = 1e-6`, no comment at all.
+- `main.ts:1455` and `:1472`, display axis half-scales, no origin, and
+  they silently clip anything beyond them.
+- `constants.ts:23-24`, the calibration settle time and sample count
+  explain the need but not the values.
+- `main.ts:1949`, the bare `400` millisecond shape lead-in. Swept 0 to
+  2000: peak velocity is bit-identical from 100 to 800, so **it sits
+  mid-plateau rather than on a knife edge.**
+
 ### Three worries measured and found inert
 
 - **The four-frame match tolerance.** Swept 0 to 30 over the real corpus:
@@ -389,6 +501,11 @@ found repeatedly.
 
 Ordered by the stated principle: published falsehoods first, then data
 corruption, then missing tests, then record-keeping.
+
+**On the count.** The request suggested five to ten increments. This is
+fifteen, because the critic's review split four bundles that broke the
+project's own one-thing-per-increment rule. Nothing was added; four
+things were separated.
 
 ---
 
