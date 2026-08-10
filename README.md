@@ -257,11 +257,18 @@ on its own. That last step shows where this reasoning ends up, and it is
 plainly cheating. So none of those numbers are on this page, including
 the two a reader might have accepted.
 
-**The misses have a pattern.** 55 of the 70 missed blinks in the middle
-column, 78.6%, contained at least one frame the human marked as fully
-closed. That table has not been rebuilt for the 50 misses in the current
-column, so treat the share as indicative rather than current. Issue
-#179. These are
+**The misses have a pattern.** 36 of the 50 missed blinks, 72.0%,
+contain at least one frame the human marked as fully closed. These are
+not faint or borderline blinks. They are ordinary ones where this app's
+eyelid measurement did not dip far enough to count. That is a real
+weakness and nobody has explained it yet. Finding out why is the next
+question.
+
+The row by row table is in
+[docs/evidence/2026-08-09/tables-current-run/](docs/evidence/2026-08-09/tables-current-run/),
+one line per miss, so the share can be recounted rather than taken on
+trust. An earlier version of this page said 78.6%, which was 55 of 70
+and described the previous run's misses. These are
 not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness. Finding out why is the next question.

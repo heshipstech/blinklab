@@ -162,13 +162,15 @@ What the audit established, so nobody argues it again:
   shorter than 4 frames. Shrinking the video to a quarter of its size
   changed how strong a blink looks by 2.7%, so the picture is not too
   small.
-- 55 of the 70 misses of the SECOND run, 78.6%, contain at least one frame the
+- 36 of the 50 misses of the CURRENT run, 72.0%, contain at least one frame the
   human marked fully closed. That is the real weakness. An earlier note
   said 87.9%; that was 109 of 124, and 124 is the FIRST run's miss
   count, so it was measuring the defect. Recomputed on the corrected
   misses using `Blink.fully_closed_frames` from
-  `analysis/blinklab/eyeblink8.py`. NOT rebuilt for the current run's
-  50 misses. Issue #179.
+  `analysis/blinklab/eyeblink8.py`. Rebuilt for the current run and
+  committed row by row at docs/evidence/2026-08-09/tables-current-run/.
+  Closes #179. Earlier figures were 87.9% (109 of 124, the FIRST run,
+  measuring the export defect) and 78.6% (55 of 70, the second run).
 - Double counting is PARTLY fixed, by the refractory period of #190. A
   closure is not counted if it ends within 150 ms of the previous
   counted blink, because an eyelid cannot open and shut twice that
