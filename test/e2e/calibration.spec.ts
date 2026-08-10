@@ -58,7 +58,10 @@ test("the demo notice is visible on load and cannot be dismissed", async ({
   const notice = page.getByTestId("demo-notice");
   await expect(notice).toBeVisible();
   await expect(notice).toContainText("not a safety or medical device");
-  await expect(notice).toContainText("no data leaves your device");
+  await expect(notice).toContainText("never leave your browser");
+  // The page used to promise nothing left the device at all, which was
+  // false. It names the model's usage reporting now. See ADR-0004.
+  await expect(notice).toContainText("usage statistics to Google");
   // Click it, click the page, and confirm it survives.
   await notice.click();
   await page.locator("body").click();

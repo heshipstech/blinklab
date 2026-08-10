@@ -11,8 +11,9 @@ leaving a gap that reads as a pass.
 ## What this is
 
 A browser page that watches a face through an ordinary webcam and turns
-what the eyes are doing into numbers. Nothing is uploaded. There is no
-server, no account and no telemetry.
+what the eyes are doing into numbers. Nothing you record is uploaded.
+There is no server and no account. The vendored face model does report
+its own usage statistics to Google; see Privacy below.
 
 It is **not a medical device, not a safety device, and not a product**.
 It is an instrument that measures eye signals, published so the
@@ -149,9 +150,16 @@ characterised across populations.
 
 ## Privacy
 
-Video never leaves the browser. There is no server component, no
-analytics and no telemetry. Exported files are written to the reader's
-own disk by their own action.
+Video never leaves the browser. There is no server component and no
+analytics of ours. Exported files are written to the reader's own disk
+by their own action.
+
+The vendored MediaPipe library does send its own usage statistics to
+Google about sixty seconds after the face model loads, needing no
+detections. No video, image, landmark or measurement is included. This
+page denied any reporting at all until the August 2026 audit measured
+it. See
+`decisions/ADR-0004-model-telemetry.md`.
 
 Dataset video is never committed to this repository, and derived numbers
 are published only where the rights holder has granted permission in

@@ -77,7 +77,7 @@ Text is `DEMO_NOTICE` from `core/notice.ts`, a tested constant:
 > Demo, not a safety or medical device. This is a learning project. It is
 > not for clinical, workplace or safety use, its numbers are not
 > diagnostic, and it has not been validated against any medical standard.
-> All processing happens in your browser and no data leaves your device.
+> Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.
 
 **Wraps to two lines at 1512 px, three on narrower windows.** Budget for
 three.
