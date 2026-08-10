@@ -14,14 +14,27 @@ Deliverable at the end: `AUDIT_REPORT_AUG_2026.md`.
 ## How to resume if the context window is lost
 
 1. Read this file.
-2. Read every file in `docs/audit/` that exists. Each one is a finished
-   chunk and its findings are final.
-3. The first chunk in the list below with no file in `docs/audit/` is the
+2. Read every `docs/audit/chunk-N-*.md` that exists. Each one is a
+   finished chunk and its findings are final. Files named
+   `appendix-*` are the raw finding lists behind those write-ups, not
+   progress markers.
+3. The first chunk in the list below with no `chunk-N-*.md` file is the
    next one to run.
 4. Do not restart from Chunk 1.
 5. If the master prompt is needed again, ask the owner to paste it. It
    lives in `~/Downloads`, which macOS blocks, and it is deliberately
    not committed to this repository.
+
+**NOTHING IS EXECUTED UNTIL THE AUDIT IS COMPLETE.** Decided by the
+owner on 10 August 2026. No fix, no correction, no issue filed, however
+small or however obviously right, until Chunk 7 delivers
+`AUDIT_REPORT_AUG_2026.md`. Remediation is planned after, from the whole
+picture, in priority order. Stopping to fix things mid-audit is the
+failure mode that produced half the findings in Chunk 1.
+
+The audit therefore has to be a durable record rather than a live to-do
+list, which is why every finding is written to `docs/audit/` as it is
+produced, including the ones later refuted.
 
 Each chunk gets its own branch, its own pull request and green
 continuous integration. Gates before every pull request, from the repo
