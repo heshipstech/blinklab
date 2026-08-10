@@ -352,6 +352,87 @@ sit on a real blink with half of them 3 frames long or shorter. This
 page carries the corrected wording. That file has not been rewritten
 yet.
 
+## Does any of it track how sleepy somebody actually is?
+
+**No, not on the evidence available. This is a null result and it is
+published for the same reason the unflattering blink numbers above are.**
+
+Everything else on this page measures blink DETECTION, where a human had
+already marked the right answer. This asks the harder question: do these
+numbers mean anything about tiredness?
+
+DROZY is a set of recordings from the University of Liege in which
+fourteen people rated their own sleepiness on the Karolinska Sleepiness
+Scale, 1 to 9, immediately before each session, under increasing sleep
+deprivation. It is used here under written permission from Professor
+Jacques Verly. Numbers only. No frame of it is in this repository and
+none ever will be.
+
+**The plan was written and committed before any correlation was
+computed.** It named the seven features, the statistic, the correction,
+the controls and the decision rule in advance, so this result can be
+checked against a plan that could not have been written to fit it. It is
+at [docs/drozy-analysis-plan.md](docs/drozy-analysis-plan.md), in its own
+commit, with no results in it.
+
+| what was measured       | correlation with sleepiness | after correction |
+| ----------------------- | --------------------------- | ---------------- |
+| blink duration          | +0.44                       | not significant  |
+| closing velocity        | −0.44                       | not significant  |
+| long closures           | +0.36                       | not significant  |
+| amplitude over velocity | +0.36                       | not significant  |
+| blink amplitude         | −0.33                       | not significant  |
+| blink rate              | −0.07                       | nothing          |
+| PERCLOS                 | −0.00                       | nothing          |
+
+Seven tests on twenty sessions will turn up something that looks
+interesting by chance, so the correction is not optional. **Nothing
+survives it.** The shuffled control settles it: the strongest
+correlation seen was 0.44, and shuffling the sleepiness ratings produces
+up to 0.75 by chance alone.
+
+**Two things are worth saying beyond the headline.**
+
+The two most commonly cited drowsiness measures, blink rate and PERCLOS,
+were flat. Not weak. Effectively zero.
+
+And the four features that did move all moved the way the drowsiness
+literature says they should: sleepier people showed slower lid closing,
+smaller blinks, and a higher ratio of the two. Four features agreeing
+with prior expectation is not proof of anything, and twenty sessions
+cannot make it one, but it is not nothing either.
+
+**The sample is not just small, it is biased.** blinklab refuses to
+measure blinks below 25 frames per second, and DROZY's own README says
+its 15 fps recordings are "tests 2 and 3 of subjects 1->8, because of a
+recording bug occurring in darkness". Those are the sleep deprived
+sessions. So the 16 sessions this instrument cannot measure are
+systematically the sleepier ones:
+
+|          | sessions | mean sleepiness | range  |
+| -------- | -------- | --------------- | ------ |
+| analysed | 20       | 4.60            | 2 to 8 |
+| excluded | 16       | **6.38**        | 3 to 9 |
+
+Every rating of 9 in the dataset sits in the excluded group. **So this is
+a null result on a sample missing the top of the scale**, which is weaker
+evidence than a null result on the whole of it. They cannot be recovered:
+DROZY carries no blink annotation, and lowering the frame rate floor to
+include them would be choosing a threshold to get a result.
+
+**What this means for the alertness score on this page.** It remains a
+documented heuristic that has never been shown to correspond to anyone's
+actual sleepiness. That was true before this measurement and it is still
+true after it.
+
+Full output in [docs/drozy-result.txt](docs/drozy-result.txt), reproducible
+with `analysis/tools/analyse_drozy.py`.
+
+> Quentin Massoz, Thomas Langohr, Clementine Francois and Jacques G.
+> Verly. "The ULg Multimodality Drowsiness Database (called DROZY) and
+> Examples of Use." IEEE Winter Conference on Applications of Computer
+> Vision (WACV), 2016.
+
 ## Does it give the same answer twice?
 
 A measuring instrument that answers differently on different computers is

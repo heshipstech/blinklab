@@ -1,0 +1,54 @@
+DROZY, do blinklab's features track reported sleepiness?
+Plan fixed in advance: docs/drozy-analysis-plan.md
+
+  sessions measured   36
+  excluded            16   below 25 fps, issue #192
+  analysed            20
+  subjects            13
+  KSS range           2 to 8
+
+EXCLUSION BIAS, read this before the correlations
+  analysed  n=20  mean KSS 4.60  range 2 to 8
+  excluded  n=16  mean KSS 6.38  range 3 to 9
+  the excluded sessions are +1.78 KSS points sleepier
+  So this is NOT a random half. Whatever is reported below
+  is measured on a sample that is missing the sleepiest
+  sessions, and a null result here is correspondingly
+  weaker evidence than a null result on the full set.
+
+PRIMARY, Spearman against KSS across sessions
+  feature                            n     rho    p raw   p Holm  within-subject
+  blink duration, ms                20   0.444   0.0490   0.3427  2/5 agree
+  closing velocity, mm/s            20  -0.443   0.0490   0.3427  3/5 agree
+  long closures, count              20   0.364   0.0939   0.4695  1/5 agree
+  amplitude over velocity, ms       20   0.355   0.1319   0.5275  3/5 agree
+  blink amplitude, mm               20  -0.327   0.1439   0.5275  4/5 agree
+  blink rate, per minute            20  -0.070   0.7612   1.0000  1/5 agree
+  PERCLOS, share of the minute      20  -0.001   0.9990   1.0000  2/5 agree
+
+NEGATIVE CONTROL, KSS shuffled 1000 times, roadmap 7.7
+  feature                           observed  chance max   median
+  blink duration, ms                   0.444       0.747    0.160
+  closing velocity, mm/s               0.443       0.743    0.154
+  long closures, count                 0.364       0.364    0.243
+  amplitude over velocity, ms          0.355       0.738    0.161
+  blink amplitude, mm                  0.327       0.790    0.153
+  blink rate, per minute               0.070       0.679    0.154
+  PERCLOS, share of the minute         0.001       0.714    0.147
+
+VERDICT, by the rule fixed before the data was seen
+  a feature TRACKS KSS only if Holm p < 0.05 AND at least 3 of the multi-session subjects agree
+  blink duration, ms              no
+  closing velocity, mm/s          suggestive and unconfirmed
+  long closures, count            no
+  amplitude over velocity, ms     suggestive and unconfirmed
+  blink amplitude, mm             suggestive and unconfirmed
+  blink rate, per minute          no
+  PERCLOS, share of the minute    no
+
+  Nothing cleared both bars. On these 20 sessions this instrument's
+  features do not detectably track self-reported sleepiness. That is
+  the result, and the plan said it would be published as readily as
+  a positive one.
+
+Cite: Massoz, Langohr, Francois and Verly, WACV 2016.
