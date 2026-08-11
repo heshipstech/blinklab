@@ -205,3 +205,68 @@ def test_the_seven_features_match_the_pre_registered_plan() -> None:
         "perclos",
         "long_closures",
     )
+
+
+# Remediation C2, the test roadmap row 7.7 demands. No DROZY data is
+# involved: the sessions below are synthetic, with a PLANTED perfect
+# relation between perclos and KSS, so the observed correlation is
+# exactly 1.0 by construction. The shuffled null must then collapse:
+# if relabelling sleepiness at random still "finds" the planted
+# signal, the control is measuring the pipeline, not the data.
+def planted_sessions(count: int) -> list:
+    from blinklab.drozy import SessionFeatures
+
+    return [
+        SessionFeatures(
+            subject=i,
+            session=1,
+            kss=1 + (i * 8) // max(1, count - 1),
+            measured_fps=30.0,
+            blink_rate_per_min=None,
+            blink_duration_ms=None,
+            blink_amplitude_mm=None,
+            closing_velocity_mm_s=None,
+            amplitude_over_velocity_ms=None,
+            perclos=float(i),
+            long_closures=None,
+        )
+        for i in range(count)
+    ]
+
+
+def test_shuffled_null_collapses_a_planted_perfect_signal() -> None:
+    from blinklab.stats import spearman
+    from tools.analyse_drozy import _paired, _shuffled_null
+
+    sessions = planted_sessions(20)
+    xs, ys = _paired(sessions, "perclos")
+    # The signal is really there before the shuffle destroys it.
+    # Not exactly 1.0: the integer KSS scale forces ties.
+    assert spearman(xs, ys) > 0.99
+    worst, median = _shuffled_null(sessions, "perclos")
+    # Chance never reproduces the planted signal, and its typical
+    # strength is far below it. The bounds are loose on purpose: the
+    # run is seeded and deterministic, but the claim under test is
+    # "collapses to chance", not one library's exact permutation.
+    assert worst < 0.9
+    assert median < 0.4
+    # And bounded from BELOW: a null stubbed to (0.0, 0.0) would sail
+    # under the ceilings while claiming chance produces nothing at
+    # all, the exact silent success this control exists to catch. The
+    # floors are seed-scan verified: across 200 alternative seeds the
+    # worst never fell under 0.61 nor the median under 0.14.
+    assert worst > 0.5
+    assert median > 0.05
+    assert worst >= median
+
+
+def test_shuffled_null_refuses_starved_input_instead_of_zero() -> None:
+    from tools.analyse_drozy import _shuffled_null
+
+    sessions = planted_sessions(2)
+    # Two measured pairs. The old branch answered (0.0, 0.0), which
+    # downstream reads as "chance produces nothing", letting any
+    # observed correlation clear the null on a feature with almost no
+    # data. It must refuse by name instead.
+    with pytest.raises(ValueError, match="at least 3 measured pairs"):
+        _shuffled_null(sessions, "perclos")

@@ -105,7 +105,16 @@ def _shuffled_null(
     """
     xs, ys = _paired(sessions, name)
     if len(xs) < 3:
-        return 0.0, 0.0
+        # Refuse, never answer zero. A returned (0.0, 0.0) claims
+        # "chance produces nothing", so any observed correlation
+        # would clear the null control on a feature that had almost
+        # no data. main() filters such features out before calling
+        # here, so this guards direct and future callers, not the
+        # published run. Remediation C2.
+        raise ValueError(
+            f"the shuffled null for {name} needs at least 3 measured "
+            f"pairs and got {len(xs)}; a null from that is not evidence"
+        )
     rng = random.Random(SHUFFLE_SEED)
     shuffled = list(ys)
     seen: list[float] = []
