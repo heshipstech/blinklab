@@ -379,6 +379,15 @@ let clipLoop: VideoFrameLoop | null = null;
 // A stepped run is a loop inside an await, so it cannot be cancelled
 // by clearing a handle. It checks this between frames instead.
 let clipStopRequested = false;
+// Which call to beginCamera or beginVideoFile owns the page. Both
+// functions hold long awaits, and the user can start a new source in
+// the middle of one: the clip input stays enabled during a run, and
+// the success line even says "pick another clip". A superseded run's
+// continuation must then touch nothing. Review of remediation B1
+// found the stale summary could refuse the NEW run's session as
+// "nothing measured", or hand checkStepping one run's sought count
+// beside another run's measured count.
+let sourceRunToken = 0;
 
 // A finished clip must stop claiming to be running. Every readout
 // would otherwise freeze on its last value while the page still says
@@ -504,6 +513,11 @@ let state: CameraState = { kind: "idle" };
 function render(): void {
   const running = state.kind === "running";
   status.textContent = cameraStateMessage(state);
+  // The state's name, machine readable. The status text is prose for
+  // a person, and the batch runner in tools/measure_corpus.mjs was
+  // matching prose prefixes to learn the outcome, which left it
+  // waiting forever on any failure it did not know the words for.
+  status.dataset.state = state.kind;
 
   // Readouts stay on the page at idle, showing their own
   // "measuring..." and "no valid measurement" lines. The line count
@@ -642,14 +656,20 @@ function fitCanvasTo(widthPx: number, heightPx: number): void {
 }
 
 async function beginCamera(deviceId?: string): Promise<void> {
+  sourceRunToken += 1;
+  const runToken = sourceRunToken;
   setState({ kind: "requesting" });
   clipStopRequested = true;
   clipLoop?.stop();
   clipLoop = null;
+  // A camera session has no clip to stop. Without this, a stepped run
+  // superseded by the camera left its button behind.
+  stopClipButton.hidden = true;
   stopCamera(video);
   unloadVideoFile(video);
   try {
     const frame = await startCamera(video, deviceId);
+    if (runToken !== sourceRunToken) return;
     frameSource = "camera";
     loadedClipName = null;
     measurementMode = "live";
@@ -666,12 +686,14 @@ async function beginCamera(deviceId?: string): Promise<void> {
     setState({ kind: "running" });
     void ensureLandmarker();
   } catch (error: unknown) {
+    if (runToken !== sourceRunToken) return;
     const name = error instanceof Error ? error.name : String(error);
     setState(classifyCameraError(name));
     return;
   }
   try {
     const options = cameraOptions(await listMediaDevices());
+    if (runToken !== sourceRunToken) return;
     if (shouldShowPicker(options)) {
       populatePicker(options, deviceId);
       picker.hidden = false;
@@ -690,6 +712,8 @@ async function beginCamera(deviceId?: string): Promise<void> {
 // wrong face. A clip's label belongs to whoever was recorded, and it
 // comes from the dataset rather than from the viewer.
 async function beginVideoFile(file: File): Promise<void> {
+  sourceRunToken += 1;
+  const runToken = sourceRunToken;
   setState({ kind: "requesting" });
   clipStopRequested = true;
   stopCamera(video);
@@ -709,6 +733,7 @@ async function beginVideoFile(file: File): Promise<void> {
     }
 
     const clip = await loadVideoFile(video, file);
+    if (runToken !== sourceRunToken) return;
     frameSource = "file";
     loadedClipName = clip.name;
     loadedClipDurationSeconds = clip.durationSeconds;
@@ -728,6 +753,7 @@ async function beginVideoFile(file: File): Promise<void> {
     // ready, so no part of the recording is consumed unmeasured.
     status.textContent = "Loading the model before the clip starts...";
     await ensureLandmarker();
+    if (runToken !== sourceRunToken) return;
     status.textContent = "";
 
     if (stepToggle.checked) {
@@ -766,8 +792,11 @@ async function beginVideoFile(file: File): Promise<void> {
             );
           }
         },
-        () => clipStopRequested,
+        // A newer source stops this run too: the flag alone is not
+        // enough, because the newer run clears it for its own use.
+        () => clipStopRequested || runToken !== sourceRunToken,
       );
+      if (runToken !== sourceRunToken) return;
       stopClipButton.hidden = true;
       const tookSeconds = Math.round((performance.now() - startedAtMs) / 1000);
       // Deliberately NOT "measured every frame". The instrument cannot
@@ -803,6 +832,23 @@ async function beginVideoFile(file: File): Promise<void> {
           kind: "clipFailed",
           reason:
             "No frames could be read from this clip. The file loaded, but seeking through it produced nothing. Try another browser, or re-save the clip as MP4.",
+        });
+        return;
+      }
+      // The stepper sought frames but the pipeline measured none.
+      // This is a failure, not a result, and it must not fall through
+      // to the summary below: review of remediation B1 showed that
+      // path diagnosing it as "stepped at the wrong interval, frames
+      // visited twice" and promising a correct exported file, every
+      // clause false, while the export buttons sat disabled. The
+      // likeliest cause, a model that never loaded, gets its named
+      // degraded state in remediation B2; until then this refusal
+      // says what is known and nothing more.
+      if (framesMeasured === 0) {
+        setState({
+          kind: "clipFailed",
+          reason:
+            "This clip was read frame by frame, but not one frame was measured, so there is no result to report. The likeliest cause is that the measuring model never finished loading. Reload the page and try the clip again.",
         });
         return;
       }
@@ -852,6 +898,10 @@ async function beginVideoFile(file: File): Promise<void> {
 
     await video.play();
   } catch (error: unknown) {
+    // A superseded run may not report either: its failure belongs to
+    // a session that no longer exists, and the state is the new
+    // run's to write.
+    if (runToken !== sourceRunToken) return;
     frameSource = "camera";
     loadedClipName = null;
     clipLoop?.stop();
@@ -891,6 +941,17 @@ picker.addEventListener("change", () => {
 
 const fpsLabel = document.createElement("p");
 const inferenceLabel = document.createElement("p");
+// Invisible, and a permanent test contract like the data-testid
+// handles in the calibration overlay: the end to end suite reads the
+// frames-measured counter through it, because the counter is otherwise
+// observable only in an exported CSV header. It starts EMPTY on
+// purpose: the first processed frame writes "0", so a probe nobody
+// writes reads as empty, never as a measured zero. Review caught the
+// first version initialised to "0", where a dead wire and an honest
+// zero were the same text.
+const framesMeasuredProbe = document.createElement("span");
+framesMeasuredProbe.hidden = true;
+framesMeasuredProbe.setAttribute("data-testid", "frames-measured");
 const earLabel = document.createElement("p");
 const apertureLabel = document.createElement("p");
 
@@ -1544,7 +1605,6 @@ function processFrame(
   // why it is written to the blink log only for clips.
   frameIndex: number | null = null,
 ): void {
-  framesMeasured += 1;
   currentFrameIndex = frameIndex;
   frameTimestampsMs.push(nowMs);
   frameTimestampsMs = keepRecent(frameTimestampsMs, nowMs, 2000);
@@ -1572,6 +1632,18 @@ function processFrame(
       // always that, and it survives a switch from camera to file,
       // which a media clock restarting at zero would not.
       const result = landmarker.detectForVideo(video, modelClockMs);
+      // Counted HERE, behind the running-session, canvas and
+      // landmarker conditions and AFTER the model call returned, and
+      // the placement is what the number means. This counter is
+      // written into the export header as frames_measured, and a
+      // frame is measured only when the model actually processed it.
+      // At the top of this function the counter ticked at display
+      // rate from the moment a camera session began, while the model
+      // was still seconds away from existing, so a cold start wrote
+      // thousands of phantom frames into the header of an otherwise
+      // honest file. Counting after the call also keeps a frame the
+      // model throws on out of the count. Remediation B1.
+      framesMeasured += 1;
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
         performance.now() - inferenceStartMs,
@@ -2273,6 +2345,12 @@ function processFrame(
       );
     }
   }
+  // The probe is written LAST, outside every guard above, so it holds
+  // the exact count after this frame, wherever the increment sits.
+  // Written at the top it lagged one frame behind, and after a
+  // stepped clip's final frame nothing ticks again, so the lag froze
+  // into the reading: a 60 frame clip showed 59, forever.
+  framesMeasuredProbe.textContent = String(framesMeasured);
 }
 
 // The graph strip sits at the very top and spans the whole window,
@@ -2546,7 +2624,7 @@ legend.append(
 
 const instrumentLine = document.createElement("div");
 instrumentLine.className = "instrument-line";
-instrumentLine.append(fpsLabel, inferenceLabel);
+instrumentLine.append(fpsLabel, inferenceLabel, framesMeasuredProbe);
 
 const signalsFooter = document.createElement("div");
 signalsFooter.className = "signals-footer";

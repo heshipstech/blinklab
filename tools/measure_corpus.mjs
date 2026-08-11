@@ -127,15 +127,36 @@ for (const [i, clip] of clips.entries()) {
     );
 
     // No timeout worth setting here: a ten minute clip at 60 fps is
-    // 36,000 frames and the run legitimately takes an hour.
+    // 36,000 frames and the run legitimately takes an hour. The wait
+    // also ends on a failed clip, read from the status line's
+    // machine-readable state, because this loop used to know only the
+    // success words: any clip failure that reaches the clipFailed
+    // state would have parked the whole batch forever. (A decode that
+    // stalls without ever failing still would; no state exists to
+    // see.) And before remediation B1 a clip measured with no model
+    // present ended in "Measured 0 frames", which this prefix match
+    // booked as a success. "36 measured, 0 failed" with 16 never
+    // measured is this project's fourth silent success.
     await page.waitForFunction(
       () =>
+        document.querySelector('p[data-state="clipFailed"]') !== null ||
         [...document.querySelectorAll("p")].some((p) =>
           (p.textContent ?? "").startsWith("Measured"),
         ),
       null,
       { timeout: 0 },
     );
+    const failed = await page.evaluate(
+      () =>
+        document
+          .querySelector('p[data-state="clipFailed"]')
+          ?.textContent?.trim() ?? null,
+    );
+    if (failed !== null) {
+      failures += 1;
+      console.log(`${label}  FAILED: ${failed.slice(0, 90)}`);
+      continue;
+    }
     const summary = await page.evaluate(
       () =>
         [...document.querySelectorAll("p")]

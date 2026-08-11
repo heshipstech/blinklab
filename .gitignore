@@ -60,3 +60,8 @@ recordings/
 # Throwaway probe scripts written while debugging in a browser.
 # They are not part of the project and must not reach a commit.
 *.cjs
+
+# Harness scratch. Agent worktrees under .claude/worktrees hold full
+# copies of this repository, and on a machine without the local
+# excludes a stray `git add .` would commit one whole.
+.claude/

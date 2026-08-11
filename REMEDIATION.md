@@ -66,7 +66,20 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 ## Stage B. Stop corrupting data and hiding failure
 
-- [ ] **B1 (R7).** Move `framesMeasured += 1` at `src/main.ts:1542` inside
+- [x] **B1 (R7).** DONE 11 August, PR #222: the counter increments only
+      after `detectForVideo` returns; a hidden probe plus three end to
+      end tests pin it from both sides (blocked model stays 0, healthy
+      model climbs, and the stepped-clip count still lands on 60);
+      proven able to fail by hoisting the increment back and by killing
+      the probe write, two red runs. Review forced three repairs: a
+      stepped run that measured nothing now REFUSES instead of
+      misdiagnosing "wrong interval, file is correct", the status line
+      carries machine-readable `data-state` so the corpus runner books
+      that refusal as a failure instead of parking forever, and a
+      source-run token stops a superseded clip run from writing into
+      its successor's session. Issue #221 filed for the backwards
+      model clock a skeptic found nearby. Was: Move `framesMeasured += 1`
+      at `src/main.ts:1542` inside
       the landmarker guard 21 lines below. A cold start counts about
       3,000 frames before the model exists and writes the total into the
       export header. **Regression surface:** the same variable feeds
