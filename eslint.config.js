@@ -17,7 +17,11 @@ export default tseslint.config(
       globals: { process: "readonly", console: "readonly" },
     },
   },
-  { ignores: ["dist/", "public/mediapipe-wasm/", "analysis/.venv/"] },
+  // .claude/ is harness scratch: agent worktrees carry full repo
+  // copies, and linting one broke the root gates on 11 August 2026.
+  {
+    ignores: ["dist/", "public/mediapipe-wasm/", "analysis/.venv/", ".claude/"],
+  },
   js.configs.recommended,
   tseslint.configs.recommended,
   { languageOptions: { globals: globals.browser } },

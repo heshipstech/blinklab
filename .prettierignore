@@ -2,3 +2,7 @@ dist/
 package-lock.json
 public/mediapipe-wasm/
 analysis/
+# Harness scratch. Agent worktrees under .claude/ hold full repo
+# copies, and their vendored files escape the patterns above: the
+# copies' public/mediapipe-wasm/ broke this gate on 11 August 2026.
+.claude/
