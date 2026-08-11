@@ -6,7 +6,7 @@ The save state for the work that follows the August 2026 audit.
 for the fixes. `AUDIT_REPORT_AUG_2026.md` section 6 holds the reasoning
 behind each increment; this file holds the order and the progress.
 
-Paused 10 August 2026. Resuming 12 August.
+Paused 10 August 2026, resumed 11 August.
 
 ---
 
@@ -41,7 +41,7 @@ this stage.** The Y Combinator application is editable until 28 August.
       retired phrases banned by `tools/claimGuard.mjs`. PR #215.
 - [x] **R2.** `blinklab-blinks-*.csv` refused by `.gitignore`, guarded by
       `tools/exportGuard.mjs`. PR #213.
-- [ ] **A1 (R3).** Five stale prose claims: the reproduction command in
+- [x] **A1 (R3).** DONE 11 August, with tools/resultGuard.mjs as the check: it reads docs/eyeblink8-result.txt and also covers ARCHITECTURE.md. Was: five stale prose claims: the reproduction command in
       `STATE.md:303-308` that prints 82.8% against a headline of 87.7%,
       the withdrawn-glasses paragraph at `README.md:243-247`, the
       refractory contradiction at `README.md:328-330`, the false citation

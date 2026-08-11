@@ -15,7 +15,7 @@ Everything that decides anything lives in `core` as a function from
 values to values. Everything that talks to the world lives in `io`.
 `main.ts` is the wiring between them.
 
-That is why 461 unit tests run in about two seconds with no browser. A
+That is why 495 unit tests run in about three seconds with no browser. A
 blink detector that takes numbers and returns numbers can be tested on a
 hand written series where you know the answer, and most of this project's
 real defects were found that way.
@@ -89,7 +89,7 @@ src/core/     pure logic, no browser, ~45 modules, this is the project
 src/io/       camera, video files, MediaPipe, canvas, downloads
 src/main.ts   wiring and the DOM. The only file that builds the page
 test/core/    unit tests, one per core module
-test/e2e/     Playwright, two browser engines
+test/e2e/     Playwright. Chromium in CI, WebKit added locally
 analysis/     Python. Reads exported CSV, does statistics. Never measures
 tools/        the corpus runner, which drives the real built app
 docs/evidence/ the data behind published claims
