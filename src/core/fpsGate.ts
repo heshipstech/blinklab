@@ -8,6 +8,41 @@ export function measurableAtFps(fps: number | null): boolean {
   return fps !== null && fps >= MIN_BLINK_FPS;
 }
 
+/**
+ * The readout for the rate the pipeline is achieving.
+ *
+ * Named a PROCESSING rate, deliberately, remediation D1 stage one.
+ * The number is how often the frame handler runs, which for a live
+ * camera is the display's animation rate: on a 20 frames per second
+ * camera the old label read "Frames per second: 70" and a reader took
+ * the camera to be fast enough for blink detection when it was not.
+ * The honest label buys no new measurement, it stops the existing one
+ * from impersonating the camera. Wiring a true camera rate into the
+ * 25 fps gate is stage two, held until its blast radius is measured
+ * on real hardware, because it will refuse sessions that succeed
+ * today.
+ *
+ * Mode-aware, from review: for a clip the number rides the MEDIA
+ * clock (frameClock's frameTimestampMs), so it is the clip's own
+ * rate, and "not the camera's" would have been exactly backwards on
+ * a 15 fps DROZY recording. The file-mode suffix deliberately avoids
+ * the word "Measured": the stepped-clip end to end test anchors its
+ * status line on that word, and the first draft's label stole the
+ * anchor mid-run.
+ */
+export function processingRateMessage(
+  fps: number | null,
+  source: "camera" | "file",
+): string {
+  if (fps === null) {
+    return "Processing rate: measuring...";
+  }
+  const rounded = String(Math.round(fps));
+  return source === "camera"
+    ? `Processing rate: ${rounded} frames per second, the instrument's pace, not the camera's`
+    : `Processing rate: ${rounded} frames per second, on the clip's own clock`;
+}
+
 export function fpsGateMessage(fps: number | null): string {
   if (measurableAtFps(fps)) {
     return "";

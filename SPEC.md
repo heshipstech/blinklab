@@ -21,7 +21,7 @@ The original seed here held three fields and planned to grow one per increment. 
 export type FeatureRecord = {
   timestampMs: number;
   faceDetected: boolean; // face present AND landmark count valid
-  fps: number | null;
+  fps: number | null; // the PROCESSING rate: animation pace live, media-clock pace on clips; not a camera measurement (D1)
   apertureMm: number | null;
   baselineMm: number | null; // the live 4.2 baseline (blink line)
   shutBaselineMm: number | null; // frozen first-ready baseline (shut line)

@@ -10,6 +10,7 @@ import {
   clipRefusedMessage,
   fpsGateMessage,
   measurableAtFps,
+  processingRateMessage,
 } from "../../src/core/fpsGate";
 
 describe("measurableAtFps", () => {
@@ -89,5 +90,30 @@ describe("clipRefusedMessage, a whole clip below the floor", () => {
 
   it("copes when the frame rate could not be established at all", () => {
     expect(clipRefusedMessage(null, 900)).toContain("could not be established");
+  });
+});
+
+describe("the processing rate readout (remediation D1, stage one)", () => {
+  it("names itself a processing rate and disowns the camera, live", () => {
+    // On a 20 fps camera the old label read "Frames per second: 70",
+    // and a reader took the camera to be fast enough for blink
+    // detection. The label now says what the number is and is not.
+    const message = processingRateMessage(59.7, "camera");
+    expect(message).toBe(
+      "Processing rate: 60 frames per second, the instrument's pace, not the camera's",
+    );
+    expect(processingRateMessage(null, "camera")).toBe(
+      "Processing rate: measuring...",
+    );
+    expect(message).not.toContain("Frames per second:");
+  });
+
+  it("owns the clip's clock in file mode instead of disowning it", () => {
+    // Review caught the first draft applying the camera suffix to
+    // clips, where the number rides the media clock and IS the
+    // source's rate: exactly backwards on a 15 fps DROZY recording.
+    expect(processingRateMessage(15, "file")).toBe(
+      "Processing rate: 15 frames per second, on the clip's own clock",
+    );
   });
 });

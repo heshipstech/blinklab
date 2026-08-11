@@ -69,6 +69,6 @@ test("one throw in the frame loop stops measurement visibly and keeps the data",
   await page.getByRole("button", { name: "Start camera" }).click();
   await expect(message).toBeVisible();
   await expect(
-    page.locator("p").filter({ hasText: /Frames per second: \d+/ }),
+    page.locator("p").filter({ hasText: /Processing rate: \d+/ }),
   ).toBeHidden();
 });

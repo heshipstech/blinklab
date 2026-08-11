@@ -193,7 +193,16 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 ## Stage D. The risky one, alone, on a quiet day
 
-- [ ] **D1 (R13).** The frames-per-second readout is the animation-frame
+- [ ] **D1 (R13).** STAGE ONE DONE 12 August, PR #230: the readout is
+      relabelled "Processing rate", mode-aware after review (live: the
+      instrument's pace, not the camera's; clips: measured on the
+      clip's own clock, where the number IS the source's rate), wording
+      pinned by unit test and proven red by reversion; SPEC's fps field
+      and MODEL_CARD's 25 fps sentence now say the same. STAGE TWO
+      REMAINS and keeps this box unticked: measure the blast radius on
+      real hardware, then wire a true camera rate into the gate.
+      **That will begin refusing sessions that succeed today**, and it
+      needs the owner's machines and a quiet day. Was: The frames-per-second readout is the animation-frame
       call rate, not the camera's. On a 20 fps device the page reads 70,
       which holds the 25 fps blink gate open in healthy sessions.
       **Split it.** First relabel the number honestly as a processing

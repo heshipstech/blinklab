@@ -35,7 +35,7 @@ test("a camera session with no model says so instead of looking healthy", async 
 
   // The healthy-looking lie is gone with the state: no frame rate
   // readout pretending a session is being measured.
-  await expect(page.getByText(/Frames per second: \d+/)).toBeHidden();
+  await expect(page.getByText(/Processing rate: \d+/)).toBeHidden();
 });
 
 test("retry after the network recovers resumes a real session", async ({

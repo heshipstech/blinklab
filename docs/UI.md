@@ -282,10 +282,10 @@ the column.**
 
 #### Box: Instrument
 
-| Element           | Strings                                                                  |
-| ----------------- | ------------------------------------------------------------------------ |
-| Frames per second | `Frames per second: N` or `Frames per second: measuring...`              |
-| Inference time    | `Inference time: N ms` with `, over the 30 ms budget` appended when over |
+| Element         | Strings                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Processing rate | `Processing rate: N frames per second, the instrument's pace, not the camera's` or `Processing rate: measuring...` |
+| Inference time  | `Inference time: N ms` with `, over the 30 ms budget` appended when over                                           |
 
 ---
 
