@@ -38,6 +38,7 @@ import {
   clipRefusedMessage,
   fpsGateMessage,
   measurableAtFps,
+  processingRateMessage,
 } from "./core/fpsGate";
 import {
   CALIBRATION_TARGETS,
@@ -1760,11 +1761,7 @@ function processFrame(
   // frame rate is a wrong number rather than a missing one.
   writeReadout(
     fpsLabel,
-    state.kind !== "running"
-      ? ""
-      : fps === null
-        ? "Frames per second: measuring..."
-        : `Frames per second: ${String(Math.round(fps))}`,
+    state.kind !== "running" ? "" : processingRateMessage(fps, frameSource),
   );
 
   if (state.kind === "running" && canvasContext !== null) {
@@ -2829,7 +2826,7 @@ const eyesBox = box(
 
 // Head pose and the pose gate live with gaze rather than with the
 // instrument readouts, because they explain why the gaze lines above
-// them go quiet. Next to "frames per second" they would explain
+// them go quiet. Next to "processing rate" they would explain
 // nothing.
 const gazeBox = box(
   "Gaze",
@@ -2843,7 +2840,7 @@ const gazeBox = box(
 );
 
 // The live traces, plus the two numbers describing how well they are
-// being captured. Frame rate and inference time are not measurements
+// being captured. Processing rate and inference time are not measurements
 // of the eyes, but they ARE measurements of the signal on this strip,
 // so they belong beside it rather than in a box of their own.
 const liveSignalsBox = box("Live signals", graphStrip, signalsFooter);

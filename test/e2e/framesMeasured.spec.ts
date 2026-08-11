@@ -57,7 +57,7 @@ test("no frame counts as measured before the model exists", async ({
   // often enough to compute a rate. Without this, a zero counter
   // could mean a stalled loop rather than a working guard.
   await expect(
-    page.locator("p").filter({ hasText: /Frames per second: \d+/ }),
+    page.locator("p").filter({ hasText: /Processing rate: \d+/ }),
   ).toBeVisible({ timeout: 30_000 });
 
   const probe = page.getByTestId("frames-measured");

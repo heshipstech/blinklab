@@ -1,13 +1,15 @@
-Last increment: remediation C3, the reducers refuse a backwards
-clock, closing issue #107 and Stage C (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #229, 2026-08-12;
+Last increment: remediation D1 stage one, the frames-per-second
+readout relabelled as a processing rate (REMEDIATION.md).
+Last commit, as of the stamp below: pull request #230, 2026-08-12;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
 hiding failure, is COMPLETE (B1 to B5, PRs #222 to #226). Stage C,
 make the tests able to fail, is COMPLETE (C1 to C3, PRs #227 to
-#229). Next: Stage D, the frames-per-second readout, risky, alone on
-a quiet day; or Stage E/F items if the day is not quiet. Issue #221 records
+#229). Stage D: stage one, the safe relabel, is done; stage two,
+wiring a true camera rate into the 25 fps gate, is HELD until its
+blast radius is measured on the owner's real hardware, because it
+will refuse sessions that succeed today. Stage E is open meanwhile. Issue #221 records
 the backwards model clock found by B1's review.
 Stamped: 12 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
@@ -392,7 +394,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 531 unit tests, 14 end to end tests all run in Chromium
+Test count: 533 unit tests, 14 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 

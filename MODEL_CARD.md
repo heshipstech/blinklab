@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 11 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 12 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -63,7 +63,7 @@ Where a person's mind is, is a different question.
 
 ## Where it fails
 
-**Below 25 frames per second it stops detecting blinks entirely.** At 15
+**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display is not yet caught (remediation D1, stage two pending).** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
 The failure is currently near-silent: one line of small text, while
 everything else on the page carries on looking healthy. This removed 16
