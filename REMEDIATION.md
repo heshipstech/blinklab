@@ -118,7 +118,16 @@ this stage.** The Y Combinator application is editable until 28 August.
       state and stops appending feature records**. A catch that silently
       resumes is this project's own recurring defect wearing a fix's
       clothing.
-- [ ] **B4 (R10).** The blink shape window at `src/main.ts:1948-1951`
+- [x] **B4 (R10).** DONE 12 August, PR #225: shapeWindowStartMs in
+      core/blinkShape.ts clips the window at the previous blink's end,
+      read from the reducer's own pre-step memory, no new state. The
+      audit's synthetic two-close-blinks trace is the fixture: the
+      clipped window gives blink 2 its own three columns, and a
+      counterfactual pins the old contamination bit for bit (A/V 231 ms
+      read as 76 ms). Mutation proof: deleting the clip turns the test
+      red. Known residue: a closure the reducer refused leaves no end
+      time, so a window opening after one can still see it, as before.
+      Was: The blink shape window at `src/main.ts:1948-1951`
       reaches back over the previous blink, so a blink can be published
       with its predecessor's closing velocity. The only genuine
       arithmetic error the audit found.
