@@ -15,7 +15,13 @@ export type CameraState =
   // ever be measured. Distinct from "failed" for the same reason
   // clipFailed is: the camera is innocent, and the fix is a retry
   // of the load, not a visit to permission settings.
-  | { kind: "modelFailed" };
+  | { kind: "modelFailed" }
+  // The measurement loop itself threw. Remediation B3: before this
+  // state existed, a throw inside the frame handler killed the loop
+  // and the page froze silently, every readout stuck on its last
+  // value. The reason is carried because the operator is being asked
+  // to reload and deserves to know why.
+  | { kind: "measurementFailed"; reason: string };
 
 export function classifyCameraError(errorName: string): CameraState {
   switch (errorName) {
@@ -58,5 +64,14 @@ export function cameraStateMessage(state: CameraState): string {
       // the model, and this message cannot see which happened. The
       // network is named as a hint, not asserted as the cause.
       return 'The measuring model could not be loaded, so nothing can be measured. This is often a network problem. Check your connection, then click "Retry loading the model".';
+    case "measurementFailed":
+      // Three facts and nothing more: it stopped, what was recorded
+      // survived, reload for a fresh start. "Anything recorded" and
+      // not "the data", because a crash can land before a single
+      // record exists, and a promise of data that is not there would
+      // contradict the disabled export buttons beside it. The reason
+      // is included because "internal error" alone teaches nobody
+      // anything and cannot be reported.
+      return `Measurement stopped because of an internal error (${state.reason}). Anything recorded before the stop is kept for export. Reload the page to measure again.`;
   }
 }

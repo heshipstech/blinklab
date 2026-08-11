@@ -1,6 +1,21 @@
-export function startFrameLoop(onFrame: (nowMs: number) => void): void {
+// A throw in onFrame ends the loop AND reports it. Both halves
+// matter, and remediation B3 is why. Without the catch, the throw
+// skips the re-arm and the page freezes silently, every readout
+// stuck on its last value. With a catch that resumed, the throw
+// would repeat at sixty a second while the page looked healthy,
+// which is this project's own recurring defect wearing a fix's
+// clothing. So: report once, stop for good, let the caller say so.
+export function startFrameLoop(
+  onFrame: (nowMs: number) => void,
+  onCrash: (error: unknown) => void,
+): void {
   function tick(nowMs: number): void {
-    onFrame(nowMs);
+    try {
+      onFrame(nowMs);
+    } catch (error: unknown) {
+      onCrash(error);
+      return;
+    }
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -51,13 +66,23 @@ export type VideoFrameLoop = {
 export function startVideoFrameLoop(
   video: VideoWithFrameCallback,
   onFrame: (mediaTimeSeconds: number) => void,
+  // Same contract as startFrameLoop's: a throw reports once and ends
+  // the loop, because this loop dying silently mid-clip is the same
+  // frozen page with a different driver.
+  onCrash: (error: unknown) => void,
 ): VideoFrameLoop {
   let stopped = false;
   let handle: number | null = null;
 
   function tick(_nowMs: number, metadata: VideoFrameMetadata): void {
     if (stopped) return;
-    onFrame(metadata.mediaTime);
+    try {
+      onFrame(metadata.mediaTime);
+    } catch (error: unknown) {
+      stopped = true;
+      onCrash(error);
+      return;
+    }
     handle = video.requestVideoFrameCallback(tick);
   }
 

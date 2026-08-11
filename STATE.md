@@ -1,13 +1,13 @@
-Last increment: remediation B2, the failed model load gets a named
-degraded state with a retry (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #223, 2026-08-11;
+Last increment: remediation B3, frame loop crashes contained visibly
+and the calibration storage guarded (REMEDIATION.md).
+Last commit, as of the stamp below: pull request #224, 2026-08-12;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
-hiding failure. B1 and B2 done; B3, guard the localStorage reads and
-writes and contain frame loop failures visibly, is next. Issue #221
-records the backwards model clock found by B1's review.
-Stamped: 11 August 2026. When this file changes, this stamp changes
+hiding failure. B1, B2 and B3 done; B4, the blink shape window that
+reaches back over the previous blink, is next. Issue #221 records
+the backwards model clock found by B1's review.
+Stamped: 12 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -390,7 +390,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 510 unit tests, 11 end to end tests all run in Chromium
+Test count: 515 unit tests, 12 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 97 Python tests of which
 2 skip
 

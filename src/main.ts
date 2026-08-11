@@ -387,6 +387,11 @@ let clipLoop: VideoFrameLoop | null = null;
 // A stepped run is a loop inside an await, so it cannot be cancelled
 // by clearing a handle. It checks this between frames instead.
 let clipStopRequested = false;
+// Set when the display loop dies (remediation B3). The loop starts
+// once per page life, so after a crash there is nothing behind the
+// camera path until a reload: beginCamera refuses while this is set,
+// re-showing the crash instead of a session that could only freeze.
+let frameLoopCrashReason: string | null = null;
 // Which call to beginCamera or beginVideoFile owns the page. Both
 // functions hold long awaits, and the user can start a new source in
 // the middle of one: the clip input stays enabled during a run, and
@@ -564,13 +569,17 @@ function render(): void {
   // forced off, never on, or this would overrule them.
   calibrateButton.disabled = !running;
   if (!running) {
-    for (const button of [
-      heatmapButton,
-      replayButton,
-      exportButton,
-      exportBlinksButton,
-    ]) {
+    for (const button of [heatmapButton, replayButton]) {
       button.disabled = true;
+    }
+    // measurementFailed keeps the exports. Its message promises the
+    // recorded data can still be exported, and buttons that
+    // contradict the message are worse than no message. The count
+    // rule from the last running frame still holds, so a session
+    // that recorded nothing stays disabled. Remediation B3.
+    if (state.kind !== "measurementFailed") {
+      exportButton.disabled = true;
+      exportBlinksButton.disabled = true;
     }
   }
   if (recorder !== null) {
@@ -676,6 +685,17 @@ async function beginCamera(deviceId?: string): Promise<void> {
   stopClipButton.hidden = true;
   stopCamera(video);
   unloadVideoFile(video);
+  // A dead display loop cannot run a camera session. Refuse with the
+  // original reason rather than entering a "running" state whose
+  // readouts would freeze on their first values. The refusal comes
+  // AFTER the supersede lines above on purpose: review found the
+  // early version returning before them, which left a live clip run
+  // half-stopped, still seeking while its measurements were frozen.
+  // Clips keep working: both clip drivers are their own loops.
+  if (frameLoopCrashReason !== null) {
+    setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
+    return;
+  }
   try {
     const frame = await startCamera(video, deviceId);
     if (runToken !== sourceRunToken) return;
@@ -921,13 +941,35 @@ async function beginVideoFile(file: File): Promise<void> {
     // frame rate readout describes frames actually measured, and the
     // export records the mode so an analysis can tell the two apart.
     measurementMode = "played";
-    clipLoop = startVideoFrameLoop(video, (mediaTimeSeconds) => {
-      const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
-      const clockStep = acceptFrame(frameClock, nowMs);
-      frameClock = clockStep.state;
-      if (!clockStep.accepted) return;
-      processFrame(nowMs, performance.now());
-    });
+    clipLoop = startVideoFrameLoop(
+      video,
+      (mediaTimeSeconds) => {
+        const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
+        const clockStep = acceptFrame(frameClock, nowMs);
+        frameClock = clockStep.state;
+        if (!clockStep.accepted) return;
+        processFrame(nowMs, performance.now());
+      },
+      (error) => {
+        // This loop belongs to one clip, so no page-wide flag: the
+        // next source builds a fresh loop. The session still ends
+        // visibly, with the data kept. The token bump keeps it that
+        // way: without it, pausing here rejected beginVideoFile's
+        // pending play() with an AbortError, whose catch then wrote
+        // that browser prose over this state as a clip diagnosis.
+        console.error("the clip measurement loop stopped:", error);
+        sourceRunToken += 1;
+        setState({
+          kind: "measurementFailed",
+          reason: error instanceof Error ? error.message : String(error),
+        });
+        try {
+          video.pause();
+        } catch (pauseError: unknown) {
+          console.error("the clip could not be paused:", pauseError);
+        }
+      },
+    );
 
     await video.play();
   } catch (error: unknown) {
@@ -941,6 +983,17 @@ async function beginVideoFile(file: File): Promise<void> {
     clipLoop = null;
     const reason =
       error instanceof Error ? error.message : "That file could not be read.";
+    // A throw AFTER frames were measured is a mid-run measurement
+    // crash, not a broken file: the stepped driver has no loop
+    // wrapper, so its throws land here. clipFailed would frame the
+    // internal error as a file problem and, worse, force-disable the
+    // exports, silently revoking minutes of recorded data that
+    // measurementFailed keeps offered. Remediation B3, from review.
+    if (framesMeasured > 0) {
+      console.error("the clip measurement stopped mid-run:", error);
+      setState({ kind: "measurementFailed", reason });
+      return;
+    }
     setState({ kind: "clipFailed", reason });
   }
 }
@@ -2053,16 +2106,24 @@ function processFrame(
           // the fresh profile. A refused solve keeps the old profile,
           // stale beats poisoned.
           const solved = solveCalibration(captureState.completed);
+          // A profile that could not be stored still calibrates THIS
+          // session: the in-memory profile is already active. The
+          // button label is the one persistent surface next to the
+          // feature, so the storage failure is written there rather
+          // than lost to the console. Remediation B3.
+          let profileStored = true;
           if (solved !== null) {
             calibrationProfile = solved;
-            saveCalibrationProfile(solved);
+            profileStored = saveCalibrationProfile(solved);
           }
           captureState = null;
           calibrationOverlay.hidden = true;
           calibrateButton.textContent =
             solved === null
               ? "Recalibrate gaze (solver refused the samples, try again)"
-              : "Recalibrate gaze";
+              : profileStored
+                ? "Recalibrate gaze"
+                : "Recalibrate gaze (calibrated for now, but could not be stored, so it will not survive a reload)";
           refreshHeatmapButton();
         } else {
           const target = CALIBRATION_TARGETS[captureState.targetIndex];
@@ -2928,10 +2989,35 @@ render();
 // The display loop drives the camera. A clip is driven by its own
 // decoded frames instead, so this returns early in file mode rather
 // than sampling an interpolated currentTime sixty times a second.
-startFrameLoop((wallClockMs) => {
-  if (frameSource === "file") return;
-  const clockStep = acceptFrame(frameClock, wallClockMs);
-  frameClock = clockStep.state;
-  if (!clockStep.accepted) return;
-  processFrame(wallClockMs, wallClockMs);
-});
+startFrameLoop(
+  (wallClockMs) => {
+    if (frameSource === "file") return;
+    const clockStep = acceptFrame(frameClock, wallClockMs);
+    frameClock = clockStep.state;
+    if (!clockStep.accepted) return;
+    processFrame(wallClockMs, wallClockMs);
+  },
+  (error) => {
+    // The loop is dead for the life of the page, and the flag is what
+    // keeps that honest: beginCamera refuses while it is set, because
+    // a "running" session with no loop behind it is the frozen page
+    // this state exists to replace. Records stop appending because
+    // nothing appends them; what was recorded stays exportable.
+    //
+    // The token bump makes every in-flight continuation stale:
+    // review walked a pending startCamera resolving AFTER the crash
+    // and writing "running" over this state, camera light on, page
+    // frozen. The state is written FIRST because it is the one duty
+    // that may not be skipped; stopping the camera is best effort.
+    console.error("the measurement loop stopped:", error);
+    sourceRunToken += 1;
+    frameLoopCrashReason =
+      error instanceof Error ? error.message : String(error);
+    setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
+    try {
+      stopCamera(video);
+    } catch (stopError: unknown) {
+      console.error("the camera could not be stopped:", stopError);
+    }
+  },
+);

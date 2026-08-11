@@ -100,7 +100,19 @@ this stage.** The Y Combinator application is editable until 28 August.
       sixth degraded state for a failed model load, with a
       message and a retry. Today the camera path runs forever looking
       healthy and the clip path prints a completed measurement.
-- [ ] **B3 (R9).** Guard both `localStorage` reads and both writes in
+- [x] **B3 (R9).** DONE 12 August, PR #224: both loops in frameLoop.ts
+      report a crash once and stop for good; CameraState gained
+      `measurementFailed` (reason carried, recorded data stays
+      exportable, reload to measure again); a dead display loop makes
+      beginCamera refuse rather than run a frozen session; a stepped
+      clip crash mid-run reports as a measurement crash, not a broken
+      file; crash handlers bump the source-run token so pending
+      continuations cannot overwrite the crash state. All four
+      calibration storage ops guarded, failed profile store surfaced on
+      the calibrate button. The audit's check shipped: one injected
+      throw, message appears, record count freezes, export stays
+      offered; both wrong fixes (no catch, silently resuming catch)
+      proven red. Was: Guard both `localStorage` reads and both writes in
       `src/io/calibrationStore.ts`. Wrap `onFrame` in
       `src/io/frameLoop.ts` in a catch that **enters a visible degraded
       state and stops appending feature records**. A catch that silently

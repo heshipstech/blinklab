@@ -35,6 +35,7 @@ describe("cameraStateMessage", () => {
       { kind: "noCamera" },
       { kind: "failed", reason: "AbortError" },
       { kind: "modelFailed" },
+      { kind: "measurementFailed", reason: "boom" },
     ];
     for (const state of states) {
       expect(cameraStateMessage(state).length).toBeGreaterThan(10);
@@ -63,6 +64,23 @@ describe("a model that will not download", () => {
     expect(message).toContain("Retry loading the model");
     expect(message).toContain("nothing can be measured");
     expect(message).not.toContain("camera");
+    expect(message).not.toContain("permission");
+  });
+});
+
+describe("a measurement loop that crashed", () => {
+  it("carries the reason, promises the data, and asks for a reload", () => {
+    // Remediation B3. Before this state, a throw in the frame
+    // handler froze the page silently. The message must name the
+    // error (an unnamed internal error can never be reported), say
+    // the recorded data survived, and give the one recovery step.
+    const message = cameraStateMessage({
+      kind: "measurementFailed",
+      reason: "canvas is gone",
+    });
+    expect(message).toContain("canvas is gone");
+    expect(message).toContain("kept");
+    expect(message).toContain("Reload the page");
     expect(message).not.toContain("permission");
   });
 });
