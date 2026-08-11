@@ -147,7 +147,20 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 ## Stage C. Make the tests able to fail
 
-- [ ] **C1 (R11).** Pin `BLINK_REFRACTORY_MS`, `POSE_LIMITS` pitch and
+- [x] **C1 (R11).** DONE 12 August, PR #227. A census first: mutate
+      every candidate both directions, record what survives. Naked were
+      pitch, roll and yaw in BOTH directions (the old tests derive their
+      angles from the constants and move with them) and the learning
+      window in the shrink direction, the audit's headline, confirmed
+      live. New literal-valued tests pin all three pose axes at their
+      exact limits, the learning window at exactly 30,000 ms, and the
+      audit-flagged missing learningSecondsLeft behaviour. The list
+      lives in tools/mutationCheck.mjs, RUNNABLE: 23 mutations, each
+      applied, suite run, red demanded, file restored; refuses with its
+      own exit codes when the tree is already red or the runner cannot
+      run, after review demonstrated the first draft printing "all
+      caught" with the runner replaced by a nonexistent command. Was:
+      Pin `BLINK_REFRACTORY_MS`, `POSE_LIMITS` pitch and
       roll, the three `BASELINE_` gates and both PERCLOS time boundaries.
       The 30 second learning window can currently be cut to 1 second with
       all tests green. **Verify by mutating each**, and keep the mutation

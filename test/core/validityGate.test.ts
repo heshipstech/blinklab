@@ -57,3 +57,37 @@ describe("poseValidityMessage", () => {
     expect(poseValidityMessage({ kind: "noPose" }).length).toBeGreaterThan(10);
   });
 });
+
+describe("the pose limits, pinned by literal degrees (remediation C1)", () => {
+  // Every test above derives its angles FROM the constants, so it
+  // moves when they move: the audit bent pitch to 89 degrees and to
+  // 1 degree and the suite stayed green both times. These literals
+  // are the pin. Changing a limit is allowed, but it must arrive
+  // here consciously, with these numbers, not slip through. The
+  // valid probes sit AT each limit, because at-limit-valid is the
+  // gate's convention (strictly beyond refuses): review found the
+  // first draft probing one degree inside, which left a one-degree
+  // tightening invisible to the whole suite.
+  const level = { pitchDeg: 0, yawDeg: 0, rollDeg: 0 };
+
+  it("pitch: 20 degrees measures, 21 refuses, either sign", () => {
+    expect(poseValidity({ ...level, pitchDeg: 20 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, pitchDeg: -20 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, pitchDeg: 21 }).kind).toBe("invalid");
+    expect(poseValidity({ ...level, pitchDeg: -21 }).kind).toBe("invalid");
+  });
+
+  it("roll: 25 degrees measures, 26 refuses, either sign", () => {
+    expect(poseValidity({ ...level, rollDeg: 25 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, rollDeg: -25 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, rollDeg: 26 }).kind).toBe("invalid");
+    expect(poseValidity({ ...level, rollDeg: -26 }).kind).toBe("invalid");
+  });
+
+  it("yaw: 25 degrees measures, 26 refuses, either sign", () => {
+    expect(poseValidity({ ...level, yawDeg: 25 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, yawDeg: -25 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, yawDeg: 26 }).kind).toBe("invalid");
+    expect(poseValidity({ ...level, yawDeg: -26 }).kind).toBe("invalid");
+  });
+});
