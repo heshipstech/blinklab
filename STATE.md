@@ -1,12 +1,12 @@
-Last increment: remediation C1, the safety constants pinned with a
-runnable mutation list in tools/mutationCheck.mjs (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #227, 2026-08-12;
+Last increment: remediation C2, the shuffled-null control tested,
+with the starved branch raising by name (REMEDIATION.md).
+Last commit, as of the stamp below: pull request #228, 2026-08-12;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
 hiding failure, is COMPLETE (B1 to B5, PRs #222 to #226). Stage C,
-make the tests able to fail: C1 done; C2, the DROZY shuffled-null
-test that row 7.7 demands, is next, then C3 (issue #107). Issue #221 records
+make the tests able to fail: C1 and C2 done; C3, issue #107, the
+reducers accepting backwards timestamps, is next and closes Stage C. Issue #221 records
 the backwards model clock found by B1's review.
 Stamped: 12 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
@@ -392,7 +392,7 @@ boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 524 unit tests, 14 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 97 Python tests of which
+in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

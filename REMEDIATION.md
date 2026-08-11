@@ -165,7 +165,15 @@ this stage.** The Y Combinator application is editable until 28 August.
       The 30 second learning window can currently be cut to 1 second with
       all tests green. **Verify by mutating each**, and keep the mutation
       list in a file so the next person can repeat it.
-- [ ] **C2 (R12).** Row 7.7's negative control test, in
+- [x] **C2 (R12).** DONE 12 August, PR #228: the silent-zero branch
+      raises by name (main() already filtered such features, so the
+      guard protects direct and future callers); the collapse test
+      plants a near-perfect perclos-KSS relation in synthetic sessions
+      and demands the shuffled null land in a BAND, under 0.9 worst
+      and 0.4 median but above 0.5 and 0.05, because review showed a
+      null stubbed to zero sailing under ceilings alone. Both proven
+      red by mutation: shuffle disabled, and the zero restored. Was:
+      Row 7.7's negative control test, in
       `analysis/tests/test_drozy.py`, importing `_shuffled_null`,
       asserting the collapse **and** that the silent-zero branch raises.
 - [ ] **C3.** Issue #107, reducers accepting backwards timestamps and
