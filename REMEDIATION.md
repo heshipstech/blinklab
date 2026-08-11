@@ -55,7 +55,7 @@ this stage.** The Y Combinator application is editable until 28 August.
       `test/core/tiltInvariance.test.ts` to a 1280x720 frame so it can
       fail. It runs on a square frame today, where the defect cannot
       appear.
-- [ ] **A3 (R5).** Dated stamps on `README.md` and `STATE.md`, copying
+- [x] **A3 (R5).** DONE 11 August: stamps on README.md and STATE.md, enforced by test against the last commit touching each file, CI fetching full history. Was: dated stamps on `README.md` and `STATE.md`, copying
       `MODEL_CARD.md:6-7`. That stamp already converted one finding from
       a contradiction into a correctly-scoped snapshot.
 - [ ] **A4 (R6).** `THIRD_PARTY_LICENSES` emitted into `dist` at build
