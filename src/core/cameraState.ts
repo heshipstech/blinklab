@@ -8,7 +8,14 @@ export type CameraState =
   // A clip that would not load is not a camera problem, and saying
   // "the camera could not start" would send someone to their browser
   // permissions to fix a file they should simply re-export.
-  | { kind: "clipFailed"; reason: string };
+  | { kind: "clipFailed"; reason: string }
+  // The measuring model failed to load. Remediation B2: before this
+  // state existed, the failure was swallowed into the console and a
+  // camera session ran forever looking healthy while nothing could
+  // ever be measured. Distinct from "failed" for the same reason
+  // clipFailed is: the camera is innocent, and the fix is a retry
+  // of the load, not a visit to permission settings.
+  | { kind: "modelFailed" };
 
 export function classifyCameraError(errorName: string): CameraState {
   switch (errorName) {
@@ -42,5 +49,14 @@ export function cameraStateMessage(state: CameraState): string {
       // The reason arrives already written for a person to read, so it
       // is passed through rather than wrapped in more apology.
       return state.reason;
+    case "modelFailed":
+      // Names the model, the consequence, and the way back. It must
+      // not mention the camera: sending someone to their permission
+      // settings for a failed load teaches them the wrong lesson.
+      // "Could not be loaded", not "could not be downloaded": the
+      // loader also fails on machines whose graphics stack refuses
+      // the model, and this message cannot see which happened. The
+      // network is named as a hint, not asserted as the cause.
+      return 'The measuring model could not be loaded, so nothing can be measured. This is often a network problem. Check your connection, then click "Retry loading the model".';
   }
 }
