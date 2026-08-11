@@ -21,6 +21,13 @@ export function recordBlink(
   state: BlinkRateState,
   nowMs: number,
 ): BlinkRateState {
+  // Backwards clock: ignored, state unchanged. The read side is
+  // already safe, its minimum-observation rule refuses a negative
+  // span, so this keeps the record ordered. Issue #107, C3.
+  const newest = state.blinkTimesMs[state.blinkTimesMs.length - 1];
+  if (nowMs < state.startedAtMs || (newest !== undefined && nowMs < newest)) {
+    return state;
+  }
   return {
     ...state,
     blinkTimesMs: keepRecent(

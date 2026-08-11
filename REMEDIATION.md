@@ -176,7 +176,16 @@ this stage.** The Y Combinator application is editable until 28 August.
       Row 7.7's negative control test, in
       `analysis/tests/test_drozy.py`, importing `_shuffled_null`,
       asserting the collapse **and** that the silent-zero branch raises.
-- [ ] **C3.** Issue #107, reducers accepting backwards timestamps and
+- [x] **C3.** DONE 12 August, PR #229, closes #107, and Stage C is
+      COMPLETE: the five reducers the issue names (blink, longClosure,
+      baseline, blinkRate, perclos) ignore a frame stamped earlier than
+      the newest timestamp their state carries, and ongoingClosureMs
+      answers null rather than a negative. All five guards proven
+      red-by-removal; the boundary is strict, an equal stamp is
+      processed, pinned by test. Honest residual, in the comments: an
+      OPEN state carries no timestamp, so disorder among open frames
+      remains the door's job (frameClock acceptFrame), which the real
+      wiring always crosses. Was: Issue #107, reducers accepting backwards timestamps and
       emitting negative durations. Open since Phase 5 and squarely this
       territory.
 
