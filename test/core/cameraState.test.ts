@@ -34,6 +34,7 @@ describe("cameraStateMessage", () => {
       { kind: "denied" },
       { kind: "noCamera" },
       { kind: "failed", reason: "AbortError" },
+      { kind: "modelFailed" },
     ];
     for (const state of states) {
       expect(cameraStateMessage(state).length).toBeGreaterThan(10);
@@ -48,6 +49,21 @@ describe("cameraStateMessage", () => {
     expect(cameraStateMessage({ kind: "denied" })).toContain(
       "browser settings",
     );
+  });
+});
+
+describe("a model that will not download", () => {
+  it("names the model and the retry, and leaves the camera out of it", () => {
+    // Remediation B2. The failure is a download, the remedy is a
+    // retry, and the camera is innocent: the message must not send
+    // anyone toward permission settings, the way the camera states
+    // rightly do for their own failures.
+    const message = cameraStateMessage({ kind: "modelFailed" });
+    expect(message).toContain("model");
+    expect(message).toContain("Retry loading the model");
+    expect(message).toContain("nothing can be measured");
+    expect(message).not.toContain("camera");
+    expect(message).not.toContain("permission");
   });
 });
 

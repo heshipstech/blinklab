@@ -85,7 +85,19 @@ this stage.** The Y Combinator application is editable until 28 August.
       export header. **Regression surface:** the same variable feeds
       `checkStepping` at `main.ts:815-819` and a division in the clip
       summary.
-- [ ] **B2 (R8).** A sixth degraded state for a failed model load, with a
+- [x] **B2 (R8).** DONE 11 August, PR #223: CameraState gained
+      `modelFailed` with a readable message and a "Retry loading the
+      model" button. The camera path's fire-and-forget load now reports
+      its failure and stops the camera with the session; the clip path
+      refuses by name before the first seek; retry goes back through
+      beginCamera, so a camera unplugged during the outage gets its own
+      honest state instead of a session resumed over a dead stream.
+      Three e2e tests including the full retry round trip pinned to
+      B1's counter probe; both wirings proven able to fail by mutation.
+      The corpus runner learned the new terminal state (review caught
+      it parking otherwise). Known residue, deliberate: a load that
+      HANGS forever still looks healthy, no timeout was added. Was: A
+      sixth degraded state for a failed model load, with a
       message and a retry. Today the camera path runs forever looking
       healthy and the clip path prints a completed measurement.
 - [ ] **B3 (R9).** Guard both `localStorage` reads and both writes in

@@ -272,6 +272,14 @@ bannerColumn.append(statusBanner);
 const startButton = document.createElement("button");
 startButton.textContent = "Start camera";
 
+// The way back from a failed model download. Visible only in the
+// modelFailed state, and named exactly as the status message names
+// it, so the sentence and the button read as one instruction.
+const retryModelButton = document.createElement("button");
+retryModelButton.textContent = "Retry loading the model";
+retryModelButton.setAttribute("data-testid", "retry-model");
+retryModelButton.hidden = true;
+
 // Hidden until we know the machine has more than one camera.
 const picker = document.createElement("select");
 picker.setAttribute("aria-label", "Camera");
@@ -576,6 +584,7 @@ function render(): void {
   }
 
   startButton.hidden = running || state.kind === "requesting";
+  retryModelButton.hidden = state.kind !== "modelFailed";
 }
 
 function setState(next: CameraState): void {
@@ -684,7 +693,22 @@ async function beginCamera(deviceId?: string): Promise<void> {
       kssBefore = rating;
     });
     setState({ kind: "running" });
-    void ensureLandmarker();
+    // Fired, not awaited: the camera preview is honest on its own
+    // while the model downloads. But the failure is no longer
+    // fire-and-forget with it. Before B2 this call swallowed a failed
+    // download and the session ran forever looking healthy, readouts
+    // saying "measuring..." for a measurement that could never come.
+    void ensureLandmarker().then((ready) => {
+      if (ready || runToken !== sourceRunToken) return;
+      // The camera stops with the session. Leaving it capturing
+      // behind a failure screen that says "nothing can be measured"
+      // would keep the recording light on while the page hides every
+      // sign of the stream; review called that the dishonest shape.
+      // Retry re-requests the camera, which a granted permission
+      // makes near-instant.
+      stopCamera(video);
+      setState({ kind: "modelFailed" });
+    });
   } catch (error: unknown) {
     if (runToken !== sourceRunToken) return;
     const name = error instanceof Error ? error.name : String(error);
@@ -752,8 +776,16 @@ async function beginVideoFile(file: File): Promise<void> {
     // fetch and initialise, and the clip is still paused until it is
     // ready, so no part of the recording is consumed unmeasured.
     status.textContent = "Loading the model before the clip starts...";
-    await ensureLandmarker();
+    const modelReady = await ensureLandmarker();
     if (runToken !== sourceRunToken) return;
+    // Refused BEFORE the first seek. The alternative was measured on
+    // this exact scenario during B1: the stepper walked every frame
+    // for nothing and the summary could only guess at why the count
+    // was zero. Here the cause is still known by name.
+    if (!modelReady) {
+      setState({ kind: "modelFailed" });
+      return;
+    }
     status.textContent = "";
 
     if (stepToggle.checked) {
@@ -840,15 +872,16 @@ async function beginVideoFile(file: File): Promise<void> {
       // to the summary below: review of remediation B1 showed that
       // path diagnosing it as "stepped at the wrong interval, frames
       // visited twice" and promising a correct exported file, every
-      // clause false, while the export buttons sat disabled. The
-      // likeliest cause, a model that never loaded, gets its named
-      // degraded state in remediation B2; until then this refusal
-      // says what is known and nothing more.
+      // clause false, while the export buttons sat disabled. Since
+      // B2, a missing model is refused by name before the first
+      // seek, so a zero here has no known cause and the message
+      // claims none. Defense in depth: kept even though no staged
+      // test can currently reach it.
       if (framesMeasured === 0) {
         setState({
           kind: "clipFailed",
           reason:
-            "This clip was read frame by frame, but not one frame was measured, so there is no result to report. The likeliest cause is that the measuring model never finished loading. Reload the page and try the clip again.",
+            "This clip was read frame by frame, but not one frame was measured, so there is no result to report. Reload the page and try the clip again.",
         });
         return;
       }
@@ -913,27 +946,77 @@ async function beginVideoFile(file: File): Promise<void> {
 }
 
 let landmarker: FaceLandmarker | null = null;
-let landmarkerLoading = false;
+let landmarkerLoadingPromise: Promise<boolean> | null = null;
 let lastFacePresent: boolean | null = null;
 
-async function ensureLandmarker(): Promise<void> {
-  if (landmarker !== null || landmarkerLoading) {
-    return;
+// Resolves true when the model is ready, false when the download
+// failed. Concurrent callers share one attempt and one answer. After
+// a failure the promise is cleared, so the next call is a genuine
+// retry rather than a cached no. The old version swallowed the
+// failure into the console and resolved void, and every caller
+// carried on as if measurement were possible; remediation B2 gives
+// the failure a state instead (modelFailed, with a retry button).
+async function ensureLandmarker(): Promise<boolean> {
+  if (landmarker !== null) {
+    return true;
   }
-  landmarkerLoading = true;
-  try {
-    landmarker = await loadLandmarker();
-  } catch (error: unknown) {
-    // Full degraded-state treatment for a failed model load is 2.5 territory.
-    console.error("face landmarker failed to load:", error);
-  } finally {
-    landmarkerLoading = false;
-  }
+  landmarkerLoadingPromise ??= loadLandmarker()
+    .then((loaded) => {
+      landmarker = loaded;
+      return true;
+    })
+    .catch((error: unknown) => {
+      console.error("face landmarker failed to load:", error);
+      return false;
+    })
+    .finally(() => {
+      landmarkerLoadingPromise = null;
+    });
+  return landmarkerLoadingPromise;
 }
 
 startButton.addEventListener("click", () => {
   void beginCamera();
 });
+
+retryModelButton.addEventListener("click", () => {
+  void retryModel();
+});
+
+async function retryModel(): Promise<void> {
+  if (state.kind !== "modelFailed") return;
+  // Read, not bumped: a retry is another attempt at the same
+  // session, but a genuinely new source starting mid-download must
+  // still win over this continuation.
+  const runToken = sourceRunToken;
+  retryModelButton.disabled = true;
+  status.textContent = "Loading the measuring model again...";
+  const ready = await ensureLandmarker();
+  retryModelButton.disabled = false;
+  if (runToken !== sourceRunToken) return;
+  if (!ready) {
+    // The same state re-entered on purpose: the message comes back,
+    // and the console carries the loader's underlying error.
+    setState({ kind: "modelFailed" });
+    return;
+  }
+  // A camera session goes back through the front door. beginCamera
+  // re-requests the stream, which a granted permission makes fast,
+  // and a camera that has meanwhile been unplugged gets its own
+  // honest state from the same path instead of a session resumed
+  // over a dead stream. The session restarts from zero, baseline
+  // and all, because nothing was measured under the failed model.
+  if (frameSource === "camera") {
+    void beginCamera();
+    return;
+  }
+  // A clip run never started under a missing model, so there is
+  // nothing to resume. Idle's own message talks about the camera,
+  // so the next step for a clip is written over it.
+  setState({ kind: "idle" });
+  status.textContent =
+    "The model is loaded now. Pick your clip again to measure it.";
+}
 
 picker.addEventListener("change", () => {
   void beginCamera(picker.value);
@@ -2633,6 +2716,7 @@ signalsFooter.append(legend, instrumentLine);
 const sourceBox = box(
   "Source",
   startButton,
+  retryModelButton,
   clipLabel,
   stepLabel,
   stopClipButton,

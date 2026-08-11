@@ -137,20 +137,25 @@ for (const [i, clip] of clips.entries()) {
     // present ended in "Measured 0 frames", which this prefix match
     // booked as a success. "36 measured, 0 failed" with 16 never
     // measured is this project's fourth silent success.
+    // Two failure states, matched by name. B2 added modelFailed for
+    // a model that never loaded, and a selector that knew only
+    // clipFailed would park the batch on it, the exact trap this
+    // wait exists to avoid.
+    const FAILED_STATES =
+      'p[data-state="clipFailed"], p[data-state="modelFailed"]';
     await page.waitForFunction(
-      () =>
-        document.querySelector('p[data-state="clipFailed"]') !== null ||
+      (failedSelector) =>
+        document.querySelector(failedSelector) !== null ||
         [...document.querySelectorAll("p")].some((p) =>
           (p.textContent ?? "").startsWith("Measured"),
         ),
-      null,
+      FAILED_STATES,
       { timeout: 0 },
     );
     const failed = await page.evaluate(
-      () =>
-        document
-          .querySelector('p[data-state="clipFailed"]')
-          ?.textContent?.trim() ?? null,
+      (failedSelector) =>
+        document.querySelector(failedSelector)?.textContent?.trim() ?? null,
+      FAILED_STATES,
     );
     if (failed !== null) {
       failures += 1;

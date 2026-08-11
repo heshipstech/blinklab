@@ -10,30 +10,41 @@ import { expect, test } from "@playwright/test";
 //
 // The counter is observable through a hidden probe element written on
 // every accepted frame, OUTSIDE the guard, so moving the increment
-// back out of the guard cannot drag the probe with it.
+// back out of the guard cannot drag the probe with it. The no-model
+// test STALLS the model download rather than failing it, because a
+// failed download has had its own state and message since B2, while
+// a download in flight is exactly the cold start this counter lied
+// about.
 //
-// Three tests. The first proves the counter stays at zero without a
-// model. Alone it could pass vacuously, so the probe starts EMPTY and
-// only a real frame writes "0": a dead wire fails the assertion. The
-// second proves the same probe climbs when the model exists. The
-// stepped-clip test in videoFile.spec.ts squeezes from the other
-// side: a 60 frame clip must report 60 measured, within the one
-// frame of slack that test allows, so the guard cannot be narrowed
-// into undercounting by more than that. The third pins what a
-// stepped clip says when nothing was measured: a refusal, not the
-// false diagnosis review caught the first version of this fix
-// printing ("stepped at the wrong interval, frames visited twice,
-// the exported file is correct", all of it wrong, beside a disabled
-// export button).
+// Two tests, and the pair is the point. The first proves the counter
+// stays at zero without a model. Alone it could pass vacuously, so
+// the probe starts EMPTY and only a real frame writes "0": a dead
+// wire fails the assertion. The second proves the same probe climbs
+// when the model exists. The stepped-clip test in videoFile.spec.ts
+// squeezes from the other side: a 60 frame clip must report 60
+// measured, within the one frame of slack that test allows, so the
+// guard cannot be narrowed into undercounting by more than that.
+// What a clip run says when the model is MISSING lives in
+// modelFailed.spec.ts: since remediation B2 that case is refused by
+// name before the first seek, so B1's deeper zero-measured refusal
+// in the summary is defense in depth that no staged test can reach.
 
 test("no frame counts as measured before the model exists", async ({
   page,
 }) => {
-  // The block goes up before the page loads, so no cached model can
-  // sneak past it. Both the WASM runtime and the model file are
-  // refused: either one alone might leave a half-initialised path.
-  await page.route("**/mediapipe-wasm/**", (route) => route.abort());
-  await page.route("**/models/**", (route) => route.abort());
+  // The routes STALL rather than abort, and the difference is the
+  // scenario. An aborted download is a failure, and since remediation
+  // B2 a failure ends the session with its own state and message. A
+  // download that hangs is the cold start B1 is about: the session
+  // runs, frames flow, and the model simply is not there yet. The
+  // handlers never resolve, so the model stays forever in flight.
+  // Installed before the page loads, so no cached copy sneaks past.
+  await page.route("**/mediapipe-wasm/**", () => {
+    // Never resolved: the request hangs for the life of the page.
+  });
+  await page.route("**/models/**", () => {
+    // Never resolved: the request hangs for the life of the page.
+  });
 
   await page.goto("./");
   await expect(
@@ -83,35 +94,4 @@ test("the counter climbs once the model exists", async ({ page }) => {
   // Generous timeout: the model and WASM download from the preview
   // server first, and CI machines are slow.
   await expect(probe).toHaveText(/^[1-9]\d*$/, { timeout: 90_000 });
-});
-
-test("a stepped clip with no model refuses instead of misdiagnosing", async ({
-  page,
-}) => {
-  await page.route("**/mediapipe-wasm/**", (route) => route.abort());
-  await page.route("**/models/**", (route) => route.abort());
-
-  await page.goto("./");
-  await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
-  ).toBeVisible();
-
-  // Stepping is the default, asserted rather than assumed.
-  await expect(page.getByTestId("step-toggle")).toBeChecked();
-  await page
-    .getByTestId("clip-input")
-    .setInputFiles("test/fixtures/clip-60fps-60frames.mp4");
-
-  // The refusal names the facts: frames were read, none measured.
-  const status = page.locator('p[data-state="clipFailed"]');
-  await expect(status).toBeVisible({ timeout: 60_000 });
-  await expect(status).toContainText("not one frame was measured");
-
-  // And it must NOT deliver the confident wrong story: no duplicate
-  // visit diagnosis, no promise of a correct exported file, and the
-  // export buttons stay disabled because there is nothing to export.
-  await expect(status).not.toContainText("stepped at the wrong interval");
-  await expect(status).not.toContainText("is correct");
-  await expect(page.getByTestId("export-csv")).toBeDisabled();
-  await expect(page.getByTestId("export-blinks")).toBeDisabled();
 });
