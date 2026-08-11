@@ -58,7 +58,7 @@ this stage.** The Y Combinator application is editable until 28 August.
 - [x] **A3 (R5).** DONE 11 August: stamps on README.md and STATE.md, enforced by test against the last commit touching each file, CI fetching full history. Was: dated stamps on `README.md` and `STATE.md`, copying
       `MODEL_CARD.md:6-7`. That stamp already converted one finding from
       a contradiction into a correctly-scoped snapshot.
-- [ ] **A4 (R6).** `THIRD_PARTY_LICENSES` emitted into `dist` at build
+- [x] **A4 (R6).** DONE 11 August: public/THIRD_PARTY_LICENSES.txt ships in dist via vite's public copy, canonical Apache-2.0 text, unit tests plus an e2e fetch from the served site. Stage A is COMPLETE. Was: `THIRD_PARTY_LICENSES` emitted into `dist` at build
       time. MediaPipe is Apache-2.0, it is bundled, and the built output
       contains zero occurrences of "Copyright".
 

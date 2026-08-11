@@ -3,7 +3,8 @@ pixel space (REMEDIATION.md).
 Last commit, as of the stamp below: pull request #218, 2026-08-11;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: remediation Stage A. A1, A2 and A3 done, A4 is next.
+Currently working: remediation Stage A COMPLETE (A1 to A4). Stage B,
+stop corrupting data and hiding failure, is next.
 Stamped: 11 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
@@ -387,7 +388,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 506 unit tests, 7 end to end tests across two browser
+Test count: 509 unit tests, 8 end to end tests across two browser
 engines locally and Chromium in CI, 97 Python tests of which 2 skip
 
 ## DROZY, which is also ready
