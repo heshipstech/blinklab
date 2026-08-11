@@ -94,7 +94,7 @@ import {
   serialiseBlinkEvents,
   type BlinkEvent,
 } from "./core/blinkLog";
-import { analyzeClosing } from "./core/blinkShape";
+import { analyzeClosing, shapeWindowStartMs } from "./core/blinkShape";
 import { eyeAspectRatio, eyeLandmarksFromFace } from "./core/ear";
 import { eulerFromMatrix } from "./core/headPose";
 import { isFacePresent } from "./core/facePresence";
@@ -2156,6 +2156,9 @@ function processFrame(
       );
 
       const blinkCountBefore = blinkState.blinkCount;
+      // Captured BEFORE the step: after it, the reducer's memory of
+      // "the previous blink's end" is already this blink's end.
+      const previousBlinkEndMs = blinkState.lastBlinkEndedAtMs;
       const wasOpen = blinkState.eye !== "closed";
       const blinkMeasurable = measurableAtFps(fps);
       if (blinkMeasurable) framesBlinkMeasurable += 1;
@@ -2173,9 +2176,15 @@ function processFrame(
         rateState = recordBlink(rateState, nowMs);
 
         // Analyse the descent that just ended: the closure plus a
-        // little lead in, from the rolling aperture history.
-        const closureStartMs =
-          nowMs - (blinkState.lastBlinkDurationMs ?? 0) - 400;
+        // little lead in, from the rolling aperture history, clipped
+        // at the previous blink's end so the window cannot reach back
+        // over it. Unclipped, a quick second blink was published
+        // with its predecessor's closing velocity. Remediation B4.
+        const closureStartMs = shapeWindowStartMs(
+          nowMs,
+          blinkState.lastBlinkDurationMs ?? 0,
+          previousBlinkEndMs,
+        );
         const window = stabilitySamples
           .filter(
             (sample) =>

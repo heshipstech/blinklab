@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { apertureMm } from "../../src/core/aperture";
-import { analyzeClosing } from "../../src/core/blinkShape";
+import {
+  analyzeClosing,
+  shapeWindowStartMs,
+  type ApertureSample,
+} from "../../src/core/blinkShape";
 import {
   LEFT_EYE_EAR_INDICES,
   LEFT_IRIS_RING_INDICES,
@@ -143,5 +147,88 @@ describe("analyzeClosing against the recorded fixture", () => {
       expect(shape.amplitudeOverVelocityMs).toBeGreaterThan(10);
       expect(shape.amplitudeOverVelocityMs).toBeLessThan(400);
     }
+  });
+});
+
+describe("the shape window clipped at the previous blink (remediation B4)", () => {
+  // The audit's synthetic two-close-blinks trace, rebuilt on an exact
+  // 33 ms grid, 30 frames per second. Blink 1 is fast and shallow:
+  // 8.0 down to 1.5 mm in two steps, peak velocity 3.25 mm per step.
+  // Blink 2 is slow and deep: 8.0 down to 0.5 mm in seven steps.
+  // They sit close enough that blink 2's 400 ms lead-in reaches over
+  // blink 1, which is the contamination band ordinary blinking
+  // visits routinely.
+  const STEP_MS = 33;
+  const trace: ApertureSample[] = [
+    ...[0, 1, 2, 3].map((i) => ({ timestampMs: i * STEP_MS, apertureMm: 8 })),
+    { timestampMs: 132, apertureMm: 4.75 },
+    { timestampMs: 165, apertureMm: 1.5 },
+    { timestampMs: 198, apertureMm: 8 }, // blink 1 reopens here
+    ...[231, 264, 297, 330, 363].map((t) => ({
+      timestampMs: t,
+      apertureMm: 8,
+    })),
+    ...[1, 2, 3, 4, 5, 6].map((i) => ({
+      timestampMs: 363 + i * STEP_MS,
+      apertureMm: 8 - (7.5 / 7) * i,
+    })),
+    { timestampMs: 594, apertureMm: 0.5 },
+    { timestampMs: 627, apertureMm: 8 }, // blink 2 reopens here
+  ];
+  const REOPEN_1 = 198;
+  const REOPEN_2 = 627;
+  // Window arithmetic value, not the reducer's closed-phase figure
+  // (132 ms here); both clip to the same start, checked by review.
+  const DURATION_2 = 231;
+  const windowFrom = (startMs: number, endMs: number) =>
+    trace.filter((s) => s.timestampMs >= startMs && s.timestampMs <= endMs);
+
+  it("gives the second blink its own shape, all three columns", () => {
+    const first = analyzeClosing(
+      windowFrom(shapeWindowStartMs(REOPEN_1, 66, null), REOPEN_1),
+    );
+    const second = analyzeClosing(
+      windowFrom(shapeWindowStartMs(REOPEN_2, DURATION_2, REOPEN_1), REOPEN_2),
+    );
+    expect(first).not.toBeNull();
+    expect(second).not.toBeNull();
+    if (first === null || second === null) return;
+    // Blink 1: fell 6.5 mm at 3.25 mm per 33 ms step.
+    expect(first.peakClosingVelocityMmPerS).toBeCloseTo(3.25 / 0.033, 3);
+    expect(first.amplitudeMm).toBeCloseTo(6.5, 6);
+    // Blink 2: fell 7.5 mm at 7.5/7 mm per step, three times slower.
+    expect(second.peakClosingVelocityMmPerS).toBeCloseTo(7.5 / 7 / 0.033, 3);
+    expect(second.amplitudeMm).toBeCloseTo(7.5, 6);
+    expect(second.amplitudeOverVelocityMs).toBeCloseTo(231, 0);
+    // The audit's literal check: no column of blink 2 equals blink 1's.
+    expect(second.amplitudeMm).not.toBe(first.amplitudeMm);
+    expect(second.peakClosingVelocityMmPerS).not.toBe(
+      first.peakClosingVelocityMmPerS,
+    );
+    expect(second.amplitudeOverVelocityMs).not.toBe(
+      first.amplitudeOverVelocityMs,
+    );
+  });
+
+  it("counterfactual: the unclipped window published the predecessor's velocity", () => {
+    // The bug we did write, pinned so its mechanism stays understood.
+    // Without the clip, the second window's global minimum is its own
+    // 0.5 mm floor, but the descent scan climbs back to the trace's
+    // first 8.0 and crosses blink 1's steeper fall, so blink 2 is
+    // published with blink 1's peak velocity, bit for bit, and its
+    // A over V collapses from 231 ms to 76 ms.
+    const first = analyzeClosing(
+      windowFrom(shapeWindowStartMs(REOPEN_1, 66, null), REOPEN_1),
+    );
+    const contaminated = analyzeClosing(
+      windowFrom(shapeWindowStartMs(REOPEN_2, DURATION_2, null), REOPEN_2),
+    );
+    if (first === null || contaminated === null) {
+      throw new Error("both shapes must exist for the counterfactual");
+    }
+    expect(contaminated.peakClosingVelocityMmPerS).toBe(
+      first.peakClosingVelocityMmPerS,
+    );
+    expect(contaminated.amplitudeOverVelocityMs).toBeCloseTo(76, 0);
   });
 });
