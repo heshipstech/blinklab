@@ -70,11 +70,14 @@ stays at 150, which is below the ~200 ms a person can produce
 deliberately. A constant chosen to improve a score on a benchmark
 already read is fitting, not measuring.
 
-NOT REBUILT FOR THIS RUN
+THE MISS TABLE, REBUILT 10 AUGUST (#200)
 
-The per-miss table describes the SECOND run's 70 misses, not this run's
-50. The "78.6% of misses were fully closed" figure comes from that older
-table. Issue #179.
+When this file was first written the per-miss table still described the
+SECOND run's 70 misses, and the published "78.6% of misses were fully
+closed" came from it. Issue #179 tracked that. The table has since been
+rebuilt for this run: 50 misses, of which 36 carry at least one frame
+the human marked fully closed, 72.0%. The table is
+docs/evidence/2026-08-09/tables-current-run/eyeblink8_misses.csv.
 
 The superseded result, kept here so the correction can be checked:
 

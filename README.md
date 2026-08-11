@@ -240,13 +240,17 @@ shows a person wearing glasses. The first write up said that clip scored
 that as evidence against this project's own warning about prescription
 lenses. That gap was not real. The defect created it. Both of the cut
 short clips were in the group without glasses, so that group's score was
-pulled down. On the corrected run the glasses clip scores 83.7% recall
-and 83.7% precision. The seven without score 82.7% recall and 86.8%
-precision. So recall is one point apart, and precision is three points
-apart in the other direction. Both figures rest on a single clip of 43
-blinks, and both settle nothing in either direction. So the claim is
-withdrawn rather than reversed. This project has no evidence yet about
-what glasses do to blink detection.
+pulled down. On the current run the glasses clip scores 88.4% recall and
+88.4% precision. The seven without score 87.7% recall and 82.7%
+precision. Recall is under a point apart, and precision now favours the
+glasses clip, which is the opposite direction from the earlier run and
+just as meaningless. Both figures rest on a single clip of 43 blinks,
+and both settle nothing in either direction. So the claim is withdrawn
+rather than reversed. This project has no evidence yet about what
+glasses do to blink detection. An earlier version of this paragraph
+printed a stale run's figures here while calling them the corrected
+ones; the figures above are the current run's, from
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 
 There is a version of this result that reads better, and it is not
 printed here. Leave out the blinks the human marked as long closures and
@@ -316,21 +320,25 @@ A number chosen to improve a score on a benchmark already read is
 fitting, not measuring, and this page has a section above about exactly
 that temptation.
 
-8 of the 53 are more than four frames away from any blink the human
-marked. That count is the same under both rules, and it is the one the
-argument actually rests on.
+8 of the 72 sit more than four frames from any blink the human marked,
+and those 8 are the only ones that read as inventions rather than
+fragments of a real blink.
 
-41 of the 53 are three frames long or shorter. The rule there is to
+61 of the 72 are three frames long or shorter. The rule there is to
 count from the detection's first frame to its last, including both, so
-frames 10 to 12 is three frames. This page used to say half of them were
-that short. That was wrong. The true share is higher.
+frames 10 to 12 is three frames.
 
-A refractory period, a short window after a blink in which a second one
-cannot be reported, should remove most of them. It is planned and it is
-not built. The script behind all of these counts is
-[docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py](docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py),
-and its output is
-[docs/evidence/2026-08-09/tables/false_positive_overlap.txt](docs/evidence/2026-08-09/tables/false_positive_overlap.txt).
+An earlier version of this section gave these counts against the
+previous run's 53 false alarms, and said a refractory period was
+planned and not built. Both statements had been overtaken by the run
+this page now reports: the refractory period is built and described
+above, and the counts here are recomputed from
+[docs/evidence/2026-08-09/tables-current-run/eyeblink8_false_positives.csv](docs/evidence/2026-08-09/tables-current-run/eyeblink8_false_positives.csv),
+one row per false alarm. The method is
+[docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py](docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py);
+its saved output at
+[docs/evidence/2026-08-09/tables/false_positive_overlap.txt](docs/evidence/2026-08-09/tables/false_positive_overlap.txt)
+describes the earlier 53-alarm run and is kept as that run's record.
 
 The rules for what counts as a correct detection were written down
 before any result was seen. They are in
@@ -481,7 +489,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 442 unit tests, 7 end to end tests and 61 Python tests plus 2 skipped, all green on every pull request.
+Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 495 unit tests, 7 end to end tests locally across two browser engines of which 5 run on every pull request in Chromium, and 97 Python tests of which 2 skip, all green.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records roughly forty public datasets assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 

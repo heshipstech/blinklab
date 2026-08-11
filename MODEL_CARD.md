@@ -3,7 +3,8 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026 against the state of `main` on
+Roadmap row 8.4. Written 9 August 2026, revised 11 August 2026,
+against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
@@ -46,10 +47,12 @@ in the README.
 alertness score is a documented weighted heuristic built from four named
 penalties. It has never been shown to correspond to how sleepy anyone
 actually is. A sleepiness validation against a dataset carrying real
-self-reported ratings has been built and pre-registered
-(`docs/drozy-analysis-plan.md`) and its results are not yet published.
-Until they are, treat the score as an illustration of how such a score
-could be assembled, not as evidence that it works.
+self-reported ratings was built, pre-registered
+(`docs/drozy-analysis-plan.md`), run, and published on 10 August 2026:
+a null result. Nothing survived the multiple-comparison correction
+(`docs/drozy-result.txt`). Treat the score as an illustration of how
+such a score could be assembled, not as evidence that it works. That
+was true before the measurement and it is still true after it.
 
 **Anything clinical.** No condition, no impairment, no fitness to drive
 or work. It has not been compared against any medical standard and no
@@ -68,8 +71,9 @@ of 36 sessions from a dataset before anyone noticed. Issue
 [#192](https://github.com/heshipstech/blinklab/issues/192).
 
 **It misses blinks that are plainly there.** Of the blinks it missed on
-Eyeblink8, 78.6% contained at least one frame a human marked as fully
-closed. These are not faint or borderline events. Why the eyelid
+Eyeblink8, 72.0% contained at least one frame a human marked as fully
+closed, 36 of the 50. (This card said 78.6% until 11 August; that figure
+described the superseded run's misses.) These are not faint or borderline events. Why the eyelid
 measurement does not dip far enough on them is unexplained. Issue
 [#179](https://github.com/heshipstech/blinklab/issues/179).
 

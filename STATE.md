@@ -1,29 +1,34 @@
-Last increment: the overnight run of 9 to 10 August 2026. DROZY was
-measured for the first time, and the two defects it exposed were fixed.
-Last commit: squash merge of pull request #198 on 2026-08-10
+Last increment: the August 2026 audit (AUDIT_REPORT_AUG_2026.md) and
+the first two remediation fixes, R1 and R2 (REMEDIATION.md).
+Last commit: squash merge of pull request #216 on 2026-08-10
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: nothing.
+Currently working: remediation Stage A. A1 is done, A2 is next.
 
 ## Where things stand, 10 August 2026
 
 Track A is DONE and its number REPEATS. Track B, the sleepiness
-question, has been measured once and its result is NOT published.
+question, has been measured once and its result IS published: a null
+result, in README.md and docs/drozy-result.txt, merged as #201 on
+10 August.
 
 MERGED overnight: #194 the DROZY analysis code and its pre-registration
 plus MODEL_CARD.md and ARCHITECTURE.md (roadmap 8.2 and 8.4 done), #196
 the exclusion bias report, #197 the frame count guard (closed #193),
 #198 the loud frame rate refusal (closed #192).
 
-OPEN AND WAITING FOR THE OWNER: pull request #195, which rebuilds the
-miss table and moves a published figure from 78.6% to 72.0%. It was not
-merged because the owner asked to see number changes first. The headline
-recall, precision and F1 are untouched by it.
+RESOLVED: the miss table rebuild first opened as #195 was re-opened as
+#200 and MERGED on 10 August, moving the published miss figure from
+78.6% to 72.0%. The headline recall, precision and F1 were untouched by
+it. (#195 itself was closed unmerged after its branch was deleted too
+early, which is why REMEDIATION.md now says merge before deleting.)
 
-### The DROZY result, held deliberately
+### The DROZY result, now published
 
-Measured, analysed, and NOT in this repository. The owner asked to see
-the first sleepiness result before anyone else does. The analysis is
-reproducible with:
+Measured, analysed, and published in this repository since 10 August:
+the full table is in docs/drozy-result.txt and the write-up in
+README.md. It is a null result: nothing survived the Holm correction.
+It was held back briefly so the owner saw it first; that hold ended
+with #201. The analysis is reproducible with:
 
     cd analysis
     PYTHONPATH="$PWD" .venv/bin/python tools/analyse_drozy.py \
@@ -258,7 +263,7 @@ minutes. It writes nothing until a clip finishes, and the longest clip,
 
 ### Checking and restarting a run
 
-    ls "$DATASETS/eyeblink8-measured-capfix/"
+    ls "$DATASETS/<measured-dir>/"
 
 It writes two CSVs per clip, `<name>.blinks.csv` and
 `<name>.seconds.csv`, into that folder.
@@ -291,8 +296,14 @@ To restart a run:
     # Now do the bundle check above. Only if it agrees:
     node tools/measure_corpus.mjs \
       "$DATASETS/eyeblink8-mp4" \
-      "$DATASETS/eyeblink8-measured-capfix" \
+      "$DATASETS/eyeblink8-measured-$(date +%m%d)" \
       > "/tmp/corpus-$(date +%m%d-%H%M).log" 2>&1
+
+Write every new run into a NEW dated folder. Never point this command
+at a folder that already holds a published run: the four measured
+folders listed under "The datasets folder" above are the evidence
+behind published numbers,
+and a restart aimed at one of them would overwrite it.
 
 The build is on its OWN line on purpose. This page used to write
 `npm run build && npm run preview -- --strictPort &`, where the `&`
@@ -305,7 +316,7 @@ measuring before anything has been built.
     cd analysis
     PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
       "$DATASETS/eyeblink8/eyeblink8" \
-      "$DATASETS/eyeblink8-measured-capfix"
+      "$DATASETS/eyeblink8-measured-refractory"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table
@@ -373,8 +384,8 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 442 unit tests, 7 end to end tests across two browser
-engines, 61 Python tests passed plus 2 skipped
+Test count: 495 unit tests, 7 end to end tests across two browser
+engines locally and Chromium in CI, 97 Python tests of which 2 skip
 
 ## DROZY, which is also ready
 
