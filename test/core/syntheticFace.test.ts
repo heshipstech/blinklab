@@ -64,7 +64,10 @@ describe("syntheticFace", () => {
     const eye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
     expect(eye).not.toBeNull();
     if (eye !== null) {
-      expect(eyeAspectRatio(eye)).toBeCloseTo(10 / EYE_WIDTH_MM, 10);
+      expect(eyeAspectRatio(eye, 1000, 1000)).toBeCloseTo(
+        10 / EYE_WIDTH_MM,
+        10,
+      );
     }
   });
 
@@ -103,7 +106,7 @@ describe("syntheticFace", () => {
     });
     const earOf = (face: ReturnType<typeof syntheticFace>) => {
       const eye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
-      return eye === null ? null : eyeAspectRatio(eye);
+      return eye === null ? null : eyeAspectRatio(eye, 1000, 1000);
     };
     const levelEar = earOf(level);
     const tiltedEar = earOf(tilted);

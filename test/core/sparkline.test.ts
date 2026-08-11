@@ -84,8 +84,10 @@ describe("sparklineSegments", () => {
       const face = frameLandmarks(frame);
       const right = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
       const left = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
-      const rightEar = right === null ? null : eyeAspectRatio(right);
-      const leftEar = left === null ? null : eyeAspectRatio(left);
+      // The fixture was recorded at 1280x720, so the ratio is computed
+      // on that frame, as it would have been live.
+      const rightEar = right === null ? null : eyeAspectRatio(right, 1280, 720);
+      const leftEar = left === null ? null : eyeAspectRatio(left, 1280, 720);
       return {
         timestampMs: frame.timestampMs,
         value:
