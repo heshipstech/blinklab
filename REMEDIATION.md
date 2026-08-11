@@ -51,7 +51,7 @@ this stage.** The Y Combinator application is editable until 28 August.
       result file in `docs/evidence/`. Not a corpus re-run: the corpus is
       not in the repository and that check could never execute.
       **This is the one a reviewer would catch.**
-- [ ] **A2 (R4).** Correct `SPEC.md:137`'s roll-invariance claim, and move
+- [x] **A2 (R4).** DONE 11 August: ear.ts computes in pixel space via the shared toPixels, the tilt test runs at 1280x720 and fails against the old behaviour (checked by reverting), and the old formula is pinned as a counterfactual. Was: correct `SPEC.md:137`'s roll-invariance claim, and move
       `test/core/tiltInvariance.test.ts` to a 1280x720 frame so it can
       fail. It runs on a square frame today, where the defect cannot
       appear.

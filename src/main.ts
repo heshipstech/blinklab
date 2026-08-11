@@ -1452,6 +1452,11 @@ let stabilitySamples: StabilitySample[] = [];
 // The rolling EAR sparkline: 10 seconds, fixed scale, gaps are gaps.
 const SPARK_WINDOW_MS = 10000;
 
+// Tuned when the displayed ratio read about 0.5; since the 11 August
+// 2026 coordinate fix an open eye sits near 0.28, so the trace rides
+// the lower half of this scale. Kept for now: rescaling the chart is a
+// display decision, not part of fixing the measurement, and a blink
+// valley is still unmistakable at half height.
 const SPARK_EAR_MAX = 0.6;
 const sparkCanvas = document.createElement("canvas");
 sparkCanvas.width = 640;
@@ -1620,8 +1625,14 @@ function processFrame(
         if (gate.kind === "valid") {
           const rightEye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
           const leftEye = eyeLandmarksFromFace(face, LEFT_EYE_EAR_INDICES);
-          const rightEar = rightEye === null ? null : eyeAspectRatio(rightEye);
-          const leftEar = leftEye === null ? null : eyeAspectRatio(leftEye);
+          const rightEar =
+            rightEye === null
+              ? null
+              : eyeAspectRatio(rightEye, canvas.width, canvas.height);
+          const leftEar =
+            leftEye === null
+              ? null
+              : eyeAspectRatio(leftEye, canvas.width, canvas.height);
           writeReadout(
             earLabel,
             rightEar === null || leftEar === null

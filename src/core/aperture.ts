@@ -1,5 +1,5 @@
 import { IRIS_DIAMETER_MM } from "./constants";
-import { distance, type Point2 } from "./geometry";
+import { distance, toPixels, type Point2 } from "./geometry";
 import type { EarIndexMap } from "./ear";
 
 // Pixels lie about size, they inflate as you lean in. The iris does
@@ -8,17 +8,10 @@ import type { EarIndexMap } from "./ear";
 // this instant, and the aperture converts through that ruler.
 //
 // The aspect ratio trap: normalised x is a fraction of the frame
-// WIDTH, normalised y of the HEIGHT. On a 16:9 frame those units
-// differ by nearly a factor of two, so every measurement converts to
-// pixels first and only then mixes directions.
-
-function toPixels(
-  p: Point2,
-  frameWidthPx: number,
-  frameHeightPx: number,
-): Point2 {
-  return { x: p.x * frameWidthPx, y: p.y * frameHeightPx };
-}
+// WIDTH, normalised y of the HEIGHT, so every measurement converts to
+// pixels first and only then mixes directions. The conversion lives in
+// geometry.ts since 11 August 2026, shared with the eye aspect ratio,
+// which used to skip it and paid for that on every 16:9 frame.
 
 // The horizontal iris diameter, ring points right and left. The
 // vertical pair would be occluded by the lids exactly when it
