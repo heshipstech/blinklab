@@ -131,7 +131,15 @@ this stage.** The Y Combinator application is editable until 28 August.
       reaches back over the previous blink, so a blink can be published
       with its predecessor's closing velocity. The only genuine
       arithmetic error the audit found.
-- [ ] **B5.** The heatmap button never re-enables for a returning visitor
+- [x] **B5.** DONE 12 August, PR #226, and Stage B is COMPLETE:
+      render() recomputes the heatmap button from the stored profile on
+      entering the running state; the startup refresh was real but the
+      off-duty force-off overwrote it and only a fresh solve refreshed
+      again. Two e2e tests: a seeded returning visitor gets the button
+      back, a never-calibrated visitor keeps the explain-first label,
+      the latter behind a running barrier after review proved the first
+      version green against an always-enabled rot. Mutation proofs both
+      ways. Was: The heatmap button never re-enables for a returning visitor
       with a stored calibration profile, so increments 5.9 and 5.10 are
       unreachable on any visit after the first.
 

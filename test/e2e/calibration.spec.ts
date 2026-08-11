@@ -67,3 +67,53 @@ test("the demo notice is visible on load and cannot be dismissed", async ({
   await page.locator("body").click();
   await expect(notice).toBeVisible();
 });
+
+test("a returning visitor's stored profile re-enables the heatmap", async ({
+  page,
+}) => {
+  // Remediation B5. The profile was loaded at startup and the button
+  // refreshed once, but render's off-duty force-off then won and
+  // nothing recomputed the button when a session began: only a fresh
+  // solve did. So the heatmap, and the scanpath replay behind it,
+  // were unreachable on every visit after the first. The seed below
+  // IS the returning visitor: a profile in storage before page load.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "blinklab-calibration-profile-v1",
+      JSON.stringify({
+        horizontal: { slope: 1, intercept: 0 },
+        vertical: { slope: 1, intercept: 0 },
+      }),
+    );
+  });
+  await page.goto("./");
+  const heatmap = page.getByRole("button", { name: "Gaze heatmap" });
+  // Off duty the button stays off, profile or not: the overlay can
+  // only accumulate gaze while a session runs.
+  await expect(heatmap).toBeDisabled();
+  await page.getByRole("button", { name: "Start camera" }).click();
+  await expect(heatmap).toBeEnabled({ timeout: 30_000 });
+  await expect(heatmap).toHaveText("Gaze heatmap");
+});
+
+test("a visitor who never calibrated keeps the explain-first label", async ({
+  page,
+}) => {
+  // The other half, so the fix cannot rot into always-enabled: with
+  // no stored profile the running session still offers calibration
+  // first, and the label says why the button is off.
+  await page.goto("./");
+  await page.getByRole("button", { name: "Start camera" }).click();
+  // The RUNNING barrier first. Review proved the assertion below
+  // green against an always-enabled rot without it: sampled during
+  // the requesting window, "disabled" is trivially true. Calibrate
+  // is enabled exactly while a session runs, so this waits for the
+  // moment the rot would fire.
+  await expect(
+    page.getByRole("button", { name: "Calibrate gaze" }),
+  ).toBeEnabled({ timeout: 30_000 });
+  const heatmap = page.getByRole("button", {
+    name: "Gaze heatmap (calibrate first)",
+  });
+  await expect(heatmap).toBeDisabled();
+});

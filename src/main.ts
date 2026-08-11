@@ -568,6 +568,16 @@ function render(): void {
   // and the frame loop sets those while running. Here they are only
   // forced off, never on, or this would overrule them.
   calibrateButton.disabled = !running;
+  // Entering the running state recomputes the heatmap button from
+  // the stored profile. The force-off below is only half a rule:
+  // without this half, a returning visitor with a saved calibration
+  // had the button disabled at page load and NOTHING re-enabled it,
+  // because the only other refresh sits behind a fresh solve. The
+  // heatmap and the replay behind it were unreachable on every visit
+  // after the first. Remediation B5.
+  if (running) {
+    refreshHeatmapButton();
+  }
   if (!running) {
     for (const button of [heatmapButton, replayButton]) {
       button.disabled = true;
