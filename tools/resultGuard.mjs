@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -138,4 +139,112 @@ export function actualPythonTestCount(root) {
     }
   }
   return count;
+}
+
+// The dated stamp. During the audit, MODEL_CARD.md's "written 9 August
+// against the state of main on that date" converted what would have
+// been a contradiction finding into a correctly scoped snapshot, the
+// cheapest defence in the repository. README.md and STATE.md carry the
+// same stamp now, and the rule is enforced rather than remembered:
+// when a stamped file changes, its stamp must change with it.
+
+const MONTHS = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+};
+
+const DATE_WORDS =
+  /(?:Stamped:\s*|Written\s+|[Rr]evised\s+)(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/g;
+
+/**
+ * The newest date in a document's stamp, as "YYYY-MM-DD", or null when
+ * the document carries no stamp.
+ *
+ * A date only counts when it sits in a real stamp sentence: either
+ * behind "Stamped:", or behind "Written"/"revised" within a sentence
+ * that also says "against the state of". Prose in this repository
+ * narrates dates constantly ("the application, revised 28 August
+ * 2026") and a prose date newer than the real stamp would silently
+ * mask a stale one, which is this project's recurring defect wearing
+ * yet another coat.
+ */
+export function newestStampDate(docText) {
+  let newest = null;
+  const consider = (day, monthWord, year) => {
+    const month = String(MONTHS[monthWord.toLowerCase()]).padStart(2, "0");
+    const iso = `${year}-${month}-${day.padStart(2, "0")}`;
+    if (newest === null || iso > newest) {
+      newest = iso;
+    }
+  };
+  DATE_WORDS.lastIndex = 0;
+  let match = DATE_WORDS.exec(docText);
+  while (match !== null) {
+    const isStampedForm = match[0].startsWith("Stamped:");
+    // The stamp sentence runs from this date to the next full stop;
+    // "against the state of" must appear inside it, or just after the
+    // comma-joined clause MODEL_CARD uses.
+    const tail = docText.slice(match.index, match.index + 160);
+    const inStampSentence = tail
+      .split(/\.\s/)[0]
+      .concat(tail)
+      .includes("against the state of");
+    if (isStampedForm || inStampSentence) {
+      consider(match[1], match[2], match[3]);
+    }
+    match = DATE_WORDS.exec(docText);
+  }
+  return newest;
+}
+
+/** The date of the last commit touching a file, "YYYY-MM-DD", or null. */
+export function lastCommitDateFor(relativePath, root) {
+  try {
+    const out = execFileSync(
+      "git",
+      ["log", "-1", "--format=%cs", "--", relativePath],
+      { cwd: root, encoding: "utf8" },
+    ).trim();
+    return out.length > 0 ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether the checkout is shallow. A depth-1 clone reports every file
+ * as last touched by its single tip commit, which would force a stamp
+ * bump on every pull request whether or not the file changed, so the
+ * staleness comparison is only meaningful with full history. CI fetches
+ * full history for exactly this reason.
+ */
+export function isShallowRepo(root) {
+  try {
+    const out = execFileSync("git", ["rev-parse", "--is-shallow-repository"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim();
+    return out === "true";
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Whether this run is continuous integration. GitHub Actions always
+ * sets CI; the pin test uses this because the shallow-repo skip is
+ * only safe where a shallow checkout is guaranteed not to happen.
+ */
+export function runningInCi() {
+  return process.env.CI !== undefined;
 }

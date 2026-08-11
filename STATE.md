@@ -1,8 +1,11 @@
-Last increment: the August 2026 audit (AUDIT_REPORT_AUG_2026.md) and
-the first two remediation fixes, R1 and R2 (REMEDIATION.md).
-Last commit: squash merge of pull request #216 on 2026-08-10
+Last increment: remediation A2, the eye aspect ratio measured in
+pixel space (REMEDIATION.md).
+Last commit, as of the stamp below: pull request #218, 2026-08-11;
+`git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: remediation Stage A. A1 and A2 done, A3 is next.
+Currently working: remediation Stage A. A1, A2 and A3 done, A4 is next.
+Stamped: 11 August 2026. When this file changes, this stamp changes
+with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
 
@@ -384,7 +387,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 501 unit tests, 7 end to end tests across two browser
+Test count: 506 unit tests, 7 end to end tests across two browser
 engines locally and Chromium in CI, 97 Python tests of which 2 skip
 
 ## DROZY, which is also ready

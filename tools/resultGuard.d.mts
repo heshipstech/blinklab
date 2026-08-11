@@ -40,3 +40,18 @@ export function actualUnitTestCount(root: string): number;
 
 /** Count def test_ functions across analysis/tests. */
 export function actualPythonTestCount(root: string): number;
+
+/** The newest stamp date in a document, "YYYY-MM-DD", or null if unstamped. */
+export function newestStampDate(docText: string): string | null;
+
+/** The date of the last commit touching a file, "YYYY-MM-DD", or null. */
+export function lastCommitDateFor(
+  relativePath: string,
+  root: string,
+): string | null;
+
+/** Whether the checkout is shallow, where staleness cannot be judged. */
+export function isShallowRepo(root: string): boolean;
+
+/** Whether this run is continuous integration. */
+export function runningInCi(): boolean;
