@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   baselineStep,
+  learningSecondsLeft,
   personalThresholdMm,
   startBaseline,
   type BaselineState,
@@ -220,5 +221,56 @@ describe("the ratchet's ceiling, fix #126", () => {
     expect(rawP90).toBeCloseTo(7.9, 5);
     expect(rawP90).toBeLessThan(median * BASELINE_MEDIAN_CEILING_FACTOR);
     expect(after).toBeCloseTo(rawP90, 5);
+  });
+});
+
+describe("the 30 second learning window, pinned by literal clocks (remediation C1)", () => {
+  // The audit's headline for this file: the learning window could be
+  // cut from 30 seconds to 1 with every test green, because the
+  // suite always fed enough elapsed time. These literals hold the
+  // boundary from both sides. The window is a safety constant: it is
+  // how long the instrument watches a face before it claims to know
+  // that face's open eyes.
+  const feed = (endMs: number): BaselineState => {
+    let state = startBaseline(0);
+    // Plenty of samples on a steady 100 ms grid, so the sample-count
+    // gates are satisfied and only TIME decides readiness.
+    for (let t = 100; t <= endMs; t += 100) {
+      state = baselineStep(state, t, 7);
+    }
+    return state;
+  };
+
+  it("still learning one step before 30 seconds", () => {
+    expect(feed(29_900).kind).toBe("learning");
+  });
+
+  it("ready exactly at 30 seconds, the boundary included", () => {
+    // Readiness is elapsed >= the window, and only a probe AT the
+    // boundary pins that operator: review flipped it to a strict
+    // greater-than and the one-step-off probes left the suite green.
+    expect(feed(30_000).kind).toBe("ready");
+    expect(feed(30_100).kind).toBe("ready");
+  });
+});
+
+describe("learningSecondsLeft (remediation C1, the missing test)", () => {
+  it("counts down in whole seconds from the learning start", () => {
+    const state = startBaseline(1_000);
+    expect(learningSecondsLeft(state, 1_000)).toBe(30);
+    expect(learningSecondsLeft(state, 11_000)).toBe(20);
+    expect(learningSecondsLeft(state, 30_500)).toBe(1);
+    // Never negative, even when readiness is overdue because samples
+    // are still missing: 0 and waiting, not a minus sign.
+    expect(learningSecondsLeft(state, 99_000)).toBe(0);
+  });
+
+  it("answers null once the baseline is ready, not zero", () => {
+    let state = startBaseline(0);
+    for (let t = 100; t <= 31_000; t += 100) {
+      state = baselineStep(state, t, 7);
+    }
+    expect(state.kind).toBe("ready");
+    expect(learningSecondsLeft(state, 31_000)).toBeNull();
   });
 });
