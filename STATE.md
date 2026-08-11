@@ -1,12 +1,13 @@
-Last increment: remediation C2, the shuffled-null control tested,
-with the starved branch raising by name (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #228, 2026-08-12;
+Last increment: remediation C3, the reducers refuse a backwards
+clock, closing issue #107 and Stage C (REMEDIATION.md).
+Last commit, as of the stamp below: pull request #229, 2026-08-12;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
 hiding failure, is COMPLETE (B1 to B5, PRs #222 to #226). Stage C,
-make the tests able to fail: C1 and C2 done; C3, issue #107, the
-reducers accepting backwards timestamps, is next and closes Stage C. Issue #221 records
+make the tests able to fail, is COMPLETE (C1 to C3, PRs #227 to
+#229). Next: Stage D, the frames-per-second readout, risky, alone on
+a quiet day; or Stage E/F items if the day is not quiet. Issue #221 records
 the backwards model clock found by B1's review.
 Stamped: 12 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
@@ -388,10 +389,10 @@ turned a paragraph into a list and the check went red. Nobody had
 changed a word. `npm run format` fixes it.
 
 Known issues: #15 (actions majors), #90 (calibrated off screen
-boundary), #107 (backwards timestamps), #108 (log.md backfill), #115
+boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 524 unit tests, 14 end to end tests all run in Chromium
+Test count: 531 unit tests, 14 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 

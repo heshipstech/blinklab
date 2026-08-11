@@ -39,6 +39,12 @@ export function baselineStep(
   nowMs: number,
   apertureMm: number | null,
 ): BaselineState {
+  // Backwards clock: ignored, state unchanged. A sample stamped
+  // before the learning started would stretch the window into the
+  // past. Issue #107, remediation C3.
+  if (state.kind === "learning" && nowMs < state.startedAtMs) {
+    return state;
+  }
   if (state.kind === "learning") {
     const samples =
       apertureMm === null ? state.samples : [...state.samples, apertureMm];

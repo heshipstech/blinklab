@@ -51,6 +51,19 @@ export function blinkStep(
   apertureMm: number | null,
   thresholdMm: number,
 ): BlinkState {
+  // A frame stamped earlier than the newest timestamp this state
+  // CARRIES is ignored, state unchanged: without this, a reopen
+  // stamped earlier than the close recorded a negative duration. An
+  // open state carries no timestamp, so a backwards frame there is
+  // still accepted; full monotonicity lives at the door, in
+  // frameClock's acceptFrame, which the real wiring always crosses.
+  // Issue #107, remediation C3.
+  if (
+    nowMs < (state.closedAtMs ?? nowMs) ||
+    nowMs < (state.lastBlinkEndedAtMs ?? nowMs)
+  ) {
+    return state;
+  }
   // An invalid frame breaks the cycle: a blink we could not watch
   // from start to finish is not a blink we may count or time.
   if (apertureMm === null) {

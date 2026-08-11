@@ -64,6 +64,12 @@ export function longClosureStep(
   apertureMm: number | null,
   thresholdMm: number,
 ): LongClosureState {
+  // Backwards clock: ignored, state unchanged. Same contract as
+  // blink.ts, same reason: a reopen stamped earlier than the close
+  // measured a negative closure. Issue #107, remediation C3.
+  if (state.closedAtMs !== null && nowMs < state.closedAtMs) {
+    return state;
+  }
   // An invalid frame abandons the cycle, blink.ts's own rule: no
   // event may be built on frames nobody saw. A count that already
   // fired stays fired, that moment WAS witnessed, but the closure's
@@ -133,6 +139,12 @@ export function ongoingClosureMs(
     !state.firedForCurrentClosure ||
     state.closedAtMs === null
   ) {
+    return null;
+  }
+  // A read clock behind the closure start has no honest answer, and
+  // "0 ms and counting" would be a wrong one. Issue #107 named this
+  // function; null, never a negative. Remediation C3.
+  if (nowMs < state.closedAtMs) {
     return null;
   }
   return nowMs - state.closedAtMs;

@@ -67,6 +67,13 @@ export function perclosStep(
   apertureMm: number | null,
   baselineMm: number | null,
 ): PerclosState {
+  // Backwards clock: ignored, state unchanged. A sample stamped
+  // before the newest one would disorder the window and silently
+  // age out its neighbours. Issue #107, remediation C3.
+  const newest = state.samples[state.samples.length - 1];
+  if (newest !== undefined && nowMs < newest.timestampMs) {
+    return state;
+  }
   const kept = state.samples.filter(
     (sample) => nowMs - sample.timestampMs <= PERCLOS_WINDOW_MS,
   );
