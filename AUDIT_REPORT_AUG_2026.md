@@ -167,7 +167,7 @@ problem that has become a credibility problem.**
 | 6   | **No third-party network calls at runtime** | **VIOLATED.**                                                                                                                                                                                     |
 | 7   | The demo must never crash the page          | **Partial.** All five documented degraded states pass, observed in a browser. But `calibrationStore.ts` can blank the page, and any throw in `processFrame` ends the only frame loop permanently. |
 | 8   | Accessibility floor                         | **Substantially met.** Focus visible, fully keyboard operable, all text clears WCAG contrast. Missing: modal semantics, live regions, three text equivalents. Row 8.8 tracks these openly.        |
-| 13  | No company branding or positioning          | **Met** in every issue title, pull request title and published document. One evidence file names the old folder "a previous project", where it is load-bearing for the finding it appears in.        |
+| 13  | No company branding or positioning          | **Met** in every issue title, pull request title and published document. One evidence file names the old folder "a previous project", where it is load-bearing for the finding it appears in.     |
 | —   | **Explainability over accuracy**            | **Met, and it defended the code.** No increment was found where a more accurate but less explainable method won.                                                                                  |
 
 ### The explainability rule, which turned out to be a shield
