@@ -353,7 +353,7 @@ carrying into the final report:
   four statements the master prompt requires of it. (G3)
 - `STATE.md` update discipline degraded from every commit to roughly
   half from 8 August. (B5)
-- The folder name "Noddr Fun Build" survives in one evidence file, where
+- The folder name "a previous project" survives in one evidence file, where
   it is load-bearing for the finding it appears in. (G3)
 
 ---

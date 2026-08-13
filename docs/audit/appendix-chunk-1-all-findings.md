@@ -822,7 +822,7 @@ Produced 10 August 2026.
 
 **Detail.** Two of the four required statements are present verbatim in the README. "Personal learning project" exists only in LICENSE ("This software is a personal learning project and technology demonstration") and "unaffiliated" appears nowhere in the README at all. The gap matters more than usual because DATASETS.md:34-38 simultaneously asserts a startup attachment, so the one document the master prompt names is silent on the exact question another document answers.
 
-### C1-57. A private folder name, "Noddr Fun Build", survives in the tree and in every commit since
+### C1-57. A private folder name, "a previous project", survives in the tree and in every commit since
 
 |                   |              |
 | ----------------- | ------------ |
@@ -831,9 +831,9 @@ Produced 10 August 2026.
 | Verdict as filed  | partial      |
 | Verification      | **UNTESTED** |
 
-**Evidence.** docs/evidence/2026-08-09/findings/issue-177-broken-python-environment.md:11 "The project folder was renamed from `Noddr Fun Build` to `blinklab build`."; `git log --all --oneline -S "Noddr"` -> 8640bfd, 31003fe, 688e7c9 ("stop leaking a personal path"), 3c7f529
+**Evidence.** docs/evidence/2026-08-09/findings/issue-177-broken-python-environment.md:11 "The project folder was renamed from `a previous project` to `blinklab build`."; `git log --all --oneline -S a former folder name` -> 8640bfd, 31003fe, 688e7c9 ("stop leaking a personal path"), 3c7f529
 
-**Detail.** This is the only unexplained non-project proper noun in the tree. It is load-bearing for the finding it appears in, since it explains why the virtualenv shebangs break, which is why this is partial rather than a clean violation. Whether "Noddr" is the name of the startup DATASETS.md refers to cannot be established from the repository itself, but the string outlived commit 688e7c9 whose stated purpose was to stop leaking a personal path.
+**Detail.** This is the only unexplained non-project proper noun in the tree. It is load-bearing for the finding it appears in, since it explains why the virtualenv shebangs break, which is why this is partial rather than a clean violation. Whether a former folder name is the name of the startup DATASETS.md refers to cannot be established from the repository itself, but the string outlived commit 688e7c9 whose stated purpose was to stop leaking a personal path.
 
 ### C1-58. DATASETS.md's startup and commercial-venture disclosures are justified by the licence assessment, not positioning
 
@@ -1023,7 +1023,7 @@ Verified-correct observations, quoted with their evidence inline.
 - G2 .gitignore:46 ignores _.mp4 with a single documented exception at :57 for test/fixtures/_.mp4; history scan for dataset|drozy|rldd|nitymed|uta paths returns only DATASETS.md, analysis/_.py and docs/_.md.
 - G3 no company owns the repo: `gh api users/heshipstech` returns "type":"User" and "company":null, so the 12 heshipstech references in tracked files are a personal GitHub handle, not a company name.
 - G3 issue titles clean: all 74 titles from `gh issue list --state all --limit 300` are increment, bug or gate titles with no company, product or market language.
-- G3 pull request titles clean: 119 PRs enumerated, `grep -niE "noddr|startup|commercial|company|brand|product|launch|customer|pilot|market"` over the titles returns nothing.
+- G3 pull request titles clean: 119 PRs enumerated, `grep -niE "startup|commercial|company|brand|product|launch|customer|pilot|market"` over the titles returns nothing.
 - G3 no commercial roadmap: ROADMAP.md headings are Phases 0 to 9 of the build ladder only, and its amendments 7 and 9 discuss dataset licences, not markets.
 - G3 no marketing surface: index.html:6 title is "blinklab", src/main.ts:169 h1 is "Alertness measurement demo", and src/core/notice.ts:10-14 holds the demo and non-medical disclaimer as one tested constant reused by page, README and export.
 - G3 no private correspondence committed: DATASETS.md:86-88 and :266-268 state both permission emails are held privately, and an email-address regex over all tracked .md files returns zero hits.
@@ -1093,4 +1093,4 @@ Verified-correct observations, quoted with their evidence inline.
 - G1 cannot be proven as a negative: I can show every parameter has a stated in-repo derivation, but not that no threshold was carried mentally from the author's other work.
 - Issue and pull request bodies were not read in full (74 issues, 119 PRs); only titles were enumerated, alongside a full-tree grep and a git pickaxe over all history.
 - The actual disclosure made to Professors Athitsos and Verly cannot be verified, because the emails are deliberately kept out of the repo (DATASETS.md:86-88, :266-268). Only the repo's own account of what was disclosed is auditable.
-- Whether "Noddr" is the name of the startup DATASETS.md refers to cannot be established from the repository; the repo presents it only as a former folder name.
+- Whether a former folder name is the name of the startup DATASETS.md refers to cannot be established from the repository; the repo presents it only as a former folder name.

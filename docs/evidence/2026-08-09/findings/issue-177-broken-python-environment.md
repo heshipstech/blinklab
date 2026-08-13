@@ -8,7 +8,7 @@ needs a data file. It is all facts about the machine.
 A virtual environment is the sandbox that holds one folder's Python packages.
 The one in `analysis/.venv/` is broken.
 
-The project folder was renamed from `Noddr Fun Build` to `blinklab build`. The
+The project folder was renamed from `a previous project` to `blinklab build`. The
 scripts inside `analysis/.venv/bin/` still point at the old name. Line 2 of
 `analysis/.venv/bin/pytest` still executes a path under the old folder name. That
 path does not exist any more, so the command fails with "No such file or
