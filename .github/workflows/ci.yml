@@ -17,7 +17,7 @@ jobs:
       # Full history: this repository is public, so a secret committed and
       # later reverted is still exposed. Scanning only HEAD would miss exactly
       # the case that matters.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
     # default. Added 2026-08-14.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Full history: the stamp guard compares each summary
           # document's dated stamp against the last commit that touched
@@ -88,7 +88,7 @@ jobs:
       run:
         working-directory: analysis
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
