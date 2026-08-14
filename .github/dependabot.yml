@@ -1,13 +1,15 @@
 # Nothing watched dependencies until 2026-08-14. Dependabot alerts and security
-# updates are also off at the repository level, and CI never ran `npm audit`, so
+# updates were also off at the repository level, and CI never ran `npm audit`, so
 # nothing anywhere would have told the maintainer that a dependency had picked
 # up a published CVE. On a public repo that deploys to GitHub Pages on every
 # push to main, that gap is worth closing. ROADMAP row 8.5 and REMEDIATION E5
 # both record it as open.
 #
-# Note the repository setting still has to be turned on by hand: this file
-# configures version updates, not alerts. Settings → Advanced Security →
-# Dependabot alerts + security updates.
+# The repository setting is now ON — the two paragraphs above describe the state
+# this file was written in, not the state today. Verified 2026-08-14:
+# `gh api -i repos/heshipstech/blinklab/vulnerability-alerts` returns 204 (it
+# 404s when alerts are disabled), and the alerts endpoint reports 0 open, which
+# agrees with `npm audit` reporting 0 at every severity.
 version: 2
 
 updates:
@@ -22,6 +24,22 @@ updates:
         update-types:
           - minor
           - patch
+    # TypeScript 7 cannot install here and will not until typescript-eslint
+    # moves. 8.67.0 is the latest published and still peers
+    # `typescript >=4.8.4 <6.1.0`, which is exactly what the `"typescript":
+    # "<6.1.0"` pin in package.json mirrors. PR #240 proved it twice over —
+    # it also failed `npm ci` with EUSAGE because Dependabot bumped the
+    # lockfile without the manifest — and was closed 2026-08-14. Closing a
+    # Dependabot PR only suppresses that one release, so every 7.0.x patch
+    # would reopen the same dead PR.
+    #
+    # Scoped to 7.x on purpose, not to `semver-major`: TypeScript 8 should
+    # still get a PR. Delete this entry when
+    # `npm view typescript-eslint@latest peerDependencies.typescript` admits ^7.
+    ignore:
+      - dependency-name: typescript
+        versions:
+          - 7.x
     commit-message:
       prefix: "chore(deps)"
 
