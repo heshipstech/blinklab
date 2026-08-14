@@ -1,5 +1,11 @@
 # Engineering audit, August 2026
 
+> **A dated snapshot of 10 August 2026, kept unedited on purpose.** Its
+> findings are written in the present tense and several have since been
+> fixed — [REMEDIATION.md](REMEDIATION.md) records what was done and what
+> is still open. Read the two together: on its own, this file overstates
+> what is currently wrong with the repository.
+
 A full audit of `blinklab` against the original master prompt that started
 the project, conducted 10 August 2026 at the owner's request.
 

@@ -1799,7 +1799,14 @@ function processFrame(
 
       const present = isFacePresent(result);
       if (present !== lastFacePresent) {
-        console.log("face detected:", present);
+        // Dev only. This line shipped to the public site from PR #33
+        // until 2026-08-14, logging on every face-presence change
+        // inside the frame loop. Vite strips the branch from the
+        // production bundle, the way it already strips createRecorder().
+        // The disable is needed because no-console cannot see the DEV
+        // guard; it is the one exemption in src/, and it is deliberate.
+        // eslint-disable-next-line no-console
+        if (import.meta.env.DEV) console.log("face detected:", present);
         lastFacePresent = present;
       }
 

@@ -165,11 +165,15 @@ way, so that column is not five runs of one test.
 None of that closes a gap of ten points or more. It means the gap should
 be read as a direction and not as a decimal.
 
-Per clip recall now runs from 67.7% to 91.7%. The whole gain sits in the
-two clips the defect had cut short. One moved from 55.7% to 89.8% and
-the other from 58.3% to 91.7%. That is 30 blinks recovered in one and 24
-in the other, 54 in total, which is the entire move from 284 to 338.
-Every other clip found exactly the same number of blinks in both runs.
+After that fix, per clip recall ran from 67.7% to 91.7%. The whole gain
+sits in the two clips the defect had cut short. One moved from 55.7% to
+89.8% and the other from 58.3% to 91.7%. That is 30 blinks recovered in
+one and 24 in the other, 54 in total, which is the entire move from 284
+to 338. Every other clip found exactly the same number of blinks in
+both runs. (Those are that run's figures. The current run's per clip
+recall runs from 76.9% to 95.8% — see
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt). This sentence
+said "now" until 2026-08-14, which read as current.)
 
 **One caveat about comparing the two runs.** They were built from
 different commits, so they are not the same measurement with a single
@@ -199,8 +203,11 @@ that rule the eight clips lose 787 frames between them, spread over 174
 gaps. That is 1.1% of every frame in the set. Twelve of those gaps are
 long freezes of half a second or more. Those twelve sit in three clips
 and hold 611 of the 787 lost frames. Very few gaps land inside a blink.
-At the very most the lost frames explain 4 of the 70 remaining misses.
-The script that counts all of this is
+At the very most the lost frames explain 4 of the 70 remaining misses —
+**that is the second run's figure, and it has not been recomputed for
+this one.** The current run has 50 misses, not 70, so the "4 of 70" pair
+belongs to the run before it. Recomputing needs the corpus, which is not
+in this repository. The script that counts all of this is
 [analysis/tools/audit_frame_loss.py](analysis/tools/audit_frame_loss.py),
 so you do not have to take the number on trust. Three more checks came
 back clean. In all eight clips the person faces the camera in every
@@ -302,10 +309,10 @@ flattering one and hiding it would be its own kind of dishonesty.
 **Most of this double counting has been removed, and the rest is left
 on purpose.** During one closure the eyelid measurement can rise back
 over the line for a frame or two and dip again, and the app counts two
-blinks. There are now 111 fewer chances of that: a completed closure is
+blinks. There were 111 such double counts. A completed closure is now
 not counted if it ends within 150 milliseconds of the previous one,
 because an eyelid cannot open and shut twice that fast. That removed 39
-false alarms and **cost no recall at all**, which is the number that
+of the 111 and **cost no recall at all**, which is the number that
 decides whether a rule like this is a fix or a way of hiding misses.
 
 Where 150 comes from matters more than the number. Deliberate rapid
@@ -355,12 +362,14 @@ clips gave one frame more than their file lists. Every other clip
 matched exactly.
 
 Full output, including the superseded numbers, in
-[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt). Two lines in
-that file are older than this page and disagree with it. It still says
-the third capped clip lost its first row, and it still says 45 of the 53
-sit on a real blink with half of them 3 frames long or shorter. This
-page carries the corrected wording. That file has not been rewritten
-yet.
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt). This paragraph
+used to warn that two lines in that file disagreed with this page.
+Checked on 2026-08-14: they no longer do. The file contains nothing
+about the capped clip losing its first row, and its false-alarm lines
+read "45 of 72 sit on a real blink under the strict rule" and "61 of 72
+are three frames long or shorter" — which agree with this page. The
+warning was itself the stale part, and `tools/resultGuard.mjs` already
+treats that file as the source of truth.
 
 ## Does any of it track how sleepy somebody actually is?
 
@@ -499,7 +508,15 @@ So the evaluation track was replanned rather than abandoned. The next result is 
 
 ## How to run
 
-You need Node.js 20 or newer.
+You need Node.js 22.13 or newer, or 24 and above. CI runs 26, and
+`.nvmrc` carries that, so `nvm use` gives you what the gates ran on.
+
+The floor is not arbitrary: vite requires `^20.19.0 || >=22.12.0` and
+eslint requires `^20.19.0 || ^22.13.0 || >=24`, so Node 21 and Node 23
+satisfy neither and Node 20.0–20.18 fails vite. `package.json` now
+declares the range, so a wrong version is refused at install time rather
+than described here and hoped for. This line said "Node.js 20 or newer"
+until 2026-08-14, which was wrong at both ends.
 
 ```
 git clone https://github.com/heshipstech/blinklab.git
@@ -523,8 +540,17 @@ The project grows one small increment per session, each one branch, one pull req
 - [LEARNING.md](LEARNING.md), one plain English engineering note per increment, including the ones that record a mistake.
 - [docs/UI.md](docs/UI.md), every element the page can show, when it appears, and every string it can contain.
 - [test/MANUAL.md](test/MANUAL.md), the checks a machine cannot run, because a headless browser has no face.
+- [ARCHITECTURE.md](ARCHITECTURE.md), how the pieces fit, written so a newcomer understands it in five minutes.
+- [MODEL_CARD.md](MODEL_CARD.md), what the measurement does, who it has been tested on, and what it does not do.
 - [decisions/](decisions/), architecture decision records.
+- [AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md), the August 2026 audit, and [REMEDIATION.md](REMEDIATION.md), what has been fixed since.
 
 ## License
 
-MIT, with a not a medical device notice. See [LICENSE](LICENSE).
+MIT for this project's own code, with a not a medical device notice. See
+[LICENSE](LICENSE).
+
+The published page also bundles Google's MediaPipe library, its WASM and
+the face landmarker model, which are Apache-2.0 and are **not** covered
+by that MIT grant. Their notice travels with them in
+[public/THIRD_PARTY_LICENSES.txt](public/THIRD_PARTY_LICENSES.txt).

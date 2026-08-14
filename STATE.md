@@ -34,6 +34,11 @@ early, which is why REMEDIATION.md now says merge before deleting.)
 
 ### The DROZY result, now published
 
+DROZY is used under a written permission whose condition is that the
+database and its paper are cited wherever results appear, in any form.
+Cite: Massoz, Langohr, Francois and Verly, WACV 2016. (Added 2026-08-14
+— this section printed DROZY figures without it.)
+
 Measured, analysed, and published in this repository since 10 August:
 the full table is in docs/drozy-result.txt and the write-up in
 README.md. It is a null result: nothing survived the Holm correction.
@@ -140,10 +145,14 @@ CAVEAT when comparing the two runs. They were built from different
 commits, so this is not one line changed. Four of the six shorter clips
 shifted a blink edge by a frame or two, or split one detection into
 two. Two report exactly the same blink timings. The cap counted
-DETECTIONS, not annotated blinks, so it also bit `27122013_152435_cam`,
-which made exactly 50 detections and lost its first one. That one was a
-false positive, so no recall figure changes. The frame rate is not the
-cause either: `measured_fps` is 30.00 in both runs for all eight clips.
+DETECTIONS, not annotated blinks, so it also bit `27122013_152435_cam`.
+How many rows that clip lost cannot be recovered: the capped export is
+the only surviving record of that run, and it holds fifty rows whatever
+number was cut from the front of it. No recall figure changes either
+way. (Until 2026-08-14 this said the clip "lost its first one" and that
+the lost row was a false positive. README.md had already withdrawn that
+as unrecoverable, so the two documents disagreed; README is the
+corrected account.) The frame rate is not the cause either: `measured_fps` is 30.00 in both runs for all eight clips.
 The recall attribution above is nevertheless exact. Fixing the cap also
 surfaced 8 more invented blinks, 45 to 53, seven of them in the two
 recovered clips.
@@ -171,7 +180,8 @@ What the audit established, so nobody argues it again:
   frames and 1.011%; no single rule produces 737 together with "3
   clips", so both are retired. 12 gaps are half a second or longer,
   they sit in 3 clips, and they hold 611 of the 787. At the very most
-  the lost frames explain 4 of the 70 misses. A blink counts as touched
+  the lost frames explain 4 of the 70 misses — the second run's figure,
+  not recomputed for the current run, which has 50 misses. A blink counts as touched
   when a gap falls anywhere from one frame before it starts to its last
   frame. In every frame the person faces the camera. No blink is
   shorter than 4 frames. Shrinking the video to a quarter of its size

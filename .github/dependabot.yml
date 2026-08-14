@@ -1,0 +1,45 @@
+# Nothing watched dependencies until 2026-08-14. Dependabot alerts and security
+# updates are also off at the repository level, and CI never ran `npm audit`, so
+# nothing anywhere would have told the maintainer that a dependency had picked
+# up a published CVE. On a public repo that deploys to GitHub Pages on every
+# push to main, that gap is worth closing. ROADMAP row 8.5 and REMEDIATION E5
+# both record it as open.
+#
+# Note the repository setting still has to be turned on by hand: this file
+# configures version updates, not alerts. Settings → Advanced Security →
+# Dependabot alerts + security updates.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: "chore(deps)"
+
+  # The Python track. analysis/ is uv-locked; Dependabot reads uv.lock through
+  # the pip ecosystem.
+  - package-ecosystem: pip
+    directory: /analysis
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(deps-py)"
+
+  # PR #232 pinned every action to a full commit SHA with the version in a
+  # trailing comment. Pinning freezes the version, so without this the pins
+  # would quietly rot — Dependabot moves the SHA and the comment together.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(actions)"

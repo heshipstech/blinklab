@@ -42,7 +42,12 @@ export function loadCalibrationSamples(): CompletedTarget[] | null {
   }
   try {
     return JSON.parse(raw) as CompletedTarget[];
-  } catch {
+  } catch (error: unknown) {
+    // Returning null is right — a corrupt entry should behave as no
+    // entry. The silence was not: "stored but unreadable" and "nothing
+    // stored" were indistinguishable, while the localStorage catch a
+    // few lines above already warns for the same class of failure.
+    console.warn("stored calibration samples were unreadable:", error);
     return null;
   }
 }
@@ -70,7 +75,10 @@ export function loadCalibrationProfile(): CalibrationProfile | null {
   }
   try {
     return JSON.parse(raw) as CalibrationProfile;
-  } catch {
+  } catch (error: unknown) {
+    // Same reasoning as loadCalibrationSamples above: null is the right
+    // return, silence was not.
+    console.warn("stored calibration profile was unreadable:", error);
     return null;
   }
 }
