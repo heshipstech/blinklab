@@ -19,9 +19,12 @@ person said they were?
 ## The data
 
 DROZY, University of Liege, used under written permission from Professor
-Jacques Verly recorded in `DATASETS.md`. Each subject rated their own
-sleepiness on the Karolinska Sleepiness Scale (KSS), 1 to 9, immediately
-before each recording.
+Jacques Verly recorded in `DATASETS.md`. That permission's condition is
+that the database and its paper are cited wherever results appear, in any
+form. Cite: Massoz, Langohr, Francois and Verly, WACV 2016. (Citation
+added 2026-08-14.) Each subject rated their own sleepiness on the
+Karolinska Sleepiness Scale (KSS), 1 to 9, immediately before each
+recording.
 
 **20 sessions, not 36.** DROZY contains 16 recordings at 15 frames per
 second, and blinklab refuses to measure blinks below 25 fps because at

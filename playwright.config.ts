@@ -65,23 +65,29 @@ export default defineConfig({
     // Build first, every time: the test must see the current code,
     // never yesterday's dist folder.
     //
-    // Read `reuseExistingServer` below before trusting that. On CI
-    // (continuous integration, the checks GitHub runs on every pull
-    // request) it is false, so this command always runs, and
-    // `--strictPort` does make a busy 4173 fail loudly.
+    // `reuseExistingServer` is false everywhere, CI and laptop alike,
+    // so this command always runs and `--strictPort` makes a busy 4173
+    // fail loudly.
     //
-    // On a laptop it is TRUE, and then this comment used to be wrong.
-    // If any server already answers on 4173, Playwright skips this
-    // command completely. No build runs, `--strictPort` never gets a
-    // chance to complain, and the suite quietly tests whatever that
-    // other server is serving. That happened on 9 August 2026: the
-    // suite passed against a bundle several hours old. It is issue
-    // #175. So before trusting a local end to end pass, compare the
-    // served bundle name against `dist/assets`, the way STATE.md
-    // describes under "The stale server trap".
+    // It used to be true on a laptop, and that is issue #175: if any
+    // server already answered on 4173, Playwright skipped this command
+    // completely. No build ran, `--strictPort` never got its chance,
+    // and the suite quietly tested whatever that other server served.
+    // It happened on 9 August 2026 — the suite passed against a bundle
+    // several hours old.
+    //
+    // Closed 2026-08-14 by making local behave the way CI already did.
+    // The documented workaround was to compare the served bundle name
+    // against `dist/assets` by hand before trusting a local pass, and a
+    // gate that depends on remembering is not a gate. The cost is a
+    // rebuild per run, which `command` was already doing on CI.
+    //
+    // A sibling repo hit the same trap the same week from the other
+    // side: its suite attached to a different project's preview server
+    // and 51 of its 84 tests ran against the wrong site.
     command: "npm run build && npm run preview -- --strictPort",
     url: "http://localhost:4173/blinklab/",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

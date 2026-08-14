@@ -26,3 +26,9 @@ The boundary, stated once and relied on everywhere: a headless browser can fake 
 - Bad: CI grows a browser download of roughly 100 MB per run, about a minute. If this starts to hurt, cache `~/.cache/ms-playwright` keyed on the Playwright version.
 - Bad: one engine only. A WebKit or Firefox specific wiring bug would not be caught. Accepted for a learning lab: one engine buys nearly all the value at a third of the cost.
 - The `data-testid` attributes on the calibration overlay and dot are a small permanent contract between the app and its tests: styles and copy may change freely, those names may not.
+
+**Superseded in part, recorded 2026-08-14.** The "one engine only"
+consequence above no longer holds: a WebKit project was added to
+`playwright.config.ts` and is documented in README.md, ARCHITECTURE.md
+and `docs/log.md`, but no ADR ever recorded the change. Everything else
+here stands. Nothing above this line has been edited.

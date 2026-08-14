@@ -109,6 +109,12 @@ This is the section most model cards leave vague, so here it is plainly.
 | DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number   |
 | The author         | 1                     | One adult, one lighting setup, one laptop |
 
+DROZY is used under a written permission whose condition is that the
+database and its paper are cited wherever results appear, in any form.
+Cite: Massoz, Langohr, Francois and Verly, WACV 2016. (Added 2026-08-14:
+this file published DROZY subject counts and exclusion reasoning without
+the citation the permission requires.)
+
 **Age, skin tone, eye shape, ethnicity, visual impairment and eyewear
 are unknown for every subject above.** Neither benchmark publishes them.
 So this project cannot tell you whether the instrument works equally

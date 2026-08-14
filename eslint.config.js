@@ -25,6 +25,15 @@ export default tseslint.config(
   js.configs.recommended,
   tseslint.configs.recommended,
   { languageOptions: { globals: globals.browser } },
+  // No stray debug logging in shipped code. `console.log("face detected:")`
+  // shipped to the public site from PR #33 until 2026-08-14 precisely because
+  // nothing objected to it: lint passed clean the whole time. warn and error
+  // stay allowed — the existing six console.error and four console.warn calls
+  // are real failure paths and should keep reaching the console.
+  {
+    files: ["src/**/*.ts"],
+    rules: { "no-console": ["error", { allow: ["warn", "error"] }] },
+  },
   {
     // The architectural spine: src/core is pure computation.
     // It may not import from the impure edges, and may not touch the browser.

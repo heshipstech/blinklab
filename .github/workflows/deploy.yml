@@ -5,10 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege at the top, with the two Pages grants scoped to the job that
+# actually needs them (below). Until 2026-08-14 `pages: write` and
+# `id-token: write` sat here, so the build job held them too — and build only
+# checks out, runs npm ci/build and uploads an artifact. `id-token: write` is
+# the one that matters: it lets a job mint an OIDC token, the credential other
+# systems trust for keyless auth, and build is the job that executes
+# third-party dependency code.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -17,6 +22,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -32,6 +38,11 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The only job that publishes, and the only one that needs these.
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
