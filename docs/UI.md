@@ -115,6 +115,12 @@ From `cameraStateMessage` in `core/cameraState.ts`:
 - `noCamera`: No camera was found on this device. Connect one and reload the page.
 - `failed`: The camera could not start (REASON). Reload the page and try again.
 - `clipFailed`: passes a written reason straight through, for example: This browser could not decode NAME. Try an MP4 or WebM file.
+- `modelFailed`: The measuring model could not be loaded, so nothing can be measured. This is often a network problem. Check your connection, then click "Retry loading the model". _(added by remediation B2, PR #223; this list omitted it until 2026-08-14)_
+- `measurementFailed`: Measurement stopped because of an internal error (REASON). Anything recorded before the stop is kept for export. Reload the page to measure again. _(added by remediation B3, PR #224)_
+
+`modelFailed` is the only state that brings its own control with it: a
+**"Retry loading the model"** button, rendered beside the status line. Every
+other state is text only.
 
 While a clip runs, the same line carries:
 
