@@ -92,7 +92,7 @@ Where the finding is wrong.
 
 Not verified by me: I did not drive a full 9x30 calibration with a real face, because captureStep (src/core/calibrationCapture.ts:63) needs a non-null offset and the fake Chromium camera has no face; I confirmed the write site and the loop-death consequence separately instead.
 
-Worktree confirmed clean: `git -C "/Users/evannorus/Desktop/blinklab build/blinklab/.claude/worktrees/audit-fresh" status --porcelain` returned empty output. No npm install was run; built with npx vite build to /private/tmp/.../scratchpad/sk3/dist.
+Worktree confirmed clean: `git -C "<repo>/.claude/worktrees/audit-fresh" status --porcelain` returned empty output. No npm install was run; built with npx vite build to /private/tmp/.../scratchpad/sk3/dist.
 
 ### C5-04. The compensating control for the missing src/ui is void: UI.md was obsolete two hours after it merged and no automated check ties it to the code
 
@@ -161,7 +161,7 @@ NOT UNREACHED ROADMAP WORK. Row 8.8 (accessibility) is irrelevant here. No ROADM
 
 SEVERITY CUT critical -> high. Two corrections to the finding. Its quoted strings are slightly off: I got an empty Alertness line, not "Alertness score: measuring...", and the clip path is not silent at all. And critical overreaches: the page does not crash or blank, no stored data or published number is affected, a reload fixes it, and it needs an asset fetch to fail on an otherwise correct deploy. Compare the calibrationStore whole-page blank in this same audit, which a skeptic already cut to medium. High is right because the trigger is an ordinary network failure on a 15 MB first load, the user has no recovery affordance, and the clip path states a false cause.
 
-Repo untouched: everything I wrote went to scratchpad/skeptic-a7, and `git -C "/Users/evannorus/Desktop/blinklab build/blinklab/.claude/worktrees/audit-fresh" status --porcelain` returns empty at the end.
+Repo untouched: everything I wrote went to scratchpad/skeptic-a7, and `git -C "<repo>/.claude/worktrees/audit-fresh" status --porcelain` returns empty at the end.
 
 ### C5-07. No modal semantics: focus walks behind the open overlay and operates controls the user cannot see
 
