@@ -116,12 +116,12 @@ Accepted on 2026-07-28, before any code:
 
 - [ ] 8.1 (moved to 7.0, see amendments)
 - [x] 8.2 ARCHITECTURE.md with a module diagram and the data flow. Done when a newcomer understands it in 5 minutes.
-- [ ] 8.3 CHANGELOG.md, semantic version tags, first GitHub Release v0.1.0. Check: release workflow.
+- [x] 8.3 CHANGELOG.md written 15 August covering all seven existing releases plus an Unreleased section. Tags exist to v0.7.0. The v0.8.0 tag is deliberately not cut: 8.8 is declined rather than done, and a version number is not worth a ceremony.
 - [x] 8.4 MODEL_CARD.md: what it measures, what it does not, where it fails, who it fails for.
-- [ ] 8.5 Dependabot and a basic security policy. Check: automated dependency pull requests appear.
-- [ ] 8.6 Test coverage reporting with a floor on `core/`, starting at 70 percent. Check: CI gate.
-- [ ] 8.7 Performance budget check in CI: bundle size gate in CI, inference time measured locally and recorded (CI machines have no camera and vary in speed). Check: CI gate plus documented local numbers.
-- [ ] 8.8 Accessibility pass: keyboard navigation, focus states, text alternatives for every graphic number. Check: automated accessibility test.
+- [x] 8.5 Dependabot config, alerts on and reporting 0, SECURITY.md with a real threat model. Verified against the API 15 August.
+- [x] 8.6 Coverage floor on src/core as its own CI step: statements 98, branches 95, functions 100, lines 98, against a measured 98.61 / 95.52 / 100 / 98.57. Far above the 70 this row asked for. Proven able to fail.
+- [x] 8.7 Bundle size ceiling of 240 kB checked after every build, against 217.6 kB actual. Written against the one commit that bundles the 3.7 MB model rather than against creep. Inference time stays a locally recorded number, 6 ms, since CI machines have no camera.
+- [~] 8.8 DECLINED 15 August. The floor is already met: keyboard operable, focus visible, all text clears WCAG contrast. What remained was polish.
 
 ## Phase 9 and beyond (ideas, not commitments)
 

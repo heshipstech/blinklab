@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 12 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 15 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -108,6 +108,14 @@ This is the section most model cards leave vague, so here it is plainly.
 | Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation     |
 | DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number   |
 | The author         | 1                     | One adult, one lighting setup, one laptop |
+
+**Both committed human-data fixtures are the author's own**, confirmed by
+the owner on 2026-08-15: `test/fixtures/session-01.json`, 300 frames of face
+landmarks, and `analysis/tests/fixtures/session-fixture.csv`, which carries
+`kss_before` and `kss_after` sleepiness ratings. No other person's face
+geometry or self-report is in this repository. This was recorded because an
+audit found it stated nowhere, which meant a reader could not tell consent
+from oversight.
 
 DROZY is used under a written permission whose condition is that the
 database and its paper are cited wherever results appear, in any form.

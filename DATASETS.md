@@ -380,8 +380,24 @@ any kind, so it cannot support 7.5 through 7.7.
 It is worth keeping in view for a different job. Validating blink _detection_
 against ground-truth blink intervals is a real result, and it is the one thing
 this project could check against external data without a drowsiness label at all.
-GPL3 on video data is legally unusual and its copyleft would need thought before
-publishing derived files, so this is recorded as an option rather than a plan.
+GPL3 on video data is legally unusual, so the copyleft question was put to the
+corpus authors rather than guessed at.
+
+**ANSWERED 2026-08-15. Permission was granted.** The owner wrote to the corpus
+authors by email and permission came back granting it. The correspondence is
+kept privately by the owner and no individual is named here, at the owner's
+instruction. What that settles: the derived miss table at
+`docs/evidence/2026-08-09/tables-current-run/eyeblink8_misses.csv` **stays
+committed**, and the rule that it was withheld on licence grounds is retired
+rather than merely corrected. Three published statements that described it as
+withheld were corrected earlier the same day in PR #248; this is the ruling
+those corrections were waiting on.
+
+The reasoning behind the ruling, recorded so it is not re-litigated: this file
+already classifies Eyeblink8 as needing no permission from anyone, the source
+paper is cited, subjects stay pseudonymous, and the analysis scripts
+`breakdown.py` and `finalise.py` both read those columns, so removing them
+would have broken the analysis they support.
 
 ## What was not verified
 

@@ -25,7 +25,14 @@ decision, not about leaked credentials.
 
 ---
 
-## 1 · A file three live documents say is withheld on licence grounds is committed
+## 1 · ~~A file three live documents say is withheld on licence grounds is committed~~ — **CLOSED 2026-08-15**
+
+**Resolved by the owner.** Permission was sought from the corpus authors by
+email and granted; the correspondence is kept privately and no individual is
+named, at the owner's instruction. The miss table stays committed and the
+withholding rule is retired in `DATASETS.md`. Remediation E4 is closed. The
+original finding is kept below because the reasoning still explains why the
+question was worth asking.
 
 `docs/evidence/2026-08-09/tables-current-run/eyeblink8_misses.csv` is tracked,
 published, and carries exactly the five fields those documents named as the
@@ -76,7 +83,11 @@ withdrawal still deserves revisiting.
 
 ---
 
-## 2 · Two committed artefacts are real human data in a public repo
+## 2 · ~~Two committed artefacts are real human data in a public repo~~ — **CLOSED 2026-08-15**
+
+**Both are the author's own**, confirmed by the owner. Recorded in
+`MODEL_CARD.md` and `test/fixtures/README.md` so a reader can tell consent
+from oversight. The original finding is kept below.
 
 - **`test/fixtures/session-01.json`** — 4.7 MB, 300 frames × 478 face landmarks
   with timestamps, produced by the dev-only "Record fixture" button from a real

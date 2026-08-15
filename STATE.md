@@ -1,19 +1,30 @@
-Last increment: roadmap 8.3, CHANGELOG.md, plus CONTRIBUTING.md. The
-v0.8.0 tag is deliberately NOT cut while 8.8 is open.
-Last commit, as of the stamp below: pull request #257, 2026-08-15;
+Last increment: the ladder closed out. Every remaining item was either
+answered by the owner or DECLINED in writing, so the audit backlog is
+finished and the next work is a new roadmap for the webcam path.
+Last commit, as of the stamp below: pull request #258, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: remediation Stage B, stop corrupting data and
-hiding failure, is COMPLETE (B1 to B5, PRs #222 to #226). Stage C,
-make the tests able to fail, is COMPLETE (C1 to C3, PRs #227 to
-#229). Stage D: stage one, the safe relabel, is done; stage two,
-wiring a true camera rate into the 25 fps gate, is HELD until its
-blast radius is measured on the owner's real hardware, because it
-will refuse sessions that succeed today. Stage E is nearly closed: E1,
-E2 and E3 are ticked, E5 is done except for
-`required_approving_review_count`, and **E4, the GPL3 licence ruling,
-is the only thing left in the stage. It is a decision, not code, and
-it is the owner's.** Issue #221 records the backwards model clock
+Currently working: NOTHING IS BLOCKED. The August audit's ladder is
+closed. Stages A, B and C are complete; D1 stage two is the single
+remaining piece of real work and it is a WEBCAM fix, not hardware
+preparation, because a 20 fps camera reads 70 today and holds the 25 fps
+blink gate open in sessions that should be refused. Stage E is complete
+apart from a repository setting. Stage F is complete or declined. Stage
+G is complete apart from 8.8, declined. Stage H is declined entire.
+
+**The owner cut the backlog on 15 August.** Items that were tidying
+rather than blocking are marked `- [~]` in REMEDIATION.md, which means
+DECLINED, not pending. That marker exists because deferred items kept
+coming back as findings in the next audit under a new number. Do not
+reopen one without a reason that did not exist on 15 August.
+
+Both licence and privacy questions are answered. The Eyeblink8 copyleft
+question was put to the corpus authors and permission was granted; no
+individual is named, at the owner's instruction. Both committed human
+data fixtures are the owner's own face and own ratings, recorded in
+MODEL_CARD.md and test/fixtures/README.md.
+
+Issue #221 records the backwards model clock
 found by B1's review.
 
 **Both handoff files under-reported themselves until 15 August.**
