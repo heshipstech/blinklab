@@ -57,7 +57,19 @@ bucket.
 
 ## What is not in this folder, and why
 
-`eyeblink8_misses.csv` is **not** committed.
+**Corrected 2026-08-15: it is.** `eyeblink8_misses.csv` is committed at
+`docs/evidence/2026-08-09/tables-current-run/eyeblink8_misses.csv`, added by
+PR #200 (`23832c5`) after this document was written — 50 data rows across 8
+clips. The licence question below was never answered; the file was published
+anyway. Both halves of that sentence matter.
+
+~~`eyeblink8_misses.csv` is **not** committed.~~
+
+Note on the description that follows: it says "for 124 blinks", and the
+committed table has 50 rows. This paragraph describes the rebuild the author
+had in mind, not the file PR #200 landed. The figure has been left alone
+rather than "corrected", because which of the two it describes has not been
+established.
 
 Its rows are the Eyeblink8 blink intervals the human marked: blink number, start
 frame, end frame, length in frames, and how many of those frames were fully
@@ -77,7 +89,9 @@ one number about one detection the app made, and together they cannot rebuild th
 marked blink intervals. `eyeblink8_clip_summary.csv` holds per clip counts, which
 the repository already publishes in `docs/eyeblink8-result.txt`.
 
-The miss table can be rebuilt whenever the licence question is answered. The
+~~The miss table can be rebuilt whenever the licence question is answered.~~
+**Corrected 2026-08-15:** the table is already committed, so this reads as
+though it were absent. The rebuild command below remains valid and useful. The
 corpus is a free download and the script is here. From the analysis folder:
 
 ```

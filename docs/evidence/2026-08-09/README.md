@@ -102,8 +102,10 @@ Each is the saved output of the matching script in `scripts/checks/`.
 Most rows of the false alarm table carry the label `double_fire_on_a_real_blink`.
 That is the evidence for issue #176.
 
-The third table of the set, `eyeblink8_misses.csv`, is deliberately not here.
-See [Licence and privacy](#licence-and-privacy).
+The third table of the set, `eyeblink8_misses.csv`, is deliberately not here —
+true of **this** folder, `tables/`. It **is** committed under
+`tables-current-run/`, added later by PR #200. See
+[Licence and privacy](#licence-and-privacy), corrected 2026-08-15.
 
 ### `scripts/`, for issues #176, #178 and #179
 
@@ -284,8 +286,15 @@ session folders were replaced with `/PATH/TO/output-folder`. Home folder paths
 were replaced with `~`, which names no person. This is why the scripts need a
 path edited before they run. No email address, key or token appears in any file.
 
-**One file held back on licence grounds.** `eyeblink8_misses.csv` is not
-committed. Its rows are the blink intervals a human marked in the Eyeblink8
+**Corrected 2026-08-15 — this paragraph was false.** `eyeblink8_misses.csv`
+**is** committed, at `tables-current-run/eyeblink8_misses.csv`, added by PR #200
+(`23832c5`): 50 data rows across 8 clips, 21 columns. It was never held back.
+The original paragraph is kept below because the licence reasoning in it is
+still the open question — it is the _withholding_ that never happened, not the
+concern.
+
+~~**One file held back on licence grounds.** `eyeblink8_misses.csv` is not
+committed.~~ Its rows are the blink intervals a human marked in the Eyeblink8
 videos, so it is a partial copy of the corpus's own annotation rather than a
 measurement this project made. `DATASETS.md` records that the benchmark set is
 stated GPL3, and that "GPL3 on video data is legally unusual and its copyleft
@@ -338,4 +347,5 @@ Two things changed in the issue text beyond the paths.
 1. #174 dropped its claim that `mixA` and `mixC` are two extra corpus runs. They
    are not. See `findings/issue-174-repeatability.md`.
 2. #179 points at the script that rebuilds `eyeblink8_misses.csv` rather than at
-   the table, because the table is held back on licence grounds.
+   the table. ~~because the table is held back on licence grounds~~ — **not so,
+   corrected 2026-08-15:** the table is committed under `tables-current-run/`.
