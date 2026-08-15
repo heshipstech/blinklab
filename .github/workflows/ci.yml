@@ -65,6 +65,14 @@ jobs:
           node-version: 26
           cache: npm
       - run: npm ci
+      # Remediation F1, the Definition of Done as a mechanism rather
+      # than an intention. It held for 130 pull requests on intent
+      # alone, lapsed at #134, and nobody noticed for weeks. Pull
+      # requests only: on a push to main the range would be empty.
+      # base.sha is reachable because this checkout has full history.
+      - name: Definition of Done
+        if: github.event_name == 'pull_request'
+        run: node tools/checkLearningEntry.mjs ${{ github.event.pull_request.base.sha }}
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

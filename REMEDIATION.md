@@ -264,11 +264,22 @@ From section 7 of the report. None of this was in the audit's scope.
 
 ## Stage F. Restart the record
 
-- [ ] **F1 (R14).** Backfill `LEARNING.md` and `docs/log.md` for 8 to 10
-      August, which closes issue #108. Reinstate the Definition of Done,
-      abandoned at pull request #134. **Check:** continuous integration
-      fails a pull request that touches `src/` without touching
-      `LEARNING.md` or saying why not.
+- [x] **F1 (R14).** DONE 15 August, both halves, and this item was
+      wrong about where the gap was. It said "8 to 10 August". 8 and 10
+      August are fully logged; the real holes were **4 August**,
+      increments 5.6 to 6.1, which is what issue #108 actually says,
+      and **9 August**, which had TWENTY merged pull requests and not
+      one line. Fifteen entries backfilled from `LEARNING.md` and the
+      pull requests, each marked with the date it was written so the
+      record does not pretend to be contemporaneous. `LEARNING.md`
+      needed nothing: it had 5.6 through 6.2 all along. Closes #108.
+      The Definition of Done is a mechanism now rather than an
+      intention: `tools/checkLearningEntry.mjs` runs on every pull
+      request and fails one that changes `src/` without touching
+      `LEARNING.md` or writing "No LEARNING entry: &lt;reason&gt;" in a
+      commit message. Verified against real history rather than only
+      synthetic cases: it passes #252 and it catches #233, which
+      changed two source files with no entry.
 - [ ] **F2 (R15).** Decide in writing: either amend the roadmap to absorb
       the 56 merged pull requests that name no increment, or state that
       the ladder ended at Phase 7 and the project now runs on issues.
