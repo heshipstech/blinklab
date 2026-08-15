@@ -76,7 +76,14 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Roadmap 8.6. The floor is on src/core only, the pure layer
+      # where an untested branch becomes a published number nobody
+      # checked. Separate from `npm test` so a coverage failure reads
+      # as a coverage failure rather than as a broken suite.
+      - run: npm run coverage
       - run: npm run build
+      # Roadmap 8.7. Must follow the build: it measures dist/.
+      - run: npm run bundle:budget
       - run: npm run format:check
       # The end to end test drives the real built app in a headless
       # browser with a fake camera stream. Chromium only, kept last:

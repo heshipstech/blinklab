@@ -301,10 +301,31 @@ From section 7 of the report. None of this was in the audit's scope.
 
 - [ ] **8.3** `CHANGELOG.md` and a v0.8.0 release. Seven tags and seven
       releases already exist, so two thirds of the row shipped.
-- [ ] **8.5** Dependabot and `SECURITY.md`. Absorbs E1.
-- [ ] **8.6** Coverage floor on `core/`. It already measures **98.07 per
-      cent** of statements, so this is configuration, not work.
-- [ ] **8.7** Bundle size budget in continuous integration.
+- [x] **8.5** DONE, verified 15 August. `SECURITY.md` is a real policy,
+      not a stub: it states the no-server threat model, what counts as a
+      vulnerability here, and how to report one. `.github/dependabot.yml`
+      configures version updates, alerts are on and report 0, and
+      `npm audit --omit=dev` agrees. Absorbs E1, which is also ticked.
+- [x] **8.6** DONE 15 August. `vitest.config.ts` carries thresholds on
+      `src/core` only: statements 98, branches 95, functions 100, lines
+      98, against a measured 98.61 / 95.52 / 100 / 98.57. Runs as its
+      own CI step so a coverage failure reads as one rather than as a
+      broken suite. Functions sits at 100 on purpose, because a pure
+      function no test calls is a function nobody has checked. Proven
+      able to fail by raising the statement floor to 99.9 and watching
+      it go red. `main.ts` is deliberately out of scope, the same split
+      ARCHITECTURE.md already makes: the alternative is a floor so low
+      it permits anything.
+- [x] **8.7** DONE 15 August. `tools/checkBundleBudget.mjs` runs after
+      the build and fails over 240 kB, against 217.6 kB measured. The
+      failure it is really written against is not creep, it is the one
+      commit that bundles the 3.7 MB face model or the 33 MB WASM
+      folder, both served from `public/` on purpose: every test would
+      still pass and the download would be twenty times bigger. Chunks
+      are summed, not judged individually, or splitting one oversized
+      bundle in two would satisfy it while changing nothing. An empty
+      `dist` fails rather than passing at zero bytes. Proven able to
+      fail by lowering the ceiling to 100 kB, exit code 1.
 - [ ] **8.8** Accessibility pass: modal semantics, live regions, text
       equivalents for the heatmap, the traces and the replay circles.
       **The floor is already met**: focus is visible, the app is fully
