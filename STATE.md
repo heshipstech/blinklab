@@ -1,6 +1,6 @@
 Last increment: remediation D1 stage one, the frames-per-second
 readout relabelled as a processing rate (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #230, 2026-08-12;
+Last commit, as of the stamp below: pull request #248, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -11,7 +11,45 @@ wiring a true camera rate into the 25 fps gate, is HELD until its
 blast radius is measured on the owner's real hardware, because it
 will refuse sessions that succeed today. Stage E is open meanwhile. Issue #221 records
 the backwards model clock found by B1's review.
-Stamped: 12 August 2026. When this file changes, this stamp changes
+
+**14 to 15 August changed nothing on the remediation ladder.** Fifteen
+pull requests merged (#234 to #248) and every one was dependencies or
+documentation. Stage D stage two is still HELD and Stage E is still the
+open path, exactly as the paragraph above says. Four things from that
+run are worth knowing before you pick up the next increment:
+
+- **Publishing was broken for about four hours and is fixed.** Two
+  pushes to `main` failed at "Set up job" before any step ran, because
+  the repository began requiring every action to be pinned to a full
+  commit SHA and `upload-pages-artifact@v3.0.1` referenced a floating
+  `actions/upload-artifact@v4` inside itself. #236 pinned it. **A
+  settings change can break a workflow with no diff in the repository**
+  — if a run dies at "Set up job", suspect policy before code.
+- **The published page now says which commit built it.** #244 adds a
+  `build-commit` meta tag, so `curl` on the live demo tells you the
+  short SHA without needing repository access. Every deploy since has
+  matched `main`.
+- **Dependabot alerts are on and report zero**, and `npm audit` agrees.
+  TypeScript 7 is ignored on purpose: `typescript-eslint` still caps at
+  `<6.1.0`, so the bump cannot install. Delete the ignore when that cap
+  lifts.
+- **Three published statements were corrected**, in #246, #247 and
+  #248. The last is the one that matters: `docs/evidence/2026-08-09`
+  told readers `eyeblink8_misses.csv` was withheld on licence grounds
+  when it has been committed since PR #200. **The licence question
+  itself is still open** — `DATASETS.md` still says the copyleft "would
+  need thought before publishing derived files" and that thought has
+  not been done. Correcting what is true about the file is not a ruling
+  on whether it should be there.
+
+One method note from that run, because it caused the #247 defect. An
+audit pass measured this repository against a local checkout nine
+commits behind `origin/main`. The tree was clean, so it read as
+current, and a live page contradicting a published document was
+invisible from it. **A clean working tree is not a current one — fetch
+before auditing.**
+
+Stamped: 15 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
