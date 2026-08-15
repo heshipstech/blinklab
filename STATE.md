@@ -1,6 +1,6 @@
-Last increment: remediation F1, the log's two real gaps backfilled and
-the Definition of Done made a mechanism.
-Last commit, as of the stamp below: pull request #254, 2026-08-15;
+Last increment: the Stage H branch inventory verified and written down,
+so the deletions are one command whenever the owner wants them.
+Last commit, as of the stamp below: pull request #255, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
