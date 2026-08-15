@@ -280,9 +280,30 @@ strip plus the footer below.
 | ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Feature records  | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)` |
 | Export CSV       | Button | Disabled until at least one record exists                                                                                                                      |
+| Mark this moment | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
+| Marks            | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
 | Export blink log | Button | Disabled until at least one blink exists                                                                                                                       |
 | Sleepiness panel | Panel  | See below                                                                                                                                                      |
 | Record fixture   | Button | **Development builds only.** Never on the live site                                                                                                            |
+
+**What the CSV export contains, since the person may send it to someone.**
+Above the header, `# key: value` metadata lines: the source and clip, the
+measurement mode and frame count, **the camera's name, negotiated resolution
+and declared frame rate, the facing mode, the user agent, core count, viewport,
+screen, pixel ratio and orientation**, then the session's observed duration,
+record count, face-detected fraction, median iris width in pixels, visibility
+changes and any markers, then the two sleepiness ratings. Below that, one row
+per second of the 16 measurement columns.
+
+`deviceId` is deliberately **not** collected: it is a stable per-origin
+identifier for one camera, which is a fingerprint rather than a measurement.
+
+**The marker exists because ground truth cannot be found by the instrument
+being tested.** A validation protocol asks for ten deliberate blinks, so ten is
+known. Locating those ten in the export by hunting for a burst of ten
+detections fails exactly when the instrument missed them, which is the case
+worth measuring. A marker makes the truth "ten blinks between marker 1 and
+marker 2", whatever the instrument thought.
 
 **Sleepiness panel.** Hidden unless asking. Never appears at all on a clip
 session. Two prompts:

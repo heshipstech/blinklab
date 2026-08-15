@@ -1,7 +1,7 @@
-Last increment: the ladder closed out. Every remaining item was either
-answered by the owner or DECLINED in writing, so the audit backlog is
-finished and the next work is a new roadmap for the webcam path.
-Last commit, as of the stamp below: pull request #258, 2026-08-15;
+Last increment: the export now records the conditions it was measured
+under, and a Mark button anchors ground truth. Both exist for the
+six-person validation round, which is the next thing to happen.
+Last commit, as of the stamp below: pull request #259, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: NOTHING IS BLOCKED. The August audit's ladder is
@@ -478,7 +478,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 584 unit tests, 16 end to end tests all run in Chromium
+Test count: 595 unit tests, 18 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 

@@ -19,7 +19,7 @@ import {
   RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
-import { apertureMm, aperturePx } from "./core/aperture";
+import { apertureMm, aperturePx, irisWidthPx } from "./core/aperture";
 import {
   baselineStep,
   learningSecondsLeft,
@@ -76,6 +76,13 @@ import {
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
+import {
+  IRIS_SAMPLE_CAP,
+  deviceMetadataRows,
+  sessionMetadataRows,
+  type DeviceInfo,
+  type SessionMarker,
+} from "./core/sessionMetadata";
 import { demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
@@ -139,6 +146,7 @@ import {
   storedSummary,
 } from "./core/storedData";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
+import { readDeviceInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
@@ -327,6 +335,12 @@ let frameClock: FrameClockState = startFrameClock();
 let loadedClipName: string | null = null;
 let measurementMode: MeasurementMode = "live";
 let framesMeasured = 0;
+// The conditions of the measurement, recorded beside it. A camera
+// session used to export no rate and no word about the camera.
+let deviceInfo: DeviceInfo | null = null;
+let irisWidthSamples: number[] = [];
+let sessionMarkers: SessionMarker[] = [];
+let visibilityChanges = 0;
 // How many frames the blink gate ACCEPTED. Zero after a whole clip means
 // the frame rate never once cleared the floor, which is a refusal and not
 // a failure, and the two must not read the same. Issue #192.
@@ -675,6 +689,11 @@ function resetSession(): void {
   // dangerous: a clip's first blink shape was computed from the
   // PREVIOUS session's aperture trace and exported as this clip's.
   framesMeasured = 0;
+  deviceInfo = null;
+  irisWidthSamples = [];
+  sessionMarkers = [];
+  visibilityChanges = 0;
+  refreshMarkButton();
   framesBlinkMeasurable = 0;
   currentFrameIndex = null;
   closureStartFrame = null;
@@ -729,6 +748,13 @@ async function beginCamera(deviceId?: string): Promise<void> {
       `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`,
     );
     resetSession();
+    // AFTER resetSession, which clears it, and after the stream is
+    // live, because getSettings() on a track that has not finished
+    // negotiating returns an empty object. Both orderings were wrong
+    // once: reading before the reset was silently wiped, and the end
+    // to end test caught it by finding the whole device block missing
+    // from a camera export.
+    deviceInfo = readDeviceInfo(video);
     askKss("Before you begin: how sleepy do you feel?", (rating) => {
       kssBefore = rating;
     });
@@ -1620,6 +1646,13 @@ function exportSession(): void {
       framesMeasured,
       loadedClipDurationSeconds,
     ),
+    ...deviceMetadataRows(deviceInfo),
+    ...sessionMetadataRows(
+      featureRecords,
+      irisWidthSamples,
+      sessionMarkers,
+      visibilityChanges,
+    ),
     ...kssMetadataRows(kssBefore, kssAfter),
   ]);
   if (csv === null) {
@@ -1957,6 +1990,21 @@ function processFrame(
               ? "Eyelid aperture: no valid measurement"
               : `Eyelid aperture, right: ${rightMm.toFixed(1)} mm, left: ${leftMm.toFixed(1)} mm`,
           );
+
+          // The measurement's own resolution: how many pixels the iris
+          // spans is what every millimetre on this page is divided by.
+          // Sampled per frame and summarised as a median at export.
+          if (irisWidthSamples.length < IRIS_SAMPLE_CAP) {
+            const irisPx = irisWidthPx(
+              face,
+              RIGHT_IRIS_RING_INDICES,
+              canvas.width,
+              canvas.height,
+            );
+            if (irisPx !== null) {
+              irisWidthSamples.push(irisPx);
+            }
+          }
 
           const rightPx = aperturePx(
             face,
@@ -2453,6 +2501,10 @@ function processFrame(
         sessionStartedAtEpochMs ??= Date.now();
         exportButton.disabled = featureRecords.length === 0;
         exportBlinksButton.disabled = blinkEvents.length === 0;
+        // The marker rides the same gate as the exports: there is
+        // nothing to mark until at least one record exists to mark
+        // against.
+        refreshMarkButton();
         writeReadout(
           featureLabel,
           featureRecords.length >= 3600
@@ -2833,11 +2885,57 @@ function box(heading: string, ...children: Element[]): HTMLDivElement {
 // The two exports and the development-only fixture recorder share a
 // row rather than stacking, since they are all "take something away
 // with you".
+const markButton = document.createElement("button");
+markButton.textContent = "Mark this moment";
+markButton.setAttribute("data-testid", "mark-moment");
+markButton.disabled = true;
+const markLabel = document.createElement("p");
+
+// Why a marker exists at all. A validation protocol asks someone to
+// blink deliberately ten times, so that ten is known ground truth.
+// Finding those ten in the export means hunting for a burst of ten
+// detections, which fails exactly when the instrument MISSED them,
+// which is the case worth measuring. Using the instrument's own output
+// to locate the event that tests the instrument is circular. A marker
+// breaks the circle: the truth becomes "ten blinks between marker 1
+// and marker 2", whatever the instrument thought happened.
+function refreshMarkButton(): void {
+  markButton.disabled = sessionStartedAtEpochMs === null;
+  markLabel.textContent =
+    sessionMarkers.length === 0
+      ? ""
+      : `Marks: ${sessionMarkers
+          .map(
+            (marker) =>
+              `${marker.index} at ${(marker.atMs / 1000).toFixed(1)} s`,
+          )
+          .join(", ")}`;
+}
+
+markButton.addEventListener("click", () => {
+  // Stamped on the same clock the records use, so a marker and a
+  // measurement can be compared without a conversion nobody checked.
+  const atMs = lastRecordAtMs ?? 0;
+  sessionMarkers = [
+    ...sessionMarkers,
+    { atMs, index: sessionMarkers.length + 1 },
+  ];
+  refreshMarkButton();
+});
+
+// A hidden tab stops the animation frame callback, so the record has a
+// gap that looks like a person who stopped blinking. Counting the
+// switches lets the analysis tell one from the other.
+document.addEventListener("visibilitychange", () => {
+  visibilityChanges += 1;
+});
+
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
   exportButton,
   exportBlinksButton,
+  markButton,
   ...(recorder !== null ? [recorder.button] : []),
 );
 
@@ -2890,7 +2988,7 @@ const sourceBox = box(
 const alertnessBox = box("Alertness", scoreLabel, panelSummaryLabel, panelList);
 scoreLabel.className = "headline";
 
-const sessionBox = box("Session", featureLabel, exportRow, kssPanel);
+const sessionBox = box("Session", featureLabel, exportRow, markLabel, kssPanel);
 
 const blinksBox = box(
   "Blinks",
