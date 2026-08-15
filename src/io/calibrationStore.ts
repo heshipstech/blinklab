@@ -1,5 +1,6 @@
 import type { CompletedTarget } from "../core/calibrationCapture";
 import type { CalibrationProfile } from "../core/calibrationProfile";
+import type { StorageProbe } from "../core/storedData";
 
 // The calibration samples and the solved profile live in this
 // browser's local storage and nowhere else, consistent with the
@@ -16,6 +17,59 @@ import type { CalibrationProfile } from "../core/calibrationProfile";
 // say, visibly, that the profile will not survive a reload.
 const STORAGE_KEY = "blinklab-calibration-samples-v1";
 const PROFILE_KEY = "blinklab-calibration-profile-v1";
+
+// Everything this page stores, in one array, so the probe and the
+// erase below cannot fall out of step with the two keys above. The
+// visitor-facing descriptions live in core/storedData.ts.
+const ALL_KEYS = [PROFILE_KEY, STORAGE_KEY] as const;
+
+/**
+ * What the browser is actually holding right now.
+ *
+ * A key whose read THREW is reported as unreadable, not as absent.
+ * The loaders above deliberately treat a failed read as "nothing
+ * stored", which is right for them, because the page then shows
+ * itself as uncalibrated and everything downstream still works. It
+ * would be badly wrong here: a privacy control that says "nothing is
+ * stored" because it was refused permission to look has told the one
+ * lie it exists to prevent.
+ */
+export function probeStoredData(): StorageProbe {
+  const present: string[] = [];
+  const unreadable: string[] = [];
+  for (const key of ALL_KEYS) {
+    try {
+      if (localStorage.getItem(key) !== null) {
+        present.push(key);
+      }
+    } catch (error: unknown) {
+      console.warn(`stored data could not be read for ${key}:`, error);
+      unreadable.push(key);
+    }
+  }
+  return { present, unreadable };
+}
+
+/**
+ * Erase everything this page stores, then RE-PROBE and return what is
+ * actually left.
+ *
+ * The return value comes from reading the storage back, never from
+ * whether removeItem threw. A remove that returns quietly and changes
+ * nothing is precisely the failure this project keeps rediscovering,
+ * and the caller can only speak honestly about the result if the
+ * result was measured rather than assumed.
+ */
+export function eraseStoredData(): StorageProbe {
+  for (const key of ALL_KEYS) {
+    try {
+      localStorage.removeItem(key);
+    } catch (error: unknown) {
+      console.warn(`stored data could not be erased for ${key}:`, error);
+    }
+  }
+  return probeStoredData();
+}
 
 export function saveCalibrationSamples(
   completed: readonly CompletedTarget[],

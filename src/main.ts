@@ -125,10 +125,19 @@ import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import {
+  eraseStoredData,
   loadCalibrationProfile,
+  probeStoredData,
   saveCalibrationProfile,
   saveCalibrationSamples,
 } from "./io/calibrationStore";
+import {
+  STORED_ITEMS,
+  eraseButtonLabel,
+  eraseOutcomeMessage,
+  hasSomethingToErase,
+  storedSummary,
+} from "./core/storedData";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
 import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
@@ -1177,6 +1186,68 @@ function refreshHeatmapButton(): void {
       : "Gaze heatmap";
 }
 refreshHeatmapButton();
+
+// Remediation E3. Two keys were written to this browser from the first
+// calibration onwards and nothing on the page said so, let alone
+// offered to undo it. The list is rendered from core/storedData.ts
+// rather than typed here, so adding a third key cannot leave the
+// interface quietly describing two.
+const storedSummaryLabel = document.createElement("p");
+const storedList = document.createElement("ul");
+storedList.className = "stored-list";
+for (const item of STORED_ITEMS) {
+  const entry = document.createElement("li");
+  const name = document.createElement("strong");
+  name.textContent = item.what;
+  entry.append(name, document.createTextNode(`, ${item.why} (${item.key})`));
+  storedList.append(entry);
+}
+const eraseButton = document.createElement("button");
+eraseButton.dataset.testid = "erase-stored-data";
+const eraseStatus = document.createElement("p");
+eraseStatus.dataset.testid = "erase-status";
+eraseStatus.hidden = true;
+
+// Erasing costs the visitor the nine dot calibration, so one stray
+// click should not do it. The confirm step is a second click on the
+// same button rather than a native dialog: it stays inside the page's
+// own vocabulary, and it can be driven by a test, which a native
+// confirm cannot.
+let eraseArmed = false;
+
+function refreshStoredBox(): void {
+  const probe = probeStoredData();
+  storedSummaryLabel.textContent = storedSummary(probe);
+  const somethingToErase = hasSomethingToErase(probe);
+  eraseButton.disabled = !somethingToErase;
+  if (!somethingToErase) {
+    eraseArmed = false;
+  }
+  eraseButton.textContent = eraseButtonLabel(probe, eraseArmed);
+}
+
+eraseButton.addEventListener("click", () => {
+  if (!eraseArmed) {
+    eraseArmed = true;
+    refreshStoredBox();
+    return;
+  }
+  const after = eraseStoredData();
+  eraseArmed = false;
+  eraseStatus.textContent = eraseOutcomeMessage(after);
+  eraseStatus.hidden = false;
+  // The profile was also held in memory, and leaving it there would
+  // keep the heatmap reachable from data the visitor just asked this
+  // page to forget. Remediation B5 was the same bug facing the other
+  // way: two rules writing one property with no meeting point.
+  calibrationProfile = null;
+  calibrateButton.textContent = "Calibrate gaze";
+  refreshHeatmapButton();
+  refreshStoredBox();
+});
+
+refreshStoredBox();
+
 const heatmapOverlay = document.createElement("div");
 heatmapOverlay.hidden = true;
 Object.assign(heatmapOverlay.style, {
@@ -2139,6 +2210,10 @@ function processFrame(
                 ? "Recalibrate gaze"
                 : "Recalibrate gaze (calibrated for now, but could not be stored, so it will not survive a reload)";
           refreshHeatmapButton();
+          // A calibration is the only thing that puts anything in
+          // storage, so this is the one moment the stored-data box can
+          // go from empty to occupied while the page is open.
+          refreshStoredBox();
         } else {
           const target = CALIBRATION_TARGETS[captureState.targetIndex];
           if (target !== undefined) {
@@ -2629,6 +2704,9 @@ graphStyles.textContent =
   " .signals-footer { display: flex; flex-wrap: wrap; gap: 16px;" +
   "   align-items: center; justify-content: space-between;" +
   "   margin-top: 8px; }" +
+  " .stored-list { margin: 8px 0; padding-left: 20px;" +
+  "   font-size: 12px; color: #555; }" +
+  " .stored-list li { margin-bottom: 4px; }" +
   " .legend { display: flex; flex-wrap: wrap; gap: 14px;" +
   "   font-size: 12px; color: #555; }" +
   " .legend-item { display: inline-flex; align-items: center; gap: 6px; }" +
@@ -2868,7 +2946,18 @@ const measurementRow = document.createElement("div");
 measurementRow.className = "row";
 measurementRow.append(gazeBox, eyesBox, blinksBox);
 
-contentBox.append(topRow, liveSignalsBox, measurementRow);
+// Last, deliberately. It is read between sessions rather than during
+// one, and it is the only box whose button destroys something, so it
+// sits away from the controls a person reaches for while measuring.
+const storedDataBox = box(
+  "Stored on this device",
+  storedSummaryLabel,
+  storedList,
+  eraseButton,
+  eraseStatus,
+);
+
+contentBox.append(topRow, liveSignalsBox, measurementRow, storedDataBox);
 
 // The graph canvases carry their own pixel buffers, and the drawing
 // code reads canvas.width for its coordinates, so widening the buffer

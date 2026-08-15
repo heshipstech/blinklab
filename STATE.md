@@ -1,7 +1,6 @@
-Last increment: the two handoff files caught up with the work already
-done, and one account name PR #243 missed was scrubbed
-(REMEDIATION.md Stage E, NEEDS-REVIEW.md sections 1 and 4).
-Last commit, as of the stamp below: pull request #251, 2026-08-15;
+Last increment: remediation E3, the page now lists what it stores on
+your device and erases it on request.
+Last commit, as of the stamp below: pull request #252, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -10,11 +9,12 @@ make the tests able to fail, is COMPLETE (C1 to C3, PRs #227 to
 #229). Stage D: stage one, the safe relabel, is done; stage two,
 wiring a true camera rate into the 25 fps gate, is HELD until its
 blast radius is measured on the owner's real hardware, because it
-will refuse sessions that succeed today. Stage E is open meanwhile, and
-as of 15 August E1 and E2 are ticked, E5 is done except for
-`required_approving_review_count`, and **E3 is the only item left in
-that stage that is code rather than a decision**. Issue #221 records
-the backwards model clock found by B1's review.
+will refuse sessions that succeed today. Stage E is nearly closed: E1,
+E2 and E3 are ticked, E5 is done except for
+`required_approving_review_count`, and **E4, the GPL3 licence ruling,
+is the only thing left in the stage. It is a decision, not code, and
+it is the owner's.** Issue #221 records the backwards model clock
+found by B1's review.
 
 **Both handoff files under-reported themselves until 15 August.**
 REMEDIATION.md had not been touched since 12 August while three Stage E
@@ -467,7 +467,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 544 unit tests, 14 end to end tests all run in Chromium
+Test count: 559 unit tests, 16 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
