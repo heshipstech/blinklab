@@ -63,6 +63,12 @@ export type DeviceInfo = {
  * truth is "ten blinks between marker 1 and marker 2", whatever the
  * instrument thought.
  */
+/** The frame the face model actually read, which display size never changes. */
+export type MeasurementFrame = {
+  widthPx: number;
+  heightPx: number;
+};
+
 export type SessionMarker = {
   atMs: number;
   index: number;
@@ -152,6 +158,7 @@ export function sessionMetadataRows(
   irisWidths: readonly number[],
   markers: readonly SessionMarker[],
   visibilityChanges: number,
+  measurementFrame: MeasurementFrame | null,
 ): string[] {
   const duration = observedDurationSeconds(records);
   const median = medianIrisWidthPx(irisWidths);
@@ -166,11 +173,25 @@ export function sessionMetadataRows(
       "face_detected_fraction",
       detected === null ? null : detected.toFixed(3),
     ),
-    // The measurement's own resolution. The iris is the ruler every
-    // millimetre on the page is divided by, so how many pixels it spans
-    // sets the precision of all of them. Without this a phone, a laptop
-    // camera and a mirrorless body are three separate stories rather
-    // than three comparable ones.
+    // The frame the MODEL read, which is not the canvas the page draws.
+    // The canvas is capped at 640 wide for display and the landmarker
+    // is handed the video element itself, so an iris width expressed in
+    // canvas pixels understates the real resolution by exactly the
+    // display scale. It said "px" without saying whose, which made the
+    // one field that lets two devices be compared the field most likely
+    // to mislead. Both numbers travel together now.
+    line(
+      "measurement_frame",
+      measurementFrame === null
+        ? null
+        : `${measurementFrame.widthPx}x${measurementFrame.heightPx}`,
+    ),
+    // The measurement's own resolution, in the pixels of the frame
+    // above. The iris is the ruler every millimetre on the page is
+    // divided by, so how many pixels it spans sets the precision of all
+    // of them. Aperture itself is a RATIO of iris pixels to lid pixels,
+    // so it survives any display scale; this number does not, which is
+    // why it is pinned to a stated frame.
     line("median_iris_width_px", median === null ? null : median.toFixed(1)),
     line("visibility_changes", visibilityChanges),
   ];

@@ -87,6 +87,7 @@ import {
   deviceMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
+  type MeasurementFrame,
   type SessionMarker,
 } from "./core/sessionMetadata";
 import { demoNoticeText } from "./core/notice";
@@ -345,6 +346,9 @@ let framesMeasured = 0;
 // session used to export no rate and no word about the camera.
 let deviceInfo: DeviceInfo | null = null;
 let irisWidthSamples: number[] = [];
+// The frame the model read, recorded so the iris width above has a
+// stated unit. The canvas is a display size and cannot stand in for it.
+let measurementFrame: MeasurementFrame | null = null;
 let sessionMarkers: SessionMarker[] = [];
 let visibilityChanges = 0;
 // How many frames the blink gate ACCEPTED. Zero after a whole clip means
@@ -698,6 +702,7 @@ function resetSession(): void {
   framesMeasured = 0;
   deviceInfo = null;
   irisWidthSamples = [];
+  measurementFrame = null;
   sessionMarkers = [];
   visibilityChanges = 0;
   refreshMarkButton();
@@ -1666,6 +1671,7 @@ function exportSession(): void {
       irisWidthSamples,
       sessionMarkers,
       visibilityChanges,
+      measurementFrame,
     ),
     ...kssMetadataRows(kssBefore, kssAfter),
   ]);
@@ -1907,6 +1913,17 @@ function processFrame(
       // always that, and it survives a switch from camera to file,
       // which a media clock restarting at zero would not.
       const result = landmarker.detectForVideo(video, modelClockMs);
+      // The frame the model just read. Recorded here rather than beside
+      // the iris sampling, because it is a property of the SOURCE and is
+      // just as true of a frame with no face in it. Behind the face
+      // branch it stayed "unknown" for any session that never found one,
+      // which is exactly the session whose conditions you most want.
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        measurementFrame = {
+          widthPx: video.videoWidth,
+          heightPx: video.videoHeight,
+        };
+      }
       // Counted HERE, behind the running-session, canvas and
       // landmarker conditions and AFTER the model call returned, and
       // the placement is what the number means. This counter is
@@ -2022,12 +2039,20 @@ function processFrame(
           // The measurement's own resolution: how many pixels the iris
           // spans is what every millimetre on this page is divided by.
           // Sampled per frame and summarised as a median at export.
-          if (irisWidthSamples.length < IRIS_SAMPLE_CAP) {
+          // Measured against the VIDEO, not the canvas. detectForVideo
+          // is handed the video element, so the landmarks describe that
+          // frame; the canvas is capped at 640 wide for display and
+          // would halve this number for no reason but the layout.
+          if (
+            irisWidthSamples.length < IRIS_SAMPLE_CAP &&
+            video.videoWidth > 0 &&
+            video.videoHeight > 0
+          ) {
             const irisPx = irisWidthPx(
               face,
               RIGHT_IRIS_RING_INDICES,
-              canvas.width,
-              canvas.height,
+              video.videoWidth,
+              video.videoHeight,
             );
             if (irisPx !== null) {
               irisWidthSamples.push(irisPx);

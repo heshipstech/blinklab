@@ -56,6 +56,11 @@ test("a camera export carries the conditions it was measured under", async ({
   // The session block, which a camera run never had: it used to say
   // duration and rate were both "unknown" because they came from a
   // clip's duration and there was no clip.
+  // The iris width has a stated frame now. Measured against the video
+  // the model reads, not the 640-wide display canvas, which used to
+  // halve it for no reason but the layout.
+  expect(csv).toContain("# measurement_frame: ");
+  expect(csv).not.toContain("# measurement_frame: unknown");
   expect(csv).toContain("# records: ");
   expect(csv).toContain("# face_detected_fraction: ");
   expect(csv).toContain("# visibility_changes: 0");

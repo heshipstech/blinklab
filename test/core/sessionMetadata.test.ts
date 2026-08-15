@@ -9,6 +9,7 @@ import {
   observedDurationSeconds,
   sessionMetadataRows,
   type DeviceInfo,
+  type MeasurementFrame,
 } from "../../src/core/sessionMetadata";
 
 // A camera session's export used to carry no rate and no word about the
@@ -143,9 +144,12 @@ describe("what the session itself reveals", () => {
 
 describe("session rows", () => {
   const records = [record(0, true), record(1000, true), record(2000, false)];
+  const FRAME: MeasurementFrame = { widthPx: 1920, heightPx: 1080 };
 
   it("carries the numbers that make two devices comparable", () => {
-    const rows = sessionMetadataRows(records, [30, 40, 50], [], 0).join("\n");
+    const rows = sessionMetadataRows(records, [30, 40, 50], [], 0, FRAME).join(
+      "\n",
+    );
     expect(rows).toContain("# observed_duration_seconds: 2.000");
     expect(rows).toContain("# records: 3");
     expect(rows).toContain("# face_detected_fraction: 0.667");
@@ -164,6 +168,7 @@ describe("session rows", () => {
         { atMs: 55500, index: 2 },
       ],
       0,
+      FRAME,
     ).join("\n");
     expect(rows).toContain("# markers: 2");
     expect(rows).toContain("# marker_1_seconds: 42.000");
@@ -175,16 +180,33 @@ describe("session rows", () => {
     // the file rather than looking complete. Without this the median
     // would silently describe the opening stretch of a long session.
     const capped = new Array(IRIS_SAMPLE_CAP).fill(30) as number[];
-    const rows = sessionMetadataRows(records, capped, [], 0).join("\n");
+    const rows = sessionMetadataRows(records, capped, [], 0, FRAME).join("\n");
     expect(rows).toContain("median_iris_width_note");
     expect(rows).toContain("not sampled");
-    expect(sessionMetadataRows(records, [30], [], 0).join("\n")).not.toContain(
-      "median_iris_width_note",
-    );
+    expect(
+      sessionMetadataRows(records, [30], [], 0, FRAME).join("\n"),
+    ).not.toContain("median_iris_width_note");
+  });
+
+  it("pins the iris width to the frame the model actually read", () => {
+    // The defect this closes: the number was measured in 640-wide
+    // canvas pixels while the model reads the video element, so it
+    // understated the real resolution by exactly the display scale and
+    // said "px" without saying whose. It misled its own author within a
+    // day of being added.
+    const rows = sessionMetadataRows(records, [26], [], 0, FRAME).join("\n");
+    expect(rows).toContain("# measurement_frame: 1920x1080");
+    expect(rows).toContain("# median_iris_width_px: 26.0");
+  });
+
+  it("says the frame is unknown rather than guessing at the canvas", () => {
+    expect(
+      sessionMetadataRows(records, [26], [], 0, null).join("\n"),
+    ).toContain("# measurement_frame: unknown");
   });
 
   it("survives a session that recorded nothing", () => {
-    const rows = sessionMetadataRows([], [], [], 0).join("\n");
+    const rows = sessionMetadataRows([], [], [], 0, null).join("\n");
     expect(rows).toContain("# observed_duration_seconds: unknown");
     expect(rows).toContain("# records: 0");
     expect(rows).toContain("# median_iris_width_px: unknown");

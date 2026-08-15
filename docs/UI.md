@@ -305,8 +305,16 @@ Above the header, `# key: value` metadata lines: the source and clip, the
 measurement mode and frame count, **the camera's name, negotiated resolution
 and declared frame rate, the facing mode, the user agent, core count, viewport,
 screen, pixel ratio and orientation**, then the session's observed duration,
-record count, face-detected fraction, median iris width in pixels, visibility
-changes and any markers, then the two sleepiness ratings. Below that, one row
+record count, face-detected fraction, **the measurement frame and the median
+iris width in that frame's pixels**, visibility changes and any markers, then
+the two sleepiness ratings.
+
+`measurement_frame` is the video the face model actually read, not the canvas
+the page draws. The canvas is capped at 640 wide for display, so an iris width
+in canvas pixels understated the real resolution by exactly the display scale.
+Aperture in millimetres is a ratio of iris pixels to lid pixels and survives
+any display scale; the iris width alone does not, which is why it travels with
+its frame. Below that, one row
 per second of the 16 measurement columns.
 
 `deviceId` is deliberately **not** collected: it is a stable per-origin
