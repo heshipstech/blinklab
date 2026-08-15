@@ -230,13 +230,18 @@ From section 7 of the report. None of this was in the audit's scope.
       `main`. Verified live rather than in the source. Was: every claim
       in the audit, including the telemetry, was measured against a
       locally built bundle, and nothing recorded which commit is live.
-- [ ] **E3.** OPEN, and re-verified 15 August: the two permanent keys
-      are `blinklab-calibration-profile-v1` and
-      `blinklab-calibration-samples-v1`, `removeItem` appears nowhere in
-      `src/`, and there is no way for a user to erase a stored gaze
-      profile from inside the app. Enumerate what is stored and add a
-      control. **This is the only Stage E item left that is code rather
-      than a decision.**
+- [x] **E3.** DONE 15 August: a "Stored on this device" box lists both
+      keys from `core/storedData.ts`, with what each holds and why, and
+      erases them on request behind a two-click confirm. The erase
+      clears the in-memory profile too, so the heatmap returns to
+      "calibrate first" in the same click, proven by an end to end test
+      that goes red when that line is removed. The confirmation is
+      derived from a RE-PROBE after the delete rather than from
+      `removeItem` not throwing, and a browser that refuses to be read
+      is reported as refusing rather than as empty, which is the one
+      lie a privacy control must not tell. Was: two permanent
+      `localStorage` keys were written and there was no way for a user
+      to erase a stored gaze profile from inside the app.
 - [ ] **E4.** OPEN, and narrower than it was. PR #248 corrected the
       three published statements that said the miss table was withheld
       when it has been committed since #200, so the repository no longer

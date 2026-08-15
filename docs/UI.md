@@ -23,9 +23,18 @@ session starts.
 | Content column | 1280 px, centred, 16 px side padding | Always                          |
 | Overlays       | Full window, above everything        | Only when opened                |
 
-The content column contains, in order: the title, then five boxes
-arranged in three tiers, with the video sitting between the first box and
-the second.
+The content column contains, in order: the title, then eight boxes. Source
+sits beside a stacked Alertness and Session; then Live signals full width;
+then Gaze, Eyes and Blinks side by side; then Stored on this device, last
+and alone. The video sits inside the top row beside Source.
+
+**Caution, and it is not fixed here.** The tier headings in section 5 below
+(5.4 "tier 1", 5.5 "tier 2", 5.6 "tier 3") describe an earlier arrangement
+and no longer match `src/main.ts`: Session is in the top row rather than a
+third tier, and the "Instrument" box named in 5.6 is now the footer of Live
+signals. The per-element strings in those sections are current, which is
+what PR #243 checked and completed. The layout prose around them is not.
+Counted from `contentBox.append` on 2026-08-15.
 
 ---
 
@@ -292,6 +301,32 @@ the column.**
 | --------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Processing rate | `Processing rate: N frames per second, the instrument's pace, not the camera's` or `Processing rate: measuring...` |
 | Inference time  | `Inference time: N ms` with `, over the 30 ms budget` appended when over                                           |
+
+### 5.7 Box: Stored on this device
+
+Always visible, running or not, because a visitor deciding whether to
+calibrate wants to know what that will leave behind BEFORE they do it, not
+after. It sits last in the column: it is read between sessions rather than
+during one, and it is the only box whose button destroys something.
+
+_(added by remediation E3; the two keys had been written since increment 5.4a
+with nothing on the page saying so and no way to erase them)_
+
+| Element     | Strings                                                                                                                                                                                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Summary     | `Nothing is stored on this device.` or `Stored on this device now: N of M.` or `This browser will not let the page read its own storage, so what is stored here cannot be listed or erased from this page.`                                                            |
+| List        | One line per stored item, rendered from `core/storedData.ts`: what it holds, why it is kept, and the storage key in brackets                                                                                                                                           |
+| Erase       | Button. `Erase stored data`, then `Click again to erase it` once armed. Disabled as `Erase stored data (nothing stored)`, or as `Erase stored data (this browser will not let the page look)`                                                                          |
+| Erase state | Hidden until an erase is attempted. `Erased. Nothing is stored on this device now.` or `Erase did not work: N of M item(s) is/are still stored.` or `Tried to erase, but this browser will not let the page read its storage, so the result cannot be confirmed here.` |
+
+**The two disabled states say different sentences on purpose.** "Nothing
+stored" and "cannot look" mean opposite things, and an early draft used the
+first for both, so a browser refusing to be read produced a button claiming a
+clean device directly under a summary saying it could not tell.
+
+**Erasing takes the live profile with it.** The in-memory calibration profile
+is cleared too, so the heatmap button returns to `Gaze heatmap (calibrate
+first)` and the calibrate button back to `Calibrate gaze` in the same click.
 
 ---
 
