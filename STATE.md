@@ -1,7 +1,7 @@
-Last increment: the DROZY measuring commit published, so three
-correlations that were measured by superseded code say so
-(NEEDS-REVIEW.md section 3).
-Last commit, as of the stamp below: pull request #250, 2026-08-15;
+Last increment: the two handoff files caught up with the work already
+done, and one account name PR #243 missed was scrubbed
+(REMEDIATION.md Stage E, NEEDS-REVIEW.md sections 1 and 4).
+Last commit, as of the stamp below: pull request #251, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -10,8 +10,21 @@ make the tests able to fail, is COMPLETE (C1 to C3, PRs #227 to
 #229). Stage D: stage one, the safe relabel, is done; stage two,
 wiring a true camera rate into the 25 fps gate, is HELD until its
 blast radius is measured on the owner's real hardware, because it
-will refuse sessions that succeed today. Stage E is open meanwhile. Issue #221 records
+will refuse sessions that succeed today. Stage E is open meanwhile, and
+as of 15 August E1 and E2 are ticked, E5 is done except for
+`required_approving_review_count`, and **E3 is the only item left in
+that stage that is code rather than a decision**. Issue #221 records
 the backwards model clock found by B1's review.
+
+**Both handoff files under-reported themselves until 15 August.**
+REMEDIATION.md had not been touched since 12 August while three Stage E
+items moved, and NEEDS-REVIEW.md still listed statements PR #248 had
+already corrected. Both are now caught up, each item re-checked against
+the repository or the GitHub API rather than against the previous
+document. Doing that check found one thing the earlier reading had
+wrong: PR #243 did not finish the account-name scrub, one memory
+directory path survived in `docs/audit/appendix-chunk-1-all-findings.md`
+and is neutralised now.
 
 **14 to 15 August changed nothing on the remediation ladder.** Fifteen
 pull requests merged (#234 to #248) and every one was dependencies or
