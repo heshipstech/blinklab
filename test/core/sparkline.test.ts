@@ -144,11 +144,20 @@ describe("withinWindow, the rule that replaced four guessed caps", () => {
     }
   });
 
+  // The 30 second timeout below is not slack, it is arithmetic.
+  // `feed` is quadratic on purpose: it rebuilds the kept array one
+  // sample at a time, exactly as the frame loop does, so 30,001
+  // iterations each filter up to 5,001 samples. That takes about a
+  // second normally, comfortably inside vitest's 5 s default. Under v8
+  // coverage instrumentation on a CI runner it does not, and this test
+  // timed out the first time roadmap 8.6 switched coverage on. The
+  // sixty seconds of simulated time IS the claim, so the timeout moves
+  // rather than the workload.
   it("stays bounded, so no rate can grow it without limit", () => {
     // The window bounds the memory. 500 frames per second over 10
     // seconds is 5001 samples and never more, however long it runs.
     expect(feed(500, 60, 10000).length).toBeLessThanOrEqual(5001);
-  });
+  }, 30_000);
 
   it("drops a sample from the future rather than keeping it forever", () => {
     // A clip's clock restarts at zero. Under the old one sided test a
