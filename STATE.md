@@ -1,6 +1,6 @@
-Last increment: roadmap 8.6 and 8.7, a coverage floor on core and a
-bundle size ceiling, both proven able to fail.
-Last commit, as of the stamp below: pull request #256, 2026-08-15;
+Last increment: roadmap 8.3, CHANGELOG.md, plus CONTRIBUTING.md. The
+v0.8.0 tag is deliberately NOT cut while 8.8 is open.
+Last commit, as of the stamp below: pull request #257, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and

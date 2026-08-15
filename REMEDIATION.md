@@ -299,8 +299,16 @@ From section 7 of the report. None of this was in the audit's scope.
 
 ## Stage G. Finish Phase 8 properly
 
-- [ ] **8.3** `CHANGELOG.md` and a v0.8.0 release. Seven tags and seven
-      releases already exist, so two thirds of the row shipped.
+- [x] **8.3** `CHANGELOG.md` written 15 August, covering the seven
+      existing releases plus an Unreleased section for everything since
+      v0.7.0, which is the largest gap in the project because the audit
+      landed in it. Each released version says it was summarised after
+      the fact from its tag, its pull requests and `docs/log.md`, rather
+      than pretending to be a contemporaneous entry. **The v0.8.0 tag
+      and release are NOT done and are deliberately left**: Phase 8 is
+      not finished while 8.8 is open, and tagging a phase closed before
+      it is would be exactly the kind of claim this project keeps
+      having to withdraw.
 - [x] **8.5** DONE, verified 15 August. `SECURITY.md` is a real policy,
       not a stub: it states the no-server threat model, what counts as a
       vulnerability here, and how to report one. `.github/dependabot.yml`
@@ -330,7 +338,12 @@ From section 7 of the report. None of this was in the audit's scope.
       equivalents for the heatmap, the traces and the replay circles.
       **The floor is already met**: focus is visible, the app is fully
       keyboard operable, and all text clears WCAG contrast.
-- [ ] `CONTRIBUTING.md`, which has no roadmap row and never will.
+- [x] `CONTRIBUTING.md`, which has no roadmap row and never will.
+      Written 15 August: what a reader can rely on, the gate list, the
+      three rules that were each learned by breaking, and a map of
+      which document is which. It says plainly that the contribution
+      this project wants is an issue saying a published number is
+      wrong.
 - [ ] Issue #178, reconcile with closed issue #126.
 - [ ] Issues #115, #90, #15.
 
