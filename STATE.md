@@ -1,7 +1,8 @@
-Last increment: every export outcome now says what happened. Two of the
-three used to be silent, which is why "Export CSV doesn't work" was
-reported against a flow that was working.
-Last commit, as of the stamp below: pull request #260, 2026-08-16;
+Last increment: the iris width is measured in the frame the model reads
+and says which frame that was, and the camera is asked for 1920 instead
+of 1280. The ruler's resolution is the thing to watch before the
+six-person round.
+Last commit, as of the stamp below: pull request #261, 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: NOTHING IS BLOCKED. The August audit's ladder is
@@ -478,7 +479,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 599 unit tests, 20 end to end tests all run in Chromium
+Test count: 601 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
