@@ -1,7 +1,7 @@
-Last increment: the export now records the conditions it was measured
-under, and a Mark button anchors ground truth. Both exist for the
-six-person validation round, which is the next thing to happen.
-Last commit, as of the stamp below: pull request #259, 2026-08-15;
+Last increment: every export outcome now says what happened. Two of the
+three used to be silent, which is why "Export CSV doesn't work" was
+reported against a flow that was working.
+Last commit, as of the stamp below: pull request #260, 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: NOTHING IS BLOCKED. The August audit's ladder is
@@ -74,7 +74,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 15 August 2026. When this file changes, this stamp changes
+Stamped: 16 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -478,7 +478,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 595 unit tests, 18 end to end tests all run in Chromium
+Test count: 599 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 

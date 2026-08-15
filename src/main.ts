@@ -77,6 +77,12 @@ import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
 import {
+  EXPORT_NOTHING_RECORDED,
+  EXPORT_NO_BLINKS,
+  EXPORT_WAITING_FOR_KSS,
+  exportedMessage,
+} from "./core/exportStatus";
+import {
   IRIS_SAMPLE_CAP,
   deviceMetadataRows,
   sessionMetadataRows,
@@ -661,6 +667,7 @@ function resetSession(): void {
   lastRecordAtMs = null;
   exportButton.disabled = true;
   exportBlinksButton.disabled = true;
+  exportStatus.textContent = "";
   sessionStartedAtEpochMs = null;
   kssBefore = null;
   kssAfter = null;
@@ -1636,6 +1643,13 @@ function askKss(
   });
   kssButtons.append(skip);
   kssPanel.hidden = false;
+  // A question nobody can see is a question nobody answers. The panel
+  // sits low in the Session box and can fall below the fold on a short
+  // window, which is how an export that was merely waiting looked like
+  // an export that was broken. `nearest` rather than `center`: this
+  // scrolls the least that still works, because moving the page during
+  // a session moves the eyes it is measuring.
+  kssPanel.scrollIntoView({ block: "nearest" });
 }
 
 function exportSession(): void {
@@ -1656,6 +1670,8 @@ function exportSession(): void {
     ...kssMetadataRows(kssBefore, kssAfter),
   ]);
   if (csv === null) {
+    // A bare `return` here produced no file, no error and no message.
+    exportStatus.textContent = EXPORT_NOTHING_RECORDED;
     return;
   }
   // Colons are not safe in filenames on every system, so the ISO
@@ -1664,7 +1680,9 @@ function exportSession(): void {
     .toISOString()
     .replace(/[:.]/g, "-")
     .replace("Z", "");
-  downloadTextFile(`blinklab-session-${stamp}.csv`, csv, "text/csv");
+  exportStatus.textContent = exportedMessage(
+    downloadTextFile(`blinklab-session-${stamp}.csv`, csv, "text/csv"),
+  );
 }
 
 const exportButton = document.createElement("button");
@@ -1702,12 +1720,17 @@ exportBlinksButton.addEventListener("click", () => {
     // trusts the row count to be the blink count.
     blinkState.blinkCount,
   );
-  if (csv === null) return;
+  if (csv === null) {
+    exportStatus.textContent = EXPORT_NO_BLINKS;
+    return;
+  }
   const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
     .toISOString()
     .replace(/[:.]/g, "-")
     .replace("Z", "");
-  downloadTextFile(`blinklab-blinks-${stamp}.csv`, csv, "text/csv");
+  exportStatus.textContent = exportedMessage(
+    downloadTextFile(`blinklab-blinks-${stamp}.csv`, csv, "text/csv"),
+  );
 });
 
 exportButton.addEventListener("click", () => {
@@ -1720,6 +1743,11 @@ exportButton.addEventListener("click", () => {
   // write the viewer's answer into the file as the recorded person's
   // label, which is the exact mislabelling a dataset exists to avoid.
   if (kssAfter === null && frameSource === "camera") {
+    // The click that looks like nothing. It opens the question below
+    // and returns, and the file only arrives once the question is
+    // answered, so the button now says so instead of leaving a person
+    // clicking it again.
+    exportStatus.textContent = EXPORT_WAITING_FOR_KSS;
     askKss("How sleepy do you feel now?", (rating) => {
       kssAfter = rating;
       exportSession();
@@ -2885,6 +2913,12 @@ function box(heading: string, ...children: Element[]): HTMLDivElement {
 // The two exports and the development-only fixture recorder share a
 // row rather than stacking, since they are all "take something away
 // with you".
+// Every export outcome says what happened, including the successful
+// one. Two of the three used to be silent, which from the outside is
+// indistinguishable from a broken button.
+const exportStatus = document.createElement("p");
+exportStatus.dataset.testid = "export-status";
+
 const markButton = document.createElement("button");
 markButton.textContent = "Mark this moment";
 markButton.setAttribute("data-testid", "mark-moment");
@@ -2988,7 +3022,14 @@ const sourceBox = box(
 const alertnessBox = box("Alertness", scoreLabel, panelSummaryLabel, panelList);
 scoreLabel.className = "headline";
 
-const sessionBox = box("Session", featureLabel, exportRow, markLabel, kssPanel);
+const sessionBox = box(
+  "Session",
+  featureLabel,
+  exportRow,
+  exportStatus,
+  markLabel,
+  kssPanel,
+);
 
 const blinksBox = box(
   "Blinks",
