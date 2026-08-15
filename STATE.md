@@ -1,6 +1,6 @@
-Last increment: the Stage H branch inventory verified and written down,
-so the deletions are one command whenever the owner wants them.
-Last commit, as of the stamp below: pull request #255, 2026-08-15;
+Last increment: roadmap 8.6 and 8.7, a coverage floor on core and a
+bundle size ceiling, both proven able to fail.
+Last commit, as of the stamp below: pull request #256, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -467,7 +467,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 578 unit tests, 16 end to end tests all run in Chromium
+Test count: 584 unit tests, 16 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
