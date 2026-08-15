@@ -216,24 +216,44 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 From section 7 of the report. None of this was in the audit's scope.
 
-- [ ] **E1.** `npm audit --omit=dev` and a Python equivalent. Nobody has
-      checked a single CVE across 170 npm and 21 Python packages. Rolls
-      into row 8.5.
-- [ ] **E2.** Fetch the deployed page at
-      `https://heshipstech.github.io/blinklab/`. Compare its bundle hash
-      and its notice text against a fresh build. **Every claim in the
-      audit, including the telemetry, was measured against a locally
-      built bundle.** Nothing records which commit is live.
-- [ ] **E3.** Data at rest. Two permanent `localStorage` keys are written
-      and there is no way for a user to erase a stored gaze profile from
-      inside the app. Enumerate what is stored and add a control.
-- [ ] **E4.** The licence chain for derived dataset artefacts, and the
-      miss table withheld on GPL3 grounds that is committed anyway. Two
-      live documents state the withholding rule. Either retire the rule
-      in writing or remove the file.
-- [ ] **E5.** GitHub settings sweep: Dependabot alerts, secret scanning,
-      default token permissions, and `required_approving_review_count`
-      which is 0. Pin the six workflow actions to commit SHAs.
+- [x] **E1.** DONE 14 August, verified again 15 August:
+      `npm audit --omit=dev` reports 0 vulnerabilities, and Dependabot
+      alerts agree at every severity. TypeScript 7 is ignored on purpose
+      in `.github/dependabot.yml`, because `typescript-eslint` still
+      caps at `<6.1.0` so the bump cannot install; delete the ignore
+      when that cap lifts. Was: nobody had checked a single CVE across
+      170 npm and 21 Python packages. Rolls into row 8.5.
+- [x] **E2.** DONE 14 August, PR #244: a `stamp-build-commit` vite
+      plugin injects `<meta name="build-commit">` at build time, so
+      `curl` on the live demo names the commit it was built from without
+      needing repository access, and every deploy since has matched
+      `main`. Verified live rather than in the source. Was: every claim
+      in the audit, including the telemetry, was measured against a
+      locally built bundle, and nothing recorded which commit is live.
+- [ ] **E3.** OPEN, and re-verified 15 August: the two permanent keys
+      are `blinklab-calibration-profile-v1` and
+      `blinklab-calibration-samples-v1`, `removeItem` appears nowhere in
+      `src/`, and there is no way for a user to erase a stored gaze
+      profile from inside the app. Enumerate what is stored and add a
+      control. **This is the only Stage E item left that is code rather
+      than a decision.**
+- [ ] **E4.** OPEN, and narrower than it was. PR #248 corrected the
+      three published statements that said the miss table was withheld
+      when it has been committed since #200, so the repository no longer
+      contradicts itself out loud. What remains is the ruling itself:
+      `DATASETS.md:383` still reads "its copyleft would need thought
+      before publishing derived files", verified 15 August, and that
+      thought has not been done. The corpus is GPL3, this repository is
+      public and MIT. See NEEDS-REVIEW.md section 1.
+- [ ] **E5.** MOSTLY DONE, PR #232 plus a settings sweep on 14 August.
+      All workflow actions are pinned to full commit SHAs, secret
+      scanning is enabled, default token permissions are `read`, and
+      Dependabot alerts are on and report 0. Each was checked against
+      the API on 15 August rather than assumed. **The box stays
+      unticked for one thing:** `required_approving_review_count` is
+      still 0. On a solo-maintained repository raising it would block
+      the maintainer's own merges, so this needs a decision rather than
+      a default.
 
 ---
 

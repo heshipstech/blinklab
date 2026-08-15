@@ -1,7 +1,15 @@
 # NEEDS-REVIEW — blinklab, 2026-08-14
 
 Items from the close-out audit that are **not mine to act on**. Each is parked
-with the evidence needed to decide. Nothing here has been changed.
+with the evidence needed to decide. ~~Nothing here has been changed.~~
+
+**That last sentence was true on 14 August and is not now.** Items resolved
+since are marked in place rather than deleted, each with the date and the pull
+request, so the file still reads as the audit left it with the answers written
+on top. Every item was re-checked against the repository or the GitHub API on
+2026-08-15, not against the previous version of this document. Doing that found
+one thing this file had wrong in the optimistic direction: the account-name
+scrub was recorded as complete when one path had survived it.
 
 The audit itself is in [AUDIT-2026-08-14.md](AUDIT-2026-08-14.md).
 
@@ -26,31 +34,45 @@ problem: `blink_id`, `startFrame`, `endFrame`, `frameLength`,
 intervals for 50 of the 408 annotated blinks — the annotation, not this
 project's measurements.
 
-Saying otherwise, right now, in the published tree:
+Saying otherwise when this was written. **Three of the four were corrected on
+2026-08-15 by PR #248**, and the fourth is the one that matters:
 
-- `docs/evidence/2026-08-09/README.md:105` — "The third table of the set,
-  `eyeblink8_misses.csv`, is deliberately not here"
-- the same file at `:289` — "`eyeblink8_misses.csv` is not committed"
-- `findings/issue-179-stale-tables.md:60` — "is **not** committed", and `:80`
-  "can be rebuilt whenever the licence question is answered"
-- `DATASETS.md:383` still records the copyleft question as unanswered
+- ~~`docs/evidence/2026-08-09/README.md:105` — "The third table of the set,
+  `eyeblink8_misses.csv`, is deliberately not here"~~ corrected: it now says
+  this is true of `tables/` and that the file **is** committed under
+  `tables-current-run/`
+- ~~the same file at `:289` — "`eyeblink8_misses.csv` is not committed"~~
+  corrected: struck through in place, with the licence reasoning kept because
+  it is the withholding that never happened, not the concern
+- ~~`findings/issue-179-stale-tables.md:60` — "is **not** committed", and `:80`
+  "can be rebuilt whenever the licence question is answered"~~ both struck
+  through in place
+- **`DATASETS.md:383` still records the copyleft question as unanswered**, and
+  it still reads "its copyleft would need thought before publishing derived
+  files". Verified 2026-08-15. **This is the whole of what remains here.**
 
 The corpus licence, checked against the primary source rather than the repo's
 summary: blinkingmatters.com/research states all its data is under **GPL3**.
 This repository is **public** and **MIT**.
 
-Three states are possible and the repo is in the worst of them: the rule exists
-in writing and the repository breaks it. Either retire the rule — do the
-copyleft analysis, write the answer into DATASETS.md, and correct the four
-statements above — or remove the file and keep `scripts/tables/autopsy.py` as
-the rebuild path. `REMEDIATION.md` stage E4 exists for exactly this and is
-queued last; the repo being public is the argument for moving it up.
+Three states were possible and the repo was in the worst of them: the rule
+existed in writing and the repository broke it. **PR #248 moved it out of that
+state on 2026-08-15** by correcting the statements, so the repository no longer
+contradicts itself out loud. That is a smaller thing than it sounds: correcting
+what is true about the file is not a ruling on whether it should be there.
+
+What remains is the ruling. Either retire the rule, which means doing the
+copyleft analysis and writing the answer into DATASETS.md, or remove the file
+and keep `scripts/tables/autopsy.py` as the rebuild path. `REMEDIATION.md`
+stage E4 exists for exactly this and is queued last; the repo being public is
+the argument for moving it up.
 
 **Note on a related earlier judgement.** A sibling repo's decision log records
 a recommendation to strip these columns being _withdrawn_ on the grounds that
 the dataset is "GPL3 and ungated by the repo's own documentation". The first
-half is right; the second is not — the documentation gates it explicitly, in
-four places. That withdrawal deserves revisiting.
+half is right; the second is not — the documentation gated it explicitly, in
+four places, and after #248 it is gated in one, `DATASETS.md:383`. That
+withdrawal still deserves revisiting.
 
 ---
 
@@ -127,13 +149,13 @@ open**: this records which rows are old, it does not recompute them.
 | **`feat/5.8-fixation-stats` survives on the remote**, 1 ahead / 99 behind. Its commit is the pre-squash original of PR #99, so nothing is lost by deleting it — but deleting a remote branch is yours                                                                                                                                                                                                                                                                                                                                                      | STOP #4                                                 | 1 min      |
 | **20 local branches** whose upstreams are gone. All squash-merged, so `git cherry` misreports them as unmerged; the reliable test is `git diff main <branch>`. None is published — the remote has only `main` and the branch above                                                                                                                                                                                                                                                                                                                         | Housekeeping, already at REMEDIATION.md:278             | 10 min     |
 | **7 commits carry a personal Gmail** as author; the other 145 use the noreply form. Changing them is a history rewrite on a public repo with 119 PRs                                                                                                                                                                                                                                                                                                                                                                                                       | STOP #3                                                 | —          |
-| **The macOS account name appears in 22 committed lines** across five audit documents, as absolute paths. `docs/evidence/` already has a path-scrubbing convention; `docs/audit/` did not get it                                                                                                                                                                                                                                                                                                                                                            | Low, but it is your name in a public repo               | 15 min     |
+| ~~**The macOS account name appears in 22 committed lines** across five audit documents, as absolute paths. `docs/evidence/` already has a path-scrubbing convention; `docs/audit/` did not get it~~ **DONE.** PR #243 scrubbed most of them to `<repo>` on 2026-08-14 but MISSED ONE, a memory-directory path at `appendix-chunk-1-all-findings.md:691`, neutralised to `~/.claude/projects/<this-project>/` on 2026-08-15. `git grep` for the account name now returns nothing                                                                            | ~~Low, but it is your name in a public repo~~ Done      | ~~15 min~~ |
 | **No CSP, `X-Frame-Options` or `Permissions-Policy` on the deployed page.** GitHub Pages serves a fixed header set and cannot be configured, so this is a hosting limit. For a page that requests camera access, the only lever is an in-document `<meta http-equiv>` CSP, which cannot express `frame-ancestors`                                                                                                                                                                                                                                          | Platform constraint; worth recording rather than fixing | —          |
 | **The demo is fully indexable and has no favicon, description or OG tags.** A project-path `robots.txt` cannot work — robots.txt is only read at the origin root, and no user-level Pages site exists there                                                                                                                                                                                                                                                                                                                                                | Product decision: do you want it indexed?               | 20 min     |
 | ~~**Nothing on the page says which commit is live.** Given this project's stamp discipline, the published artefact is the one place it does not reach. Roughly five lines: inject `GITHUB_SHA` via vite `define` and render it in the footer~~ **DONE 2026-08-14 in #244 (`5132cf2`)** — a `stamp-build-commit` vite plugin injects `<meta name="build-commit">` at build time, `dev` locally. Verified live rather than in the source: `curl -s https://heshipstech.github.io/blinklab/` returns the tag, and it has matched `main` on every deploy since | ~~Nice-to-have~~ Done                                   | ~~15 min~~ |
 | **`DROZY.zip`, 2.3 GB, is retained** beside the repo while DATASETS.md says source video is deleted once features are computed. The verifier confirmed the extracted folder holds no video and the archive is outside the repository, so the safeguard's intent holds — but the two statements should agree                                                                                                                                                                                                                                                | Wording, or delete the archive                          | 5 min      |
 | **README says DATASETS.md "records roughly forty public datasets"**; it records twenty, from roughly forty assessments. The process number became a record number                                                                                                                                                                                                                                                                                                                                                                                          | One-line correction, but it is your prose               | 2 min      |
-| **`docs/UI.md` claims to list every string the page can show** and is missing two CameraState kinds added by PR #223/#224, plus the Retry button and a clip processing-rate string                                                                                                                                                                                                                                                                                                                                                                         | Documentation of UI you own                             | 20 min     |
+| ~~**`docs/UI.md` claims to list every string the page can show** and is missing two CameraState kinds added by PR #223/#224, plus the Retry button and a clip processing-rate string~~ **DONE 2026-08-14 in #243.** `modelFailed` and `measurementFailed` are both listed with the PR that added them, the "Retry loading the model" button has its own paragraph, and the processing-rate string is in the readout table. Verified 2026-08-15                                                                                                             | ~~Documentation of UI you own~~ Done                    | ~~20 min~~ |
 | **CHANGELOG.md** absent while seven release tags exist; ROADMAP row 8.3 reads as entirely undone while REMEDIATION records it two-thirds done                                                                                                                                                                                                                                                                                                                                                                                                              | Founder preference                                      | 30 min     |
 
 ---
