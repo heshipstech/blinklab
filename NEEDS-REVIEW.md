@@ -100,6 +100,23 @@ and the README's DROZY section naming the measuring commit and noting that
 PR #225 postdates it. **I have not written that sentence** — it qualifies a
 published result, which is yours.
 
+**WRITTEN 2026-08-15, with the owner's approval of the wording.** Both
+documents now carry the caveat, and `STATE.md` points at it. The measuring
+commit is `bd2a98d`: the run's own files are stamped 9 August 22:10 to 22:41,
+and that was `main`'s head at 22:03. Its newest code change was PR #190.
+`tools/drozyGuard.mjs` reads that commit out of the result file and requires
+the caveat only while `git log bd2a98d..HEAD -- src/core/blinkShape.ts` is
+non-empty, so re-measuring retires the warning by itself.
+
+Three commit-level checks were added to the audit's empirical one, and all
+agree with it. PR #218 touched `aperture.ts`, but the diff is an import move,
+`toPixels` relocated to `geometry.ts`, so the millimetre aperture every other
+feature depends on is unchanged. PR #197 changed the status line, not the
+export, as its own commit message records. PR #229's backwards-clock guard
+fires only on a frame stamped earlier than the state carries, which a
+clip-derived clock never produces. **The re-measure decision itself is still
+open**: this records which rows are old, it does not recompute them.
+
 ---
 
 ## 4 · Smaller decisions

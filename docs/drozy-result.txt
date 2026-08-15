@@ -16,6 +16,22 @@ EXCLUSION BIAS, read this before the correlations
   sessions, and a null result here is correspondingly
   weaker evidence than a null result on the full set.
 
+MEASURING COMMIT, read this before the correlations
+  measured    9 August 2026, 22:10 to 22:41
+  built from  bd2a98d, whose newest code change was PR #190
+  Three days later PR #225 clipped the blink shape window at the
+  previous blink. The audit called it this project's one genuine
+  arithmetic error. It changes three of the seven features below:
+  closing velocity, blink amplitude, and amplitude over velocity.
+  Blink intervals re-measure byte for byte identical, so blink
+  duration, long closures, blink rate and PERCLOS are unaffected.
+  Those three shape figures have NOT been recomputed on current
+  code, and they are the same three the verdict calls suggestive
+  and unconfirmed. Recomputing needs a re-extract from DROZY.zip
+  and about 3.1 hours, and it would recreate the derived video
+  DATASETS.md requires destroyed. Read those three rows as
+  produced by code this repository has since corrected.
+
 PRIMARY, Spearman against KSS across sessions
   feature                            n     rho    p raw   p Holm  within-subject
   blink duration, ms                20   0.444   0.0490   0.3427  2/5 agree

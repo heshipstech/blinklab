@@ -1,6 +1,7 @@
-Last increment: remediation D1 stage one, the frames-per-second
-readout relabelled as a processing rate (REMEDIATION.md).
-Last commit, as of the stamp below: pull request #248, 2026-08-15;
+Last increment: the DROZY measuring commit published, so three
+correlations that were measured by superseded code say so
+(NEEDS-REVIEW.md section 3).
+Last commit, as of the stamp below: pull request #250, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -91,6 +92,17 @@ What can be said here without publishing the finding: 20 of 36 sessions
 were analysable, and the plan in docs/drozy-analysis-plan.md was
 committed before any correlation existed, so the result can be checked
 against a plan that could not have been written to fit it.
+
+THREE OF THE SEVEN ROWS WERE MEASURED BY CODE THAT HAS SINCE CHANGED.
+The run is from 9 August, built from `bd2a98d`. PR #225 then clipped the
+blink shape window on 12 August, which moves closing velocity, blink
+amplitude and amplitude over velocity. Blink intervals re-measure byte
+for byte identical, so blink duration, long closures, blink rate and
+PERCLOS are unaffected, and Track A is untouched. Both `README.md` and
+`docs/drozy-result.txt` now say so, and `tools/drozyGuard.mjs` requires
+them to while `git log bd2a98d..HEAD -- src/core/blinkShape.ts` is
+non-empty. Re-measure and update the "built from" line, and the
+requirement lifts on its own.
 
 THE EXCLUSION IS NOT RANDOM. DROZY's own README says the 15 fps
 recordings are "tests 2 and 3 of subjects 1->8, because of a recording
@@ -442,7 +454,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 533 unit tests, 14 end to end tests all run in Chromium
+Test count: 544 unit tests, 14 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
