@@ -273,10 +273,16 @@ From section 7 of the report. None of this was in the audit's scope.
       the 56 merged pull requests that name no increment, or state that
       the ladder ended at Phase 7 and the project now runs on issues.
       **A decision, not an increment.**
-- [ ] **F3.** `docs/UI.md` has one commit and 15 `main.ts` commits since,
-      and no check can fail when it drifts. It is the compensating
-      control for the missing `src/ui`, so either give it a check or
-      rewrite `SPEC.md:11`'s argument.
+- [x] **F3.** DONE 15 August: `tools/uiGuard.mjs` reads every
+      `box("...")` heading out of `src/main.ts` and holds `docs/UI.md`
+      to them in BOTH directions, so an undocumented box and a
+      documented box that no longer exists are each a red build. It
+      had already drifted, which is how the check earned itself: the
+      file described five boxes in three tiers where there are eight in
+      four rows, put Session in a tier of its own when it sits under
+      Alertness, and documented an "Instrument" box that had become the
+      footer of Live signals. All three corrected. Was: one commit and
+      15 `main.ts` commits since, with no check able to fail.
 
 ---
 

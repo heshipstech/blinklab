@@ -23,18 +23,22 @@ session starts.
 | Content column | 1280 px, centred, 16 px side padding | Always                          |
 | Overlays       | Full window, above everything        | Only when opened                |
 
-The content column contains, in order: the title, then eight boxes. Source
-sits beside a stacked Alertness and Session; then Live signals full width;
-then Gaze, Eyes and Blinks side by side; then Stored on this device, last
-and alone. The video sits inside the top row beside Source.
+The content column contains the title, then eight boxes in four rows:
 
-**Caution, and it is not fixed here.** The tier headings in section 5 below
-(5.4 "tier 1", 5.5 "tier 2", 5.6 "tier 3") describe an earlier arrangement
-and no longer match `src/main.ts`: Session is in the top row rather than a
-third tier, and the "Instrument" box named in 5.6 is now the footer of Live
-signals. The per-element strings in those sections are current, which is
-what PR #243 checked and completed. The layout prose around them is not.
-Counted from `contentBox.append` on 2026-08-15.
+| Row             | Boxes                                          | Width                             |
+| --------------- | ---------------------------------------------- | --------------------------------- |
+| Top row         | Source, beside a stacked Alertness and Session | Split, video inside Source's side |
+| Live signals    | Live signals                                   | Full column                       |
+| Measurement row | Gaze, Eyes, Blinks                             | Three abreast                     |
+| Last            | Stored on this device                          | Full column                       |
+
+**This table is checked, not remembered.** `tools/uiGuard.mjs` reads every
+`box("...")` heading out of `src/main.ts` and a test fails when one of them
+has no section in this file, or when this file documents a box that no
+longer exists. Remediation F3. Until 15 August nothing could fail here, and
+the file had drifted: it described five boxes in three tiers, put Session in
+a tier of its own, and documented an "Instrument" box that had become the
+footer of Live signals.
 
 ---
 
@@ -184,10 +188,10 @@ Drawn on the canvas, all optional and all off by default:
 - Iris rings and centres, orange
 - Face mesh, all 478 landmarks as faint grey dots
 
-### 5.4 Box: Alertness (tier 1)
+### 5.4 Box: Alertness
 
-Visible only when running. Full column width. Contains the only large
-text on the page.
+Visible only when running. Sits in the top row, in the right column above
+Session. Contains the only large text on the page.
 
 | Element       | Type                     | Visible when                       |
 | ------------- | ------------------------ | ---------------------------------- |
@@ -218,7 +222,7 @@ four parts. Each reads like `eyes closed share, 20 points`.
 Alert banner: `Alert: long eye closure (alerts: N, suppressed: M)`. Hidden
 whenever an alert is not live, and always hidden when not running.
 
-### 5.5 Tier 2: three boxes side by side
+### 5.5 The measurement row: three boxes side by side
 
 All three visible only when running. They sit in a grid that **stacks
 vertically below about 1000 px of column width.**
@@ -264,9 +268,11 @@ its cap. At 50 entries it is by far the tallest thing on the page.**
 90 characters. The pose gate message is longer still at about 120, and it
 appears without warning whenever the head turns.**
 
-### 5.6 Tier 3: two boxes side by side, smaller grey type
+### 5.6 Session and Live signals, smaller grey type
 
-Both visible only when running.
+Both visible only when running. Session sits under Alertness in the top
+row; Live signals is full column width on its own, and carries the graph
+strip plus the footer below.
 
 #### Box: Session
 
@@ -295,7 +301,10 @@ effort to keep awake, fighting sleep
 **Option 9 is 58 characters. This panel is the widest fixed content in
 the column.**
 
-#### Box: Instrument
+#### Box: Live signals
+
+The two numbers in its footer. They are not measurements of the eyes, but
+they are measurements of the signal on the strip above them.
 
 | Element         | Strings                                                                                                            |
 | --------------- | ------------------------------------------------------------------------------------------------------------------ |
