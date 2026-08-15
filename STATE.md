@@ -1,6 +1,6 @@
-Last increment: remediation F3, docs/UI.md can now fail when it stops
-describing the page.
-Last commit, as of the stamp below: pull request #253, 2026-08-15;
+Last increment: remediation F1, the log's two real gaps backfilled and
+the Definition of Done made a mechanism.
+Last commit, as of the stamp below: pull request #254, 2026-08-15;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: remediation Stage B, stop corrupting data and
@@ -467,7 +467,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 565 unit tests, 16 end to end tests all run in Chromium
+Test count: 578 unit tests, 16 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 99 Python tests of which
 2 skip
 
