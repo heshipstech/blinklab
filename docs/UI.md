@@ -281,10 +281,24 @@ strip plus the footer below.
 | Feature records  | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)` |
 | Export CSV       | Button | Disabled until at least one record exists                                                                                                                      |
 | Mark this moment | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
+| Export state     | Text   | Empty until an export is attempted. See the four strings below                                                                                                 |
 | Marks            | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
 | Export blink log | Button | Disabled until at least one blink exists                                                                                                                       |
 | Sleepiness panel | Panel  | See below                                                                                                                                                      |
 | Record fixture   | Button | **Development builds only.** Never on the live site                                                                                                            |
+
+**Every export outcome says what happened, including the successful one.**
+The button had three outcomes and only one was visible, so a click that was
+merely waiting looked like a broken button:
+
+- `Almost there: answer the sleepiness question below and the file will download.`
+- `Nothing to export yet: no measurements have been recorded in this session.`
+- `Nothing to export yet: no blinks have been detected in this session.`
+- `Exported NAME. Check your downloads.`
+
+From `core/exportStatus.ts`. The sleepiness panel also scrolls itself into
+view when it opens, with `block: "nearest"` so it moves the page as little as
+possible: scrolling during a session moves the eyes being measured.
 
 **What the CSV export contains, since the person may send it to someone.**
 Above the header, `# key: value` metadata lines: the source and clip, the
