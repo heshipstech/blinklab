@@ -33,3 +33,14 @@ Verify the frame count with:
 ffmpeg -v quiet -stats -i test/fixtures/clip-60fps-60frames.mp4 \
   -map 0:v -f null -
 ```
+
+## Whose face this is
+
+`session-01.json` is **the author's own face**, recorded with the dev-only
+"Record fixture" button and confirmed by the owner on 2026-08-15. The same is
+true of `analysis/tests/fixtures/session-fixture.csv`, which carries real
+`kss_before` and `kss_after` sleepiness ratings.
+
+This is written down because an audit found it stated nowhere. Face geometry
+and a self-reported sleepiness score are personal data, and a reader of a
+public repository could not otherwise tell consent from oversight.

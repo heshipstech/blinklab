@@ -12,8 +12,13 @@ Paused 10 August 2026, resumed 11 August.
 
 ## How to resume
 
+0. **`- [~]` means DECLINED, not pending.** On 15 August the owner cut
+   every item that was tidying rather than blocking, because deferred
+   items kept returning as findings in the next audit wearing a new
+   number. A declined item is a decision. Do not reopen one without a
+   reason that did not exist on 15 August.
 1. Read this file, then section 6 of `AUDIT_REPORT_AUG_2026.md`.
-2. The first unticked item below is the next one to do.
+2. The first unticked `- [ ]` item below is the next one to do.
 3. One branch, one pull request, green continuous integration, per item.
 4. **Merge before deleting.** Confirm `gh pr view <n> --json state`
    returns `MERGED` before deleting any branch. On 10 August a branch was
@@ -193,7 +198,12 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 ## Stage D. The risky one, alone, on a quiet day
 
-- [ ] **D1 (R13).** STAGE ONE DONE 12 August, PR #230: the readout is
+- [ ] **D1 (R13). NEXT REAL WORK, and it is a webcam fix, not hardware
+      preparation.** The owner ruled on 15 August that the project keeps
+      improving the webcam path before building for external devices.
+      That does not defer this: the readout is wrong for webcams TODAY,
+      because a 20 fps camera reads 70 and holds the 25 fps blink gate
+      open in sessions that should be refused. STAGE ONE DONE 12 August, PR #230: the readout is
       relabelled "Processing rate", mode-aware after review (live: the
       instrument's pace, not the camera's; clips: measured on the
       clip's own clock, where the number IS the source's rate), wording
@@ -242,14 +252,14 @@ From section 7 of the report. None of this was in the audit's scope.
       lie a privacy control must not tell. Was: two permanent
       `localStorage` keys were written and there was no way for a user
       to erase a stored gaze profile from inside the app.
-- [ ] **E4.** OPEN, and narrower than it was. PR #248 corrected the
-      three published statements that said the miss table was withheld
-      when it has been committed since #200, so the repository no longer
-      contradicts itself out loud. What remains is the ruling itself:
-      `DATASETS.md:383` still reads "its copyleft would need thought
-      before publishing derived files", verified 15 August, and that
-      thought has not been done. The corpus is GPL3, this repository is
-      public and MIT. See NEEDS-REVIEW.md section 1.
+- [x] **E4.** CLOSED 15 August. The owner sought permission from the
+      corpus authors by email and it was granted; the correspondence is
+      kept privately and no individual is named, at the owner's
+      instruction. The miss table stays committed and the withholding
+      rule is retired in `DATASETS.md:383`, which is the ruling PR
+      #248's corrections were waiting on. Stage E is COMPLETE apart
+      from E5's review-count setting, which is a repository preference.
+
 - [ ] **E5.** MOSTLY DONE, PR #232 plus a settings sweep on 14 August.
       All workflow actions are pinned to full commit SHAs, secret
       scanning is enabled, default token permissions are `read`, and
@@ -280,10 +290,10 @@ From section 7 of the report. None of this was in the audit's scope.
       commit message. Verified against real history rather than only
       synthetic cases: it passes #252 and it catches #233, which
       changed two source files with no entry.
-- [ ] **F2 (R15).** Decide in writing: either amend the roadmap to absorb
-      the 56 merged pull requests that name no increment, or state that
-      the ladder ended at Phase 7 and the project now runs on issues.
-      **A decision, not an increment.**
+- [~] **F2 (R15) DECLINED 15 August**, and answered by events rather
+  than by a memo: the next roadmap is being written for the webcam
+  path, and it supersedes the question of how the old one absorbs
+  56 unnumbered pull requests.
 - [x] **F3.** DONE 15 August: `tools/uiGuard.mjs` reads every
       `box("...")` heading out of `src/main.ts` and holds `docs/UI.md`
       to them in BOTH directions, so an undocumented box and a
@@ -334,29 +344,31 @@ From section 7 of the report. None of this was in the audit's scope.
       bundle in two would satisfy it while changing nothing. An empty
       `dist` fails rather than passing at zero bytes. Proven able to
       fail by lowering the ceiling to 100 kB, exit code 1.
-- [ ] **8.8** Accessibility pass: modal semantics, live regions, text
-      equivalents for the heatmap, the traces and the replay circles.
-      **The floor is already met**: focus is visible, the app is fully
-      keyboard operable, and all text clears WCAG contrast.
+- [~] **8.8 DECLINED 15 August.** The floor is already met: focus is
+  visible, the app is fully keyboard operable, and all text clears
+  WCAG contrast. What remained was polish, and polish does not
+  outrank the measurement work. Reopen only if a real user is
+  blocked.
 - [x] `CONTRIBUTING.md`, which has no roadmap row and never will.
       Written 15 August: what a reader can rely on, the gate list, the
       three rules that were each learned by breaking, and a map of
       which document is which. It says plainly that the contribution
       this project wants is an issue saying a published number is
       wrong.
-- [ ] Issue #178, reconcile with closed issue #126.
-- [ ] Issues #115, #90, #15.
+- [~] **Issues #178, #115, #90, #15, #221 DECLINED 15 August.** #178,
+  #115 and #90 are webcam detector tuning against a benchmark that
+  already repeats; none is a wrong published number. #15 is a chore.
+  #221 needs a fast stepped clip followed by a camera start to
+  trigger. They stay open in the tracker as known limitations, and
+  they are off this ladder. Issue #148 is closed: 7.4 shipped.
 
 ---
 
 ## Stage H. Housekeeping
 
-- [ ] Delete twelve stale remote branches and two local ones. **The
-      inventory below was verified on 15 August against `gh pr list`.**
-      That is the reliable test here: these were squash-merged, so
-      `git cherry` misreports them, and `git diff main <branch>` is no
-      longer usable either, now that `main` has moved far ahead of all
-      of them. Every one is safe; the deletion itself is the owner's.
+- [~] **DECLINED 15 August.** Twelve dead remote branches and two local
+  ones harm nothing. The verified inventory is kept below so the
+  deletion stays a one-liner if it is ever wanted.
 
 ```text
 MERGED, 11 remote branches, safe to delete
@@ -387,9 +399,9 @@ LOCAL, 2 branches, both pre-squash originals
 - [x] Remove the git worktrees `audit-fresh` and `full-project-audit`.
       **Already gone.** `git worktree list` on 15 August returns the
       main checkout and nothing else.
-- [ ] Decide whether the six raw appendices in `docs/audit/` stay on
-      `main` or move. They are about 5,000 lines and they are the proof
-      behind the report.
+- [~] **DECLINED 15 August.** The six raw appendices stay on `main`.
+  About 5,000 lines sitting quietly, and they are the proof behind
+  the report.
 
 ---
 

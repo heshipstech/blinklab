@@ -109,6 +109,14 @@ This is the section most model cards leave vague, so here it is plainly.
 | DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number   |
 | The author         | 1                     | One adult, one lighting setup, one laptop |
 
+**Both committed human-data fixtures are the author's own**, confirmed by
+the owner on 2026-08-15: `test/fixtures/session-01.json`, 300 frames of face
+landmarks, and `analysis/tests/fixtures/session-fixture.csv`, which carries
+`kss_before` and `kss_after` sleepiness ratings. No other person's face
+geometry or self-report is in this repository. This was recorded because an
+audit found it stated nowhere, which meant a reader could not tell consent
+from oversight.
+
 DROZY is used under a written permission whose condition is that the
 database and its paper are cited wherever results appear, in any form.
 Cite: Massoz, Langohr, Francois and Verly, WACV 2016. (Added 2026-08-14:
