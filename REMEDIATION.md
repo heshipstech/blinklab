@@ -317,9 +317,42 @@ From section 7 of the report. None of this was in the audit's scope.
 
 ## Stage H. Housekeeping
 
-- [ ] Delete the remote branch `feat/5.8-fixation-stats`, and the 20
-      merged local branches.
-- [ ] Remove the git worktrees `audit-fresh` and `full-project-audit`.
+- [ ] Delete twelve stale remote branches and two local ones. **The
+      inventory below was verified on 15 August against `gh pr list`.**
+      That is the reliable test here: these were squash-merged, so
+      `git cherry` misreports them, and `git diff main <branch>` is no
+      longer usable either, now that `main` has moved far ahead of all
+      of them. Every one is safe; the deletion itself is the owner's.
+
+```text
+MERGED, 11 remote branches, safe to delete
+  dependabot/github_actions/actions/checkout-7.0.1               #237
+  dependabot/github_actions/actions/deploy-pages-5.0.0           #235
+  dependabot/github_actions/actions/setup-node-7.0.0             #234
+  dependabot/github_actions/actions/upload-pages-artifact-5.0.0  #236
+  dependabot/github_actions/astral-sh/setup-uv-9.0.0             #238
+  dependabot/npm_and_yarn/minor-and-patch-2bfc71846e             #239
+  docs/misses-table-is-committed                                 #248
+  docs/stamp-row-stale                                           #247
+  docs/state-catch-up                                            #249
+  feat/5.8-fixation-stats                                        #99
+  feat/build-commit-meta                                         #244
+
+CLOSED on purpose, 1 remote branch
+  dependabot/npm_and_yarn/typescript-7.0.2                       #240
+  typescript-eslint caps at <6.1.0 so the bump cannot install,
+  and #245 added the ignore so it cannot reopen. Nothing is lost.
+
+LOCAL, 2 branches, both pre-squash originals
+  feat/build-commit-meta            #244 MERGED
+  investigate/174-reproducibility   no PR, but its one commit is the
+    pre-squash original of #189: the symbols it added,
+    clipModelClockBaseMs and modelClockMs, are in main today.
+```
+
+- [x] Remove the git worktrees `audit-fresh` and `full-project-audit`.
+      **Already gone.** `git worktree list` on 15 August returns the
+      main checkout and nothing else.
 - [ ] Decide whether the six raw appendices in `docs/audit/` stay on
       `main` or move. They are about 5,000 lines and they are the proof
       behind the report.
