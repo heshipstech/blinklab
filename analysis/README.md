@@ -29,6 +29,18 @@ looking like somebody's laptop.
 `docs/validation-plan.md` first: it fixes what the round measures and
 was committed before any session file existed.
 
+The round's three layers are deliberately separate. `validation.py`
+reads and refuses, `validation_checks.py` judges, and
+`tools/validation_report.py` prints:
+
+```
+PYTHONPATH="$PWD" .venv/bin/python tools/validation_report.py \
+    "$DATASETS/validation-round"
+```
+
+It exits non-zero when any participant was refused, so a run that could
+not read everybody cannot be mistaken for a clean one.
+
 ## Running it
 
 The environment is pinned by `uv.lock`, which fixes the Python

@@ -293,3 +293,36 @@ size, and the core count. Together those identify a machine.
 The reason for the first rule is simple and worth stating plainly.
 Git history cannot be un-published, and these files belong to people
 who are not the owner of this project.
+
+## Corrections
+
+Changes to this document after it was first committed. Each says what
+changed and when, so a reader can see the plan that was pre-registered
+rather than only the one that survived.
+
+### 16 August 2026: check 1 needed a fourth verdict
+
+**Still before any session file exists.** Writing the code found a hole
+in the verdicts above. They were `counted`, `ambiguous` and `missed`,
+with `missed` defined as "even with the slack, the count cannot reach
+10". That definition is silent about the other direction.
+
+If a session reports 14 blinks between the marks and no shift of the
+boundaries can bring it to 10, then 10 cannot be reached and the rule
+as written calls it `missed`, which is the opposite of what happened.
+Over-counting is not hypothetical for this instrument: precision on
+Eyeblink8 is 83.3 percent, meaning 72 detections were invented, and
+double counting is only partly fixed.
+
+So a fourth verdict is added:
+
+- **over-counted**: the count cannot reach 10 even with the slack,
+  because it is too high.
+
+`missed` keeps its meaning and now applies only when the count is too
+low. Nothing else changes, and no threshold moves.
+
+This is recorded rather than edited in place because the mechanism is
+the point. A plan that can be quietly rewritten while the data is being
+read is not a pre-registration, and the only way to tell the difference
+later is a correction log that was kept from the start.
