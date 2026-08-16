@@ -1,8 +1,8 @@
-Last increment: the iris width is measured in the frame the model reads
-and says which frame that was, and the camera is asked for 1920 instead
-of 1280. The ruler's resolution is the thing to watch before the
-six-person round.
-Last commit, as of the stamp below: pull request #261, 2026-08-16;
+Last increment: the interface was redesigned to the BeSight visual
+language across four merged pull requests, #262 to #265. The measuring
+code is untouched; every change is presentation, layout or wording of a
+label. The sleepiness question is now a modal.
+Last commit, as of the stamp below: pull request #265, 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: NOTHING IS BLOCKED. The August audit's ladder is

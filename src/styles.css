@@ -286,7 +286,12 @@ body {
   #box-blinks {
     order: 6;
   }
-  #box-live-signals {
+  /* This card keeps the older id it was given after box() assigned one,
+   * because the height reservation rule already depends on it. Naming it
+   * #box-live-signals here silently matched nothing and left the card
+   * sitting first on a phone.
+   */
+  #live-signals {
     order: 7;
   }
   #box-stored-on-this-device {
@@ -457,6 +462,11 @@ input[type="file"] {
 .blink-table-scroll {
   max-height: 150px;
   overflow-y: auto;
+  /* Five columns of figures do not fit a phone. They scroll sideways
+   * inside the card rather than widening the page, which is the one
+   * thing a layout must never do on a phone.
+   */
+  overflow-x: auto;
   margin-top: 12px;
 }
 .blink-table {
@@ -639,4 +649,21 @@ canvas {
   text-align: center;
   font-weight: 600;
   color: var(--ink);
+}
+
+/* On a narrow screen a label and its value stop being two columns and
+ * become two lines. We kept ONE set of strings rather than writing
+ * shorter ones for phones, so "none yet (about one per second)" has to
+ * go somewhere, and squeezed against its label it wrapped into a ragged
+ * block hugging the right edge. Stacked, it reads.
+ */
+@media (max-width: 560px) {
+  .box p:not(.headline):has(> .value) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .box p:not(.headline):has(> .value) > .value {
+    text-align: left;
+  }
 }
