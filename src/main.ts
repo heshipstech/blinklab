@@ -200,7 +200,11 @@ if (app === null) {
 }
 
 const title = document.createElement("h1");
-title.textContent = "Alertness measurement demo";
+// "Alertness demo", not "Alertness measurement demo", from 16 August.
+// The word measurement was carrying nothing the notice below does not
+// already say in a full sentence, and the heading is read once while
+// the notice is read every time.
+title.textContent = "Alertness demo";
 
 // The permanent notice, 6.9. Present before the camera starts, never
 // dismissible, and above everything so it cannot be scrolled past

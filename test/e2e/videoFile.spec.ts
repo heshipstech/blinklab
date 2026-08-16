@@ -35,7 +35,7 @@ test("a recorded clip loads and runs through the same pipeline @chromium-only", 
   test.setTimeout(180_000);
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
+    page.getByRole("heading", { name: "Alertness demo" }),
   ).toBeVisible();
 
   // The upload control is offered without starting a camera at all,
@@ -101,7 +101,7 @@ test("a file the browser cannot decode fails as a clip, not as a camera", async 
 }) => {
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
+    page.getByRole("heading", { name: "Alertness demo" }),
   ).toBeVisible();
 
   // A text file wearing a video name. The decoder will refuse it.
@@ -145,7 +145,7 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
   test.setTimeout(300_000);
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
+    page.getByRole("heading", { name: "Alertness demo" }),
   ).toBeVisible();
 
   await expect(page.getByTestId("step-toggle")).toBeChecked();
