@@ -25,12 +25,26 @@ session starts.
 
 The content column contains the title, then eight boxes in four rows:
 
-| Row             | Boxes                                          | Width                             |
-| --------------- | ---------------------------------------------- | --------------------------------- |
-| Top row         | Source, beside a stacked Alertness and Session | Split, video inside Source's side |
-| Live signals    | Live signals                                   | Full column                       |
-| Measurement row | Gaze, Eyes, Blinks                             | Three abreast                     |
-| Last            | Stored on this device                          | Full column                       |
+| Column      | Cards                           | Notes                        |
+| ----------- | ------------------------------- | ---------------------------- |
+| Left, 55fr  | Alertness, Source, Live signals | Source holds the 640px video |
+| Right, 45fr | Session, Gaze, Eyes, Blinks     | Each flows independently     |
+| Full width  | Stored on this device           | Last, below both columns     |
+
+The two columns are real elements, so each flows independently and Source can
+be tall without stretching Gaze beside it.
+
+**Below 1000px there is one column, and the order is not the desktop order.**
+The column wrappers become `display: contents`, every card becomes a direct
+grid item, and the stylesheet orders them by id: Alertness, Session, Source,
+Gaze, Eyes, Blinks, Live signals, Stored on this device. That is reading order
+for a phone: the score, what starts a session, the camera, what it measured,
+the instrument's own health, then storage. Doing it with `order` rather than a
+second DOM tree means one list of cards, not two that can disagree.
+
+**Below 560px a label and its value stop being two columns and become two
+lines.** There is one set of strings at every width, deliberately; the
+alternative was a second set for phones and a second list to document.
 
 **This table is checked, not remembered.** `tools/uiGuard.mjs` reads every
 `box("...")` heading out of `src/main.ts` and a test fails when one of them
@@ -229,6 +243,18 @@ vertically below about 1000 px of column width.**
 
 #### Box: Blinks
 
+The blink log is a **table**, not a prose list. Units live in the header rather
+than on every cell, figures are mono and right-aligned so an odd row is visible
+rather than merely readable, about five rows show at a time and it scrolls past
+that, sideways too on a phone.
+
+| When (s) | Closed for (ms) | Amplitude (mm) | Speed (mm/s) | A/V (ms) |
+
+A row whose amplitude is under `FAINT_BLINK_MM` (1.5 mm) is **greyed, not
+hidden**: the export keeps it, so the panel must not disagree with the file.
+An unmeasurable shape shows an em dash per cell rather than a blank, because a
+blank cell reads as a rendering fault.
+
 | Element            | Strings                                                                                                                                            |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Blink count        | `Blinks: N` or `Blinks: N (last: T ms)`                                                                                                            |
@@ -282,6 +308,7 @@ strip plus the footer below.
 | Export CSV       | Button | Disabled until at least one record exists                                                                                                                      |
 | Mark this moment | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
 | Export state     | Text   | Empty until an export is attempted. See the four strings below                                                                                                 |
+| Sleepiness       | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label         |
 | Marks            | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
 | Export blink log | Button | Disabled until at least one blink exists                                                                                                                       |
 | Sleepiness panel | Panel  | See below                                                                                                                                                      |
@@ -327,8 +354,19 @@ detections fails exactly when the instrument missed them, which is the case
 worth measuring. A marker makes the truth "ten blinks between marker 1 and
 marker 2", whatever the instrument thought.
 
-**Sleepiness panel.** Hidden unless asking. Never appears at all on a clip
-session. Two prompts:
+**Sleepiness dialog.** A modal over a dimmed page, not a panel in this card.
+It was a panel until 16 August, and because the export waits on its answer, a
+card that can run past the fold plus a question that gave no sign of itself
+produced a report that Export CSV was broken when it was only waiting.
+
+It is **deliberately not closable** by the backdrop or by Escape: every way out
+records an answer, Skip included, and a dismissal that recorded nothing would
+leave a file that cannot say whether the question was declined or never asked.
+Focus moves into the dialog on open. The answer it records then appears in the
+Session card, because that answer goes into the exported file and being able to
+see what you said is part of trusting the data.
+
+Never appears at all on a clip session. Two prompts:
 
 - Before you begin: how sleepy do you feel? _(on starting a camera)_
 - How sleepy do you feel now? _(on the first CSV export)_
