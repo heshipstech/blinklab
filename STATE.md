@@ -13,18 +13,20 @@ shortened the page heading to "Alertness demo".
 
 **THE DRY RUN HAPPENED and it found what fixtures could not.** The owner
 ran the whole protocol on three devices on 16 August: an iPhone 14 Pro
-Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. Raw files in
-`$DATASETS/validation-dry-run`, never in this repository. The tool read
-all six files with no refusals.
+Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. FOUR
+sessions, because the iPhone was run twice; see the re-run below. Raw
+files in `$DATASETS/validation-dry-run`, never in this repository. The
+tool read all eight files with no refusals, and the pairing coped with
+the device names inserted into the filenames.
 
-**The finding: the same face gave a median eyelid aperture of 6.88, 6.93
-and 6.33 mm across the three devices, within 10 percent, and the
-baselines learned from those measurements were 7.69, 9.80 and 7.30 mm, a
-spread of 34 percent.** The iris normalisation works. What is learned
+**The finding: the same face gave a median eyelid aperture of 6.88,
+7.05, 6.93 and 6.33 mm across the four sessions, within 11 percent, and
+the baselines learned from those measurements were 7.69, 8.09, 9.80 and
+7.30 mm, a spread of 34 percent.** The iris normalisation works. What is learned
 from it does not travel. On the MacBook a few frames in the first 30
 seconds read up to 10.35 mm against a window median of 7.51, and a 90th
 percentile follows them, so the blink line landed at 71 percent of
-resting aperture against 56 and 58 on the other two. That session logged
+resting aperture against 56, 57 and 58 on the other three. That session logged
 26.0 blinks per minute against 8.9 on the phone, including one detection
 of 1.26 mm amplitude, below the faint line the on-screen table greys out.
 
