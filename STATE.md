@@ -1,9 +1,19 @@
-Last increment: the pre-registration and the reading half of the
-six-person validation round. `docs/validation-plan.md` is committed
-BEFORE any session file exists, and `analysis/blinklab/validation.py`
-pairs a folder of exports and refuses, by name, everything it cannot
-trust. No check is computed yet, deliberately. Before it, #266 shortened
-the page heading to "Alertness demo".
+Last increment: the six-person validation round's analysis tool, whole.
+`docs/validation-plan.md` was committed BEFORE any session file existed,
+`analysis/blinklab/validation.py` pairs a folder of exports and refuses
+by name, `analysis/blinklab/validation_checks.py` computes the plan's
+columns, and `analysis/tools/validation_report.py` prints the table:
+
+    cd analysis
+    PYTHONPATH="$PWD" .venv/bin/python tools/validation_report.py \
+        "$DATASETS/validation-round"
+
+It exits non-zero when it could not read everybody. Before it, #266
+shortened the page heading to "Alertness demo".
+
+NO REAL FILE HAS BEEN THROUGH IT YET. It was built and proved against
+fixtures only, so the next step is the owner's own two sessions, and
+something will break there. Fixtures agree with whoever wrote them.
 Last commit, as of the stamp below: 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
@@ -12,9 +22,13 @@ project's largest untested claim rather than a piece of tidying. Every
 live-camera number published here comes from ONE face through ONE
 camera, the owner's, and the Eyeblink8 figures come from recorded clips
 rather than webcams in real rooms. The plan is in
-`docs/validation-plan.md` and its order is fixed: the checks and the
-printed table come next, then the owner's own two sessions as a dry run,
-then the round is sent. Nothing is blocked.
+`docs/validation-plan.md` and its order is fixed. The tool is built.
+NEXT: the owner runs the whole protocol twice, on the Sony A7 IV and on
+a plain laptop camera, those two files go through the tool, whatever
+breaks gets fixed, and the baseline drift threshold is set from them and
+written into the plan. Only then is the round sent, and to two people
+first rather than six, because you can only ask each person once.
+Nothing is blocked.
 
 The August audit's ladder is closed. Stages A, B and C are complete; D1
 stage two is the single remaining piece of real work and it is a WEBCAM
@@ -494,7 +508,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 603 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 126 Python tests of which
+in CI of which 2 rerun locally in WebKit, 149 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
