@@ -189,6 +189,9 @@ import {
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
+// SVG needs its own namespace or the elements render as unknown tags.
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 const app = document.querySelector<HTMLDivElement>("#app");
 
 if (app === null) {
@@ -205,74 +208,117 @@ title.textContent = "Alertness measurement demo";
 const demoNotice = document.createElement("p");
 demoNotice.dataset.testid = "demo-notice";
 demoNotice.textContent = demoNoticeText();
-Object.assign(demoNotice.style, {
-  background: "#f5c518",
-  // The text colour is set explicitly rather than inherited: on a
-  // fixed background an inherited colour would follow the page or the
-  // reader's dark mode and could end up unreadable. Near-black on
-  // yellow rather than the white the mockup showed, because white on
-  // yellow is poor contrast and this is the one line on the page that
-  // must be readable by everyone.
-  color: "#1a1a1a",
-  padding: "8px 16px",
-  margin: "0",
-  textAlign: "center",
-  fontWeight: "normal",
-  fontSize: "12px",
-  lineHeight: "1.4",
-});
+demoNotice.style.margin = "0";
 
-// The top bar. Holds the name and one outbound link, nothing else. It
+// The whole notice, never a shortened one. A phone getting a trimmed
+// version would republish a claim this page spent two weeks correcting;
+// see ADR-0004. It is taller on a narrow screen and that is the cost.
+const noticeIcon = document.createElementNS(SVG_NS, "svg");
+noticeIcon.setAttribute("width", "14");
+noticeIcon.setAttribute("height", "14");
+noticeIcon.setAttribute("viewBox", "0 0 24 24");
+noticeIcon.setAttribute("fill", "none");
+noticeIcon.setAttribute("aria-hidden", "true");
+const noticeRing = document.createElementNS(SVG_NS, "circle");
+noticeRing.setAttribute("cx", "12");
+noticeRing.setAttribute("cy", "12");
+noticeRing.setAttribute("r", "10");
+noticeRing.setAttribute("stroke", "#f97316");
+noticeRing.setAttribute("stroke-width", "2");
+const noticeBang = document.createElementNS(SVG_NS, "path");
+noticeBang.setAttribute("d", "M12 7v6m0 3.5v.5");
+noticeBang.setAttribute("stroke", "#f97316");
+noticeBang.setAttribute("stroke-width", "2");
+noticeBang.setAttribute("stroke-linecap", "round");
+noticeIcon.append(noticeRing, noticeBang);
+
+const noticeInner = document.createElement("div");
+noticeInner.className = "page-column notice-inner";
+noticeInner.append(noticeIcon, demoNotice);
+
+const noticeBar = document.createElement("div");
+noticeBar.id = "demo-notice";
+noticeBar.append(noticeInner);
+
+// The top bar. The mark, the name, and two outbound links. It
 // deliberately does not stick: this page gets screenshotted and filmed,
 // and fixed chrome eats vertical space on a laptop for no measurement
 // benefit.
 const navBar = document.createElement("div");
-navBar.className = "page-column";
-Object.assign(navBar.style, {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "16px",
-  borderBottom: "1px solid #e4e4e4",
-});
+navBar.className = "page-column nav";
 
-const linkedInLink = document.createElement("a");
-linkedInLink.href = "https://www.linkedin.com/in/eivinasnorusaitis";
-const linkedInMark = document.createElementNS(
-  "http://www.w3.org/2000/svg",
-  "svg",
-);
-linkedInMark.setAttribute("viewBox", "0 0 24 24");
-linkedInMark.setAttribute("width", "16");
-linkedInMark.setAttribute("height", "16");
-linkedInMark.setAttribute("fill", "currentColor");
-linkedInMark.setAttribute("aria-hidden", "true");
-const linkedInPath = document.createElementNS(
-  "http://www.w3.org/2000/svg",
-  "path",
-);
-linkedInPath.setAttribute(
+function iconLink(
+  href: string,
+  label: string,
+  path: string,
+): HTMLAnchorElement {
+  const link = document.createElement("a");
+  link.href = href;
+  link.className = "icon-link";
+  link.setAttribute("aria-label", label);
+  if (href.startsWith("http")) {
+    link.target = "_blank";
+    // noopener stops the opened page reaching back through
+    // window.opener, which matters more than usual here because this
+    // page's whole claim is that nothing leaves the device.
+    link.rel = "noopener noreferrer";
+  }
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", "13");
+  svg.setAttribute("height", "13");
+  svg.setAttribute("fill", "currentColor");
+  svg.setAttribute("aria-hidden", "true");
+  const shape = document.createElementNS(SVG_NS, "path");
+  shape.setAttribute("d", path);
+  svg.append(shape);
+  link.append(svg);
+  return link;
+}
+
+const brandMark = document.createElement("span");
+brandMark.className = "brand-mark";
+const eyeSvg = document.createElementNS(SVG_NS, "svg");
+eyeSvg.setAttribute("viewBox", "0 0 24 24");
+eyeSvg.setAttribute("width", "15");
+eyeSvg.setAttribute("height", "15");
+eyeSvg.setAttribute("fill", "none");
+eyeSvg.setAttribute("aria-hidden", "true");
+const eyeOutline = document.createElementNS(SVG_NS, "path");
+eyeOutline.setAttribute(
   "d",
-  "M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z",
+  "M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z",
 );
-linkedInMark.append(linkedInPath);
-linkedInLink.append(
-  linkedInMark,
-  document.createTextNode("/eivinasnorusaitis"),
+eyeOutline.setAttribute("stroke", "#ffffff");
+eyeOutline.setAttribute("stroke-width", "1.8");
+const eyePupil = document.createElementNS(SVG_NS, "circle");
+eyePupil.setAttribute("cx", "12");
+eyePupil.setAttribute("cy", "12");
+eyePupil.setAttribute("r", "2.6");
+eyePupil.setAttribute("fill", "#ffffff");
+eyeSvg.append(eyeOutline, eyePupil);
+brandMark.append(eyeSvg);
+
+const brand = document.createElement("div");
+brand.className = "brand";
+brand.append(brandMark, title);
+
+const navLinks = document.createElement("div");
+navLinks.className = "nav-links";
+navLinks.append(
+  iconLink(
+    "https://www.linkedin.com/in/eivinasnorusaitis/",
+    "LinkedIn profile",
+    "M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z",
+  ),
+  iconLink(
+    "mailto:e.norusaitis@gmail.com",
+    "Email",
+    "M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z",
+  ),
 );
-linkedInLink.target = "_blank";
-// noopener stops the opened page from reaching back into this one
-// through window.opener, which matters more than usual here because
-// this page's whole claim is that nothing leaves the device.
-linkedInLink.rel = "noopener noreferrer";
-Object.assign(linkedInLink.style, {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  fontSize: "13px",
-  color: "#0a66c2",
-  textDecoration: "none",
-});
+
+navBar.append(brand, navLinks);
 
 // One strip for everything the app needs to say out loud: camera and
 // clip failures, clip progress, the model breaking its contract, and
@@ -295,6 +341,7 @@ bannerIdle.textContent = "No alerts at this time.";
 // because a hand-written `calc(100% - 32px)` subtracted the same number
 // the column happened to pad by, which is two places to change and one
 // of them silently wrong.
+
 const bannerColumn = document.createElement("div");
 bannerColumn.className = "page-column";
 bannerColumn.append(statusBanner);
@@ -2745,6 +2792,10 @@ cameraLine.append(mirrorLabel, eyeMarkerLabel, faceMeshLabel, resolutionLabel);
 function box(heading: string, ...children: Element[]): HTMLDivElement {
   const element = document.createElement("div");
   element.className = "box";
+  // A stable handle per card, derived from its own heading, so the
+  // stylesheet can put them in reading order on a phone without a
+  // second list of names to keep in step with this one.
+  element.id = `box-${heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const title = document.createElement("h2");
   title.textContent = heading;
   element.append(title, ...children);
@@ -2811,9 +2862,11 @@ document.addEventListener("visibilitychange", () => {
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
+  // Mark first: it is used DURING a session while the two exports end
+  // one, so the order is the order a person needs them in.
+  markButton,
   exportButton,
   exportBlinksButton,
-  markButton,
   ...(recorder !== null ? [recorder.button] : []),
 );
 
@@ -2916,18 +2969,8 @@ const liveSignalsBox = box("Live signals", graphStrip, signalsFooter);
 // Source sits in the wider column because it holds the video, which is
 // sized to 640 px. An even split of a 1280 column leaves about 630 per
 // side once the gap is taken, which would shrink the picture.
-const topRow = document.createElement("div");
-topRow.className = "top-row";
-const rightColumn = document.createElement("div");
-rightColumn.className = "stack";
-rightColumn.append(alertnessBox, sessionBox);
-topRow.append(sourceBox, rightColumn);
 
 liveSignalsBox.id = "live-signals";
-
-const measurementRow = document.createElement("div");
-measurementRow.className = "row";
-measurementRow.append(gazeBox, eyesBox, blinksBox);
 
 // Last, deliberately. It is read between sessions rather than during
 // one, and it is the only box whose button destroys something, so it
@@ -2940,7 +2983,32 @@ const storedDataBox = box(
   eraseStatus,
 );
 
-contentBox.append(topRow, liveSignalsBox, measurementRow, storedDataBox);
+// Two columns on a wide window, one on a phone.
+//
+// The columns are real elements so each flows independently, which is
+// what lets Source be tall without stretching Gaze beside it. A grid
+// with placed items would have forced them into shared rows.
+//
+// Below the breakpoint the wrappers become `display: contents` and every
+// card is a direct grid item, so the stylesheet can `order` them into
+// reading order for a phone: the score, then what starts a session,
+// then the camera, then what it measured, then the instrument's own
+// health, then storage. That order is deliberately NOT the desktop
+// column order, and doing it with `order` rather than a second DOM tree
+// means there is one list of cards, not two that can disagree.
+const columnA = document.createElement("div");
+columnA.className = "col";
+columnA.append(alertnessBox, sourceBox, liveSignalsBox);
+
+const columnB = document.createElement("div");
+columnB.className = "col";
+columnB.append(sessionBox, gazeBox, eyesBox, blinksBox);
+
+const grid = document.createElement("div");
+grid.className = "grid";
+grid.append(columnA, columnB, storedDataBox);
+
+contentBox.append(grid);
 
 // The graph canvases carry their own pixel buffers, and the drawing
 // code reads canvas.width for its coordinates, so widening the buffer
@@ -3001,7 +3069,11 @@ for (const [element, initial] of [
   [baselineLabel, "Personal blink threshold: not learned yet"],
   [featureLabel, "Feature records: none yet (about one per second)"],
 ] as const) {
-  element.textContent = initial;
+  // Through writeReadout, not textContent. Setting it directly skipped
+  // the label/value split, so every readout rendered as one flat run in
+  // the idle state and only snapped into two columns once a session
+  // started. The starting state is the one a visitor sees first.
+  writeReadout(element, initial);
 }
 
 // Labels light, measurements bold. Done here rather than in the
@@ -3019,14 +3091,24 @@ function writeReadout(element: HTMLElement, text: string): void {
     return;
   }
   const label = document.createElement("span");
-  label.textContent = text.slice(0, at + 2);
+  label.textContent = text.slice(0, at);
+  // The colon is hidden, not deleted. The design puts the label left
+  // and the value hard right on one baseline, where a colon floating in
+  // the gap reads as a typo. But removing it from the DOM broke the
+  // sentence: three end to end tests stopped finding "Processing rate:
+  // 136" because the paragraph now read "Processing rate136", and a
+  // screen reader would have heard the same run-on. Visually hidden and
+  // taken out of flow, so it is there for anything that reads the text
+  // and gone for anything that looks at it.
+  const separator = document.createElement("span");
+  separator.className = "sep";
+  separator.textContent = ": ";
   const value = document.createElement("span");
   value.className = "value";
   value.textContent = text.slice(at + 2);
-  element.replaceChildren(label, value);
+  element.replaceChildren(label, separator, value);
 }
 
-navBar.append(title, linkedInLink);
 statusBanner.append(bannerIdle, status, modelStatus, alertBanner);
 
 // The page used to stop dead at the last box, with the window's edge
@@ -3071,7 +3153,7 @@ new MutationObserver(refreshBanner).observe(statusBanner, {
 refreshBanner();
 
 app.append(
-  demoNotice,
+  noticeBar,
   navBar,
   bannerColumn,
   contentBox,
