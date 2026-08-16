@@ -2,7 +2,7 @@
 
 A numbered checklist for anything that needs real eyes. Run the relevant items before merging a UI change, and the whole list before every phase tag.
 
-1. (0.2) Run `npm run dev`, open the printed local URL. The page heading reads "Alertness measurement demo" and the browser tab title reads "blinklab". No errors in the browser console.
+1. (0.2) Run `npm run dev`, open the printed local URL. The page heading reads "Alertness demo" and the browser tab title reads "blinklab". No errors in the browser console.
 2. (1.1, tightened by the fix for #22) Click "Start camera". The browser asks for camera permission. Allow it: your own face appears as live video within a second or two, with natural proportions matching what FaceTime shows. The button disappears once video runs.
 3. (1.2) Reload the page and click "Start camera" again, this time deny the permission. A full sentence appears explaining that permission was denied and how to allow it again in browser settings. The page does not go blank, the button stays available, and the console shows no uncaught error.
 4. (1.3, relabelled by remediation D1) The "Processing rate" line shows a steady number near your screen's refresh rate, usually 60 or 120. That is the instrument's own pace, not the camera's delivery rate, and the line says so. Drag-resize the window vigorously: the number dips, then recovers within about two seconds.

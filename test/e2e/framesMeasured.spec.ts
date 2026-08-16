@@ -50,7 +50,7 @@ test("no frame counts as measured before the model exists", async ({
 
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
+    page.getByRole("heading", { name: "Alertness demo" }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Start camera" }).click();
@@ -83,7 +83,7 @@ test("the counter climbs once the model exists", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("./");
   await expect(
-    page.getByRole("heading", { name: "Alertness measurement demo" }),
+    page.getByRole("heading", { name: "Alertness demo" }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Start camera" }).click();

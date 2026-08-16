@@ -115,7 +115,10 @@ three.
 
 ### 5.1 Title
 
-`blinklab`. Always visible. Single line.
+`Alertness demo`. Always visible. Single line. The browser tab title is
+`blinklab`, which is a different string in `index.html` and is not this
+one. This section said `blinklab` until 16 August, describing the tab
+rather than the page.
 
 ### 5.2 Box: Source
 
