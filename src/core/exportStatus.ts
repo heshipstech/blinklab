@@ -8,6 +8,11 @@
 // The owner reported exactly that, and the flow works: the question
 // was open and the answer was what the file was waiting for.
 //
+// The question is a modal now, so it can no longer be missed, and the
+// word "below" has gone from the waiting message with it. The message
+// stays: a person who clicks Export and answers the question still
+// wants to be told the file was written, and by what name.
+//
 // This is the project's own recurring defect wearing a new coat, so it
 // gets the project's usual answer: every path says what happened, out
 // loud, including the successful one. A confirmation is not noise here.
@@ -16,7 +21,7 @@
 
 /** Shown when the export is waiting on the sleepiness question. */
 export const EXPORT_WAITING_FOR_KSS =
-  "Almost there: answer the sleepiness question below and the file will download.";
+  "Almost there: answer the sleepiness question and the file will download.";
 
 /** Shown when there is genuinely nothing to write. */
 export const EXPORT_NOTHING_RECORDED =

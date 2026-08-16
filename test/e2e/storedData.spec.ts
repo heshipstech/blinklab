@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // Remediation E3. Two keys were written to the visitor's browser from
 // the first calibration onwards, nothing on the page said so, and
 // there was no way to erase them from inside the app.
@@ -41,6 +43,7 @@ test("erasing empties the storage and takes the live profile with it", async ({
   // against a fix that never cleared the in-memory profile at all.
   // That is remediation B5's lesson, and it applies in reverse here.
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   const heatmap = page.getByRole("button", { name: "Gaze heatmap" });
   await expect(heatmap).toBeEnabled({ timeout: 30_000 });
 

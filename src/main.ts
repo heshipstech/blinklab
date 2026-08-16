@@ -108,9 +108,10 @@ import {
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
+  BLINK_TABLE_HEADERS,
   appendEvent,
+  blinkTableRow,
   eventsForDisplay,
-  formatBlinkEvent,
   serialiseBlinkEvents,
   type BlinkEvent,
 } from "./core/blinkLog";
@@ -727,6 +728,10 @@ function resetSession(): void {
   sessionStartedAtEpochMs = null;
   kssBefore = null;
   kssAfter = null;
+  kssBeforeAsked = false;
+  kssAfterAsked = false;
+  kssPanel.hidden = true;
+  refreshKssLine();
   writeReadout(featureLabel, "");
   writeReadout(scoreLabel, "");
   panelSummaryLabel.textContent = "";
@@ -735,7 +740,7 @@ function resetSession(): void {
   // last blink duration still charged the new session's score,
   // possibly a different person's blink entirely.
   blinkState = initialBlinkState;
-  blinkLogList.replaceChildren();
+  blinkTableBody.replaceChildren();
   captureState = null;
   calibrationRequested = false;
   calibrationOverlay.hidden = true;
@@ -821,6 +826,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
     deviceInfo = readDeviceInfo(video);
     askKss("Before you begin: how sleepy do you feel?", (rating) => {
       kssBefore = rating;
+      kssBeforeAsked = true;
     });
     setState({ kind: "running" });
     // Fired, not awaited: the camera preview is honest on its own
@@ -1643,39 +1649,83 @@ const featureLabel = document.createElement("p");
 // recorded as one; a refusal must never be rounded to a middle
 // value, which would put a fabricated label in a training set.
 let kssBefore: KssRating | null = null;
+let kssBeforeAsked = false;
 let kssAfter: KssRating | null = null;
-const kssPanel = document.createElement("div");
-kssPanel.hidden = true;
+let kssAfterAsked = false;
+// A modal, not a panel inside the Session card.
+//
+// As a panel it sat low in a card that can run past the fold, and the
+// export waits on its answer, so a person clicking Export and seeing
+// nothing move reported the button as broken when it was merely
+// waiting. A dialog over a dimmed page cannot be scrolled past.
 const kssPrompt = document.createElement("p");
 kssPrompt.className = "kss-prompt";
 const kssButtons = document.createElement("div");
 kssButtons.className = "kss-grid";
-kssPanel.append(kssPrompt, kssButtons);
+
+const kssDialog = document.createElement("div");
+kssDialog.className = "kss-dialog";
+kssDialog.setAttribute("role", "dialog");
+kssDialog.setAttribute("aria-modal", "true");
+kssDialog.setAttribute("aria-labelledby", "kss-prompt");
+kssPrompt.id = "kss-prompt";
+kssDialog.append(kssPrompt, kssButtons);
+
+const kssPanel = document.createElement("div");
+kssPanel.id = "kss-backdrop";
+kssPanel.hidden = true;
+kssPanel.append(kssDialog);
+
+// Deliberately NOT closable by clicking the backdrop or pressing
+// Escape. Every way out of this dialog records an answer, and Skip is
+// one of them: a dismissal that recorded nothing would leave a session
+// whose file cannot say whether the question was declined or never
+// asked.
+
+// The answer stays visible after the dialog closes. As an inline panel
+// it simply stayed on screen as a disabled button, and being able to
+// see what you actually answered is part of trusting the file it goes
+// into: otherwise you are left with a number in a CSV and no memory of
+// the question. A modal cannot do that by staying open, so the record
+// moves into the Session card.
+const kssAnswerLabel = document.createElement("p");
+
+function describeRating(rating: KssRating | null, asked: boolean): string {
+  if (!asked) {
+    return "not asked yet";
+  }
+  const step = KSS_SCALE.find((s) => s.rating === rating);
+  return step === undefined
+    ? "skipped"
+    : `${String(step.rating)} ${step.label}`;
+}
+
+function refreshKssLine(): void {
+  if (!kssBeforeAsked && !kssAfterAsked) {
+    kssAnswerLabel.textContent = "";
+    return;
+  }
+  writeReadout(
+    kssAnswerLabel,
+    `Sleepiness: before ${describeRating(kssBefore, kssBeforeAsked)}, after ${describeRating(kssAfter, kssAfterAsked)}`,
+  );
+}
 
 function askKss(
   question: string,
   onAnswer: (r: KssRating | null) => void,
 ): void {
-  kssPrompt.textContent = question;
-
-  // The answer stays on screen after choosing, as a single disabled
-  // button. It goes into the exported file, so being able to see what
-  // you actually answered is part of trusting the data. Hiding it
-  // leaves you with a number in a CSV and no memory of the question.
-  const settle = (label: string): void => {
-    const answered = document.createElement("button");
-    answered.className = "kss-option";
-    answered.textContent = label;
-    answered.disabled = true;
-    kssButtons.replaceChildren(answered);
-  };
+  // Split like every other readout: the lead-in stays light and the
+  // question itself is bold, which is what the design shows.
+  writeReadout(kssPrompt, question);
 
   const choose = (rating: KssRating | null): void => {
-    const step = KSS_SCALE.find((s) => s.rating === rating);
-    settle(
-      step === undefined ? "Skipped" : `${String(step.rating)} ${step.label}`,
-    );
+    // The dialog closes on every path out of it. Left open it blocks
+    // the page it is asking about, which is the difference between a
+    // modal and the panel this used to be.
+    kssPanel.hidden = true;
     onAnswer(rating);
+    refreshKssLine();
   };
 
   kssButtons.replaceChildren(
@@ -1700,13 +1750,14 @@ function askKss(
   });
   kssButtons.append(skip);
   kssPanel.hidden = false;
-  // A question nobody can see is a question nobody answers. The panel
-  // sits low in the Session box and can fall below the fold on a short
-  // window, which is how an export that was merely waiting looked like
-  // an export that was broken. `nearest` rather than `center`: this
-  // scrolls the least that still works, because moving the page during
-  // a session moves the eyes it is measuring.
-  kssPanel.scrollIntoView({ block: "nearest" });
+  // Focus moves into the dialog so a keyboard reaches the ratings
+  // without tabbing the whole page first, and so a screen reader
+  // announces the question rather than leaving the user where they
+  // were.
+  const first = kssButtons.querySelector("button");
+  if (first !== null) {
+    first.focus();
+  }
 }
 
 function exportSession(): void {
@@ -1808,6 +1859,7 @@ exportButton.addEventListener("click", () => {
     exportStatus.textContent = EXPORT_WAITING_FOR_KSS;
     askKss("How sleepy do you feel now?", (rating) => {
       kssAfter = rating;
+      kssAfterAsked = true;
       exportSession();
     });
     return;
@@ -1833,11 +1885,29 @@ let lastRecordAtMs: number | null = null;
 let sessionStartedAtEpochMs: number | null = null;
 
 // The blink event log: newest on top, capped, scrolls.
-const blinkLogList = document.createElement("ul");
-blinkLogList.className = "blink-log";
-blinkLogList.setAttribute("aria-label", "Blink events");
-blinkLogList.style.maxHeight = "160px";
-blinkLogList.style.overflowY = "auto";
+// A table rather than a prose list. Units live in the header instead of
+// on every cell, the columns line up so an odd row is visible rather
+// than merely readable, and the scroll area is sized to about five rows
+// with the header staying put above them.
+const blinkTableBody = document.createElement("tbody");
+
+const blinkTable = document.createElement("table");
+blinkTable.className = "blink-table";
+blinkTable.setAttribute("aria-label", "Blink events");
+const blinkTableHead = document.createElement("thead");
+const blinkHeadRow = document.createElement("tr");
+for (const heading of BLINK_TABLE_HEADERS) {
+  const cell = document.createElement("th");
+  cell.scope = "col";
+  cell.textContent = heading;
+  blinkHeadRow.append(cell);
+}
+blinkTableHead.append(blinkHeadRow);
+blinkTable.append(blinkTableHead, blinkTableBody);
+
+const blinkLogList = document.createElement("div");
+blinkLogList.className = "blink-table-scroll";
+blinkLogList.append(blinkTable);
 let blinkEvents: BlinkEvent[] = [];
 let sessionStartMs: number | null = null;
 type StabilitySample = {
@@ -2453,12 +2523,23 @@ function processFrame(
           endFrame: currentFrameIndex,
         });
         closureStartFrame = null;
-        blinkLogList.replaceChildren(
-          // The list shows a tail. The record above it keeps everything.
+        blinkTableBody.replaceChildren(
+          // The table shows a tail, newest first. The record above it
+          // keeps everything.
           ...[...eventsForDisplay(blinkEvents)].reverse().map((event) => {
-            const item = document.createElement("li");
-            item.textContent = formatBlinkEvent(event, sessionStartMs ?? 0);
-            return item;
+            const row = document.createElement("tr");
+            const { cells, faint } = blinkTableRow(event, sessionStartMs ?? 0);
+            if (faint) {
+              row.className = "faint";
+            }
+            row.append(
+              ...cells.map((text) => {
+                const cell = document.createElement("td");
+                cell.textContent = text;
+                return cell;
+              }),
+            );
+            return row;
           }),
         );
       }
@@ -2925,7 +3006,7 @@ const sessionBox = box(
   exportRow,
   exportStatus,
   markLabel,
-  kssPanel,
+  kssAnswerLabel,
 );
 
 const blinksBox = box(
@@ -3160,6 +3241,7 @@ app.append(
   pageFooter,
   calibrationOverlay,
   heatmapOverlay,
+  kssPanel,
 );
 render();
 

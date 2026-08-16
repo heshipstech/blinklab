@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // Remediation B2. A failed model download used to be swallowed into
 // the console: the camera path ran forever looking healthy, readouts
 // saying "measuring..." for a measurement that could never come, and
@@ -24,6 +26,7 @@ test("a camera session with no model says so instead of looking healthy", async 
 
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // The failure surfaces on its own, no user action required. The
   // message names the model and the way back, and the retry button
@@ -47,6 +50,7 @@ test("retry after the network recovers resumes a real session", async ({
 
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   await expect(page.getByText(MODEL_MESSAGE)).toBeVisible({
     timeout: 30_000,
   });

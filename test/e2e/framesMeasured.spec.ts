@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // Remediation B1. `framesMeasured` is written into every exported CSV
 // header as `frames_measured`, and it used to tick at display rate
 // from the moment a camera session began, while the model was still
@@ -52,6 +54,7 @@ test("no frame counts as measured before the model exists", async ({
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // Frames are flowing: the fake camera is up and the loop has ticked
   // often enough to compute a rate. Without this, a zero counter
@@ -84,6 +87,7 @@ test("the counter climbs once the model exists", async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // Attached first, positively. A negated matcher on a mistyped test
   // id would pass on the missing element, and this file exists to
