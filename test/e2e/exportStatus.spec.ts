@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // The owner reported "Export CSV doesn't work". It worked: the first
 // click on a camera session opens the sleepiness question and returns,
 // and the file arrives once the question is answered. Nothing on the
@@ -14,6 +16,7 @@ test("the export says it is waiting, then confirms the file by name", async ({
 }) => {
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   const exportCsv = page.getByTestId("export-csv");
   await expect(exportCsv).toBeEnabled({ timeout: 30_000 });
@@ -44,6 +47,7 @@ test("the blink log refuses by name when no blink was ever seen", async ({
   // to export and the page says so by not offering it.
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   await expect(page.getByTestId("export-csv")).toBeEnabled({ timeout: 30_000 });
   await expect(page.getByTestId("export-blinks")).toBeDisabled();
 });

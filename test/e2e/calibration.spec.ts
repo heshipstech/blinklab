@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // The first end to end test: the calibration flow, driven through the
 // real built app in a headless browser with a fake camera. The fake
 // stream has no face, so samples can never collect. What this proves
@@ -16,6 +18,7 @@ test("the calibration flow opens on dot 1 of 9 and cancels cleanly", async ({
 
   // The fake permission flag grants this without any prompt.
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // Camera running: the calibrate button joins the page.
   const calibrate = page.getByRole("button", { name: "Calibrate gaze" });
@@ -92,6 +95,7 @@ test("a returning visitor's stored profile re-enables the heatmap", async ({
   // only accumulate gaze while a session runs.
   await expect(heatmap).toBeDisabled();
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   await expect(heatmap).toBeEnabled({ timeout: 30_000 });
   await expect(heatmap).toHaveText("Gaze heatmap");
 });
@@ -104,6 +108,7 @@ test("a visitor who never calibrated keeps the explain-first label", async ({
   // first, and the label says why the button is off.
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   // The RUNNING barrier first. Review proved the assertion below
   // green against an always-enabled rot without it: sampled during
   // the requesting window, "disabled" is trivially true. Calibrate

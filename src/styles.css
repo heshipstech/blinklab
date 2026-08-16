@@ -359,6 +359,20 @@ body {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* Two places read as one sentence rather than as a label and a value
+ * in two columns, so there the colon belongs back in the flow. Without
+ * this they render as "Alertness scoremeasuring..." and "Before you
+ * beginhow sleepy do you feel?".
+ */
+.headline .sep,
+.kss-prompt .sep {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
 .value {
   color: var(--ink);
   font-weight: 600;

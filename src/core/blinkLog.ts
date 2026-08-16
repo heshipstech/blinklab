@@ -43,16 +43,43 @@ export function eventsForDisplay(
     : events.slice(events.length - BLINK_LOG_DISPLAY_CAP);
 }
 
-export function formatBlinkEvent(
+/** The on-screen table's headers, units in the header rather than in
+ * every cell. Repeating "ms" and "mm" on every row was most of the ink
+ * in the old prose list and none of the information.
+ */
+export const BLINK_TABLE_HEADERS = [
+  "When (s)",
+  "Closed for (ms)",
+  "Amplitude (mm)",
+  "Speed (mm/s)",
+  "A/V (ms)",
+] as const;
+
+/**
+ * A blink whose amplitude is this small did not travel far enough to be
+ * a blink, and the table greys it rather than hiding it: the export
+ * keeps the row, so the panel must not disagree with the file. Chosen
+ * from measured sessions where real blinks ran 2.2 to 6.9 mm and the
+ * phantoms sat under 1 mm.
+ */
+export const FAINT_BLINK_MM = 1.5;
+
+/** One row of the on-screen table, already formatted, newest first. */
+export function blinkTableRow(
   event: BlinkEvent,
   sessionStartMs: number,
-): string {
-  const relativeS = ((event.atMs - sessionStartMs) / 1000).toFixed(1);
-  const shapeText =
-    event.shape === null
-      ? "shape unavailable"
-      : `${event.shape.amplitudeMm.toFixed(1)} mm at ${event.shape.peakClosingVelocityMmPerS.toFixed(0)} mm/s, A/V ${event.shape.amplitudeOverVelocityMs.toFixed(0)} ms`;
-  return `${relativeS} s, ${event.durationMs.toFixed(0)} ms, ${shapeText}`;
+): { cells: string[]; faint: boolean } {
+  const shape = event.shape;
+  return {
+    cells: [
+      ((event.atMs - sessionStartMs) / 1000).toFixed(1),
+      event.durationMs.toFixed(0),
+      shape === null ? "—" : shape.amplitudeMm.toFixed(1),
+      shape === null ? "—" : shape.peakClosingVelocityMmPerS.toFixed(0),
+      shape === null ? "—" : shape.amplitudeOverVelocityMs.toFixed(0),
+    ],
+    faint: shape !== null && shape.amplitudeMm < FAINT_BLINK_MM,
+  };
 }
 
 // The columns of the blink log export. Deliberately separate from the

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // Remediation B3. A throw inside the frame handler used to skip the
 // loop's re-arm, so the page froze silently: every readout stuck on
 // its last value, no message, records simply stopping. The loop now
@@ -16,6 +18,7 @@ test("one throw in the frame loop stops measurement visibly and keeps the data",
   test.setTimeout(180_000);
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // Records must be provably ADVANCING first, or "stops advancing"
   // is vacuous. Two increasing numeric readings prove the session
@@ -67,6 +70,7 @@ test("one throw in the frame loop stops measurement visibly and keeps the data",
   // And the camera path may not quietly rebuild the frozen page: a
   // dead loop refuses a new session with the same message.
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
   await expect(message).toBeVisible();
   await expect(
     page.locator("p").filter({ hasText: /Processing rate: \d+/ }),

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { answerOpeningQuestion } from "./support/kss";
+
 // The unit tests own the sentences. This owns the thing only a real
 // browser can answer: that `getSettings()` on a live track actually
 // fills those rows in, and that a marker clicked during a session
@@ -14,6 +16,7 @@ test("a camera export carries the conditions it was measured under", async ({
 }) => {
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
 
   // Records arrive about once a second. The export button is the gate.
   const exportCsv = page.getByTestId("export-csv");

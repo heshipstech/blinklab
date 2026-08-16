@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   appendEvent,
   eventsForDisplay,
-  formatBlinkEvent,
+  BLINK_TABLE_HEADERS,
+  blinkTableRow,
   serialiseBlinkEvents,
   BLINK_CSV_COLUMNS,
   type BlinkEvent,
@@ -129,9 +130,9 @@ describe("serialiseBlinkEvents, when rows went missing", () => {
   });
 });
 
-describe("formatBlinkEvent", () => {
-  it("renders time relative to the session start, duration and shape", () => {
-    const line = formatBlinkEvent(
+describe("blinkTableRow", () => {
+  it("gives five cells in header order, units left to the header", () => {
+    const { cells } = blinkTableRow(
       {
         atMs: 52340,
         durationMs: 133,
@@ -145,17 +146,60 @@ describe("formatBlinkEvent", () => {
       },
       10000,
     );
-    expect(line).toContain("42.3 s");
-    expect(line).toContain("133 ms");
-    expect(line).toContain("5.2 mm");
-    expect(line).toContain("68 mm/s");
+    // Repeating "ms" and "mm" on every row was most of the ink in the
+    // prose list this replaced and none of the information.
+    expect(cells).toEqual(["42.3", "133", "5.2", "68", "77"]);
+    expect(cells).toHaveLength(BLINK_TABLE_HEADERS.length);
   });
 
-  it("stays readable when the shape analysis produced nothing", () => {
-    const line = formatBlinkEvent(eventAt(11000), 10000);
-    expect(line).toContain("1.0 s");
-    expect(line).toContain("133 ms");
-    expect(line).toContain("shape unavailable");
+  it("keeps its shape when the analysis produced none", () => {
+    // A dash rather than a blank: an empty cell reads as a rendering
+    // fault, and this is a real blink whose shape could not be measured.
+    const { cells, faint } = blinkTableRow(eventAt(11000), 10000);
+    expect(cells[0]).toBe("1.0");
+    expect(cells[1]).toBe("133");
+    expect(cells.slice(2)).toEqual(["—", "—", "—"]);
+    expect(faint).toBe(false);
+  });
+
+  it("marks a blink that barely moved, without hiding it", () => {
+    // The export keeps these rows, so the panel must not disagree with
+    // the file. Measured sessions put real blinks at 2.2 to 6.9 mm and
+    // the phantoms under 1 mm.
+    const faintRow = blinkTableRow(
+      {
+        atMs: 1000,
+        durationMs: 117,
+        startFrame: null,
+        endFrame: null,
+        shape: {
+          amplitudeMm: 0.9,
+          peakClosingVelocityMmPerS: 52,
+          amplitudeOverVelocityMs: 18,
+        },
+      },
+      0,
+    );
+    expect(faintRow.faint).toBe(true);
+    expect(faintRow.cells[2]).toBe("0.9");
+  });
+
+  it("does not mark an ordinary blink as faint", () => {
+    const ordinary = blinkTableRow(
+      {
+        atMs: 1000,
+        durationMs: 117,
+        startFrame: null,
+        endFrame: null,
+        shape: {
+          amplitudeMm: 2.5,
+          peakClosingVelocityMmPerS: 166,
+          amplitudeOverVelocityMs: 15,
+        },
+      },
+      0,
+    );
+    expect(ordinary.faint).toBe(false);
   });
 });
 
