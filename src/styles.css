@@ -1,0 +1,431 @@
+/* The page's stylesheet.
+ *
+ * Until 16 August this lived as a 183-line concatenated string inside
+ * main.ts, appended to the head at runtime. That was tolerable while it
+ * was a handful of rules and became the wrong shape the moment the page
+ * gained a design: no editor highlighting, no formatter, and every rule
+ * carrying two quote marks and a plus sign of noise.
+ *
+ * Moved verbatim in the same commit that introduced the tokens below,
+ * deliberately WITHOUT restyling anything, so that if the page changed
+ * appearance at all it was a bug in the move rather than an intended
+ * redesign hiding one.
+ *
+ * Fonts are served from this origin, never from Google. The demo notice
+ * promises that measurements never leave the browser and ADR-0004
+ * records what it cost to have claimed that loosely once already; a
+ * stylesheet that phones a font CDN on every load would make the notice
+ * false again in a new way.
+ */
+
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/space-grotesk/latin-700.css";
+
+/* Design tokens, from the BeSight style guide. Every colour, radius and
+ * shadow on the page resolves to one of these, so a change is one edit
+ * rather than a search. Names say the role, not the colour, except
+ * where the colour IS the role (the two accents).
+ */
+:root {
+  --ink: #0f172a;
+  --body: #475569;
+  --muted: #94a3b8;
+  --border: #cbdbe6;
+  --divider: #e2e8f0;
+  --surface: #ffffff;
+  --page: #f8fafc;
+  --accent: #f97316;
+  --blue: #2196f3;
+
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", var(--font-ui);
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-card: 16px;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  /* The gutter every full-width strip shares, so the top bar, the
+   * banner, the cards and the footer line up because they are one
+   * number rather than four kept in step by hand.
+   */
+  --gutter: 16px;
+  --column: 1280px;
+}
+
+/* ---- Ported verbatim from main.ts on 16 August, unchanged ---- */
+
+.graph {
+  display: block;
+}
+.graph[hidden] {
+  display: none;
+}
+/* The body's default margin leaves a strip down each side, so the */
+/* full width strip and the notice fall short of the window edge. */
+/* The centred column keeps its own padding so it stays readable */
+/* on a narrow window once the body margin is gone. */
+/* An explicit background and text colour, which the page never had. */
+/* Without them the browser paints its own canvas from the viewer's */
+/* system theme while the text stays black, so on a machine set to */
+/* dark mode the whole page rendered black on black. Nobody noticed */
+/* for six phases because it was just legible enough to squint at. */
+/*  */
+/* Fixed rather than made theme-aware on purpose: this page's job */
+/* includes being screenshotted and filmed, and a demo that looks */
+/* different depending on the viewer's settings is a demo you cannot */
+/* reason about. */
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 14px;
+}
+/* The box system. Three tiers, and the tiers are the point: the */
+/* score is the claim, the measurements are the evidence, and the */
+/* instrument's own health is neither. Before this every readout had */
+/* the same visual weight, so a stranger could not tell in two */
+/* seconds which number the project is actually about. */
+/*  */
+/* Rules live here rather than in inline styles because an inline */
+/* `display` beats the `hidden` attribute, which is how three empty */
+/* canvases once appeared above an unstarted page. */
+.box {
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0;
+  background: #fbfbfb;
+}
+.box[hidden] {
+  display: none;
+}
+/* Every gap on the page comes from a container, never from a box's */
+/* own margin, so there is exactly one number to change. */
+#content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+/* One rule for every full width strip on the page: the top bar, the */
+/* status banner's wrapper, the boxes, and the footer. They line up */
+/* with each other because they are the same rule, not because four */
+/* numbers were kept in step by hand. */
+/*  */
+/* The side padding is a gutter for narrow windows, not decoration. */
+/* Once the window is wide enough to show the whole 1280 column AND a */
+/* 16 pixel gutter either side, `margin: auto` is already providing */
+/* that space, so the padding is doing nothing except making the */
+/* column narrower than it says it is. Above 1312 pixels, which is */
+/* 1280 plus both gutters, it is therefore removed and the boxes get */
+/* the full 1280. */
+.page-column {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 1312px) {
+  .page-column {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+/* The name is the only h1 on the page and the browser's default */
+/* 0.67em margin on it, not the bar's padding, was most of why the top */
+/* bar stood 99 pixels tall. Sized here so the bar's height is a */
+/* decision rather than a leftover. */
+.page-column > h1 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin: 14px 0;
+}
+/* The page ends on a line rather than on nothing. Border only, no */
+/* fill, because a filled bar would read as a second banner. */
+#page-footer {
+  border-top: 1px solid #e4e4e4;
+  background: #ffffff;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+#page-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+.box > h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+.box p {
+  margin: 4px 0;
+}
+/* Tier 2 sits three across on a wide window and stacks on a narrow */
+/* one. auto-fit with a minimum keeps that behaviour without a media */
+/* query having to guess a breakpoint. */
+.row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+}
+/* display:grid beats the `hidden` attribute, exactly as an inline */
+/* display would, so hidden has to be restored explicitly. */
+.row[hidden] {
+  display: none;
+}
+/* The headline. The only large type on the page. */
+.headline {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+}
+/* Tier 3 is deliberately quieter than the measurements above it. */
+.quiet {
+  font-size: 12px;
+  color: #555;
+}
+.quiet p {
+  margin: 2px 0;
+}
+.caveat {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 10px 0;
+}
+/* Source takes the wider side because it holds the video, which is */
+/* sized to 640 px. An even split of a 1280 column leaves about 630 */
+/* per side once the gap is taken, which would shrink the picture. */
+.top-row {
+  display: grid;
+  gap: 16px;
+  align-items: stretch;
+  grid-template-columns: 55fr 45fr;
+}
+.top-row[hidden] {
+  display: none;
+}
+/* Below this the columns stack, and Source comes first because */
+/* nothing else on the page does anything until a source is running. */
+@media (max-width: 900px) {
+  .top-row {
+    grid-template-columns: 1fr;
+  }
+}
+/* Boxes in one row match height. A tall blink log therefore stretches */
+/* its neighbours rather than leaving a ragged edge. */
+.row > .box {
+  height: 100%;
+  box-sizing: border-box;
+}
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.signals-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.stored-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  font-size: 12px;
+  color: #555;
+}
+.stored-list li {
+  margin-bottom: 4px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: #555;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.instrument-line {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #555;
+}
+.instrument-line p {
+  margin: 0;
+}
+/* The alert is a detected EVENT, not a judgement about a person, so */
+/* it is allowed to be loud in a way the score deliberately is not. */
+.alert {
+  border-left: 3px solid #c62828;
+  padding-left: 10px;
+}
+/* The banner carries no padding of its own and its children carry */
+/* their own margins, so when every child is empty the whole strip */
+/* collapses to nothing without anyone having to remember to hide it. */
+/* This replaced a computed hidden flag that went stale: status text */
+/* is written from a dozen places that do not call render(), so the */
+/* banner stayed invisible while the app was talking. */
+/* The strip is always there, bordered like every other section, so */
+/* an arriving alert changes its colour rather than the page's height. */
+/* Centred in EVERY state, not only when idle. The strip holds four */
+/* different children and they used to disagree with each other, so */
+/* the line moved sideways depending on what the app happened to be */
+/* saying. A bar that shifts as it speaks reads as a layout fault. */
+/* The bottom margin is the same 16 the boxes use between themselves, */
+/* because without it the strip sat directly on top of Source. */
+#status-banner {
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 16px;
+  margin: 16px auto 16px auto;
+  text-align: center;
+}
+#status-banner > p {
+  margin: 0;
+}
+#status-banner > p:empty {
+  display: none;
+}
+#status-banner.alerting {
+  background: #ffb300;
+  border-color: #ef6c00;
+}
+/* Inside an orange strip the red rule is invisible and unnecessary. */
+#status-banner.alerting .alert {
+  border-left: none;
+  padding-left: 0;
+  font-weight: 600;
+}
+/* The sleepiness options, one per row. Option 9 is 54 characters and */
+/* will not share a line with anything. */
+.kss-prompt {
+  font-weight: 600;
+  margin: 8px 0 6px 0;
+}
+.kss-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.kss-option {
+  text-align: left;
+  width: 100%;
+}
+/* Skip used to span the whole row, which put it below rating 9 and */
+/* gave it more visual weight than any of the ratings it is not one */
+/* of. Nine ratings in two columns leave the second column of the */
+/* last row empty, so an ordinary cell drops Skip exactly there, */
+/* directly under rating 8, filling the hole rather than adding a */
+/* row. */
+
+/* 7. Bullets indented every blink and pushed most of them onto two */
+/* lines. The list is already visually a list. */
+.blink-log {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  max-height: 190px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+.blink-log li {
+  margin: 2px 0;
+}
+/* 8. Labels stay light, the measurements are bold. Split at the first */
+/* colon at render time rather than in the message functions, so the */
+/* tested strings in core are untouched. */
+.value {
+  font-weight: 600;
+}
+/* 9. Boxes hold their height as content changes, so the page does not */
+/* jump every time a readout gains or loses a line. They can still */
+/* grow past it; this is a floor, not a ceiling. */
+.top-row .box {
+  min-height: 132px;
+}
+/* The right column is a flex column and Session takes the slack, so */
+/* its bottom edge meets Source's however tall the video makes that. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+.stack > :last-child {
+  flex: 1;
+}
+.row .box {
+  min-height: 230px;
+}
+#live-signals {
+  min-height: 210px;
+}
+/* 2. Native form controls render differently in every browser, which */
+/* is what made Chrome and Safari look like different products. This */
+/* is not a design system, it is the cheap 90 per cent of one: one */
+/* accent colour and one button shape, no dependency. */
+input[type="checkbox"] {
+  accent-color: #1a73e8;
+  width: 14px;
+  height: 14px;
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+}
+button {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid #c6c6c6;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: #f2f2f2;
+}
+button:disabled {
+  color: #9a9a9a;
+  background: #f5f5f5;
+  cursor: default;
+}
+label {
+  font-size: 14px;
+}
