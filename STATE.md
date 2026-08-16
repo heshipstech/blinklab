@@ -1,17 +1,31 @@
-Last increment: the interface was redesigned to the BeSight visual
-language across four merged pull requests, #262 to #265. The measuring
-code is untouched; every change is presentation, layout or wording of a
-label. The sleepiness question is now a modal.
-Last commit, as of the stamp below: pull request #265, 2026-08-16;
+Last increment: the pre-registration and the reading half of the
+six-person validation round. `docs/validation-plan.md` is committed
+BEFORE any session file exists, and `analysis/blinklab/validation.py`
+pairs a folder of exports and refuses, by name, everything it cannot
+trust. No check is computed yet, deliberately. Before it, #266 shortened
+the page heading to "Alertness demo".
+Last commit, as of the stamp below: 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: NOTHING IS BLOCKED. The August audit's ladder is
-closed. Stages A, B and C are complete; D1 stage two is the single
-remaining piece of real work and it is a WEBCAM fix, not hardware
-preparation, because a 20 fps camera reads 70 today and holds the 25 fps
-blink gate open in sessions that should be refused. Stage E is complete
-apart from a repository setting. Stage F is complete or declined. Stage
-G is complete apart from 8.8, declined. Stage H is declined entire.
+Currently working: the six-person validation round, which is the
+project's largest untested claim rather than a piece of tidying. Every
+live-camera number published here comes from ONE face through ONE
+camera, the owner's, and the Eyeblink8 figures come from recorded clips
+rather than webcams in real rooms. The plan is in
+`docs/validation-plan.md` and its order is fixed: the checks and the
+printed table come next, then the owner's own two sessions as a dry run,
+then the round is sent. Nothing is blocked.
+
+The August audit's ladder is closed. Stages A, B and C are complete; D1
+stage two is the single remaining piece of real work and it is a WEBCAM
+fix, not hardware preparation, because a 20 fps camera reads 70 today
+and holds the 25 fps blink gate open in sessions that should be refused.
+**The six session files are its blast radius measurement**: they carry
+`camera_declared_fps` beside the processing rate, which is the evidence
+D1 has been held for, so the round comes first and D1 follows it. Stage
+E is complete apart from a repository setting. Stage F is complete or
+declined. Stage G is complete apart from 8.8, declined. Stage H is
+declined entire.
 
 **The owner cut the backlog on 15 August.** Items that were tidying
 rather than blocking are marked `- [~]` in REMEDIATION.md, which means
@@ -480,7 +494,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 603 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 99 Python tests of which
+in CI of which 2 rerun locally in WebKit, 126 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

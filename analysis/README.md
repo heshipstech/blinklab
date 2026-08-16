@@ -12,6 +12,23 @@ only thing they share to be explicit: the CSV contract, written in
 `../SPEC.md` and asserted from this side in
 `tests/test_csv_contract.py`.
 
+## The two readers, and why neither is the other
+
+`loader.py` reads the per-second session file. `blink_log.py` reads the
+blink log of a CLIP, and refuses any row without frame numbers, because
+only a frame index can be compared against a human annotator's marks.
+
+`validation.py` reads the blink log of a LIVE CAMERA session, which has
+no frame numbers at all, and refuses any row that has them. The two
+refusals are mirrors and both are load bearing: the first is what stops
+a webcam recording being scored against Eyeblink8 ground truth, and the
+second is what stops a clip appearing in the validation round's table
+looking like somebody's laptop.
+
+`validation.py` also pairs a folder of exports. Read
+`docs/validation-plan.md` first: it fixes what the round measures and
+was committed before any session file existed.
+
 ## Running it
 
 The environment is pinned by `uv.lock`, which fixes the Python
