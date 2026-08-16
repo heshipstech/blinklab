@@ -11,9 +11,26 @@ columns, and `analysis/tools/validation_report.py` prints the table:
 It exits non-zero when it could not read everybody. Before it, #266
 shortened the page heading to "Alertness demo".
 
-NO REAL FILE HAS BEEN THROUGH IT YET. It was built and proved against
-fixtures only, so the next step is the owner's own two sessions, and
-something will break there. Fixtures agree with whoever wrote them.
+**THE DRY RUN HAPPENED and it found what fixtures could not.** The owner
+ran the whole protocol on three devices on 16 August: an iPhone 14 Pro
+Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. Raw files in
+`$DATASETS/validation-dry-run`, never in this repository. The tool read
+all six files with no refusals.
+
+**The finding: the same face gave a median eyelid aperture of 6.88, 6.93
+and 6.33 mm across the three devices, within 10 percent, and the
+baselines learned from those measurements were 7.69, 9.80 and 7.30 mm, a
+spread of 34 percent.** The iris normalisation works. What is learned
+from it does not travel. On the MacBook a few frames in the first 30
+seconds read up to 10.35 mm against a window median of 7.51, and a 90th
+percentile follows them, so the blink line landed at 71 percent of
+resting aperture against 56 and 58 on the other two. That session logged
+26.0 blinks per minute against 8.9 on the phone, including one detection
+of 1.26 mm amplitude, below the faint line the on-screen table greys out.
+
+Readiness and drift both PASSED on that session, because a baseline born
+wrong does not move. Its drift was 0.0. The plan's second dated
+correction adds `baseline_over_resting`, flagged above 1.25.
 Last commit, as of the stamp below: 2026-08-16;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
@@ -22,13 +39,25 @@ project's largest untested claim rather than a piece of tidying. Every
 live-camera number published here comes from ONE face through ONE
 camera, the owner's, and the Eyeblink8 figures come from recorded clips
 rather than webcams in real rooms. The plan is in
-`docs/validation-plan.md` and its order is fixed. The tool is built.
-NEXT: the owner runs the whole protocol twice, on the Sony A7 IV and on
-a plain laptop camera, those two files go through the tool, whatever
-breaks gets fixed, and the baseline drift threshold is set from them and
-written into the plan. Only then is the round sent, and to two people
-first rather than six, because you can only ask each person once.
-Nothing is blocked.
+`docs/validation-plan.md` and its order is fixed. The tool is built and
+the dry run is done, see above.
+
+NEXT, and it is the only thing blocking the round: **the iPhone session
+is being re-run.** In the first one the ten deliberate blinks are not
+between the two marks. One blink sits inside the window and twelve sit
+in a burst from 79.5 to 99.6 s, after the closure. The owner does not
+remember which happened, and the exported files cannot settle it,
+because the per-second file samples one frame in thirty and the blink
+log holds only what was detected. So a re-run is cheaper than a guess.
+
+Read the re-run this way. If the ten land between the marks, the first
+run was a protocol slip and the participant instructions need to be
+firmer about the order. If they do not, the detector missed ten
+deliberate blinks on a phone, and that becomes the next increment ahead
+of D1.
+
+Then the round goes out, to TWO people first rather than six, because
+you can only ask each person once.
 
 The August audit's ladder is closed. Stages A, B and C are complete; D1
 stage two is the single remaining piece of real work and it is a WEBCAM
@@ -508,7 +537,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 603 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 149 Python tests of which
+in CI of which 2 rerun locally in WebKit, 153 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

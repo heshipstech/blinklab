@@ -43,6 +43,19 @@ MARKER_SLACK_MS = 1000.0
 # existed, so that it could not be chosen to suit a result.
 FACE_FRACTION_FLOOR = 0.90
 
+# Set 16 August from the owner's own three sessions, which measured
+# 0.0, 0.0 and 5.0 percent, before any volunteer file existed. Three
+# times the largest of the three. A session above this is a finding and
+# not a reason to move the number.
+BASELINE_DRIFT_CEILING_PCT = 15.0
+
+# The plan's second correction. The blink line is half the baseline, so
+# a baseline 1.25 times the session's own median aperture puts that
+# line at 62 percent of resting, and past that the detector counts
+# partial closures as blinks. Derived from the design, not from the
+# three measurements, which read 1.12, 1.41 and 1.15.
+BASELINE_OVER_RESTING_CEILING = 1.25
+
 COUNTED = "counted"
 AMBIGUOUS = "ambiguous"
 MISSED = "missed"
@@ -121,7 +134,7 @@ def count_between_marks(
 
 @dataclass(frozen=True)
 class BaselineSettling:
-    """Whether the ruler got made, and whether it then stayed still."""
+    """Whether the ruler got made, stayed still, and is a sane length."""
 
     # None means it never became ready at all, which is the worst
     # result this check can carry: every blink in that session was
@@ -130,31 +143,83 @@ class BaselineSettling:
     drift_pct: float | None
     first_mm: float | None
     last_mm: float | None
+    # The eye's own scale, and the baseline as a multiple of it. Added
+    # 16 August by the plan's second correction, because readiness and
+    # drift both passed on a session whose ruler was 39 percent too
+    # long. See over_resting.
+    resting_median_mm: float | None
+    over_resting: float | None
+
+    @property
+    def drifted(self) -> bool:
+        return (
+            self.drift_pct is not None
+            and self.drift_pct > BASELINE_DRIFT_CEILING_PCT
+        )
+
+    @property
+    def implausible(self) -> bool:
+        """Whether the learned baseline is too long to be "open".
+
+        Measured on the owner's three devices: the same face gave a
+        median aperture of 6.88, 6.93 and 6.33 mm, within 10 percent,
+        while the baselines learned from those measurements were 7.69,
+        9.80 and 7.30, a spread of 34 percent. A handful of frames in
+        one learning window read up to 10.35 mm against a window
+        median of 7.51, and a 90th percentile follows them.
+
+        Drift cannot see this, because a baseline born wrong does not
+        move. That session's drift was 0.0.
+        """
+        return (
+            self.over_resting is not None
+            and self.over_resting > BASELINE_OVER_RESTING_CEILING
+        )
 
 
 def baseline_settling(frame: pd.DataFrame) -> BaselineSettling:
-    """When the baseline arrived, and how far it moved afterwards.
+    """When the baseline arrived, how far it moved, and how long it is.
 
     The baseline is allowed to rise and never to fall, by design, so
     the drift is expected to be positive or zero. A large rise means
     the ruler moved underneath the measurement and the blinks late in
     the session were judged against a different bar from the early
     ones.
+
+    The resting median is taken over the WHOLE session rather than over
+    the eye-open frames. Filtering by the blink line would use the
+    baseline to choose the frames that judge the baseline, and a check
+    must not take its own answer as its input: a baseline could then
+    excuse itself by declaring more frames to be blinks.
+
+    The cost of that choice, stated rather than hidden: a session with
+    a large share of closed frames drags this median down and inflates
+    the ratio. On the three measured sessions the two definitions
+    differed by 0.4, 1.7 and 1.1 percent, so the protocol's one five
+    second closure does not move it. A session that spent most of its
+    time shut would, and would deserve the flag anyway.
     """
+    empty = BaselineSettling(None, None, None, None, None, None)
     ready = frame[frame["baselineMm"].notna()]
     if ready.empty or frame.empty:
-        return BaselineSettling(None, None, None, None)
+        return empty
 
     first_at = float(frame["timestampMs"].iloc[0])
     ready_at = float(ready["timestampMs"].iloc[0])
     first_mm = float(ready["baselineMm"].iloc[0])
     last_mm = float(ready["baselineMm"].iloc[-1])
     drift = None if first_mm == 0 else (last_mm - first_mm) / first_mm * 100.0
+
+    apertures = frame["apertureMm"].dropna()
+    resting = None if apertures.empty else float(apertures.median())
+    over = None if resting is None or resting == 0 else first_mm / resting
     return BaselineSettling(
         ready_after_s=(ready_at - first_at) / 1000.0,
         drift_pct=drift,
         first_mm=first_mm,
         last_mm=last_mm,
+        resting_median_mm=resting,
+        over_resting=over,
     )
 
 

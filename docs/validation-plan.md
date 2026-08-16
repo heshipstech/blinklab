@@ -269,9 +269,24 @@ Setting it from a volunteer file, or after reading one, would be
 choosing a threshold to suit a result, and it would void this check.
 **If that ever happens, this check is void and the table says so.**
 
-Threshold: NOT YET SET.
-Owner's own measured drift, Sony A7 IV: NOT YET MEASURED.
-Owner's own measured drift, laptop camera: NOT YET MEASURED.
+**SET on 16 August 2026, from three sessions of the owner's own face,
+before any volunteer file existed.**
+
+    Threshold: 15 percent.
+
+    iPhone 14 Pro Max, Front Camera          0.0 percent
+    MacBook Air, FaceTime HD Camera          0.0 percent
+    Sony A7 IV through a Cam Link 4K         5.0 percent
+
+Three times the largest of the three. The baseline may only rise, and
+one session in three rose by 5 percent on its own, so 15 leaves room
+for ordinary variation while catching a ruler that moves further within
+one session than these three devices' rulers differ from each other.
+
+It is provisional in the sense that three sessions of one face is a
+small basis, and it is FIXED in the sense that matters: if a volunteer
+session, or a re-run of one of these three, comes back above 15 percent,
+that is a finding and not a reason to move the number.
 
 ## What happens to the files
 
@@ -326,3 +341,55 @@ This is recorded rather than edited in place because the mechanism is
 the point. A plan that can be quietly rewritten while the data is being
 read is not a pre-registration, and the only way to tell the difference
 later is a correction log that was kept from the start.
+
+### 16 August 2026: check 4 could not see a baseline that was born wrong
+
+**Found by the owner's own three sessions, before any volunteer file
+existed.** Check 4 asked whether the baseline arrives and then stays
+still. Both halves passed on all three devices. Ready at 30.4, 30.4 and
+30.1 seconds; drift 0.0, 0.0 and 5.0 percent.
+
+Underneath that clean result, one of the three had a ruler 41 percent
+too long, and neither half of the check could see it.
+
+The measured facts. The same face gave a median eyelid aperture of 6.88,
+6.93 and 6.33 mm across the three devices, within 10 percent of each
+other, which is the iris normalisation working exactly as designed. The
+baselines learned from those measurements were 7.69, 9.80 and 7.30 mm, a
+spread of 34 percent. On the MacBook Air a handful of frames in the
+first 30 seconds read up to 10.35 mm against a window median of 7.51, and
+the baseline is a 90th percentile, so it settled on 9.80.
+
+The consequence is not cosmetic. The blink line is half the baseline, so
+it sat at 56, 71 and 58 percent of the session's own median aperture on
+the three devices. On the MacBook a blink had only to close 30 percent of the way
+to be counted, and that session logged 26.0 blinks per minute against
+8.9 on the phone, with one detection of 1.26 mm amplitude, below the
+faint line the on-screen table greys out.
+
+**Drift cannot catch this, because a baseline born wrong does not move.**
+The MacBook's drift was 0.0.
+
+So a fifth check is added:
+
+- **`baseline_over_resting`**: the learned baseline divided by the
+  session's own median aperture. Flagged above **1.25**.
+
+The number is derived from the design rather than from the three
+measurements. The blink line is half the baseline, so a ratio of 1.25
+puts that line at 62 percent of resting aperture, and beyond that the
+detector is counting partial closures as blinks. The three sessions read
+1.12, 1.41 and 1.15, so it flags the one that is wrong and passes the
+two that are not, but it would sit at 1.25 whatever they had read.
+
+The median is taken over the whole session and not over the eye-open
+frames, deliberately. Filtering by the blink line would use the baseline
+to decide which frames judge the baseline, and a check must not take its
+own answer as its input.
+
+**This correction is also the reason the owner's original question was
+the right one.** It was "did the baseline settle below resting
+aperture", and it was replaced with readiness and drift because the
+literal form of it is true by construction. The instinct behind it was
+not. It was asking whether the ruler is a plausible length, and nothing
+in the plan asked that until real data made the gap visible.

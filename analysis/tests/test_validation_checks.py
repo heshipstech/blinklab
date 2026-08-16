@@ -47,10 +47,11 @@ def a_row(
     closures: str = "0",
     fps: str = "60",
     face: str = "true",
+    aperture: str = "7.0",
 ) -> str:
     # timestampMs, faceDetected, fps, apertureMm, baselineMm, then the
     # rest empty except longClosureCount.
-    cells = [str(timestamp), face, fps, "7.0", baseline] + [""] * 6
+    cells = [str(timestamp), face, fps, aperture, baseline] + [""] * 6
     cells += [closures, "", "", "", "true"]
     return ",".join(cells)
 
@@ -184,6 +185,99 @@ class TestTheBaseline:
         )
         assert settling.ready_after_s is None
         assert settling.drift_pct is None
+
+    def test_a_drift_past_the_ceiling_is_flagged(self, tmp_path: Path) -> None:
+        # 15 percent, set from the owner's own three sessions which
+        # measured 0.0, 0.0 and 5.0, before any volunteer file existed.
+        write_session(
+            tmp_path,
+            ["# source: camera"],
+            rows=[
+                a_row(1000, baseline="7.0"),
+                a_row(2000, baseline="8.2"),
+            ],
+        )
+        settling = baseline_settling(
+            load_session(tmp_path / f"blinklab-session-{STAMP}.csv").frame
+        )
+        assert settling.drift_pct == pytest.approx(17.14, abs=0.01)
+        assert settling.drifted
+
+    def test_a_baseline_born_too_long_is_flagged(self, tmp_path: Path) -> None:
+        # The plan's second correction, found by real data. The MacBook
+        # Air learned a baseline of 9.80 mm from a face whose median
+        # aperture was 6.93, a ratio of 1.41, which put the blink line
+        # at 71 percent of resting. Readiness and drift BOTH passed on
+        # that session: a baseline born wrong does not move.
+        write_session(
+            tmp_path,
+            ["# source: camera"],
+            rows=[
+                a_row(1000, baseline="9.8", aperture="6.93"),
+                a_row(2000, baseline="9.8", aperture="6.93"),
+            ],
+        )
+        settling = baseline_settling(
+            load_session(tmp_path / f"blinklab-session-{STAMP}.csv").frame
+        )
+        assert settling.drift_pct == pytest.approx(0.0)
+        assert not settling.drifted
+        assert settling.over_resting == pytest.approx(1.41, abs=0.01)
+        assert settling.implausible
+
+    def test_a_baseline_a_little_above_resting_is_fine(
+        self, tmp_path: Path
+    ) -> None:
+        # A p90 sits above the median by design, so the check must not
+        # fire on a healthy session. The iPhone read 1.12, the Sony
+        # 1.15.
+        write_session(
+            tmp_path,
+            ["# source: camera"],
+            rows=[
+                a_row(1000, baseline="7.69", aperture="6.88"),
+                a_row(2000, baseline="7.69", aperture="6.88"),
+            ],
+        )
+        settling = baseline_settling(
+            load_session(tmp_path / f"blinklab-session-{STAMP}.csv").frame
+        )
+        assert settling.over_resting == pytest.approx(1.12, abs=0.01)
+        assert not settling.implausible
+
+    def test_the_median_is_not_filtered_by_the_blink_line(
+        self, tmp_path: Path
+    ) -> None:
+        # A definition-pinning test, and the session is deliberately
+        # degenerate because that is the only shape in which the two
+        # candidate definitions disagree.
+        #
+        # Three of these five rows sit below the blink line of 4.0 mm.
+        # Over the whole session the median aperture is 2.0 and the
+        # ratio is 4.00. Filter by the blink line first and the median
+        # becomes 7.0 and the ratio 1.14, which passes.
+        #
+        # The filtered version is the tempting one and it is wrong: it
+        # uses the baseline to choose the frames that judge the
+        # baseline, so a baseline can excuse itself by declaring more
+        # frames to be blinks. Without this test both definitions pass
+        # every other assertion in the file.
+        write_session(
+            tmp_path,
+            ["# source: camera"],
+            rows=[
+                a_row(1000, baseline="8.0", aperture="7.0"),
+                a_row(2000, baseline="8.0", aperture="7.0"),
+                a_row(3000, baseline="8.0", aperture="2.0"),
+                a_row(4000, baseline="8.0", aperture="2.0"),
+                a_row(5000, baseline="8.0", aperture="2.0"),
+            ],
+        )
+        settling = baseline_settling(
+            load_session(tmp_path / f"blinklab-session-{STAMP}.csv").frame
+        )
+        assert settling.resting_median_mm == pytest.approx(2.0)
+        assert settling.over_resting == pytest.approx(4.0)
 
 
 class TestTheClosure:

@@ -26,6 +26,8 @@ from blinklab.validation import (
     load_pair,
 )
 from blinklab.validation_checks import (
+    BASELINE_DRIFT_CEILING_PCT,
+    BASELINE_OVER_RESTING_CEILING,
     EXPECTED_BLINKS,
     FACE_FRACTION_FLOOR,
     MISSED,
@@ -75,6 +77,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
         "closures at mark 2 / end",
         "baseline ready (s)",
         "baseline drift (%)",
+        "baseline / resting",
     ]
     body = []
     for row in rows:
@@ -91,6 +94,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
                 f"{dash(row.closures.at_mark)} / {dash(row.closures.at_end)}",
                 dash(row.baseline.ready_after_s, 1),
                 dash(row.baseline.drift_pct, 1),
+                dash(row.baseline.over_resting, 2),
             ]
         )
     return table(headers, body)
@@ -136,8 +140,11 @@ def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
     missed = [row.label for row in rows if row.verdict == MISSED]
     over = [row.label for row in rows if row.verdict == OVER_COUNTED]
     unready = [row.label for row in rows if row.baseline.ready_after_s is None]
+    drifted = [row.label for row in rows if row.baseline.drifted]
+    implausible = [row.label for row in rows if row.baseline.implausible]
     gated = [row.label for row in rows if row.gate_would_refuse]
     low_face = [row.label for row in rows if row.face_below_floor]
+    unsound = sorted(set(unready) | set(drifted))
 
     lines = [
         "The three failure criteria, fixed in the plan before any file "
@@ -148,20 +155,28 @@ def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
         f"{len(missed)} missed ({', '.join(missed) or 'none'})."
         f" {'FAILED' if len(missed) >= DETECTOR_FAILS_AT else 'not met'}",
         f"2. The baseline does not generalise, at "
-        f"{BASELINE_FAILS_AT} or more never ready: "
-        f"{len(unready)} never ready ({', '.join(unready) or 'none'})."
-        f" {'FAILED' if len(unready) >= BASELINE_FAILS_AT else 'not met'}",
+        f"{BASELINE_FAILS_AT} or more never ready or drifting past "
+        f"{BASELINE_DRIFT_CEILING_PCT:.0f}%: "
+        f"{len(unready)} never ready ({', '.join(unready) or 'none'}), "
+        f"{len(drifted)} drifted ({', '.join(drifted) or 'none'})."
+        f" {'FAILED' if len(unsound) >= BASELINE_FAILS_AT else 'not met'}",
         f"3. The frame rate gate lets bad sessions through, at "
         f"{GATE_FAILS_AT} or more: "
         f"{len(gated)} would be refused by a true camera rate "
         f"({', '.join(gated) or 'none'})."
         f" {'FAILED' if len(gated) >= GATE_FAILS_AT else 'not met'}",
-        "",
-        "The drift half of criterion 2 cannot be answered yet: the "
-        "threshold is NOT YET SET in the plan, and it must be set from "
-        "the owner's own two sessions before any of these files were "
-        "opened. Drift is printed above and not judged.",
     ]
+    if implausible:
+        lines += [
+            "",
+            f'BASELINE TOO LONG TO BE "OPEN", above '
+            f"{BASELINE_OVER_RESTING_CEILING:.2f} times the session's own "
+            f"median aperture: {', '.join(implausible)}. The blink line "
+            f"is half the baseline, so in these sessions it sits above "
+            f"62 percent of resting and partial closures are being "
+            f"counted as blinks. Readiness and drift do not see this, "
+            f"because a baseline born wrong does not move.",
+        ]
     if over:
         lines += [
             "",
