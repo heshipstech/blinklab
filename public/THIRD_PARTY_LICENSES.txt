@@ -76,3 +76,64 @@ If the Work includes a "NOTICE" text file as part of its distribution, then any 
 9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.
 
 END OF TERMS AND CONDITIONS
+
+
+================================================================================
+Inter, Space Grotesk and IBM Plex Mono
+================================================================================
+
+Served from this origin, never from a font CDN. The demo notice promises that
+your video and your measurements never leave your browser, and a stylesheet
+that fetched fonts from a third party on every load would make that promise
+false in a new way. Vendored via the @fontsource packages.
+
+Inter: Copyright (c) 2016 The Inter Project Authors.
+Space Grotesk: Copyright (c) 2020 Florian Karsten.
+IBM Plex Mono: Copyright (c) 2017 IBM Corp.
+
+All three are licensed under the SIL Open Font License, Version 1.1.
+
+PERMISSION & CONDITIONS
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+the Font Software, to use, study, copy, merge, embed, modify, redistribute, and
+sell modified and unmodified copies of the Font Software, subject to the
+following conditions:
+
+1) Neither the Font Software nor any of its individual components, in Original
+or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy contains
+the above copyright notice and this license. These can be included either as
+stand-alone text files, human-readable headers or in the appropriate
+machine-readable metadata fields within text or binary files as long as those
+fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font Name(s)
+unless explicit written permission is granted by the corresponding Copyright
+Holder. This restriction only applies to the primary font name as presented to
+the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software
+shall not be used to promote, support or sell modified versions of the Font
+Software.
+
+5) The Font Software, modified or unmodified, in part or in whole, must be
+distributed entirely under this license, and must not be distributed under any
+other license.
+
+TERMINATION
+
+This license becomes null and void if any of the above conditions are not met.
+
+DISCLAIMER
+
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT,
+TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT,
+INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR
+FROM OTHER DEALINGS IN THE FONT SOFTWARE.
