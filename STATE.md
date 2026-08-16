@@ -42,19 +42,32 @@ rather than webcams in real rooms. The plan is in
 `docs/validation-plan.md` and its order is fixed. The tool is built and
 the dry run is done, see above.
 
-NEXT, and it is the only thing blocking the round: **the iPhone session
-is being re-run.** In the first one the ten deliberate blinks are not
-between the two marks. One blink sits inside the window and twelve sit
-in a burst from 79.5 to 99.6 s, after the closure. The owner does not
-remember which happened, and the exported files cannot settle it,
-because the per-second file samples one frame in thirty and the blink
-log holds only what was detected. So a re-run is cheaper than a guess.
+**THE IPHONE WAS RE-RUN AND THE ANSWER IS THE DETECTOR.** Protocol
+followed exactly, and 7 of 10 deliberate blinks were detected. The seven
+sit at a metronome 0.90 to 1.00 s cadence broken by two holes of 2.89
+and 2.98 s, each the width of two more blinks. The person did not pause.
 
-Read the re-run this way. If the ten land between the marks, the first
-run was a protocol slip and the participant instructions need to be
-firmer about the order. If they do not, the detector missed ten
-deliberate blinks on a phone, and that becomes the next increment ahead
-of D1.
+The full dry run write-up is `docs/validation-dry-run.txt` and it holds
+the numbers. The short version: both sessions with a CORRECT blink line
+and a processing rate near 30 fps missed deliberate blinks; the only
+near-30 session that caught all ten had a ruler 41 percent too long; the
+only session with both a correct ruler and a high rate caught all ten.
+Blink DURATION moves with the rate too, 96 ms on the phone at 2.9 frames
+per blink against 129 ms on the Sony at 16.4.
+
+**So the suspicion is that the 25 fps floor is too low, which is larger
+than D1 as written.** D1 is about a slow camera holding the gate open.
+This is about the gate being in the wrong place. It is a LEAD, not a
+result: one session per device, one face, one day, with device, rate,
+lighting and camera all moving together.
+
+NEXT, and it is one three minute test: **a second MacBook session at the
+same ~32 fps with a baseline that lands correctly.** That is the only
+cheap thing that separates the processing rate from the device. If it
+also misses about three of ten, the rate is the cause. To get a correct
+baseline, sit still and normally for the whole first 30 seconds; the
+frames that broke the first one read 9.9 to 10.4 mm against a 7.5
+median.
 
 Then the round goes out, to TWO people first rather than six, because
 you can only ask each person once.
