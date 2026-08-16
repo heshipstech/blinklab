@@ -34,5 +34,27 @@ export async function answerOpeningQuestion(page: Page): Promise<void> {
     // on the missing answer instead.
     return;
   }
-  await skip.click();
+  try {
+    await skip.click({ timeout: 5_000 });
+  } catch (error) {
+    // The dialog can also vanish BETWEEN the wait above and this click,
+    // which the first catch cannot see. `main.ts` hides the question
+    // whenever the camera state stops being `running`, so a model
+    // failure takes it away mid-step. The element is then still in the
+    // page and no longer visible, and Playwright retries a click that
+    // can never land until the whole test times out.
+    //
+    // That is a race rather than a constant, which is why it passed
+    // locally and failed in CI: on a fast machine the failure lands
+    // before the wait and the first catch handles it. Observed on
+    // 16 August in modelFailed.spec.ts, "a camera session with no model
+    // says so instead of looking healthy", failing three times on
+    // "element is not visible" after resolving the button.
+    //
+    // Only the vanished case is swallowed. If the button is still
+    // there, the click genuinely failed and that is a regression.
+    if (await skip.isVisible()) {
+      throw error;
+    }
+  }
 }
