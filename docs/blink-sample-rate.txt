@@ -1,0 +1,159 @@
+Does the rate the page runs at change how many blinks it finds?
+===============================================================
+
+17 August 2026. A deterministic experiment, no camera and no people.
+
+WHY. The dry run of 16 and 17 August gave 7, 9 and 10 of ten deliberate
+blinks at 30.7, 29.2 and 126.7 frames per second, on one face within an
+hour. It could not say why, because device, browser engine, camera,
+orientation and mounting all moved together and nothing separated them.
+`docs/validation-dry-run.txt` records that it could not.
+
+HOW. `blinkStep` is a pure function of one aperture sample, one
+timestamp and one threshold. So a blink can be built as an aperture
+trace, sampled at a chosen rate, and run past the real detector with
+nothing else changing. The PHASE is swept across a whole sample period,
+200 offsets per point, because where the samples land relative to a
+blink is the one thing nobody controls in a real session.
+
+The blink model is a raised cosine down and another up, closing in a
+third of the total and opening over the rest, which is the asymmetry the
+dry run's amplitude-over-velocity figures show. The threshold and arm
+line are the owner's own measured session P4: baseline 7.78 mm, so the
+blink line is 3.89 mm and the arm line, which is the blink line less the
+10 percent hysteresis from fix #114, is 3.50 mm.
+
+Reproduce with:
+
+    BLINKLAB_PRINT_TABLE=1 npx vitest run test/core/blinkSampleRate.test.ts
+
+open 7.0 mm, threshold 3.89 mm, arm line 3.50 mm
+
+Share of phase offsets at which one blink is counted.
+A 150 ms blink (50 ms down, 100 ms up), swept by how deep it goes.
+
+  min     ms below   ms below     25 Hz  30 Hz  40 Hz  60 Hz  90 Hz 120 Hz
+  (mm)    threshold  arm line                                             
+-----------------------------------------------------------------------
+  3.70         23          0      0.00   0.00   0.00   0.00   0.00   0.00
+  3.60         28          0      0.00   0.00   0.00   0.00   0.00   0.00
+  3.50         33          2      0.04   0.05   0.07   0.10   0.14   0.19
+  3.40         36         16      0.40   0.48   0.64   0.96   1.00   1.00
+  3.30         39         22      0.56   0.67   0.90   1.00   1.00   1.00
+  3.20         42         27      0.68   0.81   1.00   1.00   1.00   1.00
+  3.10         45         31      0.78   0.94   1.00   1.00   1.00   1.00
+  3.00         47         35      0.86   1.00   1.00   1.00   1.00   1.00
+  2.90         49         38      0.94   1.00   1.00   1.00   1.00   1.00
+  2.80         51         40      1.00   1.00   1.00   1.00   1.00   1.00
+  2.70         53         43      1.00   1.00   1.00   1.00   1.00   1.00
+  2.60         55         45      1.00   1.00   1.00   1.00   1.00   1.00
+  2.50         56         47      1.00   1.00   1.00   1.00   1.00   1.00
+  2.40         58         49      1.00   1.00   1.00   1.00   1.00   1.00
+
+The same question against SPEED, at a fixed depth of 3.20 mm, which
+is 0.30 mm below the arm line. A quicker blink spends less time down
+there, so it is harder to sample.
+
+  total    ms below     25 Hz  30 Hz  40 Hz  60 Hz  90 Hz 120 Hz
+  (ms)     arm line                                             
+---------------------------------------------------------------
+    80          15      0.36   0.43   0.58   0.87   1.00   1.00
+   100          18      0.45   0.55   0.72   1.00   1.00   1.00
+   120          22      0.55   0.66   0.88   1.00   1.00   1.00
+   150          27      0.68   0.81   1.00   1.00   1.00   1.00
+   200          36      0.91   1.00   1.00   1.00   1.00   1.00
+   250          45      1.00   1.00   1.00   1.00   1.00   1.00
+   300          55      1.00   1.00   1.00   1.00   1.00   1.00
+
+
+WHAT THIS ESTABLISHES
+=====================
+
+There are three regions, and only the middle one is about the rate.
+
+1. DEEP BLINKS ARE FINE. At 2.80 mm and below, every rate from 25 Hz
+   upward catches the blink at every phase. Nothing is broken for a
+   firm blink.
+
+2. TOO-SHALLOW BLINKS ARE NEVER CAUGHT, AT ANY RATE. At 3.60 mm the
+   trace crosses the blink line, so the eye reads as closed, and never
+   reaches the arm line, so it is never counted. This is a depth
+   problem and more frames cannot fix it. It is also by design: fix
+   #114 added the arm line precisely so that noise riding the blink
+   line could not mint phantom blinks.
+
+3. BETWEEN THEM IS A BAND, ABOUT 0.4 mm WIDE, WHERE THE RATE DECIDES.
+   From 3.40 down to 3.00 mm, which is 16 to 35 ms spent below the arm
+   line, the same blink is sometimes counted and sometimes not, and how
+   often depends entirely on the sampling rate:
+
+       min 3.30 mm     56% at 25 Hz    67% at 30 Hz    100% at 60 Hz
+
+   Nothing about the person changed. Only where the samples happened to
+   fall.
+
+   Speed widens it. Held at one depth inside the band, an 80 ms blink is
+   caught 43 percent of the time at 30 Hz and always at 90 Hz. A 250 ms
+   blink at the same depth is always caught. Quick shallow blinks are
+   the vulnerable ones.
+
+THE MECHANISM IS THE ARM LINE, AND THAT IS PROVEN RATHER THAN ARGUED.
+Setting APERTURE_HYSTERESIS_FRACTION to 0, which removes the arm line
+and lets any crossing of the blink line count, turns three of the five
+tests red and the band disappears. A second mutation, making the sampler
+ignore its requested rate and always run at 1000 Hz, turns the two
+rate-dependent tests red. So the tests are sensitive both to the cause
+and to the variable.
+
+WHAT THIS DOES NOT ESTABLISH
+============================
+
+IT DOES NOT PROVE THIS EXPLAINS THE DRY RUN'S 7 OF 10 AND 9 OF 10. It
+shows the mechanism exists, and quantifies it. Whether real blinks live
+in the 0.4 mm band often enough to account for those misses is a
+different question, and the exports cannot answer it.
+
+The reason is worth stating plainly, because it is a permanent limit on
+this kind of evidence. THE DATA IS CENSORED. A blink the detector missed
+writes no row at all, so every amplitude in every blink log is drawn
+from the blinks that were caught. The population that would settle the
+question is exactly the population the instrument cannot record. No
+amount of re-reading the five sessions gets around it.
+
+What the experiment does explain is the SHAPE of what was observed, and
+that is not nothing:
+
+- Misses arriving in runs rather than scattered, which both the phone
+  and the laptop showed as clean multi-blink holes in a metronome
+  cadence. Phase drifts slowly against a steady blink rhythm, so a
+  marginal blinker sits on the wrong side of it for several blinks at a
+  time.
+- More misses on the slower machines and none on the fast one.
+- The device that reported the SHORTEST blinks, the phone at a 96 ms
+  median, missing the most of them, which is the direction the speed
+  sweep predicts.
+
+The model is synthetic. Real eyelid traces are noisier than a raised
+cosine, and noise near the arm line would push detection in both
+directions. The three regions and the direction of the effect do not
+depend on the exact shape; the precise width of the band does.
+
+WHAT IT MEANS FOR THE 25 FPS FLOOR
+==================================
+
+The floor is not the thing that is wrong. Refusing below 25 fps is
+correct and the numbers above support it: at 25 Hz the band is at its
+widest and a marginal blink is caught barely half the time.
+
+What is wrong is that ABOVE the floor nothing is said at all. A session
+at 29 fps and a session at 127 fps both pass the gate silently, and this
+experiment shows they are not the same instrument. Between 25 and about
+60 Hz, whether a marginal blink is counted is decided by the speed of
+the viewer's computer.
+
+That is the honest shape of remediation D1's remaining work, and it is
+not the shape D1 was written in. D1 assumed a slow CAMERA declaring a
+rate the page ignored. In five real sessions every camera declared 30
+and the gate never wrongly opened once. The rate that varies is the
+model's own, it is set by the machine, and the page reports it as a
+readout rather than as a caveat on the numbers beside it.
