@@ -91,8 +91,49 @@ are Blink), camera, orientation and mounting all still move together.
 The full write-up is `docs/validation-dry-run.txt`, five sessions, and it
 carries the tool's own output.
 
+**THE CAUSE IS NOW ISOLATED, offline, with no camera and no people.**
+`docs/blink-sample-rate.txt`, reproducible with
+
+    BLINKLAB_PRINT_TABLE=1 npx vitest run test/core/blinkSampleRate.test.ts
+
+`blinkStep` is a pure function, so a blink can be built as an aperture
+trace, sampled at a chosen rate, and run past the real detector with
+everything else held still, sweeping the PHASE that nobody controls in a
+real session. Three regions, and only the middle one is about the rate:
+
+- Deep blinks, 2.80 mm and below: caught at every rate, every phase.
+- Blinks too shallow to reach the ARM LINE (the blink line less the 10
+  percent hysteresis of fix #114): never caught at any rate. A depth
+  problem, and by design.
+- Between them, a band about 0.4 mm wide where the RATE decides. At
+  3.30 mm: 56 percent at 25 Hz, 67 at 30, 100 at 60. Speed widens it:
+  an 80 ms blink at 3.20 mm is caught 43 percent of the time at 30 Hz
+  and always at 90.
+
+Proven by mutation rather than argued: setting
+`APERTURE_HYSTERESIS_FRACTION` to 0 removes the arm line and the band
+disappears, turning three of the five tests red. So the tests are
+sensitive to the cause, not only to themselves.
+
+**WHAT IT CANNOT SAY, and this is permanent.** Whether real blinks live
+in that band often enough to explain 7 of 10 and 9 of 10. THE DATA IS
+CENSORED: a missed blink writes no row, so every amplitude in every
+blink log comes from the blinks that were caught. More sessions do not
+fix it.
+
+**The 25 fps floor is NOT the thing that is wrong.** Refusing below 25
+is correct and these numbers support it. What is wrong is that above the
+floor nothing is said: 29 fps and 127 fps both pass silently and are not
+the same instrument. That is the honest shape of D1's remaining work,
+and it is not the shape D1 was written in, which assumed a slow CAMERA.
+In five real sessions every camera declared 30 and the gate never
+wrongly opened once.
+
 NEXT: the round goes out, to TWO people first rather than six, because
-you can only ask each person once. The finding above makes the round
+you can only ask each person once. Still worth one honest change to
+README and MODEL_CARD before sending, because the blink count is now
+measured to depend on the viewer's machine and neither document says
+so. The finding above makes the round
 MORE worth running, not less: it gives the table a specific hypothesis
 to test, and the table already prints each person's processing rate
 beside their count. Before sending, consider one honest change to
@@ -576,7 +617,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 603 unit tests, 20 end to end tests all run in Chromium
+Test count: 608 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 153 Python tests of which
 2 skip
 
