@@ -12,28 +12,31 @@ It exits non-zero when it could not read everybody. Before it, #266
 shortened the page heading to "Alertness demo".
 
 **THE DRY RUN HAPPENED and it found what fixtures could not.** The owner
-ran the whole protocol on three devices on 16 August: an iPhone 14 Pro
-Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. FOUR
-sessions, because the iPhone was run twice; see the re-run below. Raw
-files in `$DATASETS/validation-dry-run`, never in this repository. The
-tool read all eight files with no refusals, and the pairing coped with
-the device names inserted into the filenames.
+ran the whole protocol on three devices, 16 and 17 August: an iPhone 14
+Pro Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. FIVE
+sessions, because the iPhone and the MacBook were each run twice; both
+re-runs are explained below. Raw files in
+`$DATASETS/validation-dry-run`, never in this repository. The tool read
+all ten files with no refusals, and the pairing coped with the device
+names inserted into the filenames.
 
-**The finding: the same face gave a median eyelid aperture of 6.88,
-7.05, 6.93 and 6.33 mm across the four sessions, within 11 percent, and
-the baselines learned from those measurements were 7.69, 8.09, 9.80 and
-7.30 mm, a spread of 34 percent.** The iris normalisation works. What is learned
-from it does not travel. On the MacBook a few frames in the first 30
-seconds read up to 10.35 mm against a window median of 7.51, and a 90th
-percentile follows them, so the blink line landed at 71 percent of
-resting aperture against 56, 57 and 58 on the other three. That session logged
-26.0 blinks per minute against 8.9 on the phone, including one detection
-of 1.26 mm amplitude, below the faint line the on-screen table greys out.
+**The finding: the same face gave a median eyelid aperture within 11
+percent across all five sessions, and the baselines learned from those
+measurements were 7.69, 8.09, 9.80, 7.78 and 7.30 mm, a spread of 34
+percent.** The iris normalisation works. What is learned from it does
+not travel. In P3, the first MacBook session, a few frames in the first
+30 seconds read up to 10.35 mm against a window median of 7.51, and a
+90th percentile follows them, so the blink line landed at 71 percent of
+resting aperture against 56 to 58 on the other four. That session logged
+26.0 blinks per minute, including one detection of 1.26 mm amplitude,
+below the faint line the on-screen table greys out. P4 is the same
+laptop run again with a baseline that landed correctly.
 
 Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
-correction adds `baseline_over_resting`, flagged above 1.25.
-Last commit, as of the stamp below: 2026-08-16;
+correction adds `baseline_over_resting`, flagged above 1.25, and P3 is
+the only session of the five that it flags.
+Last commit, as of the stamp below: 2026-08-17;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: the six-person validation round, which is the
@@ -49,30 +52,52 @@ followed exactly, and 7 of 10 deliberate blinks were detected. The seven
 sit at a metronome 0.90 to 1.00 s cadence broken by two holes of 2.89
 and 2.98 s, each the width of two more blinks. The person did not pause.
 
-The full dry run write-up is `docs/validation-dry-run.txt` and it holds
-the numbers. The short version: both sessions with a CORRECT blink line
-and a processing rate near 30 fps missed deliberate blinks; the only
-near-30 session that caught all ten had a ruler 41 percent too long; the
-only session with both a correct ruler and a high rate caught all ten.
-Blink DURATION moves with the rate too, 96 ms on the phone at 2.9 frames
-per blink against 129 ms on the Sony at 16.4.
+**THE MACBOOK WAS RE-TESTED on 17 August and the dry run is now five
+sessions.** P4 is the same laptop at the same rate with a baseline that
+landed correctly, run to separate the processing rate from the device.
+Taking only the three sessions whose baseline is sound:
 
-**So the suspicion is that the 25 fps floor is too low, which is larger
-than D1 as written.** D1 is about a slow camera holding the gate open.
-This is about the gate being in the wrong place. It is a LEAD, not a
-result: one session per device, one face, one day, with device, rate,
-lighting and camera all moving together.
+    P2  iPhone,  30.7 fps     7 of 10
+    P4  MacBook, 29.2 fps     9 of 10
+    P5  Sony,   126.7 fps    10 of 10
 
-NEXT, and it is one three minute test: **a second MacBook session at the
-same ~32 fps with a baseline that lands correctly.** That is the only
-cheap thing that separates the processing rate from the device. If it
-also misses about three of ten, the rate is the cause. To get a correct
-baseline, sit still and normally for the whole first 30 seconds; the
-frames that broke the first one read 9.9 to 10.4 mm against a 7.5
-median.
+**At the rate a four core machine produces, whether laptop or phone,
+this instrument loses deliberate blinks, and the 25 fps floor is above
+none of it.** Every one of those sessions ran above 25 fps throughout
+the marked window, so nothing was refused and nothing said anything was
+wrong. Each miss is a hole a whole number of blinks wide in an otherwise
+metronome cadence.
 
-Then the round goes out, to TWO people first rather than six, because
-you can only ask each person once.
+**The processing rate is set by the COMPUTER, not the camera.** All five
+cameras declare 30 fps. The two four-core machines ran the page at 29 to
+32; the one twelve-core machine ran it at 127. So how many blinks this
+instrument reports depends on how fast the viewer's computer is, and the
+page tells them nothing about it. That is larger than D1 as written,
+which is about a slow camera holding the gate open.
+
+**RETRACTED, and the write-up records it:** the 16 August version of
+this said blink duration moves with the processing rate. P4 refutes it.
+It is the slowest sound session and reports the longest blinks, 149 ms
+at 29.2 fps against 96 ms at 30.7 and 129 ms at 126.7. Not ordered by
+rate in either direction. The claim rested on two points that happened
+to line up.
+
+**What the decisive test did NOT settle.** P2 and P4 run at the same
+rate for this purpose and miss 3 and 1 of ten, so the rate cannot
+explain a difference of three times. Something about the phone is worse
+beyond the rate, and device, browser engine (iPhone is WebKit, both Macs
+are Blink), camera, orientation and mounting all still move together.
+
+The full write-up is `docs/validation-dry-run.txt`, five sessions, and it
+carries the tool's own output.
+
+NEXT: the round goes out, to TWO people first rather than six, because
+you can only ask each person once. The finding above makes the round
+MORE worth running, not less: it gives the table a specific hypothesis
+to test, and the table already prints each person's processing rate
+beside their count. Before sending, consider one honest change to
+README and MODEL_CARD, because the blink count is now measured to depend
+on the viewer's machine and neither document says so.
 
 The August audit's ladder is closed. Stages A, B and C are complete; D1
 stage two is the single remaining piece of real work and it is a WEBCAM
@@ -147,7 +172,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 16 August 2026. When this file changes, this stamp changes
+Stamped: 17 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
