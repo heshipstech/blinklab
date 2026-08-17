@@ -1,10 +1,10 @@
-The validation round's DRY RUN, 16 August 2026
-==============================================
+The validation round's DRY RUN, 16 to 17 August 2026
+====================================================
 
-Four sessions, one face, the owner's, on three devices within about an
-hour. This is NOT the six-person round. It is the rehearsal that had to
-happen before six strangers were asked, and its purpose was to find what
-fixtures cannot. It did.
+Five sessions, one face, the owner's, on three devices. This is NOT the
+six-person round. It is the rehearsal that had to happen before six
+strangers were asked, and its purpose was to find what fixtures cannot.
+It did, and it also refuted one of its own first conclusions.
 
 The raw CSVs are NOT in this repository. They sit in
 $DATASETS/validation-dry-run. Reproduce this table with:
@@ -13,13 +13,19 @@ $DATASETS/validation-dry-run. Reproduce this table with:
     PYTHONPATH="$PWD" .venv/bin/python tools/validation_report.py \
         "$DATASETS/validation-dry-run"
 
-P1 and P2 are the SAME device and the same protocol, run twice. P1's
-ten deliberate blinks are not between its marks, and the owner did not
-remember whether the sequence had slipped, so it was run again as P2
-rather than guessed at. P1 is kept because deleting a session that
-disagrees with you is how a result stops meaning anything.
+    P1, P2  iPhone 14 Pro Max, front camera, Chrome on iOS (WebKit)
+    P3, P4  MacBook Air, FaceTime HD, Chrome (Blink), 4 cores
+    P5      Sony A7 IV through a Cam Link 4K, Chrome (Blink), 12 cores
 
-Validation round: 4 participants in /Users/evannorus/Desktop/blinklab build/datasets/validation-dry-run
+P1's ten deliberate blinks are not between its marks and the owner did
+not remember whether the sequence had slipped, so it was run again as P2
+rather than guessed at. P3 learned a baseline 41 percent longer than its
+own session's median aperture, so it was run again as P4 with the same
+device at the same rate and a baseline that landed correctly. Both
+originals are kept. Deleting a session that disagrees with you is how a
+result stops meaning anything.
+
+Validation round: 5 participants in /Users/evannorus/Desktop/blinklab build/datasets/validation-dry-run
 Ground truth between the two marks: 10 blinks.
 
 CHECKS
@@ -29,7 +35,8 @@ CHECKS
 P1  1          0           0         missed   0 / 3                     30.4                0.0                 1.12              
 P2  7          0           0         missed   0 / 1                     30.4                0.0                 1.14              
 P3  10         0           0         counted  0 / 1                     30.4                0.0                 1.41              
-P4  10         1           0         counted  0 / 1                     30.1                5.0                 1.15              
+P4  9          0           0         missed   0 / 1                     30.6                6.8                 1.12              
+P5  10         1           0         counted  0 / 1                     30.1                5.0                 1.15              
 
 CONDITIONS
 
@@ -38,120 +45,134 @@ CONDITIONS
 P1  Front Camera                               100.0          45.5       1080x1920    30.0          31.7            0           121.8       
 P2  Front Camera                               100.0          44.6       1080x1920    30.0          30.7            0           111.5       
 P3  FaceTime HD Camera (Built-in) (05ac:8514)  100.0          22.2       1280x720     30.0          32.4            0           117.6       
-P4  Cam Link 4K (0fd9:00a1)                    100.0          36.9       1920x1080    30.0          126.7           0           125.3       
+P4  FaceTime HD Camera (Built-in) (05ac:8514)  100.0          22.3       1280x720     30.0          29.2            0           150.5       
+P5  Cam Link 4K (0fd9:00a1)                    100.0          36.9       1920x1080    30.0          126.7           0           125.3       
 
 The three failure criteria, fixed in the plan before any file was read:
 
-1. The detector does not generalise, at 3 or more missed: 2 missed (P1, P2). not met
+1. The detector does not generalise, at 3 or more missed: 3 missed (P1, P2, P4). FAILED
 2. The baseline does not generalise, at 2 or more never ready or drifting past 15%: 0 never ready (none), 0 drifted (none). not met
 3. The frame rate gate lets bad sessions through, at 2 or more: 0 would be refused by a true camera rate (none). not met
 
 BASELINE TOO LONG TO BE "OPEN", above 1.25 times the session's own median aperture: P3. The blink line is half the baseline, so in these sessions it sits above 62 percent of resting and partial closures are being counted as blinks. Readiness and drift do not see this, because a baseline born wrong does not move.
 
 
-What this found, in order of how much it matters
-================================================
+What this found
+===============
 
 1. THE MEASUREMENT TRAVELS BETWEEN DEVICES. WHAT IS LEARNED FROM IT
    DOES NOT.
 
-   The same face gave a median eyelid aperture of 6.88, 7.05, 6.93 and
-   6.33 mm on the four sessions, within 11 percent of each other. The
-   iris normalisation works: it is doing exactly the job it was built
-   for, cancelling distance and resolution.
+   The same face gave a median eyelid aperture within 11 percent across
+   all five sessions. The iris normalisation works: it is doing exactly
+   the job it was built for, cancelling distance and resolution.
 
-   The baselines learned from those measurements were 7.69, 8.09, 9.80
-   and 7.30 mm, a spread of 34 percent.
+   The baselines learned from those measurements were 7.69, 8.09, 9.80,
+   7.78 and 7.30 mm, a spread of 34 percent.
 
-   On the MacBook Air a handful of frames in the first 30 seconds read
-   up to 10.35 mm against a window median of 7.51. The baseline is a
-   90th percentile, so it followed them and settled at 9.80, which is
-   1.41 times that session's own median aperture. Its blink line landed
-   at 71 percent of resting against 56, 57 and 58 on the other three,
-   so a blink had only to close 29 percent of the way to be counted.
-   That session logged 26.0 blinks per minute, and one of its
+   P3 is the outlier and P4 is the same laptop done again. In P3 a
+   handful of frames in the first 30 seconds read up to 10.35 mm against
+   a window median of 7.51. The baseline is a 90th percentile, so it
+   followed them and settled at 1.41 times that session's own median
+   aperture, which put its blink line at 71 percent of resting instead
+   of 56. It then counted 26.0 blinks per minute, and one of its
    detections has an amplitude of 1.26 mm, below the 1.5 mm line the
    on-screen table greys out as too faint to be a blink.
 
-   The baseline check as pre-registered could not see any of this.
-   Readiness passed on all four. Drift passed on all four, INCLUDING
-   the session with the wrong ruler, because a baseline born wrong does
-   not move. Its drift is 0.0. The plan's second dated correction adds
-   `baseline_over_resting`, flagged above 1.25.
+   The baseline check as pre-registered could not see any of that.
+   Readiness passed on all five. Drift passed on all five, INCLUDING
+   P3, because a baseline born wrong does not move: its drift is 0.0.
+   The plan's second dated correction adds `baseline_over_resting`,
+   flagged above 1.25, and P3 is the only session it flags.
 
-2. THE IPHONE MISSED 3 OF 10 DELIBERATE BLINKS, AND MISSED THEM IN
-   RUNS RATHER THAN AT RANDOM.
+2. AT ABOUT 30 FRAMES PER SECOND THIS INSTRUMENT MISSES DELIBERATE
+   BLINKS, AND THE 25 FPS GATE NEVER FIRES.
 
-   P2 followed the protocol exactly. Seven blinks were detected between
-   the two marks. Their spacing:
+   Take only the four sessions whose baseline is sound, so the
+   threshold is not doing the work:
 
-       mark 1 at 42.77 s
-         blink 45.66   gap 2.89 s
-         blink 46.63   gap 0.97 s
-         blink 47.63   gap 1.00 s
-         blink 48.63   gap 1.00 s
-         blink 51.60   gap 2.98 s
-         blink 52.50   gap 0.90 s
-         blink 53.47   gap 0.96 s
-       mark 2 at 53.95   gap 0.48 s
+       P2  iPhone,  30.7 fps    7 of 10
+       P4  MacBook, 29.2 fps    9 of 10
+       P5  Sony,   126.7 fps   10 of 10
 
-   A metronome cadence of 0.90 to 1.00 seconds, interrupted by two holes
-   of 2.89 and 2.98 seconds. Each hole is the width of two more blinks
-   at that cadence. The person did not pause; the instrument stopped
-   reporting.
+   The misses are not scattered. Each one shows up as a hole in an
+   otherwise metronome cadence, and each hole is a whole number of
+   blinks wide:
 
-3. BLINK DURATION DEPENDS ON THE RATE THE PAGE HAPPENS TO RUN AT.
+       P2, cadence 0.90 to 1.00 s, holes of 2.89 s and 2.98 s
+       P4, cadence 1.32 to 1.60 s, one hole of 3.00 s
 
-   Same face, same day. Median detected blink duration and how many
-   frames that spans at each session's own processing rate:
+   The person did not pause. The instrument stopped reporting.
 
-       iPhone,  31.7 fps    68 ms     2.2 frames
-       iPhone,  30.7 fps    96 ms     2.9 frames
-       MacBook, 32.4 fps   166 ms     5.4 frames
-       Sony,   126.7 fps   129 ms    16.4 frames
+   Every one of those sessions ran above the 25 frames per second floor
+   throughout the marked window, so nothing was refused and nothing
+   said anything was wrong.
 
-   Read the iPhone against the Sony, because those two are the pair
-   whose blink lines agree (57 and 58 percent of resting). The Sony
-   samples a blink sixteen times and calls it 129 ms. The iPhone samples
-   it three times and calls it 96 ms, a quarter shorter. The MacBook's
-   166 ms is not comparable: a lower bar keeps the aperture below it for
-   longer, so its durations are inflated by the same defect as its
-   count.
+3. THE PROCESSING RATE IS SET BY THE COMPUTER, NOT BY THE CAMERA.
 
-4. WHAT THIS MEANS FOR THE 25 FPS FLOOR, STATED CAREFULLY.
+   All five sessions used a camera declaring 30 frames per second. The
+   rate the page actually ran at was:
 
-   Remediation D1 was written around a slow CAMERA holding the gate
-   open, because the page reports its own animation rate. That is real
-   and P4 shows its size: the Sony session displayed 126.7 frames per
-   second while the camera declares 30, an overstatement of four times.
+       4 cores   iPhone      31.7 and 30.7 fps
+       4 cores   MacBook     32.4 and 29.2 fps
+       12 cores  Sony        126.7 fps
 
-   This dry run raises a larger question that D1 as written does not
-   cover. Both sessions with a CORRECT blink line and a processing rate
-   near 30 missed deliberate blinks. The only session near 30 that
-   caught all ten did so with a ruler 41 percent too long. The only
-   session with both a correct ruler and a high rate caught all ten.
+   The one machine with twelve cores ran the model four times faster
+   than the two with four, on cameras that all declare the same rate.
+   The model's own speed is the ceiling, not the camera's delivery.
 
-   So the suspicion is that 25 frames per second is not enough for this
-   detector, and the floor is set too low rather than merely reported
-   wrongly.
+   Taken with finding 2 this is the uncomfortable part. How many blinks
+   this instrument reports depends on how fast the viewer's computer
+   is, and the page tells them nothing about it.
 
-   THIS IS A LEAD AND NOT A RESULT. One session per device, one face,
-   one day. Device, processing rate, lighting and camera all move
-   together across these four files, and nothing here separates them.
-   The next test that would is a second MacBook session at the same
-   ~32 fps with a baseline that lands correctly: if that also misses
-   about three of ten, the rate is the cause and the device is not.
+4. RETRACTED: "BLINK DURATION MOVES WITH THE PROCESSING RATE."
 
-5. ONE ANOMALY THAT DID NOT REPEAT.
+   The first version of this document, written on 16 August with four
+   sessions, said blink duration tracks the rate, reading P2 at 96 ms
+   and 30.7 fps against P5 at 129 ms and 126.7 fps.
+
+   P4 refutes it. It is the SLOWEST session of the sound-baseline three
+   and it reports the LONGEST blinks:
+
+       P4  29.2 fps    149 ms
+       P2  30.7 fps     96 ms
+       P5 126.7 fps    129 ms
+
+   That is not ordered by rate in either direction. The claim was built
+   on two points that happened to line up, and the third point killed
+   it. What is left is a smaller and still unexplained fact: the phone
+   reports blinks about a third shorter than either Mac, while having
+   twice the iris resolution of the MacBook.
+
+5. WHAT THE DECISIVE TEST DID AND DID NOT SETTLE.
+
+   P4 was run specifically to separate the processing rate from the
+   device, by repeating P3's laptop at the same rate with a baseline
+   that lands correctly. It did not settle it.
+
+   P2 and P4 run at 30.7 and 29.2 frames per second, which is the same
+   rate for this purpose, and they miss 3 and 1 of ten. A rate that is
+   the same in both cannot explain a difference of three times. So
+   something about the phone is worse than the laptop beyond the rate,
+   and this dry run cannot say what: device, browser engine (the iPhone
+   is WebKit, both Macs are Blink), camera, portrait against landscape
+   and propped against fixed all still move together.
+
+   The finding that survives needs neither question settled. At the
+   rate a four core machine produces, whether laptop or phone, this
+   instrument loses deliberate blinks, and the 25 fps floor is above
+   none of it.
+
+6. ONE ANOMALY THAT DID NOT REPEAT.
 
    P1 counted a single continuous six second closure as three long
-   closures, one per second. P2, P3 and P4 each counted their closure
-   as one. Recorded because it happened, not diagnosed, and one
-   occurrence in four is not enough to call it a defect.
+   closures. P2 through P5 each counted theirs as one. Recorded because
+   it happened, not diagnosed, and one occurrence in five is not enough
+   to call it a defect.
 
-6. THE TOOL ITSELF NEEDED NO FIXES.
+7. THE TOOL ITSELF NEEDED NO FIXES.
 
-   Eight real files, no refusals, and the pairing coped with device
-   names inserted into the filenames. That was not a foregone
-   conclusion, and it is the one thing this rehearsal was expected to
-   break.
+   Ten real files across five sessions, no refusals, and the pairing
+   coped with device names inserted into the filenames. That was not a
+   foregone conclusion, and it is the one thing this rehearsal was
+   expected to break.
