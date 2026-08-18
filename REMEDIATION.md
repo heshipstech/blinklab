@@ -220,6 +220,31 @@ this stage.** The Y Combinator application is editable until 28 August.
       radius on real hardware before wiring a true camera rate into the
       gate. **This will begin refusing sessions that succeed today.**
 
+**D1 RE-SCOPED, 18 August. The original premise did not survive contact
+with real hardware.** The blast radius is measured: five sessions on
+three devices, 16 and 17 August, written up in
+`docs/validation-dry-run.txt`. EVERY camera declared 30 frames per
+second and the gate never wrongly opened once, so wiring a true camera
+rate into it would have changed nothing on any of them. The case this
+item was written for did not occur.
+
+What did occur is larger and is not about the camera. The PROCESSING
+rate is set by how fast the face model runs, so the two four-core
+machines ran at 29 to 32 frames per second while the twelve-core machine
+ran at 127, on cameras that all declare 30. Detection follows it: 7, 9
+and 10 of ten deliberate blinks. The offline experiment in
+`docs/blink-sample-rate.txt` isolates why, and the honest summary is
+that the 25 fps floor is CORRECT and the silence above it is not. A
+session at 29 fps and a session at 127 fps both pass the gate and are
+not the same instrument.
+
+So stage two is no longer "wire the camera rate into the gate". It is:
+say something true about the processing rate when it is low enough to be
+losing blinks. What it should say, and whether a second threshold
+belongs in the gate at all, is undecided and is the owner's. The
+limitation itself is now stated in README and MODEL_CARD, which is the
+part that could not wait for that decision.
+
 ---
 
 ## Stage E. Close what the audit never examined

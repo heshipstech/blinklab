@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 15 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 18 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -63,12 +63,26 @@ Where a person's mind is, is a different question.
 
 ## Where it fails
 
-**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display is not yet caught (remediation D1, stage two pending).** At 15
+**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught (remediation D1, stage two pending). Measured on five real sessions on 16 and 17 August, that case did not occur once: every camera declared 30 and the gate never wrongly opened. The larger problem is the one above the floor, in the next paragraph.** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
 The failure is currently near-silent: one line of small text, while
 everything else on the page carries on looking healthy. This removed 16
 of 36 sessions from a dataset before anyone noticed. Issue
 [#192](https://github.com/heshipstech/blinklab/issues/192).
+
+**Above the floor it still loses blinks, and how many depends on the
+machine rather than the camera.** The processing rate is set by how fast
+the face model runs, so on 17 August two four-core machines ran at 29 to
+32 frames per second and a twelve-core machine ran at 127, on cameras
+that all declare 30. In one scripted test of ten deliberate blinks the
+four-core machines found 7 and 9, and the twelve-core machine found all
+ten. A firm blink is caught at every rate from 25 up. The vulnerable
+ones are shallow or quick: in a band about 0.4 mm wide just past the
+depth at which a closure arms, detection runs from roughly half at 25
+frames per second to certain at 60. Nothing on the page says so, and the
+25 fps gate never fires because all of it happens above the floor.
+Measured in `docs/blink-sample-rate.txt`, with the sessions in
+`docs/validation-dry-run.txt`.
 
 **It misses blinks that are plainly there.** Of the blinks it missed on
 Eyeblink8, 72.0% contained at least one frame a human marked as fully
@@ -103,11 +117,11 @@ period is a period during which the instrument is not yet measuring.
 
 This is the section most model cards leave vague, so here it is plainly.
 
-| Group              | Number of people      | What is known about them                  |
-| ------------------ | --------------------- | ----------------------------------------- |
-| Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation     |
-| DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number   |
-| The author         | 1                     | One adult, one lighting setup, one laptop |
+| Group              | Number of people      | What is known about them                |
+| ------------------ | --------------------- | --------------------------------------- |
+| Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation   |
+| DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number |
+| The author         | 1                     | One adult, three devices, five sessions |
 
 **Both committed human-data fixtures are the author's own**, confirmed by
 the owner on 2026-08-15: `test/fixtures/session-01.json`, 300 frames of face
