@@ -160,6 +160,26 @@ now "say something true about the processing rate when it is low enough
 to be losing blinks". What it should say is undecided and is the
 owner's.
 
+**TWO THINGS CLOSED 18 August, both found by looking before sending.**
+
+First, a hole in the pre-registration. Criterion 1 counted every session
+that came back `missed`, with no requirement that its baseline worked.
+The dry run proved that cuts both ways: P3 counted 10 of 10 BECAUSE its
+ruler was 41 percent too long, a false pass, and the mirror case would
+read a broken ruler as evidence against the detector. The plan's THIRD
+dated correction fixes it: only sound sessions vote on criterion 1,
+unsound ones are still reported in full and named as excluded, and if
+more than half are excluded the criterion is not evaluated at all and
+the round says something worse instead.
+
+Second, there were NO participant instructions. The protocol lived only
+inside the pre-registration, which is jargon. `docs/participant-
+instructions.md` is now a document to paste into an email, shaped by
+what the rehearsal broke: the order is the part people get wrong, phone
+auto-lock kills the session, sitting still for the first 30 seconds is
+what keeps the baseline honest, and the sleepiness question must be
+answered or no file is written.
+
 NEXT: the round goes out, to TWO people first rather than six, because
 you can only ask each person once. The findings above make it MORE worth
 running: the table already prints each person's processing rate beside
@@ -646,7 +666,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 617 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 153 Python tests of which
+in CI of which 2 rerun locally in WebKit, 157 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

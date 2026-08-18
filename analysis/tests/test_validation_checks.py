@@ -516,3 +516,115 @@ class TestTheWholeReport:
         write_blinks(tmp_path, [1000.0])
         with pytest.raises(ValidationError, match="no matching session"):
             report(tmp_path)
+
+
+class TestOnlySoundSessionsVote:
+    """The plan's third correction, 18 August, found by the dry run.
+
+    A session whose ruler is wrong is not evidence about the detector in
+    either direction. P3 of the dry run counted 10 of 10 with a baseline
+    1.41 times its own median aperture, which is a pass earned by a
+    loose threshold rather than by working.
+    """
+
+    def loose_session(self, folder: Path, stamp: str, blinks: int) -> None:
+        """A session whose baseline is too long to be "open"."""
+        meta = {
+            "source": "camera",
+            "camera": "Loose",
+            "face_detected_fraction": "1.000",
+            "markers": "2",
+            "marker_1_seconds": "30.000",
+            "marker_2_seconds": "45.000",
+        }
+        rows = [
+            a_row(1000, aperture="6.93"),
+            a_row(31_000, baseline="9.80", aperture="6.93"),
+            a_row(46_000, baseline="9.80", aperture="6.93", closures="1"),
+        ]
+        path = folder / f"blinklab-session-{stamp}.csv"
+        path.write_text(
+            "\n".join(
+                [f"# {k}: {v}" for k, v in meta.items()]
+                + [",".join(COLUMNS)]
+                + rows
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        times = [30_500 + i * 1000 for i in range(blinks)]
+        (folder / f"blinklab-blinks-{stamp}.csv").write_text(
+            "\r\n".join(
+                ["# source: camera", BLINK_HEADER]
+                + [f",,{t},120,4.2,95,44" for t in times]
+            )
+            + "\r\n",
+            encoding="utf-8",
+        )
+
+    def test_a_loose_baseline_makes_a_row_unsound(
+        self, tmp_path: Path
+    ) -> None:
+        self.loose_session(tmp_path, "2026-08-18T09-00-00-000", 10)
+        row = row_for(load_pair(find_pairs(tmp_path)[0]))
+        assert row.baseline.over_resting == pytest.approx(1.41, abs=0.01)
+        assert not row.baseline_sound
+        assert row.unsound_because == "baseline is too long to be open"
+        # The verdict is still computed and still reported.
+        assert row.verdict == COUNTED
+
+    def test_an_unsound_session_does_not_vote_but_is_named(
+        self, tmp_path: Path
+    ) -> None:
+        from tools.validation_report import report
+
+        # One sound session that missed, one unsound session that
+        # "passed". Criterion 1 must count the first and not the second,
+        # and must say out loud that the second was excluded.
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [31_000.0])
+        self.loose_session(tmp_path, "2026-08-18T10-00-00-000", 10)
+        text = "\n".join(report(tmp_path)[0])
+        assert "1 missed" in text
+        assert "among the 1 sound sessions" in text
+        assert (
+            "Excluded as unsound: P2 (baseline is too long to be open)" in text
+        )
+
+    def test_more_than_half_unsound_stops_the_criterion_entirely(
+        self, tmp_path: Path
+    ) -> None:
+        # The guard on the exclusion, from the plan: otherwise excluding
+        # rows becomes a way to explain away a bad result. Two of three
+        # unsound is more than half.
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [31_000.0])
+        self.loose_session(tmp_path, "2026-08-18T10-00-00-000", 10)
+        self.loose_session(tmp_path, "2026-08-18T11-00-00-000", 3)
+        text = "\n".join(report(tmp_path)[0])
+        assert "NOT EVALUATED" in text
+        assert "2 of 3 sessions have no working baseline" in text
+        assert "worse finding" in text
+
+    def test_an_unsound_session_that_MISSES_does_not_vote_either(
+        self, tmp_path: Path
+    ) -> None:
+        # The dangerous direction, and the one the first draft of these
+        # tests could not see. A broken ruler can produce a false MISS
+        # just as easily as a false pass, and that miss would be counted
+        # as evidence that the detector fails when what failed is the
+        # ruler. One sound session missed, one unsound session missed;
+        # only the first may vote.
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [31_000.0])
+        self.loose_session(tmp_path, "2026-08-18T10-00-00-000", 2)
+        rows = [row_for(load_pair(p)) for p in find_pairs(tmp_path)]
+        assert [r.verdict for r in rows] == [MISSED, MISSED]
+        assert [r.baseline_sound for r in rows] == [True, False]
+        text = "\n".join(report(tmp_path)[0])
+        assert "1 missed (P1)" in text
+        assert "2 missed" not in text

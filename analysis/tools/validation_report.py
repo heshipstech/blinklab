@@ -135,31 +135,82 @@ def conditions_table(rows: list[ParticipantRow]) -> str:
     return table(headers, body)
 
 
+def baseline_verdict(failures: list[str]) -> str:
+    return "FAILED" if len(failures) >= BASELINE_FAILS_AT else "not met"
+
+
+def criterion_one(
+    rows: list[ParticipantRow],
+    sound: list[ParticipantRow],
+    unsound: list[ParticipantRow],
+    missed: list[str],
+) -> str:
+    """Criterion 1, evaluated only on sessions with a working ruler.
+
+    The exclusion has its own failure condition, from the plan, because
+    otherwise it is a way to explain away a bad result: if more than
+    half the sessions are excluded, the criterion is not evaluated and
+    the round says something worse instead.
+    """
+    excluded = (
+        ""
+        if not unsound
+        else " Excluded as unsound: "
+        + ", ".join(f"{row.label} ({row.unsound_because})" for row in unsound)
+        + "."
+    )
+    if rows and len(unsound) * 2 > len(rows):
+        return (
+            f"1. The detector does not generalise: NOT EVALUATED. "
+            f"{len(unsound)} of {len(rows)} sessions have no working "
+            f"baseline, which is more than half, so this round cannot "
+            f"speak about the detector at all. The instrument could not "
+            f"establish a baseline on ordinary hardware, and that is a "
+            f"worse finding than the one this criterion looked for."
+            f"{excluded}"
+        )
+    return (
+        f"1. The detector does not generalise, at "
+        f"{DETECTOR_FAILS_AT} or more missed among the "
+        f"{len(sound)} sound sessions: "
+        f"{len(missed)} missed ({', '.join(missed) or 'none'})."
+        f" {'FAILED' if len(missed) >= DETECTOR_FAILS_AT else 'not met'}"
+        f"{excluded}"
+    )
+
+
 def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
     """The three pre-registered failure criteria, answered out loud."""
-    missed = [row.label for row in rows if row.verdict == MISSED]
-    over = [row.label for row in rows if row.verdict == OVER_COUNTED]
+    # The plan's third correction: only sessions with a working ruler
+    # are evidence about the detector. Unsound rows stay in the table
+    # and are named here; they simply do not vote.
+    sound = [row for row in rows if row.baseline_sound]
+    unsound = [row for row in rows if not row.baseline_sound]
+    missed = [row.label for row in sound if row.verdict == MISSED]
+    over = [row.label for row in sound if row.verdict == OVER_COUNTED]
     unready = [row.label for row in rows if row.baseline.ready_after_s is None]
     drifted = [row.label for row in rows if row.baseline.drifted]
     implausible = [row.label for row in rows if row.baseline.implausible]
     gated = [row.label for row in rows if row.gate_would_refuse]
     low_face = [row.label for row in rows if row.face_below_floor]
-    unsound = sorted(set(unready) | set(drifted))
+    # Criterion 2's own tally, deliberately NOT the same set as
+    # `unsound` above: this one is about the baseline failing on its own
+    # terms, and it does not include a baseline that settled at an
+    # implausible length. Named apart because the two were briefly the
+    # same identifier and the second silently replaced the first.
+    baseline_failures = sorted(set(unready) | set(drifted))
 
     lines = [
         "The three failure criteria, fixed in the plan before any file "
         "was read:",
         "",
-        f"1. The detector does not generalise, at "
-        f"{DETECTOR_FAILS_AT} or more missed: "
-        f"{len(missed)} missed ({', '.join(missed) or 'none'})."
-        f" {'FAILED' if len(missed) >= DETECTOR_FAILS_AT else 'not met'}",
+        criterion_one(rows, sound, unsound, missed),
         f"2. The baseline does not generalise, at "
         f"{BASELINE_FAILS_AT} or more never ready or drifting past "
         f"{BASELINE_DRIFT_CEILING_PCT:.0f}%: "
         f"{len(unready)} never ready ({', '.join(unready) or 'none'}), "
         f"{len(drifted)} drifted ({', '.join(drifted) or 'none'})."
-        f" {'FAILED' if len(unsound) >= BASELINE_FAILS_AT else 'not met'}",
+        f" {baseline_verdict(baseline_failures)}",
         f"3. The frame rate gate lets bad sessions through, at "
         f"{GATE_FAILS_AT} or more: "
         f"{len(gated)} would be refused by a true camera rate "
