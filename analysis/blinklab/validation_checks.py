@@ -322,6 +322,37 @@ class ParticipantRow:
         return self.window.verdict
 
     @property
+    def baseline_sound(self) -> bool:
+        """Whether this session's ruler can be trusted at all.
+
+        The plan's third correction, 18 August, found by the dry run. A
+        session whose baseline never settled, drifted past the ceiling,
+        or is longer than 1.25 times its own median aperture is not
+        evidence about the DETECTOR in either direction. The dry run's
+        P3 counted 10 of 10 with a ruler 41 percent too long, which is a
+        pass earned by a loose threshold rather than by working.
+
+        The row is still reported in full. This only decides whether it
+        counts toward criterion 1.
+        """
+        return (
+            self.baseline.ready_after_s is not None
+            and not self.baseline.drifted
+            and not self.baseline.implausible
+        )
+
+    @property
+    def unsound_because(self) -> str | None:
+        """Why the ruler is not trusted, named rather than implied."""
+        if self.baseline.ready_after_s is None:
+            return "baseline never became ready"
+        if self.baseline.drifted:
+            return "baseline drifted past the ceiling"
+        if self.baseline.implausible:
+            return "baseline is too long to be open"
+        return None
+
+    @property
     def face_below_floor(self) -> bool:
         fraction = self.face_detected_fraction
         return fraction is not None and fraction < FACE_FRACTION_FLOOR

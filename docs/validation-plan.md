@@ -393,3 +393,45 @@ aperture", and it was replaced with readiness and drift because the
 literal form of it is true by construction. The instinct behind it was
 not. It was asking whether the ruler is a plausible length, and nothing
 in the plan asked that until real data made the gap visible.
+
+### 18 August 2026: criterion 1 was counting sessions whose ruler was wrong
+
+**Still before any volunteer file exists.** The dry run found it, which
+is what the dry run was for.
+
+Criterion 1 says the detector does not generalise when three or more
+sessions come back `missed` on check 1. It says nothing about whether
+those sessions had a working baseline, and the dry run showed that
+matters in BOTH directions.
+
+P3 counted 10 of 10. It did so with a baseline 1.41 times its own median
+aperture, which put the blink line at 71 percent of resting instead of
+56, so a blink had only to close 29 percent of the way to register. That
+is a FALSE PASS: the session passed because its ruler was too long, not
+because the detector worked. The same session logged 26.0 blinks per
+minute and one detection of 1.26 mm amplitude, below the line the
+on-screen table greys out as too faint to be a blink.
+
+The mirror case is worse and has not happened yet. A session whose
+baseline is wrong the other way, or never settles, could come back
+`missed` and be counted as evidence that the detector fails, when what
+failed is the ruler it was judged against.
+
+So the rule is fixed here, before any volunteer file is opened:
+
+- **A session is SOUND when its baseline became ready, drifted no more
+  than 15 percent, and sits at or below 1.25 times the session's own
+  median aperture.**
+- **Only sound sessions count toward criterion 1.** Unsound ones are
+  still reported in full, with their verdict, and are named as excluded
+  with the reason. Nothing is hidden and no row disappears.
+- **The exclusion has its own failure condition, because otherwise it
+  becomes a way to explain away a bad result.** If more than half the
+  sessions are excluded as unsound, criterion 1 is not evaluated at all
+  and the round reports that the instrument could not establish a
+  working baseline on ordinary hardware. That is a worse finding than
+  the one criterion 1 was looking for, not a softer one.
+
+Nothing else changes. The verdicts, the slack, the thresholds and the
+other two criteria are untouched, and check 1 is still computed and
+printed for every participant.
