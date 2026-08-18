@@ -36,7 +36,7 @@ Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
 correction adds `baseline_over_resting`, flagged above 1.25, and P3 is
 the only session of the five that it flags.
-Last commit, as of the stamp below: 2026-08-17;
+Last commit, as of the stamp below: 2026-08-18;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: the six-person validation round, which is the
@@ -150,6 +150,16 @@ ceiling, so fix #114 already narrowed the ceiling's second job after
 1.12 to 1.41. The constant is deliberately unchanged; that is step 4 of
 the issue's own order and it is the owner's.
 
+**THE LIMITATION IS NOW STATED WHERE IT IS READ**, 18 August: a bullet
+in README's "Honest limitations", a paragraph in MODEL_CARD's "Where it
+fails", and MODEL_CARD's tested-on table corrected from "one laptop" to
+three devices and five sessions. **D1 IS RE-SCOPED** in REMEDIATION.md
+rather than rewritten: its original premise, a slow camera holding the
+gate open, did not occur once in five real sessions, and stage two is
+now "say something true about the processing rate when it is low enough
+to be losing blinks". What it should say is undecided and is the
+owner's.
+
 NEXT: the round goes out, to TWO people first rather than six, because
 you can only ask each person once. The findings above make it MORE worth
 running: the table already prints each person's processing rate beside
@@ -231,7 +241,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 17 August 2026. When this file changes, this stamp changes
+Stamped: 18 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
