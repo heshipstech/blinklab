@@ -334,3 +334,65 @@ describe("ongoingClosureMs, the live readout", () => {
     expect(ongoingClosureMs(state, 1000)).toBe(900);
   });
 });
+
+// The gradual descent case, asked for in closed issue #126 and filed as
+// issue #115. Added by the #178 reconciliation, which changes no
+// behaviour: this asserts what today's code does, not what it should.
+//
+// For a baseline of 10 mm the blink line sits at 5.0, the arm line at
+// 4.5 and the shut line at 4.0. A lid that settles at 4.3 and stays
+// there is below the blink line and above the shut line, so it belongs
+// to neither detector: too long to be a blink, never deep enough to be
+// a long closure.
+describe("a slow descent that stops between the two lines, issue #115", () => {
+  const BLINK_LINE_MM = 5;
+  const SHUT_LINE_MM = THRESHOLD_MM;
+  const RESTING_MM = 4.3;
+
+  /** Twelve frames of descent, two seconds held, then back open. */
+  const descent: number[] = [
+    ...frames(1, OPEN_MM).map((value) => value as number),
+    ...Array.from(
+      { length: 12 },
+      (_, i) => OPEN_MM - ((OPEN_MM - RESTING_MM) * (i + 1)) / 12,
+    ),
+    ...(frames(2, RESTING_MM) as number[]),
+    ...(frames(1, OPEN_MM) as number[]),
+  ];
+
+  it("is not a long closure, because it never reaches the shut line", () => {
+    expect(RESTING_MM).toBeGreaterThan(SHUT_LINE_MM);
+    expect(run(descent).state.count).toBe(0);
+  });
+
+  it("is not a blink either, because it stays down past the ceiling", () => {
+    let state = initialBlinkState;
+    let t = 0;
+    for (const apertureMm of descent) {
+      state = blinkStep(state, t, apertureMm, BLINK_LINE_MM);
+      t += DT_MS;
+    }
+    expect(state.blinkCount).toBe(0);
+  });
+
+  it("the same descent, released before the ceiling, IS a blink", () => {
+    // The boundary that makes the previous case a partition problem
+    // rather than a depth problem: nothing about the shape disqualifies
+    // it, only how long it was held.
+    const brief: number[] = [
+      ...(frames(1, OPEN_MM) as number[]),
+      ...Array.from(
+        { length: 12 },
+        (_, i) => OPEN_MM - ((OPEN_MM - RESTING_MM) * (i + 1)) / 12,
+      ),
+      ...(frames(1, OPEN_MM) as number[]),
+    ];
+    let state = initialBlinkState;
+    let t = 0;
+    for (const apertureMm of brief) {
+      state = blinkStep(state, t, apertureMm, BLINK_LINE_MM);
+      t += DT_MS;
+    }
+    expect(state.blinkCount).toBe(1);
+  });
+});

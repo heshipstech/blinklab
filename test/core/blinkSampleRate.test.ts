@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { blinkStep, initialBlinkState } from "../../src/core/blink";
 import {
   APERTURE_HYSTERESIS_FRACTION,
   BASELINE_THRESHOLD_FRACTION,
 } from "../../src/core/constants";
+import {
+  armLineMm,
+  apertureAt,
+  detectionRate,
+  msBelow,
+  type Blink,
+  type Optics,
+} from "../fixtures/blinkTrace";
 
 // Does the rate the page happens to run at change how many blinks it
 // finds?
@@ -28,74 +35,15 @@ import {
 // trace spends far less time below the arm line than below the
 // threshold, so that is the window a sample has to hit.
 
-/** The owner's own measured session P4, used so the numbers are real. */
+/** The owner's own measured session P4, so the numbers are real. */
 const BASELINE_MM = 7.78;
-const OPEN_MM = 7.0;
-const THRESHOLD_MM = BASELINE_MM * BASELINE_THRESHOLD_FRACTION;
-const ARM_MM = THRESHOLD_MM * (1 - APERTURE_HYSTERESIS_FRACTION);
-
-type Blink = {
-  /** Lowest aperture the lid reaches, in millimetres. */
-  minMm: number;
-  /** How long the lid takes to come down, and to go back up. */
-  closeMs: number;
-  openMs: number;
+const OPTICS: Optics = {
+  openMm: 7.0,
+  thresholdMm: BASELINE_MM * BASELINE_THRESHOLD_FRACTION,
 };
-
-/**
- * The aperture at a moment, for one blink starting at t = 0.
- *
- * A raised cosine on the way down and another on the way up, which is
- * smooth at both ends and at the bottom. Real eyelids close faster than
- * they open, so the two halves take different times; the measured A/V
- * ratios in the dry run, 40 to 100 ms, are that asymmetry.
- */
-function apertureAt(blink: Blink, tMs: number): number {
-  const depth = OPEN_MM - blink.minMm;
-  if (tMs <= 0 || tMs >= blink.closeMs + blink.openMs) return OPEN_MM;
-  const phase =
-    tMs < blink.closeMs
-      ? tMs / blink.closeMs / 2
-      : 0.5 + (tMs - blink.closeMs) / blink.openMs / 2;
-  return OPEN_MM - (depth * (1 - Math.cos(2 * Math.PI * phase))) / 2;
-}
-
-/** How long the trace spends at or below a line, by fine search. */
-function msBelow(blink: Blink, lineMm: number): number {
-  const total = blink.closeMs + blink.openMs;
-  let count = 0;
-  for (let t = 0; t <= total; t += 0.1) {
-    if (apertureAt(blink, t) <= lineMm) count += 1;
-  }
-  return count * 0.1;
-}
-
-/**
- * Run one blink past the detector at a given rate and phase offset.
- *
- * Returns how many blinks it counted, which should be exactly 1.
- */
-function detect(blink: Blink, rateHz: number, phaseMs: number): number {
-  const periodMs = 1000 / rateHz;
-  const total = blink.closeMs + blink.openMs;
-  // A second of open eye either side, so the detector is settled before
-  // the blink and has somewhere to reopen into after it.
-  let state = initialBlinkState;
-  for (let t = -1000 + phaseMs; t <= total + 1000; t += periodMs) {
-    state = blinkStep(state, t + 2000, apertureAt(blink, t), THRESHOLD_MM);
-  }
-  return state.blinkCount;
-}
-
-/** The share of phase offsets at which the blink is counted, 0 to 1. */
-function detectionRate(blink: Blink, rateHz: number, steps = 200): number {
-  const periodMs = 1000 / rateHz;
-  let found = 0;
-  for (let step = 0; step < steps; step += 1) {
-    if (detect(blink, rateHz, (step / steps) * periodMs) === 1) found += 1;
-  }
-  return found / steps;
-}
+const THRESHOLD_MM = OPTICS.thresholdMm;
+const ARM_MM = armLineMm(OPTICS, APERTURE_HYSTERESIS_FRACTION);
+const OPEN_MM = OPTICS.openMm;
 
 const RATES = [25, 30, 40, 60, 90, 120];
 
@@ -129,12 +77,12 @@ if (process.env.BLINKLAB_PRINT_TABLE !== undefined) {
     const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
     rows.push(
       `  ${min.toFixed(2)}` +
-        msBelow(blink, THRESHOLD_MM).toFixed(0).padStart(11) +
-        msBelow(blink, ARM_MM).toFixed(0).padStart(11) +
+        msBelow(blink, OPTICS, THRESHOLD_MM).toFixed(0).padStart(11) +
+        msBelow(blink, OPTICS, ARM_MM).toFixed(0).padStart(11) +
         "   " +
-        RATES.map((r) => detectionRate(blink, r).toFixed(2).padStart(7)).join(
-          "",
-        ),
+        RATES.map((r) =>
+          detectionRate(blink, OPTICS, r).toFixed(2).padStart(7),
+        ).join(""),
     );
   }
   rows.push(
@@ -156,11 +104,11 @@ if (process.env.BLINKLAB_PRINT_TABLE !== undefined) {
     };
     rows.push(
       `  ${String(total).padStart(4)}` +
-        msBelow(blink, ARM_MM).toFixed(0).padStart(12) +
+        msBelow(blink, OPTICS, ARM_MM).toFixed(0).padStart(12) +
         "   " +
-        RATES.map((r) => detectionRate(blink, r).toFixed(2).padStart(7)).join(
-          "",
-        ),
+        RATES.map((r) =>
+          detectionRate(blink, OPTICS, r).toFixed(2).padStart(7),
+        ).join(""),
     );
   }
   process.stdout.write("\n" + rows.join("\n") + "\n\n");
@@ -170,7 +118,7 @@ describe("what the sampling rate does to blink detection", () => {
   it("a deep blink is caught at every rate and every phase", () => {
     // The reassuring half. Nothing here is broken for a firm blink.
     for (const rate of RATES) {
-      expect(detectionRate(DEEP, rate)).toBe(1);
+      expect(detectionRate(DEEP, OPTICS, rate)).toBe(1);
     }
   });
 
@@ -184,9 +132,9 @@ describe("what the sampling rate does to blink detection", () => {
       closeMs: 50,
       openMs: 100,
     };
-    expect(apertureAt(tooShallow, 50)).toBeLessThan(THRESHOLD_MM);
+    expect(apertureAt(tooShallow, OPTICS, 50)).toBeLessThan(THRESHOLD_MM);
     for (const rate of RATES) {
-      expect(detectionRate(tooShallow, rate)).toBe(0);
+      expect(detectionRate(tooShallow, OPTICS, rate)).toBe(0);
     }
   });
 
@@ -196,10 +144,10 @@ describe("what the sampling rate does to blink detection", () => {
     // rate a twelve core machine produces. Nothing about the person
     // changed; only where the samples happened to land.
     const marginal: Blink = { minMm: 3.3, closeMs: 50, openMs: 100 };
-    expect(detectionRate(marginal, 30)).toBeLessThan(0.75);
-    expect(detectionRate(marginal, 25)).toBeLessThan(0.65);
-    expect(detectionRate(marginal, 90)).toBe(1);
-    expect(detectionRate(marginal, 120)).toBe(1);
+    expect(detectionRate(marginal, OPTICS, 30)).toBeLessThan(0.75);
+    expect(detectionRate(marginal, OPTICS, 25)).toBeLessThan(0.65);
+    expect(detectionRate(marginal, OPTICS, 90)).toBe(1);
+    expect(detectionRate(marginal, OPTICS, 120)).toBe(1);
   });
 
   it("a QUICK blink is the vulnerable one, at the same depth", () => {
@@ -209,9 +157,9 @@ describe("what the sampling rate does to blink detection", () => {
     // the three devices and missed the most of them.
     const quick: Blink = { minMm: 3.2, closeMs: 27, openMs: 53 };
     const slow: Blink = { minMm: 3.2, closeMs: 83, openMs: 167 };
-    expect(detectionRate(quick, 30)).toBeLessThan(0.5);
-    expect(detectionRate(quick, 90)).toBe(1);
-    expect(detectionRate(slow, 30)).toBe(1);
+    expect(detectionRate(quick, OPTICS, 30)).toBeLessThan(0.5);
+    expect(detectionRate(quick, OPTICS, 90)).toBe(1);
+    expect(detectionRate(slow, OPTICS, 30)).toBe(1);
   });
 
   it("more frames never make detection worse", () => {
@@ -221,7 +169,7 @@ describe("what the sampling rate does to blink detection", () => {
       const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
       let previous = -1;
       for (const rate of RATES) {
-        const rate_ = detectionRate(blink, rate);
+        const rate_ = detectionRate(blink, OPTICS, rate);
         expect(rate_).toBeGreaterThanOrEqual(previous);
         previous = rate_;
       }

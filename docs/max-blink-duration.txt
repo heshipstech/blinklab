@@ -1,0 +1,158 @@
+Issue #178, reconciled: the duration ceiling does two jobs
+==========================================================
+
+18 August 2026. This changes no behaviour and does not move the
+constant. That is step 4 of the issue's own suggested order and it is
+the owner's.
+
+THE QUESTION. `MAX_BLINK_DURATION_MS` is 500. A Python replay of the
+Eyeblink8 corpus on 9 August found that raising it to 1000 recovered 13
+detections and moved F1 from 92.1 to 93.6. Closed issue #126 says, in
+writing and with a reproduced case, that the same constant is doing
+unadvertised work as a noise filter. Both look sound. They point
+opposite ways, and the project has carried both beliefs since.
+
+WHY IT COULD NOT BE SETTLED BEFORE. Settling it meant a corpus run or an
+argument. The blink-trace harness built on 17 August for the sampling
+rate question runs one closure past the real `blinkStep` with every
+variable held still except the one under test, so both sides can now be
+reproduced in the same framework in milliseconds.
+
+Reproduce with:
+
+    BLINKLAB_PRINT_TABLE=1 npx vitest run test/core/maxBlinkDuration.test.ts
+
+resting eyelid 7.0 mm. The blink line is half the learned
+baseline, so it climbs as the baseline ratchets. Sampled at 120 Hz, so
+nothing here is a sampling effect.
+
+baseline   blink   arm     eye reads    0.3 mm wobble    0.9 mm wobble
+/ resting  line    line    closed at    200 ms  700 ms   200 ms  700 ms
+                           rest?
+----------------------------------------------------------------------
+  1.11    3.89    3.50         no     -       -       -       -    
+  1.41    4.93    4.44         no     -       -       -       -    
+  1.70    5.95    5.36         no     -       -       -       -    
+  1.90    6.65    5.98         no     -       -       -       -    
+  1.97    6.89    6.21         no     -       -     COUNTED   -    
+  2.05    7.17    6.46         yes    -       -       -       -    
+
+A real blink against the 500 ms ceiling, healthy optics,
+by how long its closed phase lasts.
+
+  total   closed phase   counted?
+--------------------------------------
+    200             84   counted
+    400            168   counted
+    600            253   counted
+    800            337   counted
+   1000            421   counted
+   1400            589   DISCARDED
+
+
+THE ANSWER
+==========
+
+The two jobs are real, they do not overlap, and which one the constant
+is doing depends entirely on a variable neither side named: WHERE THE
+BLINK LINE SITS RELATIVE TO THE RESTING EYELID. That is
+`baseline_over_resting`, the fifth check added to the validation round
+two days ago for an unrelated reason.
+
+There are three regimes, and the tables above show all three.
+
+1. RATIO BELOW ABOUT 1.9. The blink line sits far under the resting eye.
+   Ordinary wobble cannot reach it: a 0.9 mm dip does not even read as
+   closed. The ceiling has nothing bad to throw away, so it only throws
+   away real long blinks. THE CEILING IS PURE COST HERE, and this is the
+   state the eight Eyeblink8 clips of alert people are in, which is why
+   the replay saw a gain and no loss.
+
+2. RATIO NEAR 2.0. The blink line has climbed into the resting eye's own
+   wobble. Now a dip of 0.9 mm crosses it, arms, reopens, and is counted
+   as a blink that never happened. At 200 ms it is counted; at 700 ms
+   the ceiling discards it. THE CEILING IS THE ONLY THING STANDING
+   BETWEEN THAT NOISE AND THE BLINK COUNT, which is exactly what #126
+   said. The band is narrow: at 1.90 nothing is counted, at 1.97 the
+   phantom appears.
+
+3. RATIO ABOVE 2.0. The blink line is above the resting eyelid, so the
+   eye reads closed at rest and a closure never reopens. Nothing is
+   counted at all, real or phantom, and the ceiling is irrelevant again.
+
+So 500 is neither too low nor correct. Both findings are true, of
+different sessions.
+
+THE #126 CASE HAS A SECOND DEFENCE NOW, AND IT IS NOT THE CEILING
+=================================================================
+
+Worth stating on its own, because it changes what step 4 is choosing
+between. #126's reproduced case is a 0.2 mm dip, and on main it is not
+counted. #126 credited the ceiling for that. It is not the ceiling.
+
+A 0.2 mm dip never reaches the ARM LINE that fix #114 added afterwards,
+so its duration is never consulted at all. A short version of that dip
+is refused exactly as flatly as a long one. Removing the hysteresis and
+leaving the ceiling in place turns that test red; the ceiling does not
+save it.
+
+The ceiling's job is therefore narrower than #126 believed: it defends
+only against wobble deep enough to arm, which in the measured optics
+above means roughly 0.9 mm rather than 0.2 mm, and only in regime 2.
+
+ONE MUTATION SHOWS BOTH SIDES AT ONCE
+=====================================
+
+Setting `MAX_BLINK_DURATION_MS` to 1000, which is precisely what #178
+debates, turns exactly two tests red and no others:
+
+    a real blink whose closed phase passes the ceiling is discarded
+    a deeper wobble DOES arm, and then only the ceiling stops it
+
+The first is the gain the replay measured. The second is the loss #126
+warned about. They are the same edit. Nobody has to choose which
+document to believe, because the trade is now visible in one command.
+
+WHAT THE OWNER'S OWN SESSIONS SAY
+=================================
+
+Step 4 of the issue requires any decision to be measured against the
+owner's recorded geometry as well as the corpus, because the healthy
+clips cannot see the #126 failure at all. The five validation dry-run
+sessions of 16 and 17 August:
+
+    168 blinks measured
+    longest closed phase          333.6 ms   ceiling is 500
+    blinks above 400 ms                  0
+    baseline over resting          1.12 to 1.41
+
+NEITHER JOB WAS EXERCISED ONCE. No blink came near the ceiling, so it
+cost nothing. No session came near ratio 1.9, so it defended nothing.
+This geometry cannot distinguish the two positions, and collecting more
+of it will not.
+
+WHAT WOULD DECIDE IT
+====================
+
+Not more sessions from this face. The regimes are separated by the
+baseline ratio, so what is needed is either a session that ratchets past
+1.9, or a corpus run of the shipped app rather than the replay. The
+issue is explicit that the 13 detections came from a Python replay and
+have to be earned by a real run before being quoted, and this note does
+not quote them as anything else.
+
+The likely shape of the answer, which the issue already guessed and
+these measurements support: the two jobs deserve two constants. The
+partition between blink and long closure is one number; a noise guard
+that only matters when the baseline has ratcheted is another, and it
+would be better expressed as a guard on the baseline ratio than as a
+duration. That is a decision, not a finding, and it is not taken here.
+
+ALSO ADDED
+==========
+
+The gradual descent case that #126 asked for and issue #115 filed, now
+in `test/core/longClosure.test.ts`. A lid that settles between the blink
+line and the shut line and stays there belongs to neither detector: too
+long to be a blink, never deep enough to be a long closure. Asserted as
+what today's code does, not as what it should do.

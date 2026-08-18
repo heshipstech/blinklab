@@ -129,16 +129,34 @@ and it is not the shape D1 was written in, which assumed a slow CAMERA.
 In five real sessions every camera declared 30 and the gate never
 wrongly opened once.
 
+**ISSUE #178 IS RECONCILED**, 18 August, `docs/max-blink-duration.txt`,
+and nothing was changed to do it. `MAX_BLINK_DURATION_MS` does TWO jobs
+and which one depends on `baseline_over_resting`, the same ratio the
+validation round's fifth check measures. Below about 1.9 the ceiling is
+pure cost, which is the state the Eyeblink8 clips are in and why the
+replay saw a gain. Near 2.0 the blink line has climbed into the resting
+eye's own wobble and the ceiling is the only thing keeping noise out of
+the count, which is what #126 said. Above 2.0 the eye reads closed at
+rest and nothing completes at all.
+
+Setting the constant to 1000 turns exactly two tests red: the real blink
+the replay wanted, and the phantom #126 warned about. The trade is one
+command now instead of two documents.
+
+Also found: #126's 0.2 mm dip is blocked by the ARM LINE, not by the
+ceiling, so fix #114 already narrowed the ceiling's second job after
+#126 was written. And the owner's five sessions exercised NEITHER job:
+168 blinks, longest closed phase 333.6 ms against a 500 ceiling, ratios
+1.12 to 1.41. The constant is deliberately unchanged; that is step 4 of
+the issue's own order and it is the owner's.
+
 NEXT: the round goes out, to TWO people first rather than six, because
-you can only ask each person once. Still worth one honest change to
-README and MODEL_CARD before sending, because the blink count is now
-measured to depend on the viewer's machine and neither document says
-so. The finding above makes the round
-MORE worth running, not less: it gives the table a specific hypothesis
-to test, and the table already prints each person's processing rate
-beside their count. Before sending, consider one honest change to
-README and MODEL_CARD, because the blink count is now measured to depend
-on the viewer's machine and neither document says so.
+you can only ask each person once. The findings above make it MORE worth
+running: the table already prints each person's processing rate beside
+their count, and now their baseline ratio too. Still worth one honest
+change to README and MODEL_CARD before sending, because the blink count
+is now measured to depend on the viewer's machine and neither document
+says so.
 
 The August audit's ladder is closed. Stages A, B and C are complete; D1
 stage two is the single remaining piece of real work and it is a WEBCAM
@@ -617,7 +635,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 608 unit tests, 20 end to end tests all run in Chromium
+Test count: 617 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 153 Python tests of which
 2 skip
 
