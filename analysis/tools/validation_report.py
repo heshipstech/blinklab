@@ -70,6 +70,7 @@ def table(headers: list[str], rows: list[list[str]]) -> str:
 def checks_table(rows: list[ParticipantRow]) -> str:
     headers = [
         "",
+        "session",
         "in window",
         "near start",
         "near end",
@@ -85,6 +86,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
         body.append(
             [
                 row.label,
+                row.session,
                 "no log"
                 if row.no_blinks_detected
                 else dash(None if window is None else window.in_window),
@@ -103,6 +105,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
 def conditions_table(rows: list[ParticipantRow]) -> str:
     headers = [
         "",
+        "session",
         "camera",
         "face seen (%)",
         "iris (px)",
@@ -118,6 +121,7 @@ def conditions_table(rows: list[ParticipantRow]) -> str:
         body.append(
             [
                 row.label,
+                row.session,
                 row.camera or "-",
                 dash(None if fraction is None else fraction * 100, 1),
                 dash(row.median_iris_width_px, 1),

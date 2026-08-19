@@ -291,6 +291,12 @@ class ParticipantRow:
     """One person's row of the published table."""
 
     label: str
+    # The session's own name, taken from its filename. Labels are
+    # POSITIONAL and shift when a session is added: the dry run's
+    # MacBook re-test was P4 on 17 August and became P5 the moment a
+    # sixth session arrived, which silently falsified the published
+    # write-up. A row that carries its own name cannot do that.
+    session: str
     window: WindowCount | None
     closures: ClosureCount
     baseline: BaselineSettling
@@ -373,6 +379,16 @@ class ParticipantRow:
         return declared < 25 <= processing
 
 
+def session_name(stamp: str) -> str:
+    """The readable part of an export's filename stamp.
+
+    `iphone17promax-2026-08-19T11-54-11-743` becomes `iphone17promax`,
+    and a stamp that is only a date keeps its date.
+    """
+    head = stamp.split("-2026", 1)[0]
+    return head if head else stamp
+
+
 def row_for(pair: SessionPair) -> ParticipantRow:
     """Every column of the plan, computed for one participant."""
     session = pair.session
@@ -380,6 +396,7 @@ def row_for(pair: SessionPair) -> ParticipantRow:
     frame = session.frame
     return ParticipantRow(
         label=pair.label,
+        session=session_name(pair.stamp),
         window=(
             None
             if pair.blinks is None

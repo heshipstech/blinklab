@@ -22,6 +22,7 @@ from blinklab.validation_checks import (
     long_closures,
     processing_fps_median,
     row_for,
+    session_name,
 )
 
 BLINK_HEADER = (
@@ -628,3 +629,45 @@ class TestOnlySoundSessionsVote:
         text = "\n".join(report(tmp_path)[0])
         assert "1 missed (P1)" in text
         assert "2 missed" not in text
+
+
+class TestARowCarriesItsOwnName:
+    """Labels are positional. A published table must not depend on that.
+
+    The dry run's MacBook re-test was P4 on 17 August and became P5 the
+    moment a sixth session arrived, which silently falsified the prose
+    in `docs/validation-dry-run.txt` around a table it had generated.
+    """
+
+    def test_a_session_name_is_read_from_the_filename(self) -> None:
+        assert session_name("iphone17promax-2026-08-19T11-54-11-743") == (
+            "iphone17promax"
+        )
+        assert session_name("participant1-2026-08-19T10-38-50-247") == (
+            "participant1"
+        )
+
+    def test_a_stamp_with_no_name_keeps_its_stamp(self) -> None:
+        # The dry run's first files were dated only. Returning an empty
+        # string there would put a blank column in a published table.
+        assert session_name("2026-08-16T09-00-00-000") == (
+            "2026-08-16T09-00-00-000"
+        )
+
+    def test_the_name_survives_a_label_shifting_under_it(
+        self, tmp_path: Path
+    ) -> None:
+        # Add a session that sorts FIRST and the later one's label moves
+        # from P1 to P2. Its name must not move with it.
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [31_000.0])
+        alone = row_for(load_pair(find_pairs(tmp_path)[0]))
+        assert alone.label == "P1"
+
+        TestOnlySoundSessionsVote().loose_session(
+            tmp_path, "2026-08-01T09-00-00-000", 10
+        )
+        rows = [row_for(load_pair(p)) for p in find_pairs(tmp_path)]
+        moved = next(r for r in rows if r.session == alone.session)
+        assert moved.label == "P2"
+        assert moved.session == alone.session
