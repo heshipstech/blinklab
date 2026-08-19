@@ -35,7 +35,12 @@ import {
 // trace spends far less time below the arm line than below the
 // threshold, so that is the window a sample has to hit.
 
-/** The owner's own measured session P4, so the numbers are real. */
+/**
+ * The owner's own measured session `macbookair2`, so the numbers are
+ * real. Named rather than labelled: `P1` to `P6` are positional and
+ * this session was P4 when the file was written and became P5 the
+ * moment a sixth dry-run session arrived.
+ */
 const BASELINE_MM = 7.78;
 const OPTICS: Optics = {
   openMm: 7.0,

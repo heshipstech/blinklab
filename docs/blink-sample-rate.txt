@@ -19,7 +19,8 @@ blink is the one thing nobody controls in a real session.
 The blink model is a raised cosine down and another up, closing in a
 third of the total and opening over the rest, which is the asymmetry the
 dry run's amplitude-over-velocity figures show. The threshold and arm
-line are the owner's own measured session P4: baseline 7.78 mm, so the
+line are the owner's own measured session `macbookair2`, which was
+labelled P4 when this was written and is P5 now: baseline 7.78 mm, so the
 blink line is 3.89 mm and the arm line, which is the blink line less the
 10 percent hysteresis from fix #114, is 3.50 mm.
 
