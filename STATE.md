@@ -12,31 +12,38 @@ It exits non-zero when it could not read everybody. Before it, #266
 shortened the page heading to "Alertness demo".
 
 **THE DRY RUN HAPPENED and it found what fixtures could not.** The owner
-ran the whole protocol on three devices, 16 and 17 August: an iPhone 14
-Pro Max, a MacBook Air, and a Sony A7 IV through a Cam Link 4K. FIVE
-sessions, because the iPhone and the MacBook were each run twice; both
-re-runs are explained below. Raw files in
+ran the whole protocol on FOUR devices over 16 to 19 August: an iPhone 14
+Pro Max, an iPhone 17 Pro Max, a MacBook Air, and a Sony A7 IV through a
+Cam Link 4K. SIX sessions, because the iPhone 14 and the MacBook were
+each run twice; both re-runs are explained below. Raw files in
 `$DATASETS/validation-dry-run`, never in this repository. The tool read
-all ten files with no refusals, and the pairing coped with the device
+all twelve files with no refusals, and the pairing coped with the device
 names inserted into the filenames.
+
+**REFER TO SESSIONS BY NAME, NOT BY LABEL.** `P1` to `P6` are positional
+and shift the moment a session is added: the MacBook re-test was P4 on
+17 August and is P5 now, which falsified the prose in the published
+write-up for two days. The tables print the session name beside the
+label since 19 August. The names are `iphone`, `iphone2`,
+`iphone17promax`, `macbookair`, `macbookair2`, `pcsony`.
 
 **The finding: the same face gave a median eyelid aperture within 11
 percent across all five sessions, and the baselines learned from those
 measurements were 7.69, 8.09, 9.80, 7.78 and 7.30 mm, a spread of 34
 percent.** The iris normalisation works. What is learned from it does
-not travel. In P3, the first MacBook session, a few frames in the first
-30 seconds read up to 10.35 mm against a window median of 7.51, and a
-90th percentile follows them, so the blink line landed at 71 percent of
-resting aperture against 56 to 58 on the other four. That session logged
-26.0 blinks per minute, including one detection of 1.26 mm amplitude,
-below the faint line the on-screen table greys out. P4 is the same
-laptop run again with a baseline that landed correctly.
+not travel. In `macbookair`, a few frames in the first 30 seconds read
+up to 10.35 mm against a window median of 7.51, and a 90th percentile
+follows them, so the blink line landed at 71 percent of resting aperture
+against 56 to 58 everywhere else. That session logged 26.0 blinks per
+minute, including one detection of 1.26 mm amplitude, below the faint
+line the on-screen table greys out. `macbookair2` is the same laptop run
+again with a baseline that landed correctly.
 
 Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
-correction adds `baseline_over_resting`, flagged above 1.25, and P3 is
-the only session of the five that it flags.
-Last commit, as of the stamp below: 2026-08-18;
+correction adds `baseline_over_resting`, flagged above 1.25, and
+`macbookair` is the only session of the six that it flags.
+Last commit, as of the stamp below: 2026-08-19;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: the six-person validation round, which is the
@@ -52,14 +59,15 @@ followed exactly, and 7 of 10 deliberate blinks were detected. The seven
 sit at a metronome 0.90 to 1.00 s cadence broken by two holes of 2.89
 and 2.98 s, each the width of two more blinks. The person did not pause.
 
-**THE MACBOOK WAS RE-TESTED on 17 August and the dry run is now five
-sessions.** P4 is the same laptop at the same rate with a baseline that
-landed correctly, run to separate the processing rate from the device.
-Taking only the three sessions whose baseline is sound:
+**THE MACBOOK WAS RE-TESTED on 17 August**, the same laptop at the same
+rate with a baseline that landed correctly, to separate the processing
+rate from the device. Sound sessions whose marks are where the protocol
+asks:
 
-    P2  iPhone,  30.7 fps     7 of 10
-    P4  MacBook, 29.2 fps     9 of 10
-    P5  Sony,   126.7 fps    10 of 10
+    iphone2         30.7 fps     7 of 10
+    macbookair2     29.2 fps     9 of 10
+    iphone17promax  55.0 fps    10 of 10
+    pcsony         126.7 fps    10 of 10
 
 **At the rate a four core machine produces, whether laptop or phone,
 this instrument loses deliberate blinks, and the 25 fps floor is above
@@ -68,28 +76,48 @@ the marked window, so nothing was refused and nothing said anything was
 wrong. Each miss is a hole a whole number of blinks wide in an otherwise
 metronome cadence.
 
-**The processing rate is set by the COMPUTER, not the camera.** All five
-cameras declare 30 fps. The two four-core machines ran the page at 29 to
-32; the one twelve-core machine ran it at 127. So how many blinks this
+**The processing rate is set by the COMPUTER, not the camera.** Every
+camera in every session declares 30 fps, and the achieved rate ran from
+29.2 to 126.7. Do not reduce this to core count: participant 2 of the
+actual round has twelve cores and runs at 45, while the Sony machine has
+twelve and runs at 127. So how many blinks this
 instrument reports depends on how fast the viewer's computer is, and the
 page tells them nothing about it. That is larger than D1 as written,
 which is about a slow camera holding the gate open.
 
 **RETRACTED, and the write-up records it:** the 16 August version of
-this said blink duration moves with the processing rate. P4 refutes it.
-It is the slowest sound session and reports the longest blinks, 149 ms
+this said blink duration moves with the processing rate. `macbookair2`
+refutes it: the slowest sound session reports the longest blinks, 149 ms
 at 29.2 fps against 96 ms at 30.7 and 129 ms at 126.7. Not ordered by
 rate in either direction. The claim rested on two points that happened
 to line up.
 
-**What the decisive test did NOT settle.** P2 and P4 run at the same
-rate for this purpose and miss 3 and 1 of ten, so the rate cannot
-explain a difference of three times. Something about the phone is worse
-beyond the rate, and device, browser engine (iPhone is WebKit, both Macs
-are Blink), camera, orientation and mounting all still move together.
+**SETTLED 19 August, and the prediction was committed first.** A sixth
+dry-run session on an iPhone 17 Pro Max ran at 55.0 fps and caught 10 of 10. Written down before it was recorded: a faster phone should catch
+close to ten if the rate is the cause, and should miss about three
+REGARDLESS of rate if the cause is iOS, WebKit or the front camera. That
+session holds all three of those constant against the iPhone 14 and
+missed none. **The phone was never the problem. The rate was.**
 
-The full write-up is `docs/validation-dry-run.txt`, five sessions, and it
-carries the tool's own output.
+Sound sessions, ordered by rate: 30.7 fps gives 7 of 10, 29.2 gives 9,
+55.0 gives 10, 126.7 gives 10. The transition sits between 30 and 55,
+and the 25 fps floor is nowhere near it. That agrees with
+`docs/blink-sample-rate.txt`, which was run before either phone session
+and predicted the band closes by 60 Hz.
+
+Still confounded and said so in the write-up: the camera differs (Front
+Camera against Front Ultra Wide), iOS and Chrome both moved a version,
+and it is one session per device on one face.
+
+**The duration retraction is now firmer.** Both iPhones report about
+96 ms while running at 30.7 and 55.0 fps. Duration tracks the DEVICE,
+not the rate.
+
+The full write-up is `docs/validation-dry-run.txt`, SIX sessions, and it
+carries the tool's own output. **Refer to sessions by NAME, not by label:
+labels are positional and the MacBook re-test moved from P4 to P5 the
+moment a sixth session arrived, which falsified the prose around it for
+two days. The tables now print the session name beside the label.**
 
 **THE CAUSE IS NOW ISOLATED, offline, with no camera and no people.**
 `docs/blink-sample-rate.txt`, reproducible with
@@ -261,7 +289,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 18 August 2026. When this file changes, this stamp changes
+Stamped: 19 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -666,7 +694,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 617 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 157 Python tests of which
+in CI of which 2 rerun locally in WebKit, 160 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
