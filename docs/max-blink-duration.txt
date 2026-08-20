@@ -156,3 +156,35 @@ in `test/core/longClosure.test.ts`. A lid that settles between the blink
 line and the shut line and stays there belongs to neither detector: too
 long to be a blink, never deep enough to be a long closure. Asserted as
 what today's code does, not as what it should do.
+
+STEP 4, TAKEN: THE CONSTANT STAYS AT 500
+========================================
+
+Decided by the owner on 20 August 2026, after the six-person validation
+round, and the round is what decided it.
+
+The reconciliation above ends by saying what would decide the question:
+a session whose baseline ratchets toward the regime where the ceiling
+is the only phantom guard, because the owner's own geometry never goes
+there. The round supplied it. Two of six volunteers' sessions settled a
+baseline above 1.25 times their own resting aperture, one at 1.28 and
+one at 1.33, and a third drifted 34.6 percent during its window. High
+baselines are not a corner case constructed in a fixture. They are
+what ordinary machines in ordinary rooms produce, three times out of
+six, and past a ratio of about 1.9 the ceiling is the only thing
+keeping the resting eye's own wobble out of the blink count.
+
+So the ceiling keeps its second job, and the cost it carries in clean
+geometry, roughly 13 replay detections on Eyeblink8 that a higher
+ceiling would have admitted, is paid knowingly. That cost was measured
+by a Python replay and has still not been earned by a real corpus run,
+so it is not quoted as a loss of 13; it is quoted as the price of a
+guard the wild has now been shown to need.
+
+The likely long-term shape recorded above stands as the direction: two
+jobs deserve two constants, and the noise guard would be better
+expressed on the baseline ratio than as a duration. That is future
+design work, filed with the baseline calibration work the round
+prioritised, not a reason to move this constant today.
+
+Issue #178 closes with this note.
