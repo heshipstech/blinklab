@@ -392,5 +392,71 @@ over from the first pass where it was left alone.
 OUTCOMES, SECOND PASS
 ---------------------
 
-Not yet run. Appended after the probes execute, in a separate commit,
-so the history shows these predictions existed first.
+Run 20 August 2026 against the code as it stood when the second-pass
+predictions were committed. Seven probes, seven predictions, all
+seven held; the reading was easier this time because the first pass
+had already mapped the terrain.
+
+Probe P. AS PREDICTED, and it is the finding of this pass. Two marks
+at the same moment print marks 2, in window 1, near start 2, verdict
+MISSED, exit 0. The table looks entirely routine and nothing in it
+shows the window has no width. Plausible from a real participant: two
+presses inside the same one-second record stamp identically, and two
+of the four real participants pressed more than twice. NOT fixed,
+because any fix changes a verdict on a valid file. QUEUED AS A
+NEXT-ROUND RULE beside frame-rate soundness and window-scoped drift:
+the next plan should say what a window narrower than the marker slack
+means, or print the window's length so a reader can see it.
+
+Probe Q. AS PREDICTED, control passed. A blink at the mark's exact
+millisecond counts once, in the window, as an edge blink.
+
+Probe R. AS PREDICTED. blinks_detected 40.5 was swallowed, no
+TRUNCATED FILES warning printed, the count presented as a count.
+
+Probe S. AS PREDICTED. Five detected, ten recorded, silently clamped
+to nothing lost.
+
+Probe T. AS PREDICTED. Markers numbered 2 and 3 with no 1 pass the
+declared-count check and cut a normal-looking window. Recorded, not
+fixed: the real exporter numbers from 1, so only an edited or damaged
+file produces this, and the damage shapes that matter (a LOST marker
+line) are already caught by the declared count.
+
+Probe U. AS PREDICTED. "1 participants".
+
+Probe V. AS PREDICTED. Column widths count characters, an emoji is
+one character and two terminal columns, so the row shifts. Recorded,
+not fixed: honest wide-character alignment needs a width table, which
+is more machinery than a six-row table justifies.
+
+Probe W. CONFIRMED from pass one. Session-level refusal lines print
+the filename twice.
+
+WHAT WAS FIXED IN THE SECOND PASS, AND WHAT WAS NOT
+---------------------------------------------------
+
+Six tests added, five watched failing first; the sixth pins probe Q's
+already-correct boundary behaviour so it cannot regress. Python tests
+182 to 188. The real four-participant table was diffed before and
+after again: byte for byte identical.
+
+1. The truncation declaration must be readable, whole and possible
+   (R, S). A blinks file whose blinks_detected or blinks_recorded is
+   malformed, half missing, or backwards is refused by name instead of
+   quietly reading as "nothing lost". The declaration exists so
+   truncation cannot hide; a shrug at a broken declaration was the
+   #172 defect wearing new clothes.
+
+2. One participant prints "1 participant" (U).
+
+3. A session-level refusal line names the file once (W). The report
+   stops repeating a filename the wrapped reason already starts with;
+   the wrapping itself is untouched, and a reason naming the BLINKS
+   file keeps the session prefix, because there it says whose pair the
+   file belongs to.
+
+Not fixed, recorded: the zero-width window (P) is a next-round rule,
+because fixing it mid-round changes a verdict. Marker numbering that
+starts past 1 (T) and emoji column alignment (V) are noted above and
+left alone.
