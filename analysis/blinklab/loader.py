@@ -9,6 +9,7 @@ statistic that is wrong, and nobody re-derives those by hand.
 from __future__ import annotations
 
 import csv
+import io
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -81,7 +82,18 @@ def _read_metadata(path: Path) -> dict[str, str]:
                 break
             key, separator, value = line.lstrip("# ").partition(":")
             if separator:
-                metadata[key.strip()] = value.strip()
+                key = key.strip()
+                # A dict would resolve a repeated key in favour of
+                # whichever line came last, silently. The exporter
+                # never writes a key twice, so a file that does has
+                # been edited or damaged, and which value is true
+                # cannot be known from here.
+                if key in metadata:
+                    raise SessionError(
+                        f"the metadata declares {key!r} twice, and the "
+                        "exporter never writes a key twice"
+                    )
+                metadata[key] = value.strip()
     return metadata
 
 
@@ -106,12 +118,35 @@ def load_session(path: str | Path) -> Session:
     if not path.exists():
         raise SessionError(f"no such file: {path}")
 
+    with path.open(encoding="utf-8") as handle:
+        text = handle.read()
+    if text.startswith("\ufeff"):
+        # Excel's "CSV UTF-8" save adds this mark, so a participant who
+        # opened their export "just to look" and hit save produces one.
+        # Deliberately still a refusal rather than tolerated: a file
+        # that has been through Excel may be damaged in ways the mark
+        # merely advertises, and the message should say what happened
+        # rather than list every column as missing.
+        raise SessionError(
+            "the file begins with a byte order mark, which the exporter "
+            'never writes and Excel\'s "CSV UTF-8" save adds. This file '
+            "has been through another program on its way here."
+        )
+
     metadata = _read_metadata(path)
 
-    with path.open(encoding="utf-8") as handle:
-        rows = list(
-            csv.reader(line for line in handle if not line.startswith("#"))
-        )
+    # pandas gets exactly the lines the checks below see. It used to
+    # read the file itself with comment="#", which cuts a line at a
+    # hash ANYWHERE in it, while the pre-check only skips lines that
+    # START with one. The two readers saw different files, and the
+    # difference was silent: a hash inside a cell dropped the row's
+    # tail to NaN with no refusal.
+    kept = [
+        line
+        for line in text.splitlines(keepends=True)
+        if not line.startswith("#")
+    ]
+    rows = list(csv.reader(kept))
     if not rows:
         raise SessionError("the file has no header, so it is not a session")
     _check_columns(rows[0])
@@ -127,8 +162,7 @@ def load_session(path: str | Path) -> Session:
             )
 
     frame = pd.read_csv(
-        path,
-        comment="#",
+        io.StringIO("".join(kept)),
         # An empty cell means NOT MEASURED, the same thing the
         # FeatureRecord contract means by null, and NaN is how pandas
         # spells it. Nothing here may turn one into a zero.
@@ -136,7 +170,27 @@ def load_session(path: str | Path) -> Session:
         false_values=["false"],
     )
     for name in BOOLEAN_COLUMNS:
-        frame[name] = frame[name].astype("boolean")
+        try:
+            frame[name] = frame[name].astype("boolean")
+        except (TypeError, ValueError) as error:
+            raise SessionError(
+                f"column {name} holds a value that is neither true nor false"
+            ) from error
+
+    # A cell that is not a number leaves its whole column as strings,
+    # and the crash arrives later, inside a check, as a bare pandas
+    # error no caller catches. Refuse here, naming the column, so one
+    # corrupt cell costs one participant a refusal row instead of
+    # costing everybody the table.
+    for name in COLUMNS:
+        if name in BOOLEAN_COLUMNS:
+            continue
+        if not pd.api.types.is_numeric_dtype(
+            frame[name]
+        ) or pd.api.types.is_bool_dtype(frame[name]):
+            raise SessionError(
+                f"column {name} holds a value that is not a number"
+            )
 
     if not frame["timestampMs"].is_monotonic_increasing:
         raise SessionError(

@@ -21,6 +21,7 @@ So this is the mirror of it, and each refuses what the other is for.
 from __future__ import annotations
 
 import csv
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -84,7 +85,18 @@ def _read_metadata(path: Path) -> dict[str, str]:
                 break
             key, separator, value = line.lstrip("# ").partition(":")
             if separator:
-                metadata[key.strip()] = value.strip()
+                key = key.strip()
+                # A dict would resolve a repeated key in favour of
+                # whichever line came last, silently. The exporter
+                # never writes a key twice, so which value is true
+                # cannot be known from here.
+                if key in metadata:
+                    raise ValidationError(
+                        f"{path.name}: the metadata declares {key!r} "
+                        "twice, and the exporter never writes a key "
+                        "twice"
+                    )
+                metadata[key] = value.strip()
     return metadata
 
 
@@ -111,12 +123,25 @@ def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
     if not path.exists():
         raise ValidationError(f"no such file: {path}")
 
+    text = path.read_text(encoding="utf-8")
+    if text.startswith("\ufeff"):
+        # Excel's "CSV UTF-8" save adds this mark. Still a refusal,
+        # deliberately: a file that has been through Excel may be
+        # damaged in ways the mark merely advertises. The message just
+        # points at the right culprit.
+        raise ValidationError(
+            f"{path.name}: the file begins with a byte order mark, "
+            'which the exporter never writes and Excel\'s "CSV UTF-8" '
+            "save adds. This file has been through another program on "
+            "its way here."
+        )
+
     metadata = _read_metadata(path)
     _refuse_clip(metadata, path.name)
 
     rows = [
         line
-        for line in path.read_text(encoding="utf-8").splitlines()
+        for line in text.splitlines()
         if line.strip() and not line.startswith("#")
     ]
     if not rows:
@@ -151,15 +176,28 @@ def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
         try:
             at_ms = float(row[2])
             duration_ms = float(row[3])
+            # An empty cell means NOT MEASURED and must never become a
+            # zero. A blink whose shape could not be analysed is not a
+            # blink of zero amplitude. Parsed inside this try on
+            # purpose: it used to sit below it, where one corrupt cell
+            # raised a bare ValueError that crashed the whole report.
+            amplitude = None if row[4] == "" else float(row[4])
         except ValueError as error:
             raise ValidationError(
-                f"{path.name} row {number}: could not read the time or "
-                "the duration"
+                f"{path.name} row {number}: could not read the time, "
+                "the duration or the amplitude"
             ) from error
-        # An empty cell means NOT MEASURED and must never become a
-        # zero. A blink whose shape could not be analysed is not a
-        # blink of zero amplitude.
-        amplitude = None if row[4] == "" else float(row[4])
+        # float() happily parses "inf" and "nan", and a NaN time is
+        # invisible to every window comparison, so it would silently
+        # count as outside the marks.
+        finite = [at_ms, duration_ms] + (
+            [] if amplitude is None else [amplitude]
+        )
+        if not all(math.isfinite(value) for value in finite):
+            raise ValidationError(
+                f"{path.name} row {number}: a time, duration or "
+                "amplitude that is not a finite number"
+            )
         blinks.append(
             CameraBlink(
                 at_ms=at_ms,
@@ -209,11 +247,23 @@ def session_markers_ms(session: Session) -> list[float]:
         if match is None:
             continue
         try:
-            found[int(match.group(1))] = float(value) * 1000.0
+            seconds = float(value)
         except ValueError as error:
             raise ValidationError(
                 f"marker {match.group(1)} is not a number: {value!r}"
             ) from error
+        # float() parses "inf" and "nan" without complaint. An infinite
+        # mark makes a window that never ends, and a NaN one is
+        # invisible to every comparison, so nothing sits in its window
+        # and the verdict reads MISSED, silently. The probe run's one
+        # wrong prediction was here: the order check below does NOT
+        # catch NaN, because sorted() carries the same object across
+        # and list comparison tests identity before equality.
+        if not math.isfinite(seconds):
+            raise ValidationError(
+                f"marker {match.group(1)} is not a finite number: {value!r}"
+            )
+        found[int(match.group(1))] = seconds * 1000.0
 
     declared_raw = session.metadata.get("markers")
     if declared_raw is not None:
@@ -292,13 +342,26 @@ def find_pairs(directory: str | Path) -> list[PairPaths]:
     sessions: dict[str, Path] = {}
     blinks: dict[str, Path] = {}
     strays: list[str] = []
-    for path in sorted(directory.glob("*.csv")):
-        if path.name.startswith(SESSION_PREFIX):
-            sessions[path.name[len(SESSION_PREFIX) : -len(".csv")]] = path
-        elif path.name.startswith(BLINKS_PREFIX):
-            blinks[path.name[len(BLINKS_PREFIX) : -len(".csv")]] = path
-        else:
-            strays.append(path.name)
+    # Every entry in the folder is accounted for, not just `*.csv`.
+    # The old glob was case sensitive and extension bound, so a blinks
+    # file renamed to `.CSV` or `.csv.txt` in transit was not paired,
+    # not a stray, not refused: its session paired with nothing, the
+    # row read "no log", and a file holding ten detected blinks became
+    # a MISSED verdict that criterion 1 counted against the detector.
+    for path in sorted(directory.iterdir()):
+        if path.name == ".DS_Store":
+            # The one exception, by name: macOS drops this into any
+            # folder Finder has opened, and refusing the round over it
+            # would train people to expect refusals that mean nothing.
+            continue
+        if path.is_file() and path.name.endswith(".csv"):
+            if path.name.startswith(SESSION_PREFIX):
+                sessions[path.name[len(SESSION_PREFIX) : -len(".csv")]] = path
+                continue
+            if path.name.startswith(BLINKS_PREFIX):
+                blinks[path.name[len(BLINKS_PREFIX) : -len(".csv")]] = path
+                continue
+        strays.append(path.name)
 
     if strays:
         raise ValidationError(
