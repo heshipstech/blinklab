@@ -1,5 +1,30 @@
-Last increment: the round's analysis tool was adversarially tested
-BEFORE its table gets published, and hardened by what that found. The
+**THE SIX-PERSON ROUND IS COMPLETE AND PUBLISHED, 20 August 2026.**
+All six participants returned files, every file was read with no
+refusals, and the table is published whatever it says, per the plan:
+`docs/validation-round.txt`. Criterion 2, the baseline does not
+generalise, FAILED, pre-registered: three of six rulers were unusable,
+each a different way. Criterion 1 was evaluated on the three sound
+sessions and the detector missed NOTHING; its wild defect is
+over-counting (one slow deep blinker, 25 for 10, the first independent
+evidence feeding the #178 decision). Criterion 3 not met. The
+evaluation was a two-hundredths escape: the last participant's
+baseline ratio landed 1.23 against the 1.25 ceiling, and one more
+unsound session would have voided criterion 1 by the plan's own guard.
+Nothing identifying any participant is published: no names, no file
+names, no user agents, no sleepiness answers.
+
+**THE MID-ROUND FREEZES ARE LIFTED.** src/ may change again, roadmap
+7.8 is unfrozen, the deploy workflow is unfrozen. The rules queued for
+the NEXT round (frame-rate soundness, window-scoped drift, minimum
+window width, moderation) are in the round write-up. What the round
+points development at, in order: baseline calibration (the failed
+criterion), then the owner's two decisions, D1 (now with twelve
+sessions of evidence that the gate never wrongly opened) and #178
+step 4 (now with independent refractory evidence).
+
+The increment before it: the round's analysis tool was adversarially
+tested BEFORE its table was published, and hardened by what that
+found. The
 record is `docs/validation-tool-adversarial.txt`: fifteen probes, every
 prediction committed before any probe ran, fourteen right and the
 fifteenth wrong in the bad direction. What the probes caught: five ways
@@ -74,13 +99,11 @@ correction adds `baseline_over_resting`, flagged above 1.25, and
 Last commit, as of the stamp below: 2026-08-20;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: the six-person validation round, which is the
-project's largest untested claim rather than a piece of tidying. Every
-live-camera number published here comes from ONE face through ONE
-camera, the owner's, and the Eyeblink8 figures come from recorded clips
-rather than webcams in real rooms. The plan is in
-`docs/validation-plan.md` and its order is fixed. The tool is built and
-the dry run is done, see above.
+Currently working: the round is COMPLETE and published, see the top of
+this file. Live-camera numbers now exist from seven faces: the owner's
+and six volunteers'. Next up: baseline calibration work (the failed
+criterion), and the owner's D1 and #178 step 4 decisions, both now
+fully evidenced.
 
 **THE IPHONE WAS RE-RUN AND THE ANSWER IS THE DETECTOR.** Protocol
 followed exactly, and 7 of 10 deliberate blinks were detected. The seven

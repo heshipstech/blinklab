@@ -34,7 +34,7 @@ median aperture, so it was run again at the same rate. Both originals
 are kept. Deleting a session that disagrees with you is how a result
 stops meaning anything.
 
-Validation round: 6 participants in /Users/evannorus/Desktop/blinklab build/datasets/validation-dry-run
+Validation round: 6 participants in $DATASETS/validation-dry-run
 Ground truth between the two marks: 10 blinks.
 
 CHECKS

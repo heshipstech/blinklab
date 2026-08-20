@@ -1,0 +1,217 @@
+The six-person validation round, 19 and 20 August 2026
+======================================================
+
+Six volunteers, six faces, six devices, one session each, following the
+protocol in docs/participant-instructions.md. This is the round the
+dry run rehearsed for, and it is the first time any number in this
+project was produced by somebody other than the owner. The plan,
+including the three failure criteria and every threshold below, was
+committed in docs/validation-plan.md before any session file existed,
+and nothing in it moved while files were arriving.
+
+The raw CSVs are NOT in this repository and never will be. They sit in
+$DATASETS/validation-round. Reproduce this table with:
+
+    cd analysis
+    PYTHONPATH="$PWD" .venv/bin/python tools/validation_report.py \
+        "$DATASETS/validation-round"
+
+WHAT IS DELIBERATELY NOT PUBLISHED. The participants are pseudonymous
+and stay that way: no names, no file names, no export timestamps, no
+user agent strings, and no sleepiness self-ratings appear here or
+anywhere in this repository. Camera model names are published because
+comparing devices is the point of the iris column, and a camera model
+is a fact about a product, not a person. Where the text below names a
+platform it stops at the class: a Mac in Safari, a Windows laptop in
+Chrome, an Android phone, an iPhone.
+
+THE TABLE, as the tool prints it
+--------------------------------
+
+Validation round: 6 participants in $DATASETS/validation-round
+Ground truth between the two marks: 10 blinks.
+
+CHECKS
+
+    session       marks  in window  near start  near end  verdict       closures at mark 2 / end  baseline ready (s)  baseline drift (%)  baseline / resting
+--  ------------  -----  ---------  ----------  --------  ------------  ------------------------  ------------------  ------------------  ------------------
+P1  participant1  2      25         0           1         over-counted  0 / 1                     30.4                0.0                 1.19
+P2  participant2  3      11         0           0         ambiguous     0 / 2                     30.1                4.0                 1.09
+P3  participant3  4      1          0           0         missed        1 / 2                     30.9                34.6                1.33
+P4  participant4  2      10         0           0         counted       0 / 1                     30.8                15.4                1.10
+P5  participant5  2      5          0           0         missed        1 / 5                     30.1                6.5                 1.28
+P6  participant6  4      10         0           0         counted       0 / 1                     30.2                6.2                 1.23
+
+CONDITIONS
+
+    session       camera                         face seen (%)  iris (px)  measured in  declared fps  processing fps  tab hidden  duration (s)
+--  ------------  -----------------------------  -------------  ---------  -----------  ------------  --------------  ----------  ------------
+P1  participant1  FaceTime HD Camera             100.0          44.0       1920x1080    30.0          30.0            2           129.5
+P2  participant2  Integrated Webcam (0bda:5522)  100.0          17.4       1280x720     30.0          45.2            2           178.8
+P3  participant3  camera 1, facing front         100.0          54.2       1080x1920    30.0          24.4            2           172.9
+P4  participant4  Front Camera                   100.0          50.2       1080x1920    30.0          30.0            0           140.4
+P5  participant5  Webcam C170 (046d:082b)        100.0          37.0       1024x768     30.0          40.0            0           174.0
+P6  participant6  Front Ultra Wide Camera        100.0          58.3       1080x1920    30.0          46.0            0           224.1
+
+The three failure criteria, fixed in the plan before any file was read:
+
+1. The detector does not generalise, at 3 or more missed among the
+   3 sound sessions: 0 missed (none). not met. Excluded as unsound:
+   P3 (baseline drifted past the ceiling), P4 (baseline drifted past
+   the ceiling), P5 (baseline is too long to be open).
+2. The baseline does not generalise, at 2 or more never ready or
+   drifting past 15%: 0 never ready (none), 2 drifted (P3, P4).
+   FAILED
+3. The frame rate gate lets bad sessions through, at 2 or more:
+   0 would be refused by a true camera rate (none). not met
+
+BASELINE TOO LONG TO BE "OPEN", above 1.25 times the session's own
+median aperture: P3, P5.
+
+Over-counted, which is not a failure criterion and is reported because
+precision is the other half of the question: P1.
+
+THE HEADLINE, in one paragraph
+------------------------------
+
+The pre-registered baseline criterion FAILED, and the detector
+criterion did not. Three of six sessions had no working ruler, each
+broken a different way, and the plan's exclusion guard came within one
+session of refusing to evaluate the detector at all. Among the three
+sessions whose ruler worked, the detector missed nothing; its visible
+defect in the wild is the opposite one, over-counting, which appeared
+once and matches a defect already on the books. So the component this
+round indicts is not the blink detector. It is the baseline learning
+that every measurement is judged against.
+
+THE SIX SESSIONS, one paragraph each
+------------------------------------
+
+P1, a Mac in Safari at 30 fps. 25 detections for 10 deliberate blinks,
+verdict over-counted, on a sound baseline. This person blinks slowly
+and deeply, and eleven pairs of detections sit closer together than
+0.35 seconds, which an eyelid cannot do twice. The 150 ms refractory
+period does not cover their 200 to 270 ms re-crossings. This is the
+first evidence from an independent face for the double-counting defect
+that previously had only benchmark evidence (issue #178's
+neighbourhood), and it feeds the owner's pending decision there.
+
+P2, a Windows laptop in Chrome at 45 fps, and the smallest iris image
+this instrument has ever measured, 17.4 pixels, which stayed clean.
+Eleven in the window at a metronome 2.15 second cadence, verdict
+ambiguous only because the eleventh detection sits 0.46 seconds inside
+the marker slack: markers are stamped up to about a second early, so
+the table refuses to call a count that a marker shift could change.
+Three mark presses instead of two, confirmed accidental.
+
+P3, an Android phone that processed at 24.4 fps, below the 25 fps
+floor, for 81 percent of the marked window. Below the floor the
+detector is handed nothing, which resets its closure cycle, so this
+session's 1 of 10 is not a statement about the detector and the row is
+excluded as unsound: its baseline also drifted 34.6 percent, and
+uniquely in this round, that drift happened DURING the marked window.
+Four mark presses. This session is the round's argument for the
+frame-rate soundness rule the next round starts with.
+
+P4, an iPhone at 30 fps. 10 of 10 counted, two mark presses, no tab
+switches, the cleanest protocol compliance of the round. Excluded from
+criterion 1 anyway, because its baseline drift, 15.4 percent, sits
+past the 15 percent ceiling, and the pre-registered rule is the rule.
+Stated plainly because the exclusion is marginal: every part of that
+drift happened BEFORE the marked window, and the drift inside the
+window was 0.0 percent. They caught all ten at 30 fps because they are
+a deep blinker, 5.73 mm amplitude on a 7.72 mm baseline, which the
+offline sampling experiment predicts is caught at any rate. Do not
+read this session as contradicting the processing-rate finding.
+
+P5, a Windows laptop in Chrome with an external webcam, at 40 fps.
+Five in the window, verdict missed, excluded as unsound with a
+baseline 1.28 times its own median aperture. Both numbers are
+contaminated by a protocol order mistake: the long-closure counter
+reads 1 at mark 2 and 5 at the session's end, meaning the five second
+eye closure was performed INSIDE the ten-blink window, where the
+protocol places it after. Nobody blinks with shut eyes, so the
+window's biggest hole is behaviour, and five long closures instead of
+one drag the session's median aperture down, which is what pushed the
+baseline ratio over the line. The closing sleepiness question was
+skipped. No double-counting: no gap in this log is under 0.98 seconds.
+
+P6, an iPhone at 46 fps in the window. 10 of 10 counted at a metronome
+1.8 to 2.5 second cadence, closure performed correctly after mark 2,
+both sleepiness questions answered, no tab switches, and the largest
+iris image of the round, 58 pixels. Four mark presses; the first two
+bracket the task correctly. The baseline ratio, 1.23, is the round's
+narrowest escape: two hundredths under the ceiling, and it decided
+that criterion 1 could be evaluated at all. Also a deep blinker,
+median amplitude 6.30 mm on an 8.24 mm baseline, so this 10 of 10
+cannot separate the rate question from blink depth either.
+
+WHAT THE ROUND ESTABLISHES
+--------------------------
+
+1. The baseline does not generalise, and that is now a pre-registered
+   FAILED criterion, not an impression. Three of six rulers were
+   unusable: one drifted during the measurement itself (P3), one
+   drifted past the ceiling before the window (P4), one was born too
+   long, inflated by the person's own closures (P5). Every blink
+   number this instrument produces is a comparison against that
+   ruler. Fixing baseline calibration is the highest-value work this
+   round points at.
+
+2. When the ruler works, the detector did not miss. Zero missed among
+   the three sound sessions, and the excluded P4 also caught ten of
+   ten. The detector's wild-conditions defect is precision:
+   25 detections for 10 blinks on one face whose slow deep blinks
+   re-cross the line after the 150 ms refractory period expires.
+
+3. The drift-timing pattern supports the next round's window rule.
+   Drift measured inside the marked window only: P3 34.65 percent,
+   P4 0.0, P5 0.0, P6 0.0. The whole-session drift rule excluded P4
+   for movement that happened entirely outside the measurement. The
+   pre-registered rule still binds this round, and the next round's
+   rule measures drift over the window instead.
+
+4. The frame-rate gate never wrongly opened: every camera declared 30
+   and criterion 3 was not met. What the gate lacks is a soundness
+   rule ABOVE its own floor: P3 sat at 24.4 fps, the gate fired
+   correctly, and the table still needed a human to notice that a
+   session the gate had been refusing most of the window could not
+   speak about the detector.
+
+5. Protocol compliance is the unmoderated design's real cost. Three
+   of six pressed the mark button more than twice, one performed the
+   closure inside the blink window, one skipped the closing
+   sleepiness question. The revised instructions arrived only after
+   the first three sessions, so this round cannot say whether they
+   help. The next round should be moderated: a live call while the
+   participant runs their own device in their own room, which
+   controls the person without faking the environment.
+
+WHAT THE ROUND CANNOT SAY, permanently
+--------------------------------------
+
+The blink log is censored: a missed blink writes no row, so every
+amplitude in every export comes from blinks that were caught, and no
+re-reading of the files can say whether the missed blinks were shallow
+ones in the rate band. Both 10-of-10 sessions came from deep blinkers,
+so the round adds no clean evidence on either side of the
+processing-rate transition, which stays where the dry run and the
+offline experiment left it: between 30 and 55 fps on this face, band
+closing by 60 Hz offline. And six people is six people: this round is
+a smoke test of generality, not a study.
+
+RULES ALREADY QUEUED FOR THE NEXT ROUND, none applied to this one
+-----------------------------------------------------------------
+
+1. Frame-rate soundness: a session is not evidence about the detector
+   when the gate was refusing frames for a large share of its window.
+2. Drift measured over the marked window, not the whole session.
+3. A minimum window width, or the window's length printed beside its
+   counts: two marks pressed inside the same second currently make a
+   zero-width window that prints as an ordinary miss.
+4. Moderation, as above.
+
+Written 20 August 2026, the day the sixth file arrived. The analysis
+tool that produced the table was adversarially tested before this
+document was published; that record is
+docs/validation-tool-adversarial.txt.

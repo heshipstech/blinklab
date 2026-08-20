@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 18 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 20 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -63,7 +63,17 @@ Where a person's mind is, is a different question.
 
 ## Where it fails
 
-**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught (remediation D1, stage two pending). Measured on five real sessions on 16 and 17 August, that case did not occur once: every camera declared 30 and the gate never wrongly opened. The larger problem is the one above the floor, in the next paragraph.** At 15
+**The learned baseline does not generalise, measured on six volunteers
+and pre-registered as this round's second failure criterion, which
+FAILED.** Every measurement is a comparison against a per-session
+baseline learned in the first 30 seconds, and on three of six
+volunteers' machines that baseline was unusable: drifted 34.6% during
+the measurement, drifted 15.4% before it, or settled 1.28 times the
+person's own resting aperture. The detector itself missed nothing on
+the sessions whose baseline worked. Table and write-up in
+`docs/validation-round.txt`.
+
+**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught (remediation D1, stage two pending). Measured on twelve real sessions in August 2026, six of the author's and six volunteers', that case did not occur once: every camera declared 30 and the gate never wrongly opened. The larger problem is the one above the floor, in the next paragraph.** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
 The failure is currently near-silent: one line of small text, while
 everything else on the page carries on looking healthy. This removed 16
@@ -96,7 +106,11 @@ removed 39 such reports at no cost to recall, but 72 false alarms remain
 and 45 of them still sit on top of a real blink. Raising the refractory
 period would remove most of them, and it has deliberately not been
 raised, because a constant chosen to improve a score on a benchmark
-already read is fitting rather than measuring.
+already read is fitting rather than measuring. The validation round
+added the first independent-face evidence: one volunteer who blinks
+slowly and deeply produced 25 detections for 10 scripted blinks, with
+eleven detection pairs closer than 0.35 seconds, re-crossing the line
+200 to 270 ms apart, past the refractory period's reach.
 
 **PERCLOS uses an adjusted threshold, not the literature's.** This
 instrument reads fully shut eyes as roughly a third of the open baseline
@@ -117,11 +131,12 @@ period is a period during which the instrument is not yet measuring.
 
 This is the section most model cards leave vague, so here it is plainly.
 
-| Group              | Number of people      | What is known about them                |
-| ------------------ | --------------------- | --------------------------------------- |
-| Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation   |
-| DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number |
-| The author         | 1                     | One adult, three devices, five sessions |
+| Group              | Number of people      | What is known about them                                      |
+| ------------------ | --------------------- | ------------------------------------------------------------- |
+| Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation                         |
+| DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number                       |
+| The author         | 1                     | One adult, four devices, six sessions                         |
+| Round volunteers   | 6                     | Six adults, six devices, one scripted session each, anonymous |
 
 **Both committed human-data fixtures are the author's own**, confirmed by
 the owner on 2026-08-15: `test/fixtures/session-01.json`, 300 frames of face
