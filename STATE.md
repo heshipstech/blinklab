@@ -1,3 +1,17 @@
+**THE RULER FREEZES, 20 August 2026, and the published number moved
+DOWN with the instrument's honesty.** The round's failed baseline
+criterion was met with code: the rise-only ratchet is removed, the
+baseline freezes at its thirty-second calibration, and the birth
+ceiling tightened to the plan's own 1.25 line. The corpus was
+re-measured with predictions committed first: recall 87.7 to 83.6
+(predicted 82 to 86), the precision prediction was WRONG (81.4, down,
+because the frozen lower line exposes near-line flutter fragmenting
+into re-crossings, P1's live signature) and the record says so in
+docs/baseline-freeze.txt and docs/eyeblink8-result.txt. The round's
+six live sessions are NOT re-scored. D1 stage two also shipped the
+same day (the below-60 fps warning) and #178 closed with the ceiling
+kept.
+
 **THE SIX-PERSON ROUND IS COMPLETE AND PUBLISHED, 20 August 2026.**
 All six participants returned files, every file was read with no
 refusals, and the table is published whatever it says, per the plan:
@@ -428,45 +442,63 @@ Check it before running anything else:
 
     ls "$DATASETS"
 
-You should see `eyeblink8`, `eyeblink8-mp4` and four measured folders:
+You should see `eyeblink8`, `eyeblink8-mp4` and five measured folders:
 `eyeblink8-measured` (the first run, defective export),
 `eyeblink8-measured-capfix` (export fixed, clock still wobbling),
-`eyeblink8-measured-clockfix` (clock fixed, double counting exposed) and
-`eyeblink8-measured-refractory` (CURRENT). If you do not, the commands below will fail with
+`eyeblink8-measured-clockfix` (clock fixed, double counting exposed),
+`eyeblink8-measured-refractory` (double counting cut, ruler still
+moving) and `eyeblink8-measured-frozen` (CURRENT). If you do not, the
+commands below will fail with
 "No such file or directory", and the fix is this line, not the command.
 
-## Track A result, 9 August 2026, current
+## Track A result, 20 August 2026, current
 
-Eight Eyeblink8 clips, 408 human-marked blinks, 430 detected.
+Eight Eyeblink8 clips, 408 human-marked blinks, 419 detected.
 
-    Recall     87.7%   (358 of 408 found)
-    Precision  83.3%   (72 invented)
-    F1         85.4%
+    Recall     83.6%   (341 of 408 found)
+    Precision  81.4%   (78 invented)
+    F1         82.5%
 
-THIS ONE REPEATS. Measuring one clip three times produces identical
-files, byte for byte. That was not true of any earlier figure on this
-page, and it is the single most important thing about this run.
+THIS NUMBER IS LOWER THAN THE 87.7% IT REPLACES, ON PURPOSE. The
+previous run's ruler ROSE on every one of the eight clips, 2.3 to
+37.6 percent, so its blink line grew more permissive as each clip
+went on, and the validation round failed its baseline criterion on
+exactly that behaviour. The ruler now freezes at its thirty-second
+calibration (docs/baseline-freeze.txt, predictions committed before
+the re-run; four held, the precision one was wrong and the record
+says so). Verified from the run's own records: drift 0.0 on all
+eight clips, birth values identical to the previous run's, so the
+delta is the freeze and nothing else.
 
-Three numbers have been published for this benchmark and all three
+THIS ONE REPEATS, like the run it replaces: measuring one clip three
+times produces identical files, byte for byte.
+
+Four numbers have been published for this benchmark and all four
 belong in the record:
 
     69.6% recall, F1 77.1   the export was deleting its own rows (#172)
     82.8% recall, F1 84.6   export fixed, clock still wobbled (#173)
-    87.7% recall, F1 85.4   clock fixed (#189), double counting cut (#190)
+    87.7% recall, F1 85.4   clock fixed (#189), double counting cut
+                            (#190), ruler still moving
+    83.6% recall, F1 82.5   ruler frozen at calibration (2026-08-20)
 
-Precision fell from 86.4% to 83.3% between the second and the third.
-That is not a regression. The deterministic clock made the detector more
-sensitive: 20 more real blinks found, and far more of the same blink
-reported twice. The refractory period then removed 39 of those false
-alarms at ZERO cost to recall.
+Precision fell from 86.4% to 83.3% between the second and the third,
+not a regression: the deterministic clock made the detector more
+sensitive and the refractory period removed 39 false alarms at zero
+recall cost. It fell again to 81.4% in the fourth, AGAINST the
+committed prediction: at the frozen, lower line, near-line flutter
+fragments into repeated crossings 200 to 400 ms apart, the same
+re-crossing signature the round's P1 produced live, five of the six
+new false alarms in one clip's flutter episode. The re-arm gate
+(docs/blink-rearm.txt) targets that signature.
 
 Coverage: 71,356 frames measured against 71,354 annotated. Two clips
 gave one frame more than their annotation file lists. Every other clip
 is exact.
 
 Measured from
-`$DATASETS/eyeblink8-measured-refractory`.
-All three earlier runs are kept for comparison beside it.
+`$DATASETS/eyeblink8-measured-frozen`.
+All four earlier runs are kept for comparison beside it.
 Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
@@ -505,9 +537,9 @@ recovered clips.
 The glasses claim from the first write up is WITHDRAWN, not reversed.
 It rested on 83.7% for the one glasses clip against 67.9% for the seven
 without, but both truncated clips sat in the group without glasses. The
-split on the CURRENT run is 88.4% recall with glasses against 87.7%
-without, and 88.4% precision with against 82.7% without. Recall is
-under a point apart, and precision now favours the glasses clip, which
+split on the CURRENT run is 88.4% recall with glasses against 83.0%
+without, and 88.4% precision with against 80.6% without. The glasses
+clip now scores a few points higher on both, which
 is the opposite of what the earlier run showed and just as meaningless.
 One clip of 43 blinks settles nothing either way, so report BOTH halves
 or neither.
@@ -681,7 +713,7 @@ measuring before anything has been built.
     cd analysis
     PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
       "$DATASETS/eyeblink8/eyeblink8" \
-      "$DATASETS/eyeblink8-measured-refractory"
+      "$DATASETS/eyeblink8-measured-frozen"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table

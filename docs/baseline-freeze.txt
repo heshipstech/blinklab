@@ -113,5 +113,35 @@ stays exactly as published.
 OUTCOMES
 --------
 
-Not yet run. Appended after the corpus re-run, in a later commit, so
-the history shows these predictions existed first.
+Run 20 August 2026, eight clips, zero failures, evaluated against the
+408 human-marked blinks. Four predictions held, one was wrong, and
+the wrong one taught the most.
+
+1. HELD. Total detections fell, 430 to 419, and every lost real
+   detection sits in the six clips whose old ratchet exceeded 10
+   percent. The two small-ratchet clips: one unchanged entirely, one
+   unchanged on real blinks.
+2. HELD. Recall landed at 83.6 percent, inside the predicted 82 to
+   86, above the 82 that would have forced a reconsideration.
+3. WRONG. Precision fell, 83.3 to 81.4: invented detections ROSE
+   from 72 to 78. The prediction reasoned that a permissive late-clip
+   line is where shallow false alarms live. Diffing the runs found
+   the real mechanism: at the frozen, LOWER line, near-line flutter
+   fragments into multiple crossings 200 to 400 ms apart, the same
+   re-crossing signature P1 produced live in the validation round.
+   Five of the six new false alarms sit in one clip's flutter
+   episode, and adjacent pairs among them are textbook re-crossings.
+   The freeze and the re-arm gate are therefore complementary: the
+   freeze exposes the fragmenting the moving ruler used to paper
+   over, and the gate is aimed at exactly that signature.
+4. HELD. The small-drift clips moved little, see 1.
+5. HELD, exactly. Every clip's birth baseline is IDENTICAL to the
+   previous run's, so the 1.25 cap never bound on this corpus and
+   the whole delta is the freeze. The freeze itself verified from
+   the run's own records: baseline drift 0.0 percent on all eight
+   clips.
+
+Published in docs/eyeblink8-result.txt as the fourth number in the
+record, with the third kept beside it. The round's six live sessions
+are NOT re-scored; the published round table stands as measured by
+the instrument that existed when they ran.

@@ -77,12 +77,12 @@ annotation. The 362 frame numbers in between have no row at all. The
 people who published the clips print 70,992 on their own site. So a
 reader who checks will meet two different totals, and this is why.
 
-|              | First answer        | Export fixed        | Now                     |
-| ------------ | ------------------- | ------------------- | ----------------------- |
-| Blinks found | 284 of 408          | 338 of 408          | **358 of 408**          |
-| Recall       | 69.6%               | 82.8%               | **87.7%**               |
-| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | **83.3%** (72 invented) |
-| F1           | 77.1%               | 84.6%               | **85.4%**               |
+|              | First answer        | Export fixed        | Clock fixed         | Now                     |
+| ------------ | ------------------- | ------------------- | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | **341 of 408**          |
+| Recall       | 69.6%               | 82.8%               | 87.7%               | **83.6%**               |
+| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | **81.4%** (78 invented) |
+| F1           | 77.1%               | 84.6%               | 85.4%               | **82.5%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
 is the share of the app's detections that were real. F1 is the two
@@ -90,10 +90,11 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-**There are three columns because this page got the number wrong twice,
-and both times the fault was in this app rather than in the clips.**
-Every column stays. A project that shows you only its final answer
-tells you less than one that also shows you the road there.
+**There are four columns because this page has corrected its own
+number three times, and every time the fault was in this app rather
+than in the clips.** Every column stays. A project that shows you only
+its final answer tells you less than one that also shows you the road
+there.
 
 - **The first answer, 69.6%.** The app was deleting its own results
   before writing them out. It found blinks and then threw them away.
@@ -103,15 +104,32 @@ tells you less than one that also shows you the road there.
   because the app handed the face model a wall clock reading, so how
   busy the computer was leaked into the measurement. Fixed in pull
   request #189.
-- **The third, 87.7%.** The first figure on this page that gives the
-  same answer twice. Measuring one clip three times now produces
-  identical files, byte for byte.
+- **The third, 87.7%.** The first figure that gave the same answer
+  twice, byte for byte. But part of it was earned by a measuring
+  stick that moved: the personal baseline the blink threshold is half
+  of was allowed to rise during a session, and it rose on every one
+  of the eight clips, so the threshold grew more permissive as each
+  clip went on.
+- **The fourth, 83.6%, the current number.** The six-person
+  validation round failed its baseline criterion on exactly that
+  moving-ruler behaviour, so on 20 August 2026 the baseline was
+  frozen at its thirty-second calibration and the corpus re-measured
+  with the ruler held still. The number went down and the instrument
+  got better, which is the right way around for this project. The
+  predictions were committed before the run in
+  `docs/baseline-freeze.txt`, four held and one was wrong, and the
+  wrong one is recorded there.
 
 Precision fell from 86.4% to 83.3% between the second column and the
 third, and that is not a step backwards. Making the measurement
 repeatable made the app more sensitive: it found 20 more real blinks
 and also reported far more of the same blink twice. Most of that
-double counting was then removed, which is the next section.
+double counting was then removed, which is the next section. It fell
+again in the fourth column, 83.3% to 81.4%, against the committed
+prediction: at the frozen, lower threshold, flutter near the line
+fragments into repeated crossings, the same double-counting signature
+one validation-round volunteer produced live. The re-arm
+investigation in `docs/blink-rearm.txt` targets that signature.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
@@ -128,7 +146,7 @@ against the number of blinks the app found. If any are missing, it
 prints a warning on the first line. Fixed in pull request #172.
 
 **The corrected number is honest, and it is still not good enough.** It
-misses roughly one blink in eight. Other people have measured their own
+misses roughly one blink in six. Other people have measured their own
 detectors on these same eight clips. Here is what they report.
 
 | who                                                                                        | year | where                                                                             | F1    |
@@ -138,7 +156,7 @@ detectors on these same eight clips. Here is what they report.
 | [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05                                 | 95.2% |
 | [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177                                | 91.3% |
 | [Al-gawwam and Benaissa](https://www.mdpi.com/2078-2489/9/4/93)                            | 2018 | Information, volume 9, article 93                                                 | 97.7% |
-| **this app**                                                                               | 2026 | this page                                                                         | 85.4% |
+| **this app**                                                                               | 2026 | this page                                                                         | 82.5% |
 
 ECCV is the European Conference on Computer Vision. Not one of those
 five figures was simply copied out of the paper it sits beside, so here
@@ -276,9 +294,9 @@ that as evidence against this project's own warning about prescription
 lenses. That gap was not real. The defect created it. Both of the cut
 short clips were in the group without glasses, so that group's score was
 pulled down. On the current run the glasses clip scores 88.4% recall and
-88.4% precision. The seven without score 87.7% recall and 82.7%
-precision. Recall is under a point apart, and precision now favours the
-glasses clip, which is the opposite direction from the earlier run and
+88.4% precision. The seven without score 83.0% recall and 80.6%
+precision. The glasses clip now scores a few points HIGHER on both,
+which is the opposite direction from the first write up's claim and
 just as meaningless. Both figures rest on a single clip of 43 blinks,
 and both settle nothing in either direction. So the claim is withdrawn
 rather than reversed. This project has no evidence yet about what
@@ -296,18 +314,19 @@ on its own. That last step shows where this reasoning ends up, and it is
 plainly cheating. So none of those numbers are on this page, including
 the two a reader might have accepted.
 
-**The misses have a pattern.** 36 of the 50 missed blinks, 72.0%,
+**The misses have a pattern.** 47 of the 67 missed blinks, 70.1%,
 contain at least one frame the human marked as fully closed. These are
 not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness and nobody has explained it yet. Finding out why is the next
-question.
+question. The share has barely moved across three runs, 72.0% before
+the ruler froze and 78.6% before that, so freezing the ruler changed
+how many blinks are missed and not the character of what is missed.
 
 The row by row table is in
-[docs/evidence/2026-08-09/tables-current-run/](docs/evidence/2026-08-09/tables-current-run/),
+[docs/evidence/2026-08-20-frozen/](docs/evidence/2026-08-20-frozen/),
 one line per miss, so the share can be recounted rather than taken on
-trust. An earlier version of this page said 78.6%, which was 55 of 70
-and described the previous run's misses. These are
+trust. The previous runs' tables are kept beside their own results. These are
 not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness. Finding out why is the next question.

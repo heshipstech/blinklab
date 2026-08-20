@@ -24,7 +24,7 @@ measurements can be checked.
 
 | Measurement                                 | Unit              | Validated against                           | Result                                              |
 | ------------------------------------------- | ----------------- | ------------------------------------------- | --------------------------------------------------- |
-| Blink detection                             | events            | Eyeblink8, 8 clips, 408 human-marked blinks | recall **87.7%**, precision **83.3%**, F1 **85.4%** |
+| Blink detection                             | events            | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **81.4%**, F1 **82.5%** |
 | Eyelid aperture                             | millimetres       | iris as a physical ruler                    | not validated against a physical measurement        |
 | Blink duration, amplitude, closing velocity | ms, mm, mm/s      | nothing external                            | unvalidated                                         |
 | Gaze direction                              | screen region     | nine point calibration, one person          | reliable near the centre, degrades at the corners   |
@@ -98,9 +98,10 @@ of this still happens above its floor. Measured in
 `docs/validation-dry-run.txt`.
 
 **It misses blinks that are plainly there.** Of the blinks it missed on
-Eyeblink8, 72.0% contained at least one frame a human marked as fully
-closed, 36 of the 50. (This card said 78.6% until 11 August; that figure
-described the superseded run's misses.) These are not faint or borderline events. Why the eyelid
+Eyeblink8, 70.1% contained at least one frame a human marked as fully
+closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%
+until 20 August; each figure described the run it was measured on.)
+These are not faint or borderline events. Why the eyelid
 measurement does not dip far enough on them is unexplained. Issue
 [#179](https://github.com/heshipstech/blinklab/issues/179).
 
