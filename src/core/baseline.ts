@@ -4,31 +4,29 @@ import {
   BASELINE_MEDIAN_PERCENTILE,
   BASELINE_MIN_SAMPLES,
   BASELINE_PERCENTILE,
-  BASELINE_RECENT_CAP,
-  BASELINE_RISE_MIN_SAMPLES,
   BASELINE_THRESHOLD_FRACTION,
 } from "./constants";
-import { pushBounded } from "./ringBuffer";
 import { percentile } from "./statistics";
 
 // The personal baseline: what does OPEN mean for this person's eyes.
-// Learned over thirty seconds, then allowed to rise but never fall,
-// so a drooping lid, the very thing later phases want to notice,
-// cannot quietly lower the bar that would expose it.
+// Learned over thirty seconds, then FROZEN, like any instrument that
+// is calibrated and then used. It never falls, so a drooping lid, the
+// very thing later phases want to notice, cannot quietly lower the
+// bar that would expose it. And since 20 August 2026 it never rises
+// either: the six-person validation round's pre-registered baseline
+// criterion FAILED because the old rise-only ratchet moved one
+// volunteer's ruler 34.6 percent DURING the measurement and
+// another's 15.4 percent just before it, and a ruler that moves
+// under the measurement is not a ruler. The full evidence and the
+// corpus predictions are in docs/baseline-freeze.txt.
 //
-// Fix #126 added a ceiling to the rise. Never falling is right; being
-// able to rise without limit was not, because the baseline is a p90
-// and a p90 is what a brief excursion moves. The ceiling is a
-// multiple of the window's MEDIAN, which a brief excursion barely
-// touches, so the two together say: the bar may climb when the eye
-// genuinely opens wider, and may not climb because the eye was
-// surprised for two seconds.
-//
-// The ceiling blocks rises only. It never forces a fall, or a
-// drooping lid would lower its own bar through the back door.
+// Fix #126's ceiling survives with exactly one job left: bounding
+// the BIRTH estimate, because the baseline is a p90 and a p90 is
+// what a surprised learning window inflates. The factor is the
+// validation plan's own pre-registered implausibility line.
 export type BaselineState =
   | { kind: "learning"; startedAtMs: number; samples: number[] }
-  | { kind: "ready"; baselineMm: number; recent: number[] };
+  | { kind: "ready"; baselineMm: number };
 
 export function startBaseline(nowMs: number): BaselineState {
   return { kind: "learning", startedAtMs: nowMs, samples: [] };
@@ -55,31 +53,23 @@ export function baselineStep(
     ) {
       const baselineMm = boundedBaseline(samples);
       if (baselineMm !== null) {
-        return { kind: "ready", baselineMm, recent: [] };
+        return { kind: "ready", baselineMm };
       }
     }
     return { ...state, samples };
   }
 
-  if (apertureMm === null) {
-    return state;
-  }
-  const recent = pushBounded(state.recent, apertureMm, BASELINE_RECENT_CAP);
-  let baselineMm = state.baselineMm;
-  if (recent.length >= BASELINE_RISE_MIN_SAMPLES) {
-    const candidate = boundedBaseline(recent);
-    // The rule of this whole increment: max, never min. The ceiling
-    // is inside `candidate`, so a bounded rise that is no longer a
-    // rise simply does not happen, and nothing ever falls.
-    if (candidate !== null && candidate > baselineMm) {
-      baselineMm = candidate;
-    }
-  }
-  return { kind: "ready", baselineMm, recent };
+  // Ready means frozen. No sample after birth moves the ruler in
+  // either direction: not a droop (fix #126's non-negotiable) and,
+  // since the round, not a widening either, because in a live
+  // session a genuine widening and the P3 failure are the same
+  // signal. The trade this makes, a ruler born short stays short,
+  // is stated in docs/baseline-freeze.txt rather than hidden.
+  return state;
 }
 
-// The p90 of a window, held under a multiple of that window's own
-// median. Null only when the window is empty.
+// The p90 of the learning window, held under a multiple of that
+// window's own median. Null only when the window is empty.
 function boundedBaseline(samples: readonly number[]): number | null {
   const wide = percentile(samples, BASELINE_PERCENTILE);
   const middle = percentile(samples, BASELINE_MEDIAN_PERCENTILE);

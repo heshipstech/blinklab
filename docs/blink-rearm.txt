@@ -1,0 +1,105 @@
+THE RE-ARM GATE: the double-count investigation, predictions first
+==================================================================
+
+Written 20 August 2026, after the validation round and before any
+experiment ran. The owner chose this investigation over the blunt
+alternative (a longer refractory timer) the same day.
+
+THE DEFECT, from the round
+--------------------------
+
+P1, a sound-baseline session, produced 25 detections for 10 deliberate
+blinks. Eleven pairs of detections sit closer than 0.35 seconds, and
+the re-crossings arrive 200 to 270 ms after the previous counted
+blink, past the 150 ms refractory period's reach. This is the first
+independent-face evidence for the residue Eyeblink8 already showed:
+after the refractory fix, 72 false alarms remained and 45 sat on top
+of real blinks.
+
+WHY THE STATE MACHINE ALLOWS IT
+-------------------------------
+
+A closure arms as a blink candidate at 10 percent BELOW the blink
+line (fix #114's depth arming), and nothing above the line is
+required afterwards: the moment a reopen crosses the line and counts,
+the very next dip 10 percent under it arms again. A slow, deep
+blinker's lid takes a long time to rise, and while it hovers near the
+line it wobbles more than the 10 percent sliver, so one blink mints
+several counts. The refractory period cannot cover this without
+growing past 200 to 270 ms, which is genuine double-blink territory,
+and a timer that eats real double blinks trades one defect for
+another.
+
+THE CANDIDATE FIX
+-----------------
+
+A re-arm gate, symmetric to the arm line: after a COUNTED blink, no
+new closure may arm until the aperture has risen at least 10 percent
+ABOVE the blink line. The eyelid must actually reopen before it can
+blink again, which is what an eyelid does.
+
+Why this is not the reopen latch that fix #114's review killed: that
+design moved the REOPEN line itself, so time spent between two lines
+belonged to neither state and durations corrupted. The gate moves
+neither line. Closing and reopening stay at the same threshold,
+every duration keeps its 4.3 definition, and the gate touches only
+whether the NEXT closure may arm.
+
+The cost, stated before the fix rather than discovered after: a lid
+that hovers inside the 10 percent band above the line, after a
+counted blink, has its subsequent blinks suppressed until it rises
+out of the band. That band is a nearly-shut eye on a sound baseline,
+territory where PERCLOS and the long-closure detector are the
+instruments and a blink count is already dubious, but it is a real
+suppression and it is the trade being made.
+
+THE EXPERIMENT, each with its prediction
+----------------------------------------
+
+Built on the blink-trace harness, real blinkStep, synthetic aperture
+traces, swept across sampling rates 25 to 90 Hz and phases, the same
+method that settled the sampling-rate question.
+
+Trace R, the P1 shape: one deep blink with a slow reopen that sags
+back to below the arm line 200 to 270 ms after counting, peaking
+BETWEEN the blink line and the re-arm line before sagging.
+  PREDICTION: current code counts 2 at every rate and phase. With the
+  gate, 1 at every rate and phase.
+
+Trace D, a genuine double blink: two full, deep blinks 300 to 400 ms
+apart whose lid rises well above the re-arm line in between.
+  PREDICTION: both designs count 2, at every rate and phase. If the
+  gate ever counts 1 here, the gate eats real double blinks and is
+  wrong, whatever else it fixes.
+
+Trace P, the boundary: a genuine double blink whose lid reopens only
+into the band between the two lines.
+  PREDICTION: current counts 2, the gate counts 1. This is the cost
+  above, measured rather than argued.
+
+Durations: PREDICTION: byte-identical between the two designs on
+every trace, because the gate touches arming only.
+
+Mutation: PREDICTION: deleting the gate resurrects trace R's double
+count and turns its test red, and no other test moves.
+
+THE DECISION RULE, fixed before the run
+---------------------------------------
+
+The gate ships if and only if: trace R goes to 1 at every rate and
+phase, trace D stays 2 at every rate and phase, and durations are
+untouched. If trace D loses blinks at ANY rate, the gate does not
+ship and this document records the refutation. Trace P's cost is
+accepted in advance and does not block.
+
+If the gate ships, the corpus is re-measured and the numbers
+republished, the same discipline as the ruler freeze. The prediction
+for that run: total detections FALL (the 72 remaining Eyeblink8
+false alarms contain re-crossing doubles), recall moves little
+because the refractory fix already proved removing doubles costs no
+recall, so precision RISES while recall holds within a point.
+
+OUTCOMES
+--------
+
+Not yet run. Appended after the experiment, in a later commit.

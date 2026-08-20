@@ -64,7 +64,16 @@ describe("baseline learning", () => {
   });
 });
 
-describe("the ladder's rule: rises but never falls", () => {
+describe("the ruler freezes at birth (the round's criterion 2)", () => {
+  // The six-person round's pre-registered baseline criterion FAILED:
+  // the rise-only ratchet moved the ruler 34.6 percent DURING one
+  // volunteer's marked window and 15.4 percent just before another's,
+  // and both sessions were excluded because a moving ruler is not a
+  // ruler. Measured on the published Eyeblink8 run, the ratchet also
+  // rose on every one of the eight clips. So the owner decided on
+  // 20 August 2026: thirty seconds of learning DEFINE this person's
+  // "open", and the definition then holds for the whole session,
+  // like any instrument that is calibrated and then used.
   function readyAtSeven(): BaselineState {
     return feed(startBaseline(0), 0, openEyes);
   }
@@ -78,12 +87,31 @@ describe("the ladder's rule: rises but never falls", () => {
     }
   });
 
-  it("rises when the eyes sustain wider than ever", () => {
+  it("no longer rises, even when the eyes sustain wider than ever", () => {
+    // The freeze's deliberate trade, inverted from the old ladder
+    // rule this block replaces. A genuine sustained widening after
+    // calibration no longer moves the ruler, because in a live
+    // session it is indistinguishable from the P3 failure that moved
+    // a ruler 34.6 percent mid-measurement.
     const wider = Array.from({ length: 700 }, () => 9);
     const state = feed(readyAtSeven(), 60000, wider);
     expect(state.kind).toBe("ready");
     if (state.kind === "ready") {
-      expect(state.baselineMm).toBeGreaterThan(8.9);
+      expect(state.baselineMm).toBeCloseTo(7, 6);
+    }
+  });
+
+  it("does not creep on a brief wide eyed excursion either", () => {
+    // Fix #126 capped this rise; the freeze removes it. Two seconds
+    // of raised brows leave the ruler exactly where birth put it.
+    const excursion = [
+      ...Array.from({ length: 540 }, () => 7),
+      ...Array.from({ length: 60 }, () => 11),
+    ];
+    const state = feed(readyAtSeven(), 60000, excursion);
+    expect(state.kind).toBe("ready");
+    if (state.kind === "ready") {
+      expect(state.baselineMm).toBeCloseTo(7, 6);
     }
   });
 
@@ -105,116 +133,68 @@ describe("personalThresholdMm", () => {
   });
 });
 
-describe("the ratchet's ceiling, fix #126", () => {
+describe("the birth ceiling, fix #126 tightened by the round", () => {
   // The owner's own broken session: a baseline of 10.7 mm against a
   // resting aperture of 5.25, which put the blink line at 5.35, ABOVE
-  // their open eye. Every closure was then timed from a crossing that
-  // had happened while they sat there awake, so durations read 216 to
-  // 300 ms against a true 117 to 133, and one logged blink carried an
-  // amplitude of 0.2 mm.
+  // their open eye. Fix #126 capped the baseline at 1.4 times the
+  // window's median. The round then showed 1.4 was looser than the
+  // plan's own pre-registered soundness line: baselines born at 1.28
+  // and 1.33 times resting passed the learner and failed the round's
+  // 1.25 check. The learner must not produce a ruler the plan calls
+  // implausible on sight, so the ceiling now IS the plan's line.
   //
-  // The p90 is what makes that reachable: sixty frames of surprise in
-  // a six hundred frame window move it a long way, and the baseline
-  // never falls, so the lift is permanent for the session. The MEDIAN
-  // of the same window barely moves, which is why it makes a good
-  // ceiling.
+  // With the ruler frozen at birth, the ceiling has exactly one job:
+  // bounding the birth estimate. The p90 stays because blinks during
+  // learning must not drag "open" down.
 
-  function established(restingMm: number): BaselineState {
-    // A full learning window of ordinary open eyes.
-    return feed(
-      startBaseline(0),
-      0,
-      Array.from({ length: 350 }, () => restingMm),
-    );
-  }
-
-  it("pins the ceiling factor", () => {
-    expect(BASELINE_MEDIAN_CEILING_FACTOR).toBe(1.4);
+  it("pins the ceiling factor to the plan's pre-registered line", () => {
+    expect(BASELINE_MEDIAN_CEILING_FACTOR).toBe(1.25);
   });
 
-  it("refuses a rise driven by a brief wide eyed excursion", () => {
-    // Five hundred and forty ordinary frames plus sixty wide ones,
-    // which is roughly two seconds of raised brows at 30 fps. The p90
-    // of that window is about 11 mm; the median is still 6.5.
-    let state = established(6.5);
-    const before = state.kind === "ready" ? state.baselineMm : 0;
-    state = feed(state, 40000, [
-      ...Array.from({ length: 540 }, () => 6.5),
-      ...Array.from({ length: 60 }, () => 11),
-    ]);
-    const after = state.kind === "ready" ? state.baselineMm : 0;
-    expect(after).toBeLessThanOrEqual(6.5 * BASELINE_MEDIAN_CEILING_FACTOR);
-    expect(after).toBeLessThan(11);
-    expect(after).toBeGreaterThanOrEqual(before);
+  it("bounds the birth estimate against a surprised learning window", () => {
+    // A person who was surprised during the learning window would
+    // otherwise start the session with a broken line and carry it,
+    // frozen, to the end. The wide samples are INTERLEAVED: birth
+    // happens at the 30 second mark, so a tail appended after it
+    // would never be seen, and the first draft of this test proved
+    // exactly nothing for exactly that reason. Every sixth sample at
+    // 12 mm puts the raw p90 at 12 while the median stays 6.5.
+    const surprised = Array.from({ length: 350 }, (_, i) =>
+      i % 6 === 5 ? 12 : 6.5,
+    );
+    const state = feed(startBaseline(0), 0, surprised);
+    const baseline = state.kind === "ready" ? state.baselineMm : 0;
+    expect(baseline).toBeLessThanOrEqual(6.5 * BASELINE_MEDIAN_CEILING_FACTOR);
+    expect(baseline).toBeLessThan(12);
+    expect(personalThresholdMm(state) ?? Infinity).toBeLessThan(6.5);
   });
 
   it("keeps the blink line below the eye it is measuring", () => {
-    // The property that actually matters, stated directly: whatever
-    // the ratchet does, half the baseline must stay under the typical
-    // open aperture, or the eye reads closed at rest.
-    let state = established(6.5);
-    state = feed(state, 40000, [
-      ...Array.from({ length: 540 }, () => 6.5),
-      ...Array.from({ length: 60 }, () => 11),
-    ]);
+    // The property that actually matters, stated directly: half the
+    // baseline must stay under the typical open aperture, or the eye
+    // reads closed at rest. Interleaved for the same reason as above,
+    // and the excursion reads 14 mm because a smaller one leaves half
+    // the uncapped p90 under the aperture anyway, and this test would
+    // hold with the ceiling deleted, which the mutation run proved.
+    const surprised = Array.from({ length: 350 }, (_, i) =>
+      i % 5 === 4 ? 14 : 6.5,
+    );
+    const state = feed(startBaseline(0), 0, surprised);
     const threshold = personalThresholdMm(state) ?? Infinity;
     expect(threshold).toBeLessThan(6.5);
   });
 
-  it("still accepts a genuine rise, eyes that really did open wider", () => {
-    // Not a brief excursion but a sustained change: the whole window
-    // moves, so the median moves with it and the ceiling rises too.
-    let state = established(6.5);
-    const before = state.kind === "ready" ? state.baselineMm : 0;
-    state = feed(
-      state,
-      40000,
-      Array.from({ length: 600 }, () => 8.5),
-    );
-    const after = state.kind === "ready" ? state.baselineMm : 0;
-    expect(after).toBeGreaterThan(before);
-    expect(after).toBeGreaterThanOrEqual(8);
-  });
-
-  it("never falls, so a drooping lid cannot lower its own bar", () => {
-    // The rule the ratchet exists for, unchanged: the ceiling may
-    // block a RISE, it must never force a fall, or drowsiness would
-    // quietly lower the line that is meant to expose it.
-    let state = established(8);
-    const before = state.kind === "ready" ? state.baselineMm : 0;
-    state = feed(
-      state,
-      40000,
-      Array.from({ length: 600 }, () => 3),
-    );
-    const after = state.kind === "ready" ? state.baselineMm : 0;
-    expect(after).toBe(before);
-  });
-
-  it("bounds the very first baseline too, not only later rises", () => {
-    // A person who was surprised during the learning window would
-    // otherwise start the session with a broken line and no rise
-    // ever needed to get there.
-    const state = feed(startBaseline(0), 0, [
-      ...Array.from({ length: 300 }, () => 6.5),
-      ...Array.from({ length: 50 }, () => 12),
-    ]);
-    const baseline = state.kind === "ready" ? state.baselineMm : 0;
-    expect(baseline).toBeLessThanOrEqual(6.5 * BASELINE_MEDIAN_CEILING_FACTOR);
-    expect(personalThresholdMm(state) ?? Infinity).toBeLessThan(6.5);
-  });
-
-  it("leaves a healthy session untouched, the ceiling never binding", () => {
+  it("leaves a healthy birth untouched, the ceiling never binding", () => {
     // The recorded fixture's own shape: a median near 7 and a p90
-    // near 7.9, a ratio of about 1.12, nowhere near the 1.4 ceiling.
-    // The check is that the bounded answer IS the raw p90, so the fix
-    // costs nothing where nothing was broken.
-    let state = established(7);
-    const window = [
-      ...Array.from({ length: 500 }, () => 7),
-      ...Array.from({ length: 100 }, () => 7.9),
-    ];
-    state = feed(state, 40000, window);
+    // near 7.9, a ratio of about 1.13, under the 1.25 ceiling. The
+    // check is that the bounded answer IS the raw p90, so the
+    // tightening costs nothing where nothing was broken.
+    // Interleaved, because birth happens at the 30 second mark and a
+    // tail of wide samples appended after it would never be seen.
+    const window = Array.from({ length: 350 }, (_, i) =>
+      i % 5 === 4 ? 7.9 : 7,
+    );
+    const state = feed(startBaseline(0), 0, window);
     const after = state.kind === "ready" ? state.baselineMm : 0;
     const rawP90 = percentile(window, 90) ?? 0;
     const median = percentile(window, 50) ?? 0;
