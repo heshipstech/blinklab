@@ -749,7 +749,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 621 unit tests, 20 end to end tests all run in Chromium
+Test count: 619 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 188 Python tests of which
 2 skip
 

@@ -141,32 +141,36 @@ export const BLINK_RATE_WINDOW_MS = 60000;
 export const BLINK_RATE_MIN_OBSERVATION_MS = 15000;
 
 // The personal baseline of increment 4.2: thirty seconds of watching
-// learns what this person's open eyes measure. The threshold becomes
-// half of that. The 90th percentile keeps brief blinks from lowering
-// the estimate of "open".
+// learns what this person's open eyes measure, and the measurement is
+// then FROZEN for the session (20 August 2026, after the validation
+// round's baseline criterion failed on moving rulers). The threshold
+// becomes half of it. The 90th percentile keeps brief blinks from
+// lowering the estimate of "open".
 export const BASELINE_LEARN_MS = 30000;
 export const BASELINE_MIN_SAMPLES = 100;
 export const BASELINE_PERCENTILE = 90;
 export const BASELINE_THRESHOLD_FRACTION = 0.5;
-export const BASELINE_RECENT_CAP = 600;
-export const BASELINE_RISE_MIN_SAMPLES = 300;
 
-// The ratchet's ceiling, fix #126. The baseline is a p90, and a p90
-// is exactly what a brief excursion moves: sixty frames of surprise
-// in a six hundred frame window lift it a long way, and since the
-// baseline never falls, that lift lasts the whole session. Once half
-// the baseline exceeds the resting aperture, the blink line sits
-// ABOVE the open eye, every closure is timed from a crossing that
-// happened at rest, durations inflate and shapes flatten. That is
-// what the owner's own session did: a 10.7 mm baseline over a 5.25 mm
-// resting eye.
+// The birth ceiling, fix #126, tightened by the round. The baseline
+// is a p90, and a p90 is exactly what a surprised learning window
+// inflates: once half the baseline exceeds the resting aperture, the
+// blink line sits ABOVE the open eye, every closure is timed from a
+// crossing that happened at rest, durations inflate and shapes
+// flatten. That is what the owner's own session did: a 10.7 mm
+// baseline over a 5.25 mm resting eye.
 //
-// The MEDIAN of the same window barely moves under a brief
-// excursion, which is what makes it a good ceiling. At 1.4 the blink
-// line can never exceed seventy percent of the typical open
-// aperture, while an ordinary session's p90 to median ratio is about
-// 1.12, so nothing is constrained where nothing was broken.
-export const BASELINE_MEDIAN_CEILING_FACTOR = 1.4;
+// The MEDIAN of the same window barely moves under an excursion,
+// which is what makes it the ceiling's anchor. The factor was 1.4
+// until 20 August 2026; the validation round then showed baselines
+// born at 1.28 and 1.33 times resting passing the learner and
+// failing the plan's pre-registered 1.25 soundness line, so the
+// learner's ceiling now IS that line. A healthy window's p90 to
+// median ratio measures about 1.12, so nothing is constrained where
+// nothing is broken. Two denominators, stated plainly: the ceiling
+// divides by the LEARNING window's median, the plan's check by the
+// whole session's, so a learning window that itself reads high can
+// still produce a ruler the check refuses. docs/baseline-freeze.txt.
+export const BASELINE_MEDIAN_CEILING_FACTOR = 1.25;
 export const BASELINE_MEDIAN_PERCENTILE = 50;
 
 // Beyond these head angles, eye landmarks foreshorten and occlude

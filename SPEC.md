@@ -23,8 +23,8 @@ export type FeatureRecord = {
   faceDetected: boolean; // face present AND landmark count valid
   fps: number | null; // the PROCESSING rate: animation pace live, media-clock pace on clips; not a camera measurement (D1)
   apertureMm: number | null;
-  baselineMm: number | null; // the live 4.2 baseline (blink line)
-  shutBaselineMm: number | null; // frozen first-ready baseline (shut line)
+  baselineMm: number | null; // the 4.2 baseline, frozen at birth since 2026-08-20 (blink line)
+  shutBaselineMm: number | null; // first-ready baseline (shut line); equals baselineMm since the freeze, kept for contract stability
   blinkRatePerMin: number | null;
   lastBlinkDurationMs: number | null;
   lastBlinkAmplitudeMm: number | null;
