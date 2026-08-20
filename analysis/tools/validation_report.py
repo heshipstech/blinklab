@@ -71,6 +71,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
     headers = [
         "",
         "session",
+        "marks",
         "in window",
         "near start",
         "near end",
@@ -87,6 +88,11 @@ def checks_table(rows: list[ParticipantRow]) -> str:
             [
                 row.label,
                 row.session,
+                # Two is the protocol. Three of the round's first three
+                # participants pressed a different number, and the table
+                # said nothing, so a reader had to open the file to find
+                # out. The window still uses the first two marks.
+                str(row.markers_found),
                 "no log"
                 if row.no_blinks_detected
                 else dash(None if window is None else window.in_window),

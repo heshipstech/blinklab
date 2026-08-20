@@ -27,10 +27,10 @@ write-up for two days. The tables print the session name beside the
 label since 19 August. The names are `iphone`, `iphone2`,
 `iphone17promax`, `macbookair`, `macbookair2`, `pcsony`.
 
-**The finding: the same face gave a median eyelid aperture within 11
-percent across all five sessions, and the baselines learned from those
-measurements were 7.69, 8.09, 9.80, 7.78 and 7.30 mm, a spread of 34
-percent.** The iris normalisation works. What is learned from it does
+**The finding: the same face gave a median eyelid aperture within about
+11 percent across all six sessions, and the baselines learned from those
+measurements were 7.69, 7.61, 8.09, 9.80, 7.78 and 7.30 mm, a spread of
+34 percent.** The iris normalisation works. What is learned from it does
 not travel. In `macbookair`, a few frames in the first 30 seconds read
 up to 10.35 mm against a window median of 7.51, and a 90th percentile
 follows them, so the blink line landed at 71 percent of resting aperture
@@ -694,7 +694,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 617 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 160 Python tests of which
+in CI of which 2 rerun locally in WebKit, 161 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

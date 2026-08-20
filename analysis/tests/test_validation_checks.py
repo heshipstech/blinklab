@@ -671,3 +671,28 @@ class TestARowCarriesItsOwnName:
         moved = next(r for r in rows if r.session == alone.session)
         assert moved.label == "P2"
         assert moved.session == alone.session
+
+
+class TestTheTableShowsHowManyMarks:
+    def test_an_extra_mark_is_visible_without_opening_the_file(
+        self, tmp_path: Path
+    ) -> None:
+        # The protocol asks for two. Participants 2 and 3 of the round
+        # pressed three and four, and the published table said nothing
+        # about it. The window still uses the first two marks; this only
+        # makes the deviation visible.
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path, markers="3")
+        text = (tmp_path / f"blinklab-session-{STAMP}.csv").read_text()
+        (tmp_path / f"blinklab-session-{STAMP}.csv").write_text(
+            text.replace(
+                "# marker_2_seconds: 45.000",
+                "# marker_2_seconds: 45.000\n# marker_3_seconds: 60.000",
+            ),
+            encoding="utf-8",
+        )
+        write_blinks(tmp_path, [31_000.0])
+        row = row_for(load_pair(find_pairs(tmp_path)[0]))
+        assert row.markers_found == 3
+        assert "marks" in "\n".join(report(tmp_path)[0])
