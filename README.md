@@ -26,13 +26,38 @@ Every number on screen comes from a tested pure function, and every threshold is
 
 This project's rule is that a limitation you know about belongs in the open.
 
-- Thresholds are personal and learned per session. They are priced against **one** person's measured eyes so far, so another face may need different ones.
+- Thresholds are personal and learned per session, and the six-person validation round measured what that costs: on three of six volunteers' machines the learned baseline was unusable, one drifting during the measurement itself, one drifting before it, one landing too long. The round's pre-registered baseline criterion FAILED. Full table and write-up in `docs/validation-round.txt`.
 - Strong prescription glasses compress and distort the gaze signal near the edges of the screen, so calibrated gaze is reliable in the middle and degrades at the corners.
 - The instrument reads fully shut eyes as roughly a third of the open baseline rather than zero, so the literature's usual PERCLOS threshold does not transfer and ours is adjusted to the instrument. This is documented rather than hidden.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - **How many blinks it finds depends on how fast your computer is.** The page processes frames as fast as the face model can run, not as fast as the camera delivers them. Measured on 17 August: two four-core machines ran at 29 to 32 frames per second while a twelve-core machine ran at 127, on cameras that all declare 30. In the same scripted test the four-core machines found 7 and 9 of ten deliberate blinks and the twelve-core machine found all ten. A firm blink is caught at any of those rates; the ones at risk are shallow or quick, and for those the odds run from about half at 25 frames per second to certain at 60. The page shows its processing rate and does not yet warn you when it is low enough to matter. Measured in `docs/blink-sample-rate.txt` and `docs/validation-dry-run.txt`.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
 - An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. Until pull request #189 it still did not give exactly the same answer twice, because the face model was handed a wall clock reading and uses the gap between readings to follow a face. It now measures the same clip identically, byte for byte. Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
+
+## Does it work on other people?
+
+Six volunteers ran the scripted protocol on their own devices in their
+own rooms, 19 and 20 August 2026, one session each, against a plan and
+three failure criteria committed before any file existed. The answer
+has two halves and they point in opposite directions.
+
+**The baseline failed its criterion.** Three of the six machines
+produced no usable baseline: one drifted 34.6% during the measurement,
+one drifted 15.4% before the measurement window, and one settled 1.28
+times the person's own resting aperture. Every blink this instrument
+reports is judged against that learned baseline, so this is the
+finding that directs the next work.
+
+**The detector did not fail its criterion.** Among the three sessions
+with a working baseline, zero of the scripted blinks were missed, and
+the strictest-excluded session also caught ten of ten. What did appear
+in the wild is over-counting: one slow, deep blinker produced 25
+detections for 10 blinks, the first independent evidence for a
+double-counting defect this project had only seen on a benchmark.
+
+The full table, per-session prose, deviations, and what the round
+cannot say are in `docs/validation-round.txt`. No participant is
+named there or here; nothing identifying is published.
 
 ## Does it find the blinks a human found?
 
