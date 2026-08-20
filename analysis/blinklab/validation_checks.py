@@ -13,6 +13,8 @@ softening into a default when a check finds it inconvenient.
 
 from __future__ import annotations
 
+import math
+import re
 from dataclasses import dataclass
 
 import pandas as pd
@@ -276,9 +278,14 @@ def _number(session: Session, key: str) -> float | None:
     if raw is None or raw == "unknown":
         return None
     try:
-        return float(raw)
+        value = float(raw)
     except ValueError:
         return None
+    # float() parses "nan" and "inf" without complaint, and a NaN here
+    # would flow into the table as the word nan while every floor
+    # comparison against it read False. Not a measurement, so it reads
+    # as unknown, the same as the word.
+    return value if math.isfinite(value) else None
 
 
 def _text(session: Session, key: str) -> str | None:
@@ -379,13 +386,21 @@ class ParticipantRow:
         return declared < 25 <= processing
 
 
+# The date-and-time tail of an export's filename stamp, any year. This
+# used to be the literal string "-2026", which would have printed a
+# January 2027 file's whole stamp in the name column of a published
+# table.
+STAMP_TAIL = re.compile(r"-\d{4}-\d{2}-\d{2}T")
+
+
 def session_name(stamp: str) -> str:
     """The readable part of an export's filename stamp.
 
     `iphone17promax-2026-08-19T11-54-11-743` becomes `iphone17promax`,
     and a stamp that is only a date keeps its date.
     """
-    head = stamp.split("-2026", 1)[0]
+    match = STAMP_TAIL.search(stamp)
+    head = stamp[: match.start()] if match else ""
     return head if head else stamp
 
 

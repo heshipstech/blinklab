@@ -1,0 +1,313 @@
+ADVERSARIAL TESTING OF THE VALIDATION ROUND'S ANALYSIS TOOL
+===========================================================
+
+Written 20 August 2026, while the round is mid-flight with four of six
+participants back. The tool under test is the reading and judging path:
+
+    analysis/blinklab/validation.py
+    analysis/blinklab/validation_checks.py
+    analysis/tools/validation_report.py
+    analysis/blinklab/loader.py        (load_session, which they lean on)
+
+Why now: the table this tool prints will be published whatever it says,
+and the tool has already had one latent crash, a shadowed variable that
+criterion 1 would have hit on the first unsound session. The files it
+reads arrive by email from six strangers' machines, through mail
+clients, browsers and operating systems that rename, re-encode and
+truncate things. Every probe below feeds it something a real
+participant could plausibly produce by accident, plus a few that only
+corruption in transit would produce.
+
+No probe touches the real round folder. Every hostile file lives in a
+throwaway folder outside the repository.
+
+THE RULE THIS DOCUMENT FOLLOWS. Every prediction below was committed
+before the probe was run. The outcomes section is appended afterwards,
+and a prediction that turns out wrong stays in the record, wrong. That
+is the same arrangement the frame-rate question was settled under, and
+it is the only arrangement in which running the probes can teach
+anything.
+
+What counts as a finding, in order of severity:
+
+  SILENT WRONG RESULT   the tool prints a table with a wrong verdict in
+                        it and exits zero. The project's recurring
+                        defect, nine times now.
+  WHOLE-TABLE CRASH     one bad file kills the report for everyone,
+                        with a traceback instead of a refusal row. The
+                        contract in load_pair's docstring says the
+                        caller catches and prints a refusal line per
+                        participant; an exception that is not a
+                        ValidationError escapes that.
+  MISLEADING REFUSAL    the file is refused, loudly, but the reason
+                        printed sends the reader in a wrong direction.
+  COSMETIC              a dash or a name prints oddly.
+
+THE PROBES, EACH WITH ITS PREDICTION
+------------------------------------
+
+Probe A. A blinks row whose amplitude cell is not a number:
+`,,31000,120,junk,95,44`, in an otherwise healthy pair, with a second
+fully healthy participant in the same folder.
+  PREDICTION: whole-table crash. In load_camera_blinks the amplitude
+  parse sits OUTSIDE the try block that guards the time and duration,
+  so float("junk") raises a bare ValueError, which is not a
+  ValidationError, and the report dies with a traceback. The healthy
+  participant's row is lost with it.
+
+Probe B. A session row whose fps cell is a word: `fast` in one row,
+numbers in the rest.
+  PREDICTION: whole-table crash. The loader's own checks are field
+  count and timestamp order, so the file loads with an object-dtype fps
+  column, and processing_fps_median calls .median() on strings, which
+  raises TypeError.
+
+Probe C. A session row whose longClosureCount cell is a word: `two`.
+  PREDICTION: whole-table crash, int("two") in long_closures.
+
+Probe D. A session row whose baselineMm cell is `7.O`, letter O.
+  PREDICTION: whole-table crash, float("7.O") in baseline_settling.
+
+Probe E. A session row whose faceDetected cell is `maybe`.
+  PREDICTION: whole-table crash, astype("boolean") in load_session
+  raises on a value that is neither true nor false, and that exception
+  is a pandas one rather than a SessionError.
+
+Probe F. A healthy pair, except the blinks file is named `.CSV`,
+uppercase extension, holding ten blinks inside the marked window.
+  PREDICTION: silent wrong result, and the worst one available.
+  find_pairs globs `*.csv`, which is case sensitive on this machine and
+  in CI, so the blinks file is invisible: not paired, not a stray, not
+  refused. The session pairs with nothing, the row prints "no log", the
+  verdict is MISSED, and criterion 1 counts a detector failure that
+  never happened. Exit code zero.
+
+Probe G. A stray file that is not a CSV: `notes.txt` beside a healthy
+pair. Also a blinks file with `.csv.txt` appended, the classic mail
+client rename.
+  PREDICTION: silently ignored, both of them. The strays check promises
+  "a renamed file would otherwise be skipped without a word", but it
+  only looks at `*.csv`, so a renamed file is skipped without a word.
+  The `.csv.txt` variant is the same silent MISSED flip as probe F.
+
+Probe H. A session row with a `#` in the middle of a cell:
+aperture `7.0#x`, on the row where the baseline first appears.
+  PREDICTION: silent wrong result. The loader's pre-check reads the
+  file line by line and only skips lines that START with `#`, so the
+  row passes the field count. pandas is then given comment="#", which
+  cuts the line at the `#` wherever it is, so the row loses its tail
+  and the trailing columns fill with NaN. Nothing refuses. If the cut
+  lands before baselineMm on the only rows carrying a baseline, the
+  session reads "baseline never became ready" and is excluded from
+  criterion 1 for a reason that is not in the file.
+
+Probe I. A UTF-8 byte order mark at the front of a session file, which
+is what Excel's "CSV UTF-8" save produces, and a participant who opened
+their export in Excel and hit save is a plausible participant.
+  PREDICTION: loud refusal, wrong direction. The BOM glues itself to
+  the first `#`, the metadata loop stops at line one, the metadata
+  lines fall through into the CSV rows, and the refusal talks about
+  columns rather than about the encoding.
+
+Probe J. A session file whose metadata declares `markers: 2` and then
+carries marker_1 twice with different values, plus marker_2.
+  PREDICTION: silent acceptance. Metadata lands in a dict, so the
+  second marker_1 overwrites the first without a word, the declared
+  count matches, and the window is cut at a mark the participant may
+  not have pressed.
+
+Probe K. A marker whose value is `inf`, and separately `nan`.
+  PREDICTION: `inf` is silently accepted, float() is happy with it, and
+  the window becomes endless, so every blink in the file is "in
+  window". `nan` is refused by accident: NaN breaks the order
+  comparison, so the message says the markers are numbered in one order
+  and timed in another, which is not what is wrong with the file.
+
+Probe L. Metadata numbers that are `nan`: face_detected_fraction and
+camera_declared_fps.
+  PREDICTION: silent acceptance. _number only catches ValueError and
+  float("nan") does not raise, so NaN flows into the row, every
+  comparison against it is False, no floor fires, and the table prints
+  the word nan.
+
+Probe M. A folder whose only participant is unreadable.
+  PREDICTION: the tables say "no readable sessions" and the exit code
+  is 1, which is right, but the three criteria still print underneath,
+  each concluding "not met" from zero rows of evidence. A reader who
+  trusts the bottom of the page over the middle reads a round that
+  failed to read anybody as a round that met its criteria.
+
+Probe N. An empty blinks file, zero bytes, beside a healthy session.
+  PREDICTION: refused by name, "no header and no rows". Correct
+  behaviour, included so the probe list also proves some refusals
+  work rather than only hunting for ones that do not.
+
+Probe O. A stamp from next year: `participant5-2027-01-05T09-00-00-000`.
+  PREDICTION: cosmetic. session_name splits on the literal string
+  "-2026", so a 2027 file's name column carries the whole stamp
+  instead of the participant's name.
+
+WHAT IS DELIBERATELY NOT PROBED. The two holes already queued as rules
+for the next round, frame-rate soundness and window-scoped drift, are
+metric questions and are frozen mid-round. Nothing here changes a
+metric, a threshold, or a verdict on any file the current tool already
+reads correctly; the real four-participant table must print byte for
+byte identically before and after any fix that comes out of this.
+
+OUTCOMES
+--------
+
+Run 20 August 2026, against the code as it stood when the predictions
+were committed. Every probe ran in a throwaway folder under the session
+scratchpad; the real round folder was never touched. Fourteen of
+fifteen predictions were right. The fifteenth was wrong, and what
+actually happens is worse than what was predicted.
+
+Probe A. AS PREDICTED. Traceback, `ValueError: could not convert
+string to float: 'junk'` at validation.py line 162, exit 1, no table.
+The healthy second participant's row died with it.
+
+Probe B. AS PREDICTED. Traceback, `TypeError: Cannot perform reduction
+'median' with string dtype`, exit 1, no table.
+
+Probe C. AS PREDICTED. Traceback, `ValueError: invalid literal for
+int() with base 10: 'two'` in long_closures, exit 1, no table.
+
+Probe D. AS PREDICTED. Traceback, `ValueError: could not convert
+string to float: '7.O'` in baseline_settling, exit 1, no table.
+
+Probe E. AS PREDICTED. Traceback, `TypeError: Need to pass bool-like
+values` out of astype("boolean"), exit 1, no table.
+
+Probe F. AS PREDICTED, and it is the worst finding of the run. The
+`.CSV` blinks file is invisible: no pairing, no stray warning. The row
+prints "no log", the verdict is MISSED, criterion 1 counts "1 missed
+(P1)", and the exit code is 0. A present blinks file holding ten
+detected blinks was silently converted into evidence that the detector
+caught nothing.
+
+Probe G. AS PREDICTED. `notes.txt` was ignored without a word, and the
+`.csv.txt` blinks file produced the same silent MISSED flip as F, exit
+0, on a table that also contained a correctly counted participant, so
+it looks entirely routine.
+
+Probe H. AS PREDICTED. No refusal. The `#` cut both baseline rows
+before pandas saw them, the baseline columns print dashes, the row is
+excluded as "baseline never became ready", and with one participant
+that pushed criterion 1 to NOT EVALUATED. Exit 0, from a file whose
+bytes carry a working baseline.
+
+Probe I. AS PREDICTED. Refused loudly, but the message lists all
+sixteen columns as missing and says nothing about the encoding. A
+small extra wart surfaced: the refusal line prints the filename twice,
+once from the report and once from load_pair's wrapping.
+
+Probe J. AS PREDICTED. The second marker_1 silently won: ten blinks
+sat at 30.5 to 35.0 seconds, and with the window cut at the overriding
+36.0 the row printed 0 in window, verdict MISSED, exit 0.
+
+Probe K1. AS PREDICTED. `inf` accepted, the window never ends, twelve
+blinks "in window", verdict over-counted, exit 0.
+
+Probe K2. PREDICTION WRONG, and the truth is worse. The prediction was
+an accidental refusal, on the grounds that NaN breaks the order check.
+It does not: Python's list comparison tests identity before equality,
+sorted() carries the SAME NaN object across, and the order check
+passes. The NaN then flows into the window cut, where every comparison
+against it is False, so nothing is in the window, nothing is near
+either mark, and the verdict is MISSED. Exit 0. A single unparseable
+marker value manufactures detector-failure evidence silently. This is
+the same severity as F and it was found by being wrong about K2, which
+is the argument for running probes instead of trusting a reading.
+
+Probe L. AS PREDICTED. The table prints the word nan in "face seen
+(%)" and "declared fps", no floor fires, exit 0.
+
+Probe M. AS PREDICTED. "no readable sessions" in both tables, the one
+participant refused by name, and underneath, all three criteria
+conclude "not met" from zero rows of evidence. Exit 1.
+
+Probe N. AS PREDICTED. Refused by name: "no header and no rows". The
+refusal path works; the probe list is not only failures.
+
+Probe O. AS PREDICTED. The session column prints the entire
+`participant5-2027-01-05T09-00-00-000` stamp instead of the name.
+
+THE TALLY BY SEVERITY. Silent wrong result: F, G, H, J, K1, K2, L,
+and M's criteria lines. Whole-table crash: A, B, C, D, E. Misleading
+refusal: I, plus K2's predicted-but-absent refusal. Cosmetic: O, and
+the doubled filename in refusal lines. Working as designed: N.
+
+The probe harness and full transcript are in the session scratchpad;
+the fixes and their tests are the commits that follow this one, and
+every fix's test was watched failing against the unfixed code first.
+
+WHAT WAS FIXED, AND WHAT WAS DELIBERATELY NOT
+---------------------------------------------
+
+Written after the fixes landed, same branch. Twenty-one tests were
+added, one per refusal; twenty were watched failing against the
+unfixed code before any fix was written, which is the mutation proof.
+The twenty-first, that a lone .DS_Store file is ignored, passed before
+and after on purpose: it pins the one behaviour of the old pairing
+that the new pairing must keep. With the fixes in, all 182 Python
+tests pass.
+
+1. Crashes A to E became named refusals. The loader now checks, after
+   pandas has parsed, that every non-boolean column is numeric and
+   every boolean column is boolean, and names the column when one is
+   not. The amplitude parse in load_camera_blinks moved inside its
+   try, and blink times, durations and amplitudes must be finite. One
+   participant's corrupt cell now costs that participant a refusal row
+   while everybody else's table survives: probe A re-run prints the
+   healthy participant's COUNTED row above the corrupt one's refusal.
+
+2. The pairing (F, G) accounts for every entry in the folder.
+   find_pairs walks the directory instead of globbing `*.csv`: a
+   session or blinks file must carry its exact prefix and end `.csv`
+   exactly, and anything else, an uppercase `.CSV`, an appended
+   `.txt`, a stray notes file, a subdirectory, is a named refusal that
+   stops the run. The silent MISSED flip is gone. The one exception,
+   by name, is .DS_Store, which macOS drops into any folder Finder has
+   opened; refusing the round over it would train people to expect
+   refusals that mean nothing.
+
+3. The `#` divergence (H) is gone at the root. pandas no longer reads
+   the file itself with comment="#"; it is handed exactly the lines
+   the pre-check kept, so the two readers cannot disagree again, and a
+   hash inside a cell is just a character that fails the numeric check
+   from fix 1.
+
+4. Markers must be finite (K1, K2), refused by name otherwise, and
+   the refusal message for the NaN case now describes what is wrong
+   with the file rather than something else. Metadata numbers that
+   parse to NaN or infinity read as unknown (L), the same as the word
+   "unknown", because NaN is not a measurement.
+
+5. Duplicate metadata keys are refused (J), in both metadata readers:
+   a file that declares the same key twice has been edited or damaged,
+   and which value is true cannot be known from here.
+
+6. A byte order mark is named as what it is (I). Still a refusal,
+   deliberately: a file that has been through Excel may be damaged in
+   ways the mark merely advertises. The message now points at the
+   right culprit instead of listing every column as missing.
+
+7. With zero readable rows the criteria section says NOT EVALUATED
+   (M) instead of concluding "not met" three times from no evidence.
+
+8. session_name recognises any year's stamp (O), not the literal
+   string "-2026".
+
+Deliberately not fixed:
+
+- The doubled filename in some refusal lines, load_pair's wrapping
+  plus the report's own prefix. Cosmetic, appears only in lines that
+  already stop publication, and the wrapping is contract-tested
+  behaviour that other callers rely on. Not worth touching mid-round.
+- Nothing about metrics, thresholds, windows, drift, soundness or
+  verdicts moved. The real four-participant table was printed before
+  the branch and after it and diffed: byte for byte identical, exit
+  code 0 both times. The two holes queued for the next round,
+  frame-rate soundness and window-scoped drift, remain queued and
+  untouched.

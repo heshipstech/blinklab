@@ -394,6 +394,25 @@ class TestTheRow:
         assert row.camera_declared_fps is None
         assert not row.gate_would_refuse
 
+    def test_a_metadata_number_that_is_nan_is_none_not_nan(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe L. float("nan") does not raise, so NaN flowed into the
+        # row, every comparison against it was False, no floor fired,
+        # and the published table printed the word nan. NaN is not a
+        # measurement, so it reads as unknown, the same as "unknown".
+        self.full_session(
+            tmp_path,
+            face_detected_fraction="nan",
+            camera_declared_fps="inf",
+        )
+        write_blinks(tmp_path, [31_000.0])
+        row = row_for(load_pair(find_pairs(tmp_path)[0]))
+        assert row.face_detected_fraction is None
+        assert row.camera_declared_fps is None
+        assert not row.face_below_floor
+        assert not row.gate_would_refuse
+
     def test_a_slow_camera_behind_a_fast_display_is_flagged(
         self, tmp_path: Path
     ) -> None:
@@ -505,6 +524,26 @@ class TestTheWholeReport:
         assert refused == 1
         assert "REFUSED" in text
         assert "declares 3 markers" in text
+
+    def test_zero_readable_sessions_evaluate_no_criterion(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe M. With nothing read, the criteria section still
+        # printed, each criterion concluding "not met" from zero rows
+        # of evidence. A reader who trusts the bottom of the page over
+        # the middle would read a round that could not read anybody as
+        # a round that met its criteria.
+        from tools.validation_report import report
+
+        write_session(
+            tmp_path,
+            ["# source: camera", "# markers: 3", "# marker_1_seconds: 1.0"],
+        )
+        lines, refused = report(tmp_path)
+        text = "\n".join(lines)
+        assert refused == 1
+        assert "NOT EVALUATED" in text
+        assert "not met" not in text
 
     def test_an_unreadable_folder_stops_the_whole_run(
         self, tmp_path: Path
@@ -652,6 +691,14 @@ class TestARowCarriesItsOwnName:
         # string there would put a blank column in a published table.
         assert session_name("2026-08-16T09-00-00-000") == (
             "2026-08-16T09-00-00-000"
+        )
+
+    def test_a_stamp_from_another_year_still_yields_its_name(self) -> None:
+        # Probe O. The split was on the literal string "-2026", so a
+        # file from January 2027 would print its whole stamp in the
+        # name column of a published table.
+        assert session_name("participant5-2027-01-05T09-00-00-000") == (
+            "participant5"
         )
 
     def test_the_name_survives_a_label_shifting_under_it(

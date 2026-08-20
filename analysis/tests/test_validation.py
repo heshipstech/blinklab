@@ -154,6 +154,38 @@ class TestWhatTheBlinkLogRefuses:
                 blink_file(tmp_path, [blink_row(2000), blink_row(1000)])
             )
 
+    def test_an_amplitude_that_is_not_a_number(self, tmp_path: Path) -> None:
+        # Probe A. This parse sat outside the try block that guards the
+        # time and the duration, so one corrupt cell in one
+        # participant's file crashed the whole report with a traceback,
+        # taking every other participant's row down with it.
+        with pytest.raises(ValidationError, match="could not read"):
+            load_camera_blinks(blink_file(tmp_path, [",,1000,120,junk,95,44"]))
+
+    def test_a_time_that_is_infinite(self, tmp_path: Path) -> None:
+        # float() is happy with "inf" and "nan", and a NaN time is
+        # invisible to every window comparison, so these must be
+        # refused by name rather than parsed.
+        with pytest.raises(ValidationError, match="finite"):
+            load_camera_blinks(blink_file(tmp_path, [",,inf,120,4.2,95,44"]))
+
+    def test_an_amplitude_that_is_nan(self, tmp_path: Path) -> None:
+        with pytest.raises(ValidationError, match="finite"):
+            load_camera_blinks(blink_file(tmp_path, [",,1000,120,nan,95,44"]))
+
+    def test_a_metadata_key_declared_twice(self, tmp_path: Path) -> None:
+        # Probe J, on the blinks side. A dict resolves a repeated key
+        # in favour of the last line, silently, and which value is true
+        # cannot be known from here.
+        with pytest.raises(ValidationError, match="twice"):
+            load_camera_blinks(
+                blink_file(
+                    tmp_path,
+                    [blink_row(1000)],
+                    metadata=["# source: camera", "# source: camera"],
+                )
+            )
+
     def test_a_header_and_nothing_else(self, tmp_path: Path) -> None:
         # Distinct from "no blinks detected", which produces no file at
         # all. The page cannot write this, so it arrived some other
@@ -240,6 +272,44 @@ class TestMarkers:
         with pytest.raises(ValidationError, match="not a number"):
             session_markers_ms(pair.session)
 
+    def test_a_marker_that_is_nan(self, tmp_path: Path) -> None:
+        # Probe K2, the one whose prediction was wrong. float("nan")
+        # parses, sorted() carries the same NaN object across so the
+        # order check compares it to itself by identity and passes, and
+        # then every window comparison against NaN is False: nothing in
+        # the window, nothing near either mark, verdict MISSED, exit
+        # zero. One unparseable marker manufactured detector-failure
+        # evidence silently.
+        pair = load_pair(
+            find_pairs_of(
+                tmp_path,
+                [
+                    "# source: camera",
+                    "# markers: 2",
+                    "# marker_1_seconds: 30.0",
+                    "# marker_2_seconds: nan",
+                ],
+            )[0]
+        )
+        with pytest.raises(ValidationError, match="finite"):
+            session_markers_ms(pair.session)
+
+    def test_a_marker_that_is_infinite(self, tmp_path: Path) -> None:
+        # Probe K1. An endless window swallows every blink in the file.
+        pair = load_pair(
+            find_pairs_of(
+                tmp_path,
+                [
+                    "# source: camera",
+                    "# markers: 2",
+                    "# marker_1_seconds: 30.0",
+                    "# marker_2_seconds: inf",
+                ],
+            )[0]
+        )
+        with pytest.raises(ValidationError, match="finite"):
+            session_markers_ms(pair.session)
+
 
 def find_pairs_of(tmp_path: Path, metadata: list[str]) -> list:
     """One session file in its own folder, paired."""
@@ -318,6 +388,82 @@ class TestPairingAFolder:
         (tmp_path / "sarahs-session.csv").write_text("x", encoding="utf-8")
         with pytest.raises(ValidationError, match="renamed file"):
             find_pairs(tmp_path)
+
+    def test_an_uppercase_extension_is_refused_not_invisible(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe F, the worst finding of the adversarial run. The old
+        # glob("*.csv") was case sensitive, so a blinks file renamed to
+        # .CSV in transit was not paired, not a stray, not refused. The
+        # session paired with nothing, the row said "no log", and a
+        # file holding ten detected blinks became a MISSED verdict that
+        # criterion 1 counted against the detector. Exit code zero.
+        session_file(
+            tmp_path,
+            ["# source: camera"],
+            name="blinklab-session-2026-08-16T09-00-00-000.csv",
+        )
+        blink_file(
+            tmp_path,
+            [blink_row(1000)],
+            name="blinklab-blinks-2026-08-16T09-00-00-000.CSV",
+        )
+        with pytest.raises(ValidationError, match=r"\.CSV"):
+            find_pairs(tmp_path)
+
+    def test_a_mail_clients_txt_suffix_is_refused_not_invisible(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe G, same silent MISSED flip through a different rename.
+        session_file(
+            tmp_path,
+            ["# source: camera"],
+            name="blinklab-session-2026-08-16T09-00-00-000.csv",
+        )
+        blink_file(
+            tmp_path,
+            [blink_row(1000)],
+            name="blinklab-blinks-2026-08-16T09-00-00-000.csv.txt",
+        )
+        with pytest.raises(ValidationError, match=r"\.csv\.txt"):
+            find_pairs(tmp_path)
+
+    def test_a_file_that_is_not_a_csv_at_all_is_refused(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe G. The docstring already promised that nothing in the
+        # folder goes unaccounted for; the old glob quietly limited
+        # that promise to files ending .csv in exactly that case.
+        session_file(
+            tmp_path,
+            ["# source: camera"],
+            name="blinklab-session-2026-08-16T09-00-00-000.csv",
+        )
+        (tmp_path / "notes.txt").write_text("ran it at my desk\n")
+        with pytest.raises(ValidationError, match="notes.txt"):
+            find_pairs(tmp_path)
+
+    def test_a_subdirectory_is_refused(self, tmp_path: Path) -> None:
+        session_file(
+            tmp_path,
+            ["# source: camera"],
+            name="blinklab-session-2026-08-16T09-00-00-000.csv",
+        )
+        (tmp_path / "extracted").mkdir()
+        with pytest.raises(ValidationError, match="extracted"):
+            find_pairs(tmp_path)
+
+    def test_the_ds_store_file_alone_is_ignored(self, tmp_path: Path) -> None:
+        # The one exception, by name: macOS drops .DS_Store into any
+        # folder Finder has opened, and refusing the whole round over
+        # it would train people to expect refusals that mean nothing.
+        session_file(
+            tmp_path,
+            ["# source: camera"],
+            name="blinklab-session-2026-08-16T09-00-00-000.csv",
+        )
+        (tmp_path / ".DS_Store").write_bytes(b"\x00\x01")
+        assert len(find_pairs(tmp_path)) == 1
 
     def test_an_empty_folder(self, tmp_path: Path) -> None:
         with pytest.raises(ValidationError, match="no session exports"):

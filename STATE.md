@@ -1,4 +1,21 @@
-Last increment: the six-person validation round's analysis tool, whole.
+Last increment: the round's analysis tool was adversarially tested
+BEFORE its table gets published, and hardened by what that found. The
+record is `docs/validation-tool-adversarial.txt`: fifteen probes, every
+prediction committed before any probe ran, fourteen right and the
+fifteenth wrong in the bad direction. What the probes caught: five ways
+one participant's corrupt cell crashed everybody's table, a renamed
+blinks file (`.CSV`, `.csv.txt`) that silently became a MISSED verdict
+criterion 1 would have counted, a `nan` marker that manufactured the
+same verdict, a `#` inside a cell that silently voided a working
+baseline, and criteria that printed "not met" under a table with zero
+readable rows. All of those are named refusals now, 21 new Python
+tests were each watched failing against the unfixed code first, and
+the real four-participant table prints byte for byte what it printed
+before the branch, checked by diff. No metric, threshold or verdict
+moved; mid-round freezes held.
+
+The increment before it: the six-person validation round's analysis
+tool, whole.
 `docs/validation-plan.md` was committed BEFORE any session file existed,
 `analysis/blinklab/validation.py` pairs a folder of exports and refuses
 by name, `analysis/blinklab/validation_checks.py` computes the plan's
@@ -43,7 +60,7 @@ Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
 correction adds `baseline_over_resting`, flagged above 1.25, and
 `macbookair` is the only session of the six that it flags.
-Last commit, as of the stamp below: 2026-08-19;
+Last commit, as of the stamp below: 2026-08-20;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: the six-person validation round, which is the
@@ -289,7 +306,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 19 August 2026. When this file changes, this stamp changes
+Stamped: 20 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -694,7 +711,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 617 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 161 Python tests of which
+in CI of which 2 rerun locally in WebKit, 182 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

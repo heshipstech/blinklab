@@ -191,6 +191,19 @@ def criterion_one(
 
 def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
     """The three pre-registered failure criteria, answered out loud."""
+    # With nothing read there is no evidence in either direction, and
+    # printing "not met" three times under an empty table would let a
+    # reader who trusts the bottom of the page read a round that could
+    # not read anybody as a round that met its criteria.
+    if not rows:
+        return [
+            "The three failure criteria, fixed in the plan before any "
+            "file was read:",
+            "",
+            "NOT EVALUATED. No session could be read, so this round "
+            "carries no evidence about any criterion in either "
+            "direction. The refusals above are the whole result.",
+        ]
     # The plan's third correction: only sessions with a working ruler
     # are evidence about the detector. Unsound rows stay in the table
     # and are named here; they simply do not vote.
