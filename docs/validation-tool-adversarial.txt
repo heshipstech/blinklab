@@ -311,3 +311,86 @@ Deliberately not fixed:
   code 0 both times. The two holes queued for the next round,
   frame-rate soundness and window-scoped drift, remain queued and
   untouched.
+
+SECOND PASS, 20 AUGUST 2026: THE JUDGING AND RENDERING LAYER
+============================================================
+
+The first pass fed the tool files it should refuse. This pass feeds it
+files it will ACCEPT, and asks whether the judging and the printed
+table then say anything wrong or unreadable. The owner authorised this
+while waiting for the last two participants. Same rule as before:
+these predictions are committed before any probe runs, outcomes are
+appended after, and a wrong prediction stays in the record, wrong.
+
+The freeze still binds. No metric, threshold, window rule or verdict
+may move. A finding whose fix would change a judgement on a valid file
+gets recorded as a rule for the NEXT round, exactly like frame-rate
+soundness and window-scoped drift already are. Only display and
+reading-trust fixes are allowed out of this pass, and the real
+four-participant table must again print byte for byte identically.
+
+THE PROBES, EACH WITH ITS PREDICTION
+------------------------------------
+
+Probe P. Two marks stamped at the SAME moment, a zero-width window.
+This is a plausible real file: marks are stamped with lastRecordAtMs,
+so two presses inside the same one-second record carry the same time,
+and two of the four real participants pressed the button more than
+twice.
+  PREDICTION: silently plausible-looking. Only blinks at exactly that
+  millisecond are in the window, the verdict reads MISSED, the marks
+  column says 2, and nothing in the table shows the window has no
+  width. Nothing crashes and nothing refuses. If confirmed, this is a
+  NEXT-ROUND rule (a minimum window width, or printing the window
+  length), not a mid-round fix, because a fix would change a verdict.
+
+Probe Q. A blink at exactly the first mark's millisecond.
+  PREDICTION: correct behaviour, included as a control. The boundary
+  is inclusive, so it counts in the window, does not double-count as
+  near-start, and is counted as an edge blink the slack could move.
+
+Probe R. A truncation declaration that is malformed:
+`# blinks_detected: 40.5` above a log holding one row.
+  PREDICTION: silently swallowed. blinks_lost catches the ValueError
+  and returns 0, so a file that DECLARES it lost rows reads as having
+  lost none, no TRUNCATED FILES warning prints, and the window count
+  is presented as a count rather than a floor. Exit 0.
+
+Probe S. A truncation declaration that is backwards:
+`# blinks_detected: 5` with `# blinks_recorded: 10`.
+  PREDICTION: silently clamped to zero lost by max(0, ...), same
+  presentation problem as R. A declaration that cannot be true should
+  be a refusal, not a shrug.
+
+Probe T. Markers numbered 2 and 3 with no marker 1, declared count 2.
+  PREDICTION: silently accepted. The count matches the lines found,
+  the window is cut at the two marks that exist, and the table cannot
+  show that the numbering starts at 2. The real exporter numbers from
+  1, so this only reaches the tool through editing or damage. Low
+  severity either way; recorded, probably not fixed.
+
+Probe U. A folder with exactly one participant.
+  PREDICTION: cosmetic. The header prints "1 participants".
+
+Probe V. A camera name containing an emoji.
+  PREDICTION: cosmetic. Column widths are computed by counting
+  characters, an emoji is one character but two columns wide in a
+  terminal, so that row's columns shift by one space per emoji.
+  Recorded, not fixed: honest alignment for wide characters needs a
+  width table, which is more machinery than a table of six rows
+  justifies.
+
+Probe W. The doubled filename in session-level refusal lines, carried
+over from the first pass where it was left alone.
+  PREDICTION, revisited as a display fix this time: the report's
+  refusal line prefixes the session filename onto a reason that
+  already starts with it. Deduplicating in the REPORT only, when the
+  reason already begins with the session file's name, keeps
+  load_pair's contract-tested wrapping untouched and the blinks-file
+  case (where the prefix adds information) intact.
+
+OUTCOMES, SECOND PASS
+---------------------
+
+Not yet run. Appended after the probes execute, in a separate commit,
+so the history shows these predictions existed first.
