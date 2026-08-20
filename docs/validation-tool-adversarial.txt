@@ -157,7 +157,87 @@ byte identically before and after any fix that comes out of this.
 OUTCOMES
 --------
 
-Not yet run. This section is appended after the probes execute, in a
-separate commit, so the repository's history shows the predictions
-existed first. A prediction that turns out wrong stays in the record,
-wrong.
+Run 20 August 2026, against the code as it stood when the predictions
+were committed. Every probe ran in a throwaway folder under the session
+scratchpad; the real round folder was never touched. Fourteen of
+fifteen predictions were right. The fifteenth was wrong, and what
+actually happens is worse than what was predicted.
+
+Probe A. AS PREDICTED. Traceback, `ValueError: could not convert
+string to float: 'junk'` at validation.py line 162, exit 1, no table.
+The healthy second participant's row died with it.
+
+Probe B. AS PREDICTED. Traceback, `TypeError: Cannot perform reduction
+'median' with string dtype`, exit 1, no table.
+
+Probe C. AS PREDICTED. Traceback, `ValueError: invalid literal for
+int() with base 10: 'two'` in long_closures, exit 1, no table.
+
+Probe D. AS PREDICTED. Traceback, `ValueError: could not convert
+string to float: '7.O'` in baseline_settling, exit 1, no table.
+
+Probe E. AS PREDICTED. Traceback, `TypeError: Need to pass bool-like
+values` out of astype("boolean"), exit 1, no table.
+
+Probe F. AS PREDICTED, and it is the worst finding of the run. The
+`.CSV` blinks file is invisible: no pairing, no stray warning. The row
+prints "no log", the verdict is MISSED, criterion 1 counts "1 missed
+(P1)", and the exit code is 0. A present blinks file holding ten
+detected blinks was silently converted into evidence that the detector
+caught nothing.
+
+Probe G. AS PREDICTED. `notes.txt` was ignored without a word, and the
+`.csv.txt` blinks file produced the same silent MISSED flip as F, exit
+0, on a table that also contained a correctly counted participant, so
+it looks entirely routine.
+
+Probe H. AS PREDICTED. No refusal. The `#` cut both baseline rows
+before pandas saw them, the baseline columns print dashes, the row is
+excluded as "baseline never became ready", and with one participant
+that pushed criterion 1 to NOT EVALUATED. Exit 0, from a file whose
+bytes carry a working baseline.
+
+Probe I. AS PREDICTED. Refused loudly, but the message lists all
+sixteen columns as missing and says nothing about the encoding. A
+small extra wart surfaced: the refusal line prints the filename twice,
+once from the report and once from load_pair's wrapping.
+
+Probe J. AS PREDICTED. The second marker_1 silently won: ten blinks
+sat at 30.5 to 35.0 seconds, and with the window cut at the overriding
+36.0 the row printed 0 in window, verdict MISSED, exit 0.
+
+Probe K1. AS PREDICTED. `inf` accepted, the window never ends, twelve
+blinks "in window", verdict over-counted, exit 0.
+
+Probe K2. PREDICTION WRONG, and the truth is worse. The prediction was
+an accidental refusal, on the grounds that NaN breaks the order check.
+It does not: Python's list comparison tests identity before equality,
+sorted() carries the SAME NaN object across, and the order check
+passes. The NaN then flows into the window cut, where every comparison
+against it is False, so nothing is in the window, nothing is near
+either mark, and the verdict is MISSED. Exit 0. A single unparseable
+marker value manufactures detector-failure evidence silently. This is
+the same severity as F and it was found by being wrong about K2, which
+is the argument for running probes instead of trusting a reading.
+
+Probe L. AS PREDICTED. The table prints the word nan in "face seen
+(%)" and "declared fps", no floor fires, exit 0.
+
+Probe M. AS PREDICTED. "no readable sessions" in both tables, the one
+participant refused by name, and underneath, all three criteria
+conclude "not met" from zero rows of evidence. Exit 1.
+
+Probe N. AS PREDICTED. Refused by name: "no header and no rows". The
+refusal path works; the probe list is not only failures.
+
+Probe O. AS PREDICTED. The session column prints the entire
+`participant5-2027-01-05T09-00-00-000` stamp instead of the name.
+
+THE TALLY BY SEVERITY. Silent wrong result: F, G, H, J, K1, K2, L,
+and M's criteria lines. Whole-table crash: A, B, C, D, E. Misleading
+refusal: I, plus K2's predicted-but-absent refusal. Cosmetic: O, and
+the doubled filename in refusal lines. Working as designed: N.
+
+The probe harness and full transcript are in the session scratchpad;
+the fixes and their tests are the commits that follow this one, and
+every fix's test was watched failing against the unfixed code first.
