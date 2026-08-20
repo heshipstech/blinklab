@@ -102,4 +102,37 @@ recall, so precision RISES while recall holds within a point.
 OUTCOMES
 --------
 
-Not yet run. Appended after the experiment, in a later commit.
+The experiment ran 20 August 2026, the corpus re-measured in the
+early hours of 21 August. Every prediction held, and the decision
+rule was met exactly.
+
+The traces: the P1 shape went from 2 counts to 1 at every rate from
+25 to 90 Hz and every phase. The genuine double blink stayed 2 at
+every rate and phase, which is the condition the gate had to meet to
+ship. The band-reopen double went to 1, the accepted cost. Durations
+match their analytic crossing times to within a sample step, so the
+failure that killed the fix #114 reopen latch did not return. The
+mutation proof: deleting the gate turns exactly the two re-crossing
+tests red and nothing else.
+
+The corpus, measured with the gate and evaluated against the 408
+human-marked blinks:
+
+    detections   419 -> 406   (fell, as predicted)
+    recall       83.6% -> 83.6%, 341 of 408, IDENTICAL to the blink
+    precision    81.4% -> 84.0%, invented 78 -> 65
+    F1           82.5% -> 83.8%
+
+Thirteen false alarms removed at ZERO recall cost, the same profile
+as the refractory fix before it. Of the thirteen, eleven were
+fragments sitting on a real blink under the strict rule (49 -> 38),
+which is exactly the re-crossing class the gate was aimed at. The
+miss table is unchanged to the blink: 67 misses, 47 fully closed,
+70.1%, so the gate touched nothing it was not aimed at. The flutter
+clip that drove the freeze run's precision drop kept its recall and
+lost three of its eight false alarms.
+
+Published as the fifth number in docs/eyeblink8-result.txt. The
+refractory period stays at 150 ms, untouched: the gate removes the
+re-crossings by mechanism, not by timer, which is what the plan's
+rule about constants and benchmarks always demanded.
