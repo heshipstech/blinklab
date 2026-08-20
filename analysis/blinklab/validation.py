@@ -117,6 +117,44 @@ def _refuse_clip(metadata: dict[str, str], name: str) -> None:
         )
 
 
+def _refuse_broken_truncation_declaration(
+    metadata: dict[str, str], name: str
+) -> None:
+    """The truncation declaration must be readable, whole and possible.
+
+    The declaration exists so truncation cannot hide (#172), and
+    blinks_lost used to shrug at a declaration it could not read:
+    a ValueError became zero and max(0, ...) clamped a backwards pair,
+    so a file that SAID it lost rows printed as a clean count with no
+    warning. A declaration that cannot be trusted is a refusal, not a
+    zero.
+    """
+    detected = metadata.get("blinks_detected")
+    recorded = metadata.get("blinks_recorded")
+    if detected is None and recorded is None:
+        return
+    if detected is None or recorded is None:
+        raise ValidationError(
+            f"{name}: half a truncation declaration. The exporter "
+            "writes blinks_detected and blinks_recorded together or "
+            "not at all, so this file lost a metadata line somewhere."
+        )
+    try:
+        detected_count = int(detected)
+        recorded_count = int(recorded)
+    except ValueError as error:
+        raise ValidationError(
+            f"{name}: the truncation declaration is not whole numbers: "
+            f"blinks_detected {detected!r}, blinks_recorded {recorded!r}"
+        ) from error
+    if detected_count < recorded_count:
+        raise ValidationError(
+            f"{name}: the truncation declaration cannot be true: "
+            f"{recorded_count} rows recorded out of {detected_count} "
+            "detected"
+        )
+
+
 def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
     """Read one live session's blink log, or refuse it by name."""
     path = Path(path)
@@ -138,6 +176,7 @@ def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
 
     metadata = _read_metadata(path)
     _refuse_clip(metadata, path.name)
+    _refuse_broken_truncation_declaration(metadata, path.name)
 
     rows = [
         line

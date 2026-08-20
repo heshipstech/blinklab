@@ -186,6 +186,58 @@ class TestWhatTheBlinkLogRefuses:
                 )
             )
 
+    def test_a_malformed_truncation_declaration(self, tmp_path: Path) -> None:
+        # Probe R of the second pass. blinks_lost caught the ValueError
+        # and returned 0, so a file that DECLARES it lost rows read as
+        # having lost none, and its window count printed as a count
+        # rather than a floor. The declaration exists so truncation
+        # cannot hide (#172); a declaration that cannot be read must
+        # not quietly mean "nothing lost".
+        with pytest.raises(ValidationError, match="truncation"):
+            load_camera_blinks(
+                blink_file(
+                    tmp_path,
+                    [blink_row(1000)],
+                    metadata=[
+                        "# source: camera",
+                        "# blinks_detected: 40.5",
+                        "# blinks_recorded: 1",
+                    ],
+                )
+            )
+
+    def test_a_backwards_truncation_declaration(self, tmp_path: Path) -> None:
+        # Probe S. More rows recorded than detected cannot be true, and
+        # max(0, ...) silently read it as nothing lost.
+        with pytest.raises(ValidationError, match="cannot be true"):
+            load_camera_blinks(
+                blink_file(
+                    tmp_path,
+                    [blink_row(1000)],
+                    metadata=[
+                        "# source: camera",
+                        "# blinks_detected: 5",
+                        "# blinks_recorded: 10",
+                    ],
+                )
+            )
+
+    def test_half_a_truncation_declaration(self, tmp_path: Path) -> None:
+        # The exporter writes both lines or neither. One alone means
+        # the file lost a metadata line somewhere, and what the
+        # remaining number means cannot be known from here.
+        with pytest.raises(ValidationError, match="truncation"):
+            load_camera_blinks(
+                blink_file(
+                    tmp_path,
+                    [blink_row(1000)],
+                    metadata=[
+                        "# source: camera",
+                        "# blinks_detected: 5",
+                    ],
+                )
+            )
+
     def test_a_header_and_nothing_else(self, tmp_path: Path) -> None:
         # Distinct from "no blinks detected", which produces no file at
         # all. The page cannot write this, so it arrived some other

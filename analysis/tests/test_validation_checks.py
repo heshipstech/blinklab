@@ -135,6 +135,22 @@ class TestTheTenMarkedBlinks:
         assert result is not None
         assert result.near_end == 1
 
+    def test_a_blink_exactly_at_a_mark_counts_once(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe Q of the second pass, the control that behaved. The
+        # boundary is inclusive, so a blink at the mark's own
+        # millisecond is in the window, is NOT also near-start, and is
+        # an edge blink the slack could move out.
+        times = [10_000.0, 15_000.0]
+        result = count_between_marks(
+            blink_log(tmp_path, times), [10_000, 20_000]
+        )
+        assert result is not None
+        assert result.in_window == 2
+        assert result.near_start == 0
+        assert result.edge_of_window == 1
+
     def test_fewer_than_two_marks_is_not_a_zero(self, tmp_path: Path) -> None:
         # A zero would be a claim about the instrument. This is a fact
         # about the file, and the two must not print the same.
@@ -524,6 +540,35 @@ class TestTheWholeReport:
         assert refused == 1
         assert "REFUSED" in text
         assert "declares 3 markers" in text
+
+    def test_one_participant_prints_singular(self, tmp_path: Path) -> None:
+        # Probe U of the second pass: the header printed
+        # "1 participants".
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [30_500 + index * 500 for index in range(10)])
+        text = "\n".join(report(tmp_path)[0])
+        assert "1 participant in" in text
+        assert "1 participants" not in text
+
+    def test_a_refusal_line_names_the_file_once(self, tmp_path: Path) -> None:
+        # Probe W of the second pass. load_pair wraps the loader's
+        # error with the filename, and the report prefixed the same
+        # filename again, so session-level refusals printed it twice.
+        # The wrapping stays (other callers rely on it); the report
+        # just stops repeating it.
+        from tools.validation_report import report
+
+        name = f"blinklab-session-{STAMP}.csv"
+        write_session(
+            tmp_path,
+            ["# source: camera"],
+            rows=[a_row(2000), a_row(1000)],
+        )
+        text = "\n".join(report(tmp_path)[0])
+        assert f"{name}: {name}" not in text
+        assert name in text
 
     def test_zero_readable_sessions_evaluate_no_criterion(
         self, tmp_path: Path
