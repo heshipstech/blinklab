@@ -241,3 +241,73 @@ the doubled filename in refusal lines. Working as designed: N.
 The probe harness and full transcript are in the session scratchpad;
 the fixes and their tests are the commits that follow this one, and
 every fix's test was watched failing against the unfixed code first.
+
+WHAT WAS FIXED, AND WHAT WAS DELIBERATELY NOT
+---------------------------------------------
+
+Written after the fixes landed, same branch. Twenty-one tests were
+added, one per refusal; twenty were watched failing against the
+unfixed code before any fix was written, which is the mutation proof.
+The twenty-first, that a lone .DS_Store file is ignored, passed before
+and after on purpose: it pins the one behaviour of the old pairing
+that the new pairing must keep. With the fixes in, all 182 Python
+tests pass.
+
+1. Crashes A to E became named refusals. The loader now checks, after
+   pandas has parsed, that every non-boolean column is numeric and
+   every boolean column is boolean, and names the column when one is
+   not. The amplitude parse in load_camera_blinks moved inside its
+   try, and blink times, durations and amplitudes must be finite. One
+   participant's corrupt cell now costs that participant a refusal row
+   while everybody else's table survives: probe A re-run prints the
+   healthy participant's COUNTED row above the corrupt one's refusal.
+
+2. The pairing (F, G) accounts for every entry in the folder.
+   find_pairs walks the directory instead of globbing `*.csv`: a
+   session or blinks file must carry its exact prefix and end `.csv`
+   exactly, and anything else, an uppercase `.CSV`, an appended
+   `.txt`, a stray notes file, a subdirectory, is a named refusal that
+   stops the run. The silent MISSED flip is gone. The one exception,
+   by name, is .DS_Store, which macOS drops into any folder Finder has
+   opened; refusing the round over it would train people to expect
+   refusals that mean nothing.
+
+3. The `#` divergence (H) is gone at the root. pandas no longer reads
+   the file itself with comment="#"; it is handed exactly the lines
+   the pre-check kept, so the two readers cannot disagree again, and a
+   hash inside a cell is just a character that fails the numeric check
+   from fix 1.
+
+4. Markers must be finite (K1, K2), refused by name otherwise, and
+   the refusal message for the NaN case now describes what is wrong
+   with the file rather than something else. Metadata numbers that
+   parse to NaN or infinity read as unknown (L), the same as the word
+   "unknown", because NaN is not a measurement.
+
+5. Duplicate metadata keys are refused (J), in both metadata readers:
+   a file that declares the same key twice has been edited or damaged,
+   and which value is true cannot be known from here.
+
+6. A byte order mark is named as what it is (I). Still a refusal,
+   deliberately: a file that has been through Excel may be damaged in
+   ways the mark merely advertises. The message now points at the
+   right culprit instead of listing every column as missing.
+
+7. With zero readable rows the criteria section says NOT EVALUATED
+   (M) instead of concluding "not met" three times from no evidence.
+
+8. session_name recognises any year's stamp (O), not the literal
+   string "-2026".
+
+Deliberately not fixed:
+
+- The doubled filename in some refusal lines, load_pair's wrapping
+  plus the report's own prefix. Cosmetic, appears only in lines that
+  already stop publication, and the wrapping is contract-tested
+  behaviour that other callers rely on. Not worth touching mid-round.
+- Nothing about metrics, thresholds, windows, drift, soundness or
+  verdicts moved. The real four-participant table was printed before
+  the branch and after it and diffed: byte for byte identical, exit
+  code 0 both times. The two holes queued for the next round,
+  frame-rate soundness and window-scoped drift, remain queued and
+  untouched.
