@@ -122,6 +122,18 @@ export const APERTURE_HYSTERESIS_FRACTION = 0.1;
 // frames, and a count that missed blinks would read as calm.
 export const MIN_BLINK_FPS = 25;
 
+// Remediation D1 stage two, decided by the owner on 20 August 2026.
+// Above the 25 fps floor the instrument still loses blinks near the
+// arm line, and how many depends on the processing rate: the offline
+// sweep in docs/blink-sample-rate.txt shows the risk band closing by
+// 60 Hz, and the field sessions agree (misses at 29 to 31 fps, none
+// at 55 and 127). Below BLINK_RISK_FPS the page says so out loud.
+// The pair is a hysteresis band: the warning appears under 60 and
+// clears only at 65, because a machine hovering at the boundary
+// would otherwise flick the message on and off every second.
+export const BLINK_RISK_FPS = 60;
+export const BLINK_RISK_CLEAR_FPS = 65;
+
 // The blink rate window of 4.4. Rates from very young windows are
 // arithmetic nonsense, one blink in two seconds reads as thirty per
 // minute, so no rate exists before the observation minimum.

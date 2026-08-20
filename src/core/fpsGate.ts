@@ -1,4 +1,8 @@
-import { MIN_BLINK_FPS } from "./constants";
+import {
+  BLINK_RISK_CLEAR_FPS,
+  BLINK_RISK_FPS,
+  MIN_BLINK_FPS,
+} from "./constants";
 
 // Below the minimum frame rate, short blinks slip between frames and
 // every temporal blink metric would understate reality with full
@@ -51,6 +55,51 @@ export function fpsGateMessage(fps: number | null): string {
     return "Blink metrics not measurable: the frame rate is still unknown.";
   }
   return `Blink metrics not measurable: ${fps.toFixed(0)} fps is below the ${String(MIN_BLINK_FPS)} fps a short blink needs.`;
+}
+
+/**
+ * Whether the low-rate warning is showing, remediation D1 stage two.
+ *
+ * Above the 25 fps floor nothing on the page said anything, and a
+ * session at 29 fps and one at 127 both passed silently while finding
+ * 7 and 10 of ten deliberate blinks. This is the "say something true"
+ * half of that fix: below BLINK_RISK_FPS the risk is real and
+ * measured, so the page says so.
+ *
+ * Stateful on purpose, as enter and clear thresholds five apart. The
+ * rate is measured over a two second window and wobbles, so a single
+ * threshold would flick the warning on and off on any machine
+ * hovering near it, and a warning that flickers reads as a glitch
+ * rather than a finding. An unknown rate turns the warning off: the
+ * readout beside it already says "measuring...", and warning about a
+ * number that does not exist yet would be a guess.
+ */
+export function rateRiskActive(previous: boolean, fps: number | null): boolean {
+  if (fps === null) {
+    return false;
+  }
+  if (fps < BLINK_RISK_FPS) {
+    return true;
+  }
+  if (fps >= BLINK_RISK_CLEAR_FPS) {
+    return false;
+  }
+  return previous;
+}
+
+/**
+ * The warning itself. Live camera sessions only: on a clip the
+ * processing rate rides the media clock, the risk belongs to the
+ * RECORDING's own rate, and the export already carries that number.
+ */
+export function rateRiskMessage(fps: number): string {
+  return (
+    `Blink counts may be low on this computer: it is processing ` +
+    `${String(Math.round(fps))} frames per second, and below ` +
+    `${String(BLINK_RISK_FPS)} quick or shallow blinks can be missed. ` +
+    `The camera is not the cause and a faster machine would count ` +
+    `more. Measured in docs/blink-sample-rate.txt.`
+  );
 }
 
 /**

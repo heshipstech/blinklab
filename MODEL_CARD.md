@@ -73,7 +73,7 @@ person's own resting aperture. The detector itself missed nothing on
 the sessions whose baseline worked. Table and write-up in
 `docs/validation-round.txt`.
 
-**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught (remediation D1, stage two pending). Measured on twelve real sessions in August 2026, six of the author's and six volunteers', that case did not occur once: every camera declared 30 and the gate never wrongly opened. The larger problem is the one above the floor, in the next paragraph.** At 15
+**Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught. Measured on twelve real sessions in August 2026, six of the author's and six volunteers', that case did not occur once: every camera declared 30 and the gate never wrongly opened, which is why a true camera rate is deliberately still not wired into the gate. The larger problem was the silence above the floor, addressed 20 August 2026 (remediation D1, stage two): see the next paragraph.** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
 The failure is currently near-silent: one line of small text, while
 everything else on the page carries on looking healthy. This removed 16
@@ -89,9 +89,12 @@ four-core machines found 7 and 9, and the twelve-core machine found all
 ten. A firm blink is caught at every rate from 25 up. The vulnerable
 ones are shallow or quick: in a band about 0.4 mm wide just past the
 depth at which a closure arms, detection runs from roughly half at 25
-frames per second to certain at 60. Nothing on the page says so, and the
-25 fps gate never fires because all of it happens above the floor.
-Measured in `docs/blink-sample-rate.txt`, with the sessions in
+frames per second to certain at 60. Since 20 August 2026 the page says
+so: a visible warning appears whenever the processing rate of a live
+session sits below 60, stating the machine's own number and that the
+camera is not the cause. The 25 fps refusal gate is unchanged, and all
+of this still happens above its floor. Measured in
+`docs/blink-sample-rate.txt`, with the sessions in
 `docs/validation-dry-run.txt`.
 
 **It misses blinks that are plainly there.** Of the blinks it missed on

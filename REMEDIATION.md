@@ -198,7 +198,7 @@ this stage.** The Y Combinator application is editable until 28 August.
 
 ## Stage D. The risky one, alone, on a quiet day
 
-- [ ] **D1 (R13). NEXT REAL WORK, and it is a webcam fix, not hardware
+- [x] **D1 (R13). DONE 20 August 2026, both stages, as re-scoped below. Was: NEXT REAL WORK, and it is a webcam fix, not hardware
       preparation.** The owner ruled on 15 August that the project keeps
       improving the webcam path before building for external devices.
       That does not defer this: the readout is wrong for webcams TODAY,
@@ -244,6 +244,17 @@ losing blinks. What it should say, and whether a second threshold
 belongs in the gate at all, is undecided and is the owner's. The
 limitation itself is now stated in README and MODEL_CARD, which is the
 part that could not wait for that decision.
+
+**D1 STAGE TWO DONE, 20 August 2026, decided by the owner after the
+validation round.** The page now warns whenever a live session's
+processing rate sits below 60 frames per second, where the offline
+sweep measures the risk band closing: the warning states the machine's
+own number, that quick or shallow blinks can be missed, and that the
+camera is not the cause. Enter at 60, clear at 65, a hysteresis band,
+because the rate wobbles and a flickering warning reads as a glitch.
+The 25 fps refusal is unchanged, and a true camera rate is
+deliberately still not wired into the gate: twelve real sessions never
+once produced the case it would catch.
 
 ---
 

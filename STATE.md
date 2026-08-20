@@ -101,9 +101,14 @@ Last commit, as of the stamp below: 2026-08-20;
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: the round is COMPLETE and published, see the top of
 this file. Live-camera numbers now exist from seven faces: the owner's
-and six volunteers'. Next up: baseline calibration work (the failed
-criterion), and the owner's D1 and #178 step 4 decisions, both now
-fully evidenced.
+and six volunteers'. Both owner decisions are TAKEN, 20 August: #178
+step 4 keeps the ceiling at 500 and the issue is closed
+(`docs/max-blink-duration.txt`), and D1 stage two shipped as the
+below-60 fps warning with hysteresis (REMEDIATION.md D1 is ticked).
+Next up: baseline calibration, the round's failed criterion, decided
+as robust passive learning first; it moves the blink line, so it ends
+with an Eyeblink8 re-run and republished numbers. The refractory
+re-arm investigation is queued behind it.
 
 **THE IPHONE WAS RE-RUN AND THE ANSWER IS THE DETECTOR.** Protocol
 followed exactly, and 7 of 10 deliberate blinks were detected. The seven
@@ -744,7 +749,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 617 unit tests, 20 end to end tests all run in Chromium
+Test count: 621 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 188 Python tests of which
 2 skip
 

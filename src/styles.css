@@ -553,6 +553,19 @@ canvas {
 .instrument-line p {
   margin: 0;
 }
+/* Remediation D1 stage two: the low-rate warning. Amber and full
+ * width, because the finding it states was invisible for a week as
+ * one muted line of body text. Hidden entirely while empty so the
+ * footer does not reserve a blank row for a warning that is off. */
+.rate-warning {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+.rate-warning:empty {
+  display: none;
+}
 
 /* The strip holds the graph canvases and reserves their height, so the
  * page does not jump the moment a session starts.
