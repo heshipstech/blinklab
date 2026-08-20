@@ -14,6 +14,17 @@ the real four-participant table prints byte for byte what it printed
 before the branch, checked by diff. No metric, threshold or verdict
 moved; mid-round freezes held.
 
+A SECOND PASS the same day, owner-authorised, probed the layer the
+first pass deliberately did not: the judging and the printed table,
+fed files the tool accepts. Seven probes, seven predictions held. A
+broken truncation declaration no longer reads as "nothing lost", one
+participant prints as "1 participant", and refusal lines name a file
+once. The finding that was NOT fixed: two marks stamped in the same
+second make a zero-width window that prints as a routine MISSED, and
+fixing that changes a verdict, so it is QUEUED AS A THIRD NEXT-ROUND
+RULE beside frame-rate soundness and window-scoped drift. Tests are
+188 now, table still byte-identical.
+
 The increment before it: the six-person validation round's analysis
 tool, whole.
 `docs/validation-plan.md` was committed BEFORE any session file existed,
@@ -711,7 +722,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 617 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 182 Python tests of which
+in CI of which 2 rerun locally in WebKit, 188 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

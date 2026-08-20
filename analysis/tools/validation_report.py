@@ -292,8 +292,9 @@ def report(directory: Path) -> tuple[list[str], int]:
             # naming who and why.
             refusals.append((paths, str(error)))
 
+    noun = "participant" if len(pairs) == 1 else "participants"
     lines = [
-        f"Validation round: {len(pairs)} participants in {directory}",
+        f"Validation round: {len(pairs)} {noun} in {directory}",
         f"Ground truth between the two marks: {EXPECTED_BLINKS} blinks.",
         "",
         "CHECKS",
@@ -307,8 +308,15 @@ def report(directory: Path) -> tuple[list[str], int]:
     ]
     if refusals:
         lines += ["REFUSED", ""]
+        # load_pair already names the session file in its wrapping, so
+        # only add the name when the reason does not start with it, or
+        # session-level refusals print the same filename twice. When
+        # the reason names the BLINKS file instead, the prefix is what
+        # says whose pair it belongs to, and stays.
         lines += [
-            f"{paths.label}  {paths.session_path.name}: {reason}"
+            f"{paths.label}  {reason}"
+            if reason.startswith(paths.session_path.name)
+            else f"{paths.label}  {paths.session_path.name}: {reason}"
             for paths, reason in refusals
         ]
         lines += [""]
