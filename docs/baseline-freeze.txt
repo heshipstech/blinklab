@@ -1,0 +1,117 @@
+THE RULER FREEZES: baseline calibration after the validation round
+==================================================================
+
+Written 20 August 2026, before any code changed and before the corpus
+re-run this document predicts. The owner decided the direction the
+same day: robust passive learning first, guided calibration later if
+still needed.
+
+THE EVIDENCE THAT FORCED THIS
+-----------------------------
+
+The six-person round's pre-registered criterion 2 FAILED: three of six
+volunteers' machines produced no usable baseline
+(docs/validation-round.txt). The failures map exactly onto the two
+halves of the current design:
+
+1. The rise-only ratchet. After learning, the baseline may rise with
+   a rolling window's p90, capped at 1.4 times that window's median,
+   and never falls. P3's baseline rose 34.6 percent DURING its marked
+   window; P4's rose 15.4 percent just before its window. Both
+   sessions were excluded from the detector criterion because their
+   ruler moved. And the ratchet is not only a live-session problem:
+   measured on the published Eyeblink8 run, the baseline rose on
+   EVERY one of the eight clips, by 2.3 to 37.6 percent, which means
+   the published recall was earned partly by a blink line that grew
+   more permissive as each clip went on.
+
+2. The birth estimate. The baseline is born as the p90 of thirty
+   seconds of samples, capped at 1.4 times the window median. The dry
+   run's macbookair session was born at 1.41 times its session's
+   resting median; the round's P3 and P5 landed at 1.33 and 1.28.
+   The plan pre-registered 1.25 as the line past which a baseline is
+   too long to be "open", and the learner's own ceiling sat looser
+   than the plan's definition of implausible.
+
+THE DESIGN
+----------
+
+Two changes, both to src/core/baseline.ts and its constants, nothing
+else touched:
+
+1. THE RULER FREEZES AT BIRTH. The rise ratchet is removed entirely.
+   Thirty seconds of learning define what "open" means for this
+   person on this camera, and the definition then holds for the whole
+   session, exactly like any instrument that is calibrated and then
+   used. Never-fall is preserved trivially, so a drooping lid still
+   cannot lower the bar that would expose it, which was fix #126's
+   non-negotiable. Drift becomes structurally zero: the failure that
+   sank criterion 2 cannot recur, rather than being measured and
+   excluded after the fact.
+
+2. THE BIRTH CEILING TIGHTENS FROM 1.4 TO 1.25 TIMES THE LEARNING
+   WINDOW'S MEDIAN, the plan's own pre-registered implausibility
+   line. The learner should not be allowed to produce a baseline the
+   round's soundness check would refuse on sight. The p90 itself
+   stays: it exists so blinks during learning cannot drag "open"
+   down, and that reason survives.
+
+WHAT THIS FIXES, AND WHAT IT CANNOT
+-----------------------------------
+
+Fixed: every drift-class failure (P3, P4), by construction. Narrowed:
+born-too-long, because the cap now matches the plan's line.
+
+Not fully fixable at birth, stated plainly: the cap is measured
+against the LEARNING window's median, and a learning window that
+itself reads high (macbookair's read 7.51 against a whole-session
+median of 6.93) still produces a high ruler no birth-time statistic
+can detect, because the future is not available at calibration time.
+The analysis-side soundness check remains the net for that case.
+
+Traded away, stated plainly: the ratchet was also the only recovery
+path for a ruler born too SHORT (a squint through the learning
+window). A short ruler now stays short. No session of the twelve
+measured in August was born short, the failure was always long, and a
+short ruler is visible analysis-side as a baseline BELOW the session
+median (over_resting under 1.0). A check for that belongs in the next
+round's rules; it is recorded there rather than patched here.
+
+THE PREDICTIONS, committed before the corpus re-run
+---------------------------------------------------
+
+The blink line is half the baseline, so freezing the ruler holds the
+line at its birth level for a whole clip, where the published run's
+line rose with the ratchet on all eight clips. A lower line late in a
+clip demands deeper dips, so:
+
+1. Total detections FALL from 430. The fall concentrates in the six
+   clips whose ratchet exceeded 10 percent.
+2. Recall falls from 87.7 percent. Predicted landing: between 82 and
+   86 percent.
+3. Precision (83.3 percent) HOLDS OR RISES: a permissive late-clip
+   line is where shallow false alarms live, so invented detections
+   should fall at least in proportion to real ones. If precision
+   falls alongside recall, that reading is wrong and the record
+   will say so.
+4. The two clips whose ratchet was small (2.3 and 8.3 percent) move
+   little.
+5. The 1.25 birth cap binds rarely on this corpus: every clip's birth
+   ratio measured 0.93 to 1.22 against its whole-clip median, so the
+   corpus delta is dominated by the freeze, not the cap.
+
+If recall lands BELOW 82 percent, the freeze costs more than this
+design expected, and the result is published anyway and the trade
+reconsidered in the open.
+
+Whatever the numbers do, they are republished with this document,
+the previous three runs stay in the record beside them, and the live
+round's six sessions are NOT re-scored: they were measured by the
+instrument that existed when they ran, and the published round table
+stays exactly as published.
+
+OUTCOMES
+--------
+
+Not yet run. Appended after the corpus re-run, in a later commit, so
+the history shows these predictions existed first.
