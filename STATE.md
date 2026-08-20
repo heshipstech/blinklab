@@ -1,3 +1,19 @@
+**THE RE-ARM GATE, 21 August 2026, closes the round's last code
+finding.** After a counted blink, no new closure may arm until the
+aperture rises 10 percent above the blink line, the mirror of fix
+#114's arm line: an eyelid must reopen before it can blink again.
+Built for P1's 25-for-10 re-crossings, predictions and a ship/no-ship
+decision rule committed first (docs/blink-rearm.txt), proven on
+synthetic traces at every rate and phase, then on the corpus: 13
+false alarms removed at ZERO recall cost, precision 81.4 to 84.0, F1
+83.8, the fifth published number. The genuine double blink survives
+every rate and phase, durations are untouched, and the refractory
+period stays at 150 ms because the fix is mechanism, not timer. Both
+owner decisions (D1, #178) and both round-driven fixes (freeze,
+re-arm) are now DONE; nothing is queued. Next development, agreed
+with the owner: the big-feature ladder, machine-adaptive measurement
+and guided calibration, then multi-signal and longitudinal work.
+
 **THE RULER FREEZES, 20 August 2026, and the published number moved
 DOWN with the instrument's honesty.** The round's failed baseline
 criterion was met with code: the rise-only ratchet is removed, the
@@ -113,16 +129,25 @@ correction adds `baseline_over_resting`, flagged above 1.25, and
 Last commit, as of the stamp below: 2026-08-20;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: the round is COMPLETE and published, see the top of
-this file. Live-camera numbers now exist from seven faces: the owner's
-and six volunteers'. Both owner decisions are TAKEN, 20 August: #178
-step 4 keeps the ceiling at 500 and the issue is closed
-(`docs/max-blink-duration.txt`), and D1 stage two shipped as the
-below-60 fps warning with hysteresis (REMEDIATION.md D1 is ticked).
-Next up: baseline calibration, the round's failed criterion, decided
-as robust passive learning first; it moves the blink line, so it ends
-with an Eyeblink8 re-run and republished numbers. The refractory
-re-arm investigation is queued behind it.
+Currently working: NOTHING IS IN FLIGHT. The round is complete and
+published, both owner decisions are taken (#178 closed, D1 shipped),
+and both round-driven instrument fixes are merged and measured: the
+ruler freeze (fourth published number, 83.6/81.4) and the re-arm gate
+(fifth, 83.6/84.0). Next development, agreed with the owner: the
+big-feature ladder, machine-adaptive measurement, guided calibration,
+multi-signal alertness, longitudinal tracking. Three rules plus
+moderation are queued for the NEXT validation round in
+docs/validation-round.txt.
+
+A note for sessions running from a CLOUD checkout (claude.ai/code on
+an iPad, for instance): everything in this repository works there,
+including all unit, e2e and Python tests, docs and src work. What
+does NOT exist there is `$DATASETS`, which lives only on the owner's
+Mac Mini: corpus measurement runs, re-evaluation of Eyeblink8 or
+DROZY numbers, and any re-reading of the validation round's raw
+participant files are Mac-only. Published numbers can be cited from
+docs/ everywhere; they can be REPRODUCED only where the datasets
+folder is.
 
 **THE IPHONE WAS RE-RUN AND THE ANSWER IS THE DETECTOR.** Protocol
 followed exactly, and 7 of 10 deliberate blinks were detected. The seven
@@ -359,7 +384,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 20 August 2026. When this file changes, this stamp changes
+Stamped: 21 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -442,22 +467,23 @@ Check it before running anything else:
 
     ls "$DATASETS"
 
-You should see `eyeblink8`, `eyeblink8-mp4` and five measured folders:
+You should see `eyeblink8`, `eyeblink8-mp4` and six measured folders:
 `eyeblink8-measured` (the first run, defective export),
 `eyeblink8-measured-capfix` (export fixed, clock still wobbling),
 `eyeblink8-measured-clockfix` (clock fixed, double counting exposed),
 `eyeblink8-measured-refractory` (double counting cut, ruler still
-moving) and `eyeblink8-measured-frozen` (CURRENT). If you do not, the
+moving), `eyeblink8-measured-frozen` (ruler frozen) and
+`eyeblink8-measured-rearm` (CURRENT). If you do not, the
 commands below will fail with
 "No such file or directory", and the fix is this line, not the command.
 
-## Track A result, 20 August 2026, current
+## Track A result, 21 August 2026, current
 
-Eight Eyeblink8 clips, 408 human-marked blinks, 419 detected.
+Eight Eyeblink8 clips, 408 human-marked blinks, 406 detected.
 
     Recall     83.6%   (341 of 408 found)
-    Precision  81.4%   (78 invented)
-    F1         82.5%
+    Precision  84.0%   (65 invented)
+    F1         83.8%
 
 THIS NUMBER IS LOWER THAN THE 87.7% IT REPLACES, ON PURPOSE. The
 previous run's ruler ROSE on every one of the eight clips, 2.3 to
@@ -473,7 +499,7 @@ delta is the freeze and nothing else.
 THIS ONE REPEATS, like the run it replaces: measuring one clip three
 times produces identical files, byte for byte.
 
-Four numbers have been published for this benchmark and all four
+Five numbers have been published for this benchmark and all five
 belong in the record:
 
     69.6% recall, F1 77.1   the export was deleting its own rows (#172)
@@ -481,6 +507,8 @@ belong in the record:
     87.7% recall, F1 85.4   clock fixed (#189), double counting cut
                             (#190), ruler still moving
     83.6% recall, F1 82.5   ruler frozen at calibration (2026-08-20)
+    83.6% recall, F1 83.8   re-arm gate (2026-08-21), 13 false alarms
+                            removed at zero recall cost
 
 Precision fell from 86.4% to 83.3% between the second and the third,
 not a regression: the deterministic clock made the detector more
@@ -490,15 +518,16 @@ committed prediction: at the frozen, lower line, near-line flutter
 fragments into repeated crossings 200 to 400 ms apart, the same
 re-crossing signature the round's P1 produced live, five of the six
 new false alarms in one clip's flutter episode. The re-arm gate
-(docs/blink-rearm.txt) targets that signature.
+(docs/blink-rearm.txt) then removed that signature by mechanism, 13
+false alarms at zero recall cost, precision back up to 84.0.
 
 Coverage: 71,356 frames measured against 71,354 annotated. Two clips
 gave one frame more than their annotation file lists. Every other clip
 is exact.
 
 Measured from
-`$DATASETS/eyeblink8-measured-frozen`.
-All four earlier runs are kept for comparison beside it.
+`$DATASETS/eyeblink8-measured-rearm`.
+All five earlier runs are kept for comparison beside it.
 Full output in `docs/eyeblink8-result.txt`, written up in the README.
 
 **This replaces a wrong number of 69.6% recall, 86.3% precision, 77.1%
@@ -580,8 +609,9 @@ What the audit established, so nobody argues it again:
   which 45 still sit on a real blink under the strict rule and 61 are
   3 frames or shorter. Raising 150 would catch most of them and it
   STAYS at 150: a constant chosen to improve a score on a benchmark
-  already read is fitting, not measuring. The remainder is a
-  segmentation fault needing its own investigation.
+  already read is fitting, not measuring. (The investigation this
+  bullet asked for happened on 21 August: the re-arm gate,
+  docs/blink-rearm.txt, removed the re-crossing class by mechanism.)
 - Do NOT apply exclusions to flatter the score. Dropping long closures
   raises recall, dropping partial blinks raises it again, and one notch
   further you are deleting the blinks we missed. That last step shows
@@ -713,7 +743,7 @@ measuring before anything has been built.
     cd analysis
     PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
       "$DATASETS/eyeblink8/eyeblink8" \
-      "$DATASETS/eyeblink8-measured-frozen"
+      "$DATASETS/eyeblink8-measured-rearm"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table
@@ -781,7 +811,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 619 unit tests, 20 end to end tests all run in Chromium
+Test count: 624 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 188 Python tests of which
 2 skip
 

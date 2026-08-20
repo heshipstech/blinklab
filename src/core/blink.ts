@@ -21,6 +21,20 @@ import {
 // ways: band time corrupted durations, the latch had no time bound,
 // and chatter could swallow real blinks. Depth arming has none of
 // those failure modes, because it never changes when a closure ends.
+//
+// Since 20 August 2026 a closure must also prove the eye REOPENED:
+// after a counted blink, no new closure may arm until the aperture
+// has risen the same hysteresis gap ABOVE the threshold. The
+// validation round's P1 showed why: a slow, deep blinker's lid
+// hovers near the line while reopening, wobbles past the arm line
+// 200 to 270 ms after the counted blink, outside the refractory
+// period's reach, and one blink minted 25 counts for 10. The gate
+// moves neither the closing nor the reopening line, so durations
+// stay untouched, which is what separates it from the killed latch.
+// Its cost, accepted in docs/blink-rearm.txt before the experiment:
+// a lid that hovers inside the 10 percent band above the line has
+// its next blinks suppressed until it rises out, and that band is a
+// nearly-shut eye where a blink count is already dubious.
 export type BlinkState = {
   eye: "open" | "closed" | "unknown";
   blinkCount: number;
@@ -28,6 +42,10 @@ export type BlinkState = {
   closedAtMs: number | null;
   // Whether the current closure has reached blink depth.
   armed: boolean;
+  // Whether the eye has risen above the re-arm line since the last
+  // COUNTED blink. True at the start: the first blink needs no prior
+  // reopening evidence.
+  rearmed: boolean;
   // The closed phase length of the most recent completed blink.
   lastBlinkDurationMs: number | null;
   // When the most recent COUNTED blink ended. A closure finishing
@@ -41,6 +59,7 @@ export const initialBlinkState: BlinkState = {
   blinkCount: 0,
   closedAtMs: null,
   armed: false,
+  rearmed: true,
   lastBlinkDurationMs: null,
   lastBlinkEndedAtMs: null,
 };
@@ -71,13 +90,17 @@ export function blinkStep(
   }
   if (apertureMm < thresholdMm) {
     // Exactly at the arm line still arms, the house boundary rule.
+    // Arming also requires the re-arm gate: depth alone is not
+    // enough when the eye never reopened after the last count.
     const reachedDepth =
       apertureMm <= thresholdMm * (1 - APERTURE_HYSTERESIS_FRACTION);
     return {
       ...state,
       eye: "closed",
       closedAtMs: state.eye === "closed" ? state.closedAtMs : nowMs,
-      armed: (state.eye === "closed" && state.armed) || reachedDepth,
+      armed:
+        (state.eye === "closed" && state.armed) ||
+        (reachedDepth && state.rearmed),
     };
   }
   const closedDurationMs =
@@ -97,11 +120,19 @@ export function blinkStep(
     state.lastBlinkEndedAtMs !== null &&
     nowMs - state.lastBlinkEndedAtMs < BLINK_REFRACTORY_MS;
   const completedBlink = shapedLikeABlink && !withinRefractory;
+  // The re-arm gate closes on a counted blink and opens again the
+  // moment the aperture clears the line by the hysteresis gap. Both
+  // can happen on the same frame: a reopen that overshoots straight
+  // past the re-arm line has proven the reopening already.
+  const rearmed =
+    (completedBlink ? false : state.rearmed) ||
+    apertureMm >= thresholdMm * (1 + APERTURE_HYSTERESIS_FRACTION);
   return {
     eye: "open",
     blinkCount: state.blinkCount + (completedBlink ? 1 : 0),
     closedAtMs: null,
     armed: false,
+    rearmed,
     lastBlinkDurationMs:
       completedBlink && closedDurationMs !== null
         ? closedDurationMs

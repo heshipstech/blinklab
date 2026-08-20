@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 20 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 21 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -24,7 +24,7 @@ measurements can be checked.
 
 | Measurement                                 | Unit              | Validated against                           | Result                                              |
 | ------------------------------------------- | ----------------- | ------------------------------------------- | --------------------------------------------------- |
-| Blink detection                             | events            | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **81.4%**, F1 **82.5%** |
+| Blink detection                             | events            | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **84.0%**, F1 **83.8%** |
 | Eyelid aperture                             | millimetres       | iris as a physical ruler                    | not validated against a physical measurement        |
 | Blink duration, amplitude, closing velocity | ms, mm, mm/s      | nothing external                            | unvalidated                                         |
 | Gaze direction                              | screen region     | nine point calibration, one person          | reliable near the centre, degrades at the corners   |
@@ -105,16 +105,20 @@ These are not faint or borderline events. Why the eyelid
 measurement does not dip far enough on them is unexplained. Issue
 [#179](https://github.com/heshipstech/blinklab/issues/179).
 
-**It sometimes reports one blink twice.** A refractory period of 150 ms
-removed 39 such reports at no cost to recall, but 72 false alarms remain
-and 45 of them still sit on top of a real blink. Raising the refractory
-period would remove most of them, and it has deliberately not been
-raised, because a constant chosen to improve a score on a benchmark
-already read is fitting rather than measuring. The validation round
-added the first independent-face evidence: one volunteer who blinks
-slowly and deeply produced 25 detections for 10 scripted blinks, with
-eleven detection pairs closer than 0.35 seconds, re-crossing the line
-200 to 270 ms apart, past the refractory period's reach.
+**It sometimes reports one blink twice, and two rules now remove most
+of it.** A refractory period of 150 ms removed 39 such reports at no
+cost to recall. The validation round then supplied the first
+independent-face evidence of what the timer cannot reach: one
+volunteer who blinks slowly and deeply produced 25 detections for 10
+scripted blinks, re-crossing the line 200 to 270 ms apart. The re-arm
+gate of 21 August 2026 answers that by mechanism rather than timer:
+after a counted blink, no new blink may begin until the eyelid has
+risen clearly above the line. It removed 13 more false alarms at zero
+recall cost (`docs/blink-rearm.txt`, predictions committed first).
+65 false alarms remain and 38 of them still sit on top of a real
+blink. The refractory period stays at 150 ms, deliberately: a
+constant chosen to improve a score on a benchmark already read is
+fitting rather than measuring.
 
 **PERCLOS uses an adjusted threshold, not the literature's.** This
 instrument reads fully shut eyes as roughly a third of the open baseline

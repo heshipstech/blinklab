@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
-> Revised 20 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 21 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
@@ -77,12 +77,12 @@ annotation. The 362 frame numbers in between have no row at all. The
 people who published the clips print 70,992 on their own site. So a
 reader who checks will meet two different totals, and this is why.
 
-|              | First answer        | Export fixed        | Clock fixed         | Now                     |
-| ------------ | ------------------- | ------------------- | ------------------- | ----------------------- |
-| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | **341 of 408**          |
-| Recall       | 69.6%               | 82.8%               | 87.7%               | **83.6%**               |
-| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | **81.4%** (78 invented) |
-| F1           | 77.1%               | 84.6%               | 85.4%               | **82.5%**               |
+|              | First answer        | Export fixed        | Clock fixed         | Ruler frozen        | Now                     |
+| ------------ | ------------------- | ------------------- | ------------------- | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | 341 of 408          | **341 of 408**          |
+| Recall       | 69.6%               | 82.8%               | 87.7%               | 83.6%               | **83.6%**               |
+| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | 81.4% (78 invented) | **84.0%** (65 invented) |
+| F1           | 77.1%               | 84.6%               | 85.4%               | 82.5%               | **83.8%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
 is the share of the app's detections that were real. F1 is the two
@@ -90,8 +90,8 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-**There are four columns because this page has corrected its own
-number three times, and every time the fault was in this app rather
+**There are five columns because this page has corrected its own
+number four times, and every time the fault was in this app rather
 than in the clips.** Every column stays. A project that shows you only
 its final answer tells you less than one that also shows you the road
 there.
@@ -110,15 +110,22 @@ there.
   of was allowed to rise during a session, and it rose on every one
   of the eight clips, so the threshold grew more permissive as each
   clip went on.
-- **The fourth, 83.6%, the current number.** The six-person
-  validation round failed its baseline criterion on exactly that
-  moving-ruler behaviour, so on 20 August 2026 the baseline was
-  frozen at its thirty-second calibration and the corpus re-measured
-  with the ruler held still. The number went down and the instrument
-  got better, which is the right way around for this project. The
-  predictions were committed before the run in
-  `docs/baseline-freeze.txt`, four held and one was wrong, and the
-  wrong one is recorded there.
+- **The fourth, 83.6%.** The six-person validation round failed its
+  baseline criterion on exactly that moving-ruler behaviour, so on
+  20 August 2026 the baseline was frozen at its thirty-second
+  calibration and the corpus re-measured with the ruler held still.
+  The number went down and the instrument got better, which is the
+  right way around for this project. The predictions were committed
+  before the run in `docs/baseline-freeze.txt`, four held and one was
+  wrong, and the wrong one is recorded there.
+- **The fifth, the current number: recall still 83.6%, precision up
+  to 84.0%.** One volunteer in the round blinked slowly and deeply
+  and was counted 25 times for 10 blinks: after a counted blink,
+  their hovering eyelid re-crossed the line before ever properly
+  reopening. The re-arm gate now requires the eye to rise clear of
+  the line before a new blink may count. On the corpus it removed 13
+  false alarms at zero recall cost, with its predictions and its
+  decision rule committed first in `docs/blink-rearm.txt`.
 
 Precision fell from 86.4% to 83.3% between the second column and the
 third, and that is not a step backwards. Making the measurement
@@ -128,8 +135,8 @@ double counting was then removed, which is the next section. It fell
 again in the fourth column, 83.3% to 81.4%, against the committed
 prediction: at the frozen, lower threshold, flutter near the line
 fragments into repeated crossings, the same double-counting signature
-one validation-round volunteer produced live. The re-arm
-investigation in `docs/blink-rearm.txt` targets that signature.
+one validation-round volunteer produced live. The fifth column is the
+gate built for exactly that signature doing its work.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
@@ -156,7 +163,7 @@ detectors on these same eight clips. Here is what they report.
 | [Soukupova and Cech](https://cmp.felk.cvut.cz/ftp/articles/cech/Soukupova-TR-2016-05.pdf)  | 2016 | Czech Technical University report CTU-CMP-2016-05                                 | 95.2% |
 | [Fogelton and Benesova](https://doi.org/10.1016/j.cviu.2018.09.006)                        | 2018 | Computer Vision and Image Understanding 176 to 177                                | 91.3% |
 | [Al-gawwam and Benaissa](https://www.mdpi.com/2078-2489/9/4/93)                            | 2018 | Information, volume 9, article 93                                                 | 97.7% |
-| **this app**                                                                               | 2026 | this page                                                                         | 82.5% |
+| **this app**                                                                               | 2026 | this page                                                                         | 83.8% |
 
 ECCV is the European Conference on Computer Vision. Not one of those
 five figures was simply copied out of the paper it sits beside, so here
@@ -294,7 +301,7 @@ that as evidence against this project's own warning about prescription
 lenses. That gap was not real. The defect created it. Both of the cut
 short clips were in the group without glasses, so that group's score was
 pulled down. On the current run the glasses clip scores 88.4% recall and
-88.4% precision. The seven without score 83.0% recall and 80.6%
+90.5% precision. The seven without score 83.0% recall and 83.2%
 precision. The glasses clip now scores a few points HIGHER on both,
 which is the opposite direction from the first write up's claim and
 just as meaningless. Both figures rest on a single clip of 43 blinks,
@@ -324,14 +331,14 @@ the ruler froze and 78.6% before that, so freezing the ruler changed
 how many blinks are missed and not the character of what is missed.
 
 The row by row table is in
-[docs/evidence/2026-08-20-frozen/](docs/evidence/2026-08-20-frozen/),
+[docs/evidence/2026-08-21-rearm/](docs/evidence/2026-08-21-rearm/),
 one line per miss, so the share can be recounted rather than taken on
 trust. The previous runs' tables are kept beside their own results. These are
 not faint or borderline blinks. They are ordinary ones where this app's
 eyelid measurement did not dip far enough to count. That is a real
 weakness. Finding out why is the next question.
 
-**The invented blinks have a pattern too.** 45 of the 72 land on top of
+**The invented blinks have a pattern too.** 38 of the 65 land on top of
 a real blink rather than on an open eye. That is one blink counted
 twice, not a blink imagined from nothing.
 
@@ -341,24 +348,31 @@ widen nothing. If it shares at least one frame with a blink the human
 marked, it landed on a real blink. Anyone can check that against the
 clips' own annotation files.
 
-There is a second and looser rule, and it gives 64 of the 72. Widen the
+There is a second and looser rule, and it gives 55 of the 65. Widen the
 detection by four frames at each end first, then ask the same question.
 Four frames is about 130 milliseconds at 30 frames per second, and it is
 the slack this project already allows itself when deciding which
 detections count as correct. That slack exists to stop a correct
 detection being punished for disagreeing about an edge. Reusing it to
 decide what a wrong detection sat on is a different act, so the stricter
-45 is the number printed first. Both are here because 64 is the
+38 is the number printed first. Both are here because 55 is the
 flattering one and hiding it would be its own kind of dishonesty.
 
-**Most of this double counting has been removed, and the rest is left
-on purpose.** During one closure the eyelid measurement can rise back
-over the line for a frame or two and dip again, and the app counts two
-blinks. There were 111 such double counts. A completed closure is now
+**Most of this double counting has been removed by two rules, and the
+rest is left on purpose.** During one closure the eyelid measurement
+can rise back over the line for a frame or two and dip again, and the
+app counts two blinks. The first rule is time: a completed closure is
 not counted if it ends within 150 milliseconds of the previous one,
 because an eyelid cannot open and shut twice that fast. That removed 39
-of the 111 and **cost no recall at all**, which is the number that
+double counts and **cost no recall at all**, which is the number that
 decides whether a rule like this is a fix or a way of hiding misses.
+The second rule, added 21 August 2026 after a validation-round
+volunteer was counted 25 times for 10 blinks, is depth: after a
+counted blink, no new blink may begin until the eyelid has risen
+clearly above the line, because an eyelid cannot blink again before it
+has reopened. That removed 13 more false alarms, again at zero recall
+cost, with its predictions committed before the measurement in
+`docs/blink-rearm.txt`.
 
 Where 150 comes from matters more than the number. Deliberate rapid
 blinking tops out near five a second, so the shortest gap a person can
@@ -369,30 +383,27 @@ see what it bought, in that order. It was introduced after this result
 was first seen, which is worth saying plainly, and it has not been
 adjusted since to improve the score.
 
-Raising it to 300 would catch most of the remaining 72. It stays at 150.
+Raising it to 300 would catch most of what remains. It stays at 150.
 A number chosen to improve a score on a benchmark already read is
 fitting, not measuring, and this page has a section above about exactly
-that temptation.
+that temptation. The re-arm rule is the alternative this project chose
+instead: it removes re-crossings by requiring the reopening itself,
+not by widening a timer.
 
-8 of the 72 sit more than four frames from any blink the human marked,
-and those 8 are the only ones that read as inventions rather than
-fragments of a real blink.
+10 of the 65 sit more than four frames from any blink the human
+marked, and those 10 are the only ones that read as inventions rather
+than fragments of a real blink.
 
-61 of the 72 are three frames long or shorter. The rule there is to
+54 of the 65 are three frames long or shorter. The rule there is to
 count from the detection's first frame to its last, including both, so
 frames 10 to 12 is three frames.
 
-An earlier version of this section gave these counts against the
-previous run's 53 false alarms, and said a refractory period was
-planned and not built. Both statements had been overtaken by the run
-this page now reports: the refractory period is built and described
-above, and the counts here are recomputed from
-[docs/evidence/2026-08-09/tables-current-run/eyeblink8_false_positives.csv](docs/evidence/2026-08-09/tables-current-run/eyeblink8_false_positives.csv),
-one row per false alarm. The method is
-[docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py](docs/evidence/2026-08-09/scripts/checks/false_positive_overlap.py);
-its saved output at
-[docs/evidence/2026-08-09/tables/false_positive_overlap.txt](docs/evidence/2026-08-09/tables/false_positive_overlap.txt)
-describes the earlier 53-alarm run and is kept as that run's record.
+Earlier versions of this section described the 53-alarm and 72-alarm
+runs that preceded this one; their evidence tables are kept as those
+runs' records under
+[docs/evidence/2026-08-09/](docs/evidence/2026-08-09/). The counts
+here describe the current run, whose miss table is at
+[docs/evidence/2026-08-21-rearm/](docs/evidence/2026-08-21-rearm/).
 
 The rules for what counts as a correct detection were written down
 before any result was seen. They are in
@@ -561,7 +572,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 619 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 188 Python tests of which 2 skip, all green.
+Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 624 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 188 Python tests of which 2 skip, all green.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
