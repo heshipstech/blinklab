@@ -5,12 +5,18 @@ import {
   recordBlink,
   startRate,
 } from "../../src/core/blinkRate";
-import { MIN_BLINK_FPS } from "../../src/core/constants";
+import {
+  BLINK_RISK_CLEAR_FPS,
+  BLINK_RISK_FPS,
+  MIN_BLINK_FPS,
+} from "../../src/core/constants";
 import {
   clipRefusedMessage,
   fpsGateMessage,
   measurableAtFps,
   processingRateMessage,
+  rateRiskActive,
+  rateRiskMessage,
 } from "../../src/core/fpsGate";
 
 describe("measurableAtFps", () => {
@@ -115,5 +121,43 @@ describe("the processing rate readout (remediation D1, stage one)", () => {
     expect(processingRateMessage(15, "file")).toBe(
       "Processing rate: 15 frames per second, on the clip's own clock",
     );
+  });
+});
+
+describe("the low-rate warning (remediation D1, stage two)", () => {
+  // Owner's decision, 20 August 2026: below 60 processed frames per
+  // second the page says out loud that blinks may be missed. The
+  // threshold is where docs/blink-sample-rate.txt measures the risk
+  // band closing, and the field sessions agree: misses at 29 to 31
+  // fps, none at 55 and 127.
+  it("runs the boundary trio at the enter threshold", () => {
+    expect(rateRiskActive(false, BLINK_RISK_FPS - 0.1)).toBe(true);
+    expect(rateRiskActive(false, BLINK_RISK_FPS)).toBe(false);
+    expect(rateRiskActive(false, BLINK_RISK_FPS + 0.1)).toBe(false);
+  });
+
+  it("holds inside the hysteresis band instead of flickering", () => {
+    // The rate is measured over a two second window and wobbles, so
+    // enter and clear sit five apart. Between them the warning keeps
+    // whatever it was: a machine hovering at 61 fps must not flick a
+    // finding on and off every second.
+    const inside = (BLINK_RISK_FPS + BLINK_RISK_CLEAR_FPS) / 2;
+    expect(rateRiskActive(true, inside)).toBe(true);
+    expect(rateRiskActive(false, inside)).toBe(false);
+    expect(rateRiskActive(true, BLINK_RISK_CLEAR_FPS)).toBe(false);
+  });
+
+  it("turns off on an unknown rate rather than guessing", () => {
+    // The readout beside it already says "measuring...".
+    expect(rateRiskActive(true, null)).toBe(false);
+  });
+
+  it("states the machine's own number and where the risk was measured", () => {
+    const message = rateRiskMessage(46.6);
+    expect(message).toContain("47 frames per second");
+    expect(message).toContain(`below ${String(BLINK_RISK_FPS)}`);
+    expect(message).toContain("docs/blink-sample-rate.txt");
+    // The dry run's core lesson, so a reader does not swap webcams.
+    expect(message).toContain("The camera is not the cause");
   });
 });

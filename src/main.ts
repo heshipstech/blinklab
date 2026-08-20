@@ -44,6 +44,8 @@ import {
   fpsGateMessage,
   measurableAtFps,
   processingRateMessage,
+  rateRiskActive,
+  rateRiskMessage,
 } from "./core/fpsGate";
 import {
   CALIBRATION_TARGETS,
@@ -1196,6 +1198,16 @@ picker.addEventListener("change", () => {
 });
 
 const fpsLabel = document.createElement("p");
+// Remediation D1 stage two: below 60 processed frames per second the
+// page says out loud that blinks may be missed, instead of a low rate
+// and a high one both passing in silence. Plain textContent rather
+// than writeReadout, because the sentence contains a colon and the
+// label-splitting there would style half a warning as a heading.
+const rateWarningLabel = document.createElement("p");
+rateWarningLabel.className = "rate-warning";
+// Hysteresis state for the warning: enters under 60, clears at 65,
+// so a machine hovering at the boundary does not flick it.
+let rateRiskShown = false;
 const inferenceLabel = document.createElement("p");
 // Invisible, and a permanent test contract like the data-testid
 // handles in the calibration overlay: the end to end suite reads the
@@ -2027,6 +2039,17 @@ function processFrame(
     fpsLabel,
     state.kind !== "running" ? "" : processingRateMessage(fps, frameSource),
   );
+  // Camera sessions only: on a clip the number rides the media clock
+  // and the risk belongs to the recording's own rate, which the
+  // export already carries.
+  rateRiskShown =
+    state.kind === "running" && frameSource === "camera"
+      ? rateRiskActive(rateRiskShown, fps)
+      : false;
+  const riskText = rateRiskShown && fps !== null ? rateRiskMessage(fps) : "";
+  if (rateWarningLabel.textContent !== riskText) {
+    rateWarningLabel.textContent = riskText;
+  }
 
   if (state.kind === "running" && canvasContext !== null) {
     const transform = frameTransform(mirrored, canvas.width);
@@ -2987,7 +3010,7 @@ instrumentLine.append(fpsLabel, inferenceLabel, framesMeasuredProbe);
 
 const signalsFooter = document.createElement("div");
 signalsFooter.className = "signals-footer";
-signalsFooter.append(legend, instrumentLine);
+signalsFooter.append(legend, instrumentLine, rateWarningLabel);
 
 const sourceBox = box(
   "Source",
