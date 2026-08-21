@@ -390,10 +390,11 @@ the column.**
 The two numbers in its footer. They are not measurements of the eyes, but
 they are measurements of the signal on the strip above them.
 
-| Element         | Strings                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Processing rate | `Processing rate: N frames per second, the instrument's pace, not the camera's` or `Processing rate: measuring...` |
-| Inference time  | `Inference time: N ms` with `, over the 30 ms budget` appended when over                                           |
+| Element         | Strings                                                                                                                                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Processing rate | `Processing rate: N frames per second, the instrument's pace, not the camera's` or `Processing rate: measuring...`                                                                                                                                                                                |
+| Camera delivery | `Camera delivery: N frames per second, of which this instrument read M`, or `Camera delivery: measuring...`, or `Camera delivery: this browser does not report it`. Camera sessions only: a clip is stepped off its own media clock, so every decoded frame is read exactly once by construction. |
+| Inference time  | `Inference time: N ms` with `, over the 30 ms budget` appended when over                                                                                                                                                                                                                          |
 
 ### 5.7 Box: Stored on this device
 

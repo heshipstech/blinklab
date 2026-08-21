@@ -63,6 +63,54 @@ export type VideoFrameLoop = {
  * display loop this one belongs to a particular clip and must not
  * outlive it.
  */
+/**
+ * Count the frames a CAMERA hands over, without driving measurement.
+ *
+ * The clip path below is driven BY the decoded frames. The camera path
+ * cannot be, because a live stream has to keep painting whether or not
+ * a new frame arrived, so it runs on requestAnimationFrame. That is
+ * correct for drawing and wrong for counting: it cannot tell a fresh
+ * photograph from the same one read again, and on a fast machine most
+ * of its ticks are the same one read again.
+ *
+ * So this rides alongside as a passive observer. It measures and never
+ * steers: nothing here touches the detector, and if it dies the
+ * session keeps measuring with its delivery rate reported as unknown,
+ * which is the honest outcome rather than a lost session.
+ */
+export function observeVideoDelivery(
+  video: VideoWithFrameCallback,
+  onDelivered: (nowMs: number) => void,
+  onCrash: (error: unknown) => void,
+): VideoFrameLoop {
+  let stopped = false;
+  let handle: number | null = null;
+
+  function tick(nowMs: number): void {
+    if (stopped) return;
+    try {
+      onDelivered(nowMs);
+    } catch (error: unknown) {
+      stopped = true;
+      onCrash(error);
+      return;
+    }
+    handle = video.requestVideoFrameCallback(tick);
+  }
+
+  handle = video.requestVideoFrameCallback(tick);
+
+  return {
+    stop: () => {
+      stopped = true;
+      if (handle !== null) {
+        video.cancelVideoFrameCallback(handle);
+        handle = null;
+      }
+    },
+  };
+}
+
 export function startVideoFrameLoop(
   video: VideoWithFrameCallback,
   onFrame: (mediaTimeSeconds: number) => void,

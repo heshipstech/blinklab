@@ -91,6 +91,7 @@ import {
 } from "./core/exportStatus";
 import {
   IRIS_SAMPLE_CAP,
+  deliveryMetadataRows,
   deviceMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
@@ -101,6 +102,13 @@ import { demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
+import {
+  deliveryRateMessage,
+  deliveryRates,
+  emptyDelivery,
+  noteDelivered,
+  noteRead,
+} from "./core/deliveryRate";
 import {
   initialLongClosureState,
   longClosureStep,
@@ -165,6 +173,7 @@ import { readDeviceInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
+  observeVideoDelivery,
   startFrameLoop,
   startVideoFrameLoop,
   supportsVideoFrameCallback,
@@ -755,6 +764,12 @@ function resetSession(): void {
   heatmapGrid = emptyGrid();
   scanpathSamples = [];
   scanpathSlider.hidden = true;
+  // Delivery counts belong to one camera session: carrying them into
+  // the next would average two cameras together. The OBSERVER is not
+  // stopped here, because resetSession also runs while a camera is
+  // starting and stopping it there would silence the rate it is about
+  // to measure; whoever changes the source owns the observer.
+  deliveryState = emptyDelivery();
   // A new source starts a new time axis. Carrying the old clock
   // forward would reject every frame of a clip that starts at zero.
   frameClock = startFrameClock();
@@ -797,6 +812,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
   // A camera session has no clip to stop. Without this, a stepped run
   // superseded by the camera left its button behind.
   stopClipButton.hidden = true;
+  stopDeliveryObserver();
   stopCamera(video);
   unloadVideoFile(video);
   // A dead display loop cannot run a camera session. Refuse with the
@@ -823,6 +839,24 @@ async function beginCamera(deviceId?: string): Promise<void> {
       `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`,
     );
     resetSession();
+    // AFTER resetSession, because that clears the counts this fills.
+    // A browser without requestVideoFrameCallback simply gets no
+    // observer, and the readout says the browser does not report it
+    // rather than showing nothing.
+    if (supportsVideoFrameCallback(video)) {
+      deliveryObserver = observeVideoDelivery(
+        video,
+        (deliveredAtMs) => {
+          deliveryState = noteDelivered(deliveryState, deliveredAtMs);
+        },
+        () => {
+          // A dead observer costs a diagnostic, not a session. The
+          // measurement keeps running and the rate reads unknown,
+          // which is the honest outcome and not a lost session.
+          stopDeliveryObserver();
+        },
+      );
+    }
     // AFTER resetSession, which clears it, and after the stream is
     // live, because getSettings() on a track that has not finished
     // negotiating returns an empty object. Both orderings were wrong
@@ -848,6 +882,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
       // sign of the stream; review called that the dishonest shape.
       // Retry re-requests the camera, which a granted permission
       // makes near-instant.
+      stopDeliveryObserver();
       stopCamera(video);
       setState({ kind: "modelFailed" });
     });
@@ -882,6 +917,7 @@ async function beginVideoFile(file: File): Promise<void> {
   const runToken = sourceRunToken;
   setState({ kind: "requesting" });
   clipStopRequested = true;
+  stopDeliveryObserver();
   stopCamera(video);
   clipLoop?.stop();
   clipLoop = null;
@@ -1208,6 +1244,23 @@ rateWarningLabel.className = "rate-warning";
 // Hysteresis state for the warning: enters under 60, clears at 65,
 // so a machine hovering at the boundary does not flick it.
 let rateRiskShown = false;
+// The camera's delivery, counted by a passive observer beside the
+// measurement loop. Null observer means either a clip or a browser
+// without requestVideoFrameCallback, and the readout says which.
+let deliveryState = emptyDelivery();
+let deliveryObserver: { stop: () => void } | null = null;
+
+function stopDeliveryObserver(): void {
+  deliveryObserver?.stop();
+  deliveryObserver = null;
+}
+// The camera's own rate, beside the instrument's. The processing rate
+// alone cannot tell a viewer whether a faster machine would help them:
+// a machine reading 24 of 30 delivered frames is limited by itself, and
+// one reading all 30 is limited by its camera, and until now both read
+// the same on this page. docs/blink-sample-rate.txt models what the
+// difference costs; this is the line that measures it.
+const deliveryLabel = document.createElement("p");
 const inferenceLabel = document.createElement("p");
 // Invisible, and a permanent test contract like the data-testid
 // handles in the calibration overlay: the end to end suite reads the
@@ -1785,6 +1838,11 @@ function exportSession(): void {
       loadedClipDurationSeconds,
     ),
     ...deviceMetadataRows(deviceInfo),
+    ...deliveryMetadataRows(
+      frameSource === "camera"
+        ? deliveryRates(deliveryState, performance.now())
+        : null,
+    ),
     ...sessionMetadataRows(
       featureRecords,
       irisWidthSamples,
@@ -2039,6 +2097,14 @@ function processFrame(
     fpsLabel,
     state.kind !== "running" ? "" : processingRateMessage(fps, frameSource),
   );
+  // Camera sessions only. A clip is stepped off its own media clock,
+  // so every decoded frame is read exactly once by construction and a
+  // delivery rate there would be the clip's own frame rate wearing a
+  // different name.
+  deliveryLabel.textContent =
+    state.kind !== "running" || frameSource !== "camera"
+      ? ""
+      : deliveryRateMessage(deliveryRates(deliveryState, performance.now()));
   // Camera sessions only: on a clip the number rides the media clock
   // and the risk belongs to the recording's own rate, which the
   // export already carries.
@@ -2085,6 +2151,15 @@ function processFrame(
       // honest file. Counting after the call also keeps a frame the
       // model throws on out of the count. Remediation B1.
       framesMeasured += 1;
+      // The same placement, for the same reason: a READ is the model
+      // having actually looked at whichever frame the camera had
+      // delivered by now. Counted here, it cannot include the display
+      // ticks of a cold start, and pairing it with the delivery
+      // counter is what separates a distinct photograph from the same
+      // one read again.
+      if (frameSource === "camera") {
+        deliveryState = noteRead(deliveryState, performance.now());
+      }
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
         performance.now() - inferenceStartMs,
@@ -3006,7 +3081,12 @@ legend.append(
 
 const instrumentLine = document.createElement("div");
 instrumentLine.className = "instrument-line";
-instrumentLine.append(fpsLabel, inferenceLabel, framesMeasuredProbe);
+instrumentLine.append(
+  fpsLabel,
+  deliveryLabel,
+  inferenceLabel,
+  framesMeasuredProbe,
+);
 
 const signalsFooter = document.createElement("div");
 signalsFooter.className = "signals-footer";
@@ -3301,6 +3381,7 @@ startFrameLoop(
       error instanceof Error ? error.message : String(error);
     setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
     try {
+      stopDeliveryObserver();
       stopCamera(video);
     } catch (stopError: unknown) {
       console.error("the camera could not be stopped:", stopError);

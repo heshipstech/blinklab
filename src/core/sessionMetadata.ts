@@ -1,3 +1,4 @@
+import type { DeliveryRates } from "./deliveryRate";
 import type { FeatureRecord } from "./featureRecord";
 import { percentile } from "./statistics";
 
@@ -116,6 +117,41 @@ export function deviceMetadataRows(info: DeviceInfo | null): string[] {
     line("screen", screen),
     line("device_pixel_ratio", info.devicePixelRatio),
     line("orientation", info.orientation),
+  ];
+}
+
+/**
+ * What the CAMERA delivered, beside what the page processed.
+ *
+ * Null for a clip, which is stepped off its own media clock and has no
+ * camera: writing "unknown" there would invite a reader to look for a
+ * delivery rate that never existed. For a camera these three rows are
+ * written whatever they say, because "unknown" is the honest answer on
+ * a browser without a delivery callback and a silent omission is not.
+ *
+ * These are the rows that will decide the prediction committed in
+ * docs/blink-sample-rate.txt, so they carry more decimals than the
+ * page shows: the page rounds to whole frames because a viewer is
+ * reading a sentence, and the file keeps a tenth because somebody will
+ * subtract two of them.
+ */
+export function deliveryMetadataRows(rates: DeliveryRates | null): string[] {
+  if (rates === null) {
+    return [];
+  }
+  return [
+    line(
+      "camera_delivered_fps",
+      rates.deliveredFps === null ? null : rates.deliveredFps.toFixed(1),
+    ),
+    line(
+      "sampled_fps",
+      rates.sampledFps === null ? null : rates.sampledFps.toFixed(1),
+    ),
+    line(
+      "delivered_frames_read_fraction",
+      rates.readFraction === null ? null : rates.readFraction.toFixed(3),
+    ),
   ];
 }
 

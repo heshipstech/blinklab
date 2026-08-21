@@ -149,3 +149,31 @@ export function deliveryRates(
 
   return { deliveredFps, sampledFps, readFraction };
 }
+
+/**
+ * The line the page shows beside the processing rate.
+ *
+ * It prints the two numbers as FRAMES rather than as a percentage,
+ * because the gap between them is the thing worth seeing: a viewer
+ * whose machine reads 24 of the 30 frames it is handed is the one
+ * viewer for whom a faster computer really would count more blinks,
+ * and until now the page could not tell them apart from a viewer whose
+ * machine reads all 30 and is limited by the camera instead.
+ *
+ * A browser with no delivery callback says so. Showing nothing there
+ * would take a limitation out of the open on exactly the devices where
+ * it cannot be checked, which is the wrong direction for this project.
+ */
+export function deliveryRateMessage(rates: DeliveryRates): string {
+  if (rates.deliveredFps === null) {
+    return "Camera delivery: this browser does not report it";
+  }
+  if (rates.sampledFps === null) {
+    return "Camera delivery: measuring...";
+  }
+  return (
+    `Camera delivery: ${String(Math.round(rates.deliveredFps))} frames ` +
+    `per second, of which this instrument read ` +
+    `${String(Math.round(rates.sampledFps))}`
+  );
+}

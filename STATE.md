@@ -1,3 +1,28 @@
+**THE SECOND RATE IS NOW MEASURED, 21 August 2026, and the page shows
+it.** A passive observer rides beside the camera's measurement loop,
+counting frames as the camera DELIVERS them, and a pure reducer turns
+the two event streams into three numbers the instrument has never
+had: what the camera delivered, how many DISTINCT delivered frames
+the detector actually read, and what share of what arrived was ever
+looked at. The page prints `Camera delivery: N frames per second, of
+which this instrument read M` beside the processing rate, and the
+export carries `camera_delivered_fps`, `sampled_fps` and
+`delivered_frames_read_fraction`.
+
+Distinct photographs rather than ticks is the whole idea, and the
+mutation counting ticks turns two tests red. Every rate is null and
+never zero when unmeasurable, and a browser without the delivery
+callback is TOLD so on the page rather than shown nothing, because a
+limitation removed from the open is worse than one stated. The
+observer measures and never steers: if it dies the session keeps
+measuring and the rate reads unknown.
+
+WHAT IS STILL UNMEASURED is the thing this was built for: the four
+dry-run devices have not been read yet. That takes about 30 seconds
+each and no volunteers. The prediction they will be scored against is
+already committed in docs/blink-sample-rate.txt, including the case
+that refutes the model outright.
+
 **THERE ARE TWO RATES, AND THE PAGE MAY BE NAMING THE WRONG ONE,
 21 August 2026. A PREDICTION IS COMMITTED AND NOTHING IS CORRECTED
 YET.** The sampling-rate harness now models the CAMERA's own delivery
@@ -882,7 +907,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 647 unit tests, 20 end to end tests all run in Chromium
+Test count: 654 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
