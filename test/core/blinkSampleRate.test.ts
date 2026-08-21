@@ -117,6 +117,64 @@ if (process.env.BLINKLAB_PRINT_TABLE !== undefined) {
         ).join(""),
     );
   }
+  // The camera's own grid, added 21 August 2026. Printed here so the
+  // command docs/blink-sample-rate.txt names actually emits the rows
+  // that document publishes: without this the delivered tables were
+  // reproducible only by writing a throwaway file, which is not
+  // reproducible at all.
+  const PROCESSING = [25, 29.2, 30.7, 55, 126.7];
+  const DELIVERED_DEPTHS = [3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8, 2.4, 2.0];
+  rows.push(
+    "",
+    "A camera DELIVERING 30 fps. Columns are the PROCESSING rate. The",
+    "last column is what an infinitely fast camera says at 126.7.",
+    "",
+    "  min     ms below  " +
+      PROCESSING.map((r) => `${String(r)} Hz`.padStart(9)).join("") +
+      "    infinite",
+    "  (mm)    arm line " +
+      PROCESSING.map(() => "".padStart(9)).join("") +
+      "      camera",
+    "-".repeat(20 + PROCESSING.length * 9 + 13),
+  );
+  for (const min of DELIVERED_DEPTHS) {
+    const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
+    rows.push(
+      `  ${min.toFixed(2)}` +
+        msBelow(blink, OPTICS, ARM_MM).toFixed(0).padStart(11) +
+        "  " +
+        PROCESSING.map((processHz) =>
+          deliveredDetectionRate(blink, OPTICS, { deliveryHz: 30, processHz })
+            .toFixed(2)
+            .padStart(9),
+        ).join("") +
+        deliveredDetectionRate(blink, OPTICS, {
+          deliveryHz: Infinity,
+          processHz: 126.7,
+        })
+          .toFixed(2)
+          .padStart(13),
+    );
+  }
+  rows.push(
+    "",
+    "The same blinks processed at 60, against what the CAMERA delivers:",
+    "",
+    "  min     30 delivered   60 delivered",
+    "-".repeat(38),
+  );
+  for (const min of [3.5, 3.4, 3.3, 3.2, 3.1, 3.0]) {
+    const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
+    rows.push(
+      `  ${min.toFixed(2)}` +
+        deliveredDetectionRate(blink, OPTICS, { deliveryHz: 30, processHz: 60 })
+          .toFixed(2)
+          .padStart(14) +
+        deliveredDetectionRate(blink, OPTICS, { deliveryHz: 60, processHz: 60 })
+          .toFixed(2)
+          .padStart(15),
+    );
+  }
   process.stdout.write("\n" + rows.join("\n") + "\n\n");
 }
 
@@ -255,18 +313,31 @@ describe("what the CAMERA's delivery rate does, once it is modelled", () => {
     expect(at60).toBe(1);
   });
 
-  it("an infinitely fast camera reproduces the 17 August table exactly", () => {
+  it("an infinitely fast camera agrees with the 17 August model to within a phase step", () => {
     // The old model is not discarded, it is a special case: delivery at
     // Infinity is a fresh aperture every tick. This pins the two models
     // against each other so the new one cannot quietly move the old
     // numbers, which are published in docs/blink-sample-rate.txt.
-    for (const rate of [25, 30, 60, 120]) {
-      expect(
-        deliveredDetectionRate(MARGINAL, OPTICS, {
-          deliveryHz: Infinity,
-          processHz: rate,
-        }),
-      ).toBeCloseTo(detectionRate(MARGINAL, OPTICS, rate), 1);
+    //
+    // The tolerance is 0.005 and the name says "within a phase step"
+    // rather than "exactly", both corrected after review: the two
+    // sweeps use different phase budgets, so they agree to about one
+    // step of the coarser grid and not to the last digit. At the
+    // looser 0.05 this once used, a published cell could have drifted
+    // from 0.56 to 0.60 and stayed green, which is the drift the pin
+    // exists to catch. Every published depth is checked, not one.
+    for (const min of [3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8]) {
+      const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
+      for (const rate of [25, 30, 60, 120]) {
+        expect(
+          Math.abs(
+            deliveredDetectionRate(blink, OPTICS, {
+              deliveryHz: Infinity,
+              processHz: rate,
+            }) - detectionRate(blink, OPTICS, rate),
+          ),
+        ).toBeLessThanOrEqual(0.005);
+      }
     }
   });
 });
