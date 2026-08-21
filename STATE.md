@@ -1,3 +1,15 @@
+**THE WINDOW'S WIDTH NOW PRINTS BESIDE ITS COUNTS, 21 August 2026,
+the tool half of the round's queued rule 3.** Probe P's zero-width
+window, two marks stamped inside the same one-second record, printed
+as an ordinary MISSED with nothing in the table showing the window
+had no width. The CHECKS table now carries a "window (s)" column, and
+a window narrower than the one-second marker slack is named out loud
+under the summary, its verdict printed as computed rather than
+trusted. NO VERDICT CHANGED: what such a window MEANS is still the
+next round plan's rule, queued exactly as before beside frame-rate
+soundness and window-scoped drift. Five tests, four watched failing
+first, the fifth the negative control; Python tests are 193.
+
 **THE RE-ARM GATE, 21 August 2026, closes the round's last code
 finding.** After a counted blink, no new closure may arm until the
 aperture rises 10 percent above the blink line, the mirror of fix
@@ -126,7 +138,7 @@ Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
 correction adds `baseline_over_resting`, flagged above 1.25, and
 `macbookair` is the only session of the six that it flags.
-Last commit, as of the stamp below: 2026-08-20;
+Last commit, as of the stamp below: 2026-08-21;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: NOTHING IS IN FLIGHT. The round is complete and
@@ -812,7 +824,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 624 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 188 Python tests of which
+in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

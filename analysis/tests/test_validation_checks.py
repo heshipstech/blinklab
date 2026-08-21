@@ -158,6 +158,31 @@ class TestTheTenMarkedBlinks:
             count_between_marks(blink_log(tmp_path, [1000.0]), [5000]) is None
         )
 
+    def test_the_window_carries_its_own_width(self, tmp_path: Path) -> None:
+        # Queued rule 3 of the round write-up, the half the tool can
+        # take now: the width travels with the counts, so a reader can
+        # see what the counts were counted over.
+        result = count_between_marks(
+            blink_log(tmp_path, [12_000.0]), [5000, 20_000]
+        )
+        assert result is not None
+        assert result.width_s == pytest.approx(15.0)
+
+    def test_a_zero_width_window_is_zero_not_hidden(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe P of the second pass. Two marks stamped inside the same
+        # one-second record carry the same time, so the window between
+        # them has no width. The verdict stays what the plan computes,
+        # because what such a window MEANS is the next plan's queued
+        # rule; the width is simply no longer invisible.
+        result = count_between_marks(
+            blink_log(tmp_path, [12_000.0]), [10_000, 10_000]
+        )
+        assert result is not None
+        assert result.width_s == 0.0
+        assert result.verdict == MISSED
+
 
 class TestTheBaseline:
     def test_reports_when_it_became_ready(self, tmp_path: Path) -> None:
@@ -589,6 +614,46 @@ class TestTheWholeReport:
         assert refused == 1
         assert "NOT EVALUATED" in text
         assert "not met" not in text
+
+    def test_the_table_prints_the_window_width(self, tmp_path: Path) -> None:
+        # Queued rule 3's tool half. Without this column a zero-width
+        # window and a fifteen-second one print the same row.
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [30_500 + index * 500 for index in range(10)])
+        text = "\n".join(report(tmp_path)[0])
+        assert "window (s)" in text
+        assert "15.0" in text
+
+    def test_a_window_narrower_than_the_slack_is_named(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe P made real: both marks in the same second. A mark can
+        # sit up to a second from its press, so a window narrower than
+        # that slack cannot separate its own count from the marker
+        # artefact, and the table must say so rather than leave it to
+        # a reader comparing two columns. The verdict still prints as
+        # computed; deciding what such a window means is queued for the
+        # next round's plan.
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path, marker_2_seconds="30.000")
+        write_blinks(tmp_path, [30_500 + index * 500 for index in range(10)])
+        text = "\n".join(report(tmp_path)[0])
+        assert "NARROWER THAN THE MARKER SLACK" in text
+        assert "P1 (0.0 s)" in text
+        assert MISSED in text
+
+    def test_a_normal_window_carries_no_narrowness_warning(
+        self, tmp_path: Path
+    ) -> None:
+        from tools.validation_report import report
+
+        TestTheRow().full_session(tmp_path)
+        write_blinks(tmp_path, [30_500 + index * 500 for index in range(10)])
+        text = "\n".join(report(tmp_path)[0])
+        assert "NARROWER THAN THE MARKER SLACK" not in text
 
     def test_an_unreadable_folder_stops_the_whole_run(
         self, tmp_path: Path

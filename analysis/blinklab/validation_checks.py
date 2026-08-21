@@ -75,6 +75,15 @@ class WindowCount:
     # one second shift could push OUT. The lower bound needs them.
     edge_of_window: int
     verdict: str
+    # The width between the two marks, in seconds. Queued rule 3 of
+    # the round write-up, found by probe P of the second adversarial
+    # pass: marks are stamped with the most recent per-second record's
+    # time, so two presses inside the same second make a ZERO-width
+    # window, and nothing in the table showed it. The width travels
+    # with the counts so a reader can see what they were counted over.
+    # What a window narrower than the slack MEANS for a verdict is the
+    # next round's plan's rule, deliberately not decided here.
+    width_s: float
 
     @property
     def lowest_possible(self) -> int:
@@ -131,6 +140,7 @@ def count_between_marks(
         near_end=len(near_end),
         edge_of_window=len(edge),
         verdict=verdict,
+        width_s=(end - start) / 1000.0,
     )
 
 
