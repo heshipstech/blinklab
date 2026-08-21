@@ -158,3 +158,195 @@ rate the page ignored. In five real sessions every camera declared 30
 and the gate never wrongly opened once. The rate that varies is the
 model's own, it is set by the machine, and the page reports it as a
 readout rather than as a caveat on the numbers beside it.
+
+
+THE SECOND RATE, 21 AUGUST 2026
+===============================
+
+Everything above sweeps ONE rate, the rate the page runs its detector
+at, and reads a fresh aperture at every tick. That is an infinitely fast
+camera. It is the right model for a clip, which is stepped frame by
+frame, and it is the wrong model for a live camera.
+
+A camera delivers frames on its own grid. Between two deliveries the
+page can tick as often as it likes and the lid it reads does not move,
+because it is re-reading the same photograph. So there are TWO rates,
+and which one binds is a question this file did not ask.
+
+WHY IT IS WORTH ASKING. The camera path in `src/io/frameLoop.ts` is
+`requestAnimationFrame` only, with no check that a new frame arrived,
+and `src/io/camera.ts` requests a resolution and no frame rate at all.
+The same file already refuses to make this mistake for CLIPS, and its
+comment says why: ticking at display rate and reading an interpolated
+clock "would report the display's refresh rate as the clip's frame
+rate", which is why a clip is driven by the frames themselves. The
+camera never got that treatment. Every one of the twelve measured
+sessions declared a 30 fps camera while the page reported processing
+rates from 24.4 to 126.7.
+
+THE MODEL. Sample and hold. The delivery grid runs at deliveryHz; the
+processing grid runs at processHz; at each processing tick the detector
+reads the aperture of the most recent DELIVERED frame. Both phases are
+swept, because neither is controlled in a real session: where the
+camera's grid falls against the blink, and where the processing grid
+falls against the camera's. The old model is kept as the special case
+deliveryHz = Infinity, and a test pins the two against each other so
+the new one cannot quietly move the published numbers above.
+
+Reproduce with the same command as the table above.
+
+A 150 ms blink (50 ms down, 100 ms up) on a camera DELIVERING 30 fps.
+Columns are the PROCESSING rate. The last column is what the model
+above, with its infinitely fast camera, says at 126.7.
+
+  min     ms below      25 Hz  29.2 Hz  30.7 Hz    55 Hz 126.7 Hz    infinite
+  (mm)    arm line                                                    camera
+------------------------------------------------------------------------------
+  3.50          2       0.03     0.04     0.04     0.04     0.04        0.20
+  3.40         16       0.41     0.49     0.50     0.50     0.50        1.00
+  3.30         22       0.57     0.67     0.68     0.68     0.68        1.00
+  3.20         27       0.68     0.80     0.82     0.82     0.82        1.00
+  3.10         31       0.78     0.92     0.94     0.94     0.94        1.00
+  3.00         35       0.83     0.97     1.00     1.00     1.00        1.00
+  2.90         38       0.85     0.98     1.00     1.00     1.00        1.00
+  2.80         40       0.87     0.98     1.00     1.00     1.00        1.00
+
+The same blinks, processed at 60, against what the CAMERA delivers:
+
+  min     30 delivered   60 delivered
+-------------------------------------
+  3.50          0.04         0.10
+  3.40          0.50         0.98
+  3.30          0.68         1.00
+  3.20          0.82         1.00
+  3.10          0.94         1.00
+  3.00          1.00         1.00
+
+WHAT THE MODEL SAYS
+-------------------
+
+1. ABOVE THE DELIVERED RATE, PROCESSING BUYS NOTHING. 30.7, 55 and
+   126.7 frames per second are the same column. The 0.4 mm band does
+   not close; it stops closing at the camera.
+
+2. THE IMPROVEMENT LIVES IN THE CAMERA. The same blink at the same
+   processing rate goes from 0.50 to 0.98 when the camera delivers 60
+   instead of 30. That is the whole of what a "faster machine" was
+   credited with.
+
+3. THE REASSURING REGION IS CONDITIONAL, and this is new. The table
+   above says deep blinks at 2.80 mm are caught at every rate from 25
+   up. With delivery modelled, a machine processing at 25 on a 30 fps
+   camera catches that same firm blink 0.87 of the time: below the
+   delivered rate the processing grid skips delivered frames, and a
+   held value can fall entirely between two ticks. Region 1 of the 17
+   August table is true for a camera faster than the processing rate,
+   and this is the first thing that would make the 25 fps floor itself
+   look too low. NOTHING IS CHANGED ON THAT BASIS HERE: a floor moved
+   because a synthetic table suggested it would be a constant chosen
+   from a model rather than from a measurement.
+
+THE PREDICTION, COMMITTED BEFORE ANY DEVICE IS OPENED
+-----------------------------------------------------
+
+This model is not yet measured against anything. The dry run recorded
+processing rates and never recorded a delivered rate, because nothing
+in the instrument measures one. So the following is written down first,
+in the arrangement this project uses for every question it cares about.
+
+What is predicted, for the four sound dry-run sessions:
+
+    macbookair2      29.2 processing    delivers about 30, read
+                                        fraction below 1: the machine
+                                        is slower than the camera and
+                                        skips delivered frames
+    iphone2          30.7 processing    delivers about 30
+    iphone17promax   55.0 processing    delivers about 60
+    pcsony          126.7 processing    delivers 60 or more
+
+THE DECISIVE CASE IS pcsony, AND IT CAN REFUTE THE MODEL OUTRIGHT.
+It caught 10 of 10 while processing at 126.7. If its camera delivered
+only 30, then under this model it had exactly the evidence a 30 fps
+machine has, and it should have missed blinks like `iphone2` did. It
+did not. So either that chain delivers 60 or more — a Sony A7 IV
+through a Cam Link 4K can — or the delivery model does not explain the
+dry run, and section 1 above is wrong about which rate binds.
+
+If pcsony delivers 30 and still caught 10 of 10, THIS SECTION IS
+RETRACTED in a new dated section rather than quietly amended, and the
+existing claims below stand as they are.
+
+WHAT MOVES UNDER EACH OUTCOME. The claim that the processing rate is
+the rate that matters is recorded in seven places, and a correction has
+to reach all of them or the project will have corrected the page and
+left the record wrong, which is the defect this file's own project
+history is full of:
+
+    src/core/fpsGate.ts        "The camera is not the cause and a
+                               faster machine would count more"
+    README.md                  the "how fast your computer is" bullet
+    MODEL_CARD.md              "the machine rather than the camera",
+                               and the tested-on paragraph
+    STATE.md                   "The processing rate is set by the
+                               COMPUTER, not the camera"
+    validation-dry-run.txt §3  the same sentence, as a finding
+    validation-dry-run.txt §4  "The phone was never the problem. The
+                               rate was."
+    REMEDIATION.md D1          closed on the reasoning that every
+                               camera declared 30 and the gate never
+                               wrongly opened
+
+    IF DELIVERY BINDS: every one of those gets a dated correction
+    naming this file, and §4 keeps its conclusion while losing its
+    mechanism — the rate WAS the cause, and the iPhone 17 very likely
+    ran a 60 fps camera, so the prediction that was committed there
+    still held for a reason it did not name. A prediction that holds
+    for the wrong mechanism is still a prediction that held, and it is
+    recorded as such rather than reread as a mistake.
+
+    IF DELIVERY DOES NOT BIND: nothing above moves, and this section
+    is the thing that was wrong.
+
+WHAT THE 25 FPS GATE DOES, DECIDED NOW RATHER THAN AFTER THE NUMBER IS
+SEEN. The gate reads the processing rate today. If any device is
+measured delivering below 25 while processing above it, the gate is
+refusing on the wrong quantity and moves to the delivered rate, and
+D1's closure gets a dated correction saying its premise did occur after
+all. If no device does — which is what is expected, since every
+declared rate was 30 — the gate stays exactly where it is, because a
+gate moved on a model rather than on an observation is the same error
+in the other direction.
+
+WHAT THIS DOES NOT ESTABLISH
+----------------------------
+
+THE HARNESS BYPASSES THE FACE MODEL, and that is an assumption, not a
+fact. It assumes re-processing an identical delivered frame at a later
+timestamp yields the same aperture. MediaPipe runs in VIDEO mode with
+temporal tracking, so a repeated frame at an advancing timestamp may
+give slightly different landmarks. The reasoning for the model is that
+a repeated photograph carries no NEW information about where the lid
+was, so tracking can smooth but cannot add evidence; the reasoning
+against it is that smoothing is not nothing.
+
+THE FALSIFIER, NAMED AND NOT YET RUN: measure one clip twice through
+the real page, once stepped and once watched. Stepped seeks to every
+frame; watched plays in real time and re-reads frames on a fast
+machine. Both modes already exist and both are already driven by
+`test/e2e/videoFile.spec.ts`. If a repeated frame carried new
+information, the watched export would show apertures the stepped one
+does not. It needs no camera, no dataset and no people, and it belongs
+to whoever runs this on a machine with the full browser toolchain.
+
+Until that runs, section 1's claim is a claim about the SAMPLER, proven
+against the real `blinkStep`, and not a claim about the whole pipeline.
+
+MUTATIONS, so the new tests are known to be sensitive to the mechanism
+rather than only to themselves. Making the delivery stage ignore its
+requested rate turns two of the four new tests red: "processing faster
+than the camera buys nothing" and "a faster CAMERA does what a faster
+machine was credited with". Making the delivery grid a thousand times
+finer turns the same two red. The other two survive both mutations,
+correctly: one is a direction check that holds under either model, and
+the other is the pin that holds the infinite-camera case to the 17
+August numbers.
