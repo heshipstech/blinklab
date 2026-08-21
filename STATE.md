@@ -28,14 +28,26 @@ that refutes the model outright.
 YET.** The sampling-rate harness now models the CAMERA's own delivery
 grid beside the processing grid, sample and hold, both phases swept.
 What it says: above the delivered rate, processing buys nothing —
-30.7, 55 and 126.7 fps are the same column — and the improvement a
-"faster machine" was credited with actually lives in the camera, 0.48
-to 0.96 for one marginal blink when delivery goes 30 to 60. A third
-finding is new and qualifies the 17 August table: below the delivered
-rate even a firm 2.80 mm blink is caught only 0.87 of the time,
-because the processing grid skips delivered frames. THE 25 FPS FLOOR
-IS DELIBERATELY NOT MOVED ON THAT BASIS: a constant chosen from a
-model is fitting.
+30.7, 55 and 126.7 fps are the same column — and a faster CAMERA
+helps, 0.48 to 0.96 for one marginal blink when delivery goes 30 to
+60, but only up to the rate the machine can read. A third finding
+qualifies the 17 August table: a firm 2.80 mm blink is caught only
+0.87 of the time at 25 processing on a 30 fps camera, because a frame
+held 33 ms can fall between two 40 ms ticks. THE 25 FPS FLOOR IS
+DELIBERATELY NOT MOVED ON THAT BASIS: a constant chosen from a model
+is fitting.
+
+TWO CLAIMS IN THE FIRST DRAFT WERE WRONG and an adversarial review
+caught them before publication; both wrong sentences are printed in
+docs/blink-sample-rate.txt rather than deleted. "The improvement
+lives in the camera" is FALSE past the processing rate: detection is
+not monotone in the delivered rate, it peaks where the two grids
+divide evenly and dips between, so at 60 processing a 90 fps camera
+(0.82) is worse than a 60 fps one (0.96) and a 120 recovers (0.96).
+And "region 1 holds for a camera faster than the processing rate" was
+backwards — 25 processing on a 30 fps camera IS that case and it is
+the case that fails. It is the RATIO that decides, not which number
+is larger. Both are pinned by tests now.
 
 Why it matters: `src/io/frameLoop.ts` drives the camera from
 requestAnimationFrame with no check that a frame arrived, and
@@ -907,7 +919,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 654 unit tests, 20 end to end tests all run in Chromium
+Test count: 656 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
