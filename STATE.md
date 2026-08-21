@@ -1,3 +1,16 @@
+**ROADMAP 7.8 IS MEASURED, 21 August 2026: the alert's latency is
+500 ms plus at most one frame.** Time from eye closure to alert is
+deterministic and now pinned: the long closure detector fires on the
+first frame strictly past 500 ms and the governor fires the same
+frame, so 25 Hz gives 520.0 ms, 30 Hz 533.3, 60 Hz 516.7, proven
+sensitive by mutation (removing the threshold turns the tests red).
+The debounce regime is stated beside it, not hidden: within 5 s of a
+firing a new closure is counted, never told. The core reducer chain
+costs about 42 microseconds per frame on one measured machine,
+asserted under a deliberately generous 2 ms ceiling. What the record
+does NOT include is named in docs/latency.txt: the model's ~6 ms and
+the camera's own delay. Unit tests are 628.
+
 **THE WINDOW'S WIDTH NOW PRINTS BESIDE ITS COUNTS, 21 August 2026,
 the tool half of the round's queued rule 3.** Probe P's zero-width
 window, two marks stamped inside the same one-second record, printed
@@ -823,7 +836,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 624 unit tests, 20 end to end tests all run in Chromium
+Test count: 628 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
