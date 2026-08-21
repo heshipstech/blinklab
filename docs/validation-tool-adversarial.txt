@@ -460,3 +460,19 @@ Not fixed, recorded: the zero-width window (P) is a next-round rule,
 because fixing it mid-round changes a verdict. Marker numbering that
 starts past 1 (T) and emoji column alignment (V) are noted above and
 left alone.
+
+POSTSCRIPT, 21 AUGUST 2026: THE DISPLAY HALF OF PROBE P'S REMEDY
+----------------------------------------------------------------
+
+The round is published and the mid-round freezes are lifted, so the
+half of probe P's remedy that decides nothing is now in: the CHECKS
+table prints each window's width in seconds beside its counts, and a
+window narrower than the one-second marker slack is named under the
+summary, its verdict printed as computed rather than trusted. NO
+VERDICT MOVED, and a test pins the zero-width window's verdict as the
+same MISSED it always was, so the fix is visibility and only
+visibility. The other half, what a window narrower than the slack
+MEANS, remains the next round plan's rule, queued beside frame-rate
+soundness and window-scoped drift. Five tests, four watched failing
+against the unfixed code first, the fifth the negative control that a
+normal window draws no warning. Python tests 189 to 193.

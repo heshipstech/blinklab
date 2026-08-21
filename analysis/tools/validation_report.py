@@ -30,6 +30,7 @@ from blinklab.validation_checks import (
     BASELINE_OVER_RESTING_CEILING,
     EXPECTED_BLINKS,
     FACE_FRACTION_FLOOR,
+    MARKER_SLACK_MS,
     MISSED,
     OVER_COUNTED,
     ParticipantRow,
@@ -72,6 +73,11 @@ def checks_table(rows: list[ParticipantRow]) -> str:
         "",
         "session",
         "marks",
+        # Queued rule 3 of the round write-up: without the width, a
+        # zero-width window and a fifteen-second one print the same
+        # row, and probe P showed the zero-width case is a plausible
+        # real file, not a hypothetical.
+        "window (s)",
         "in window",
         "near start",
         "near end",
@@ -93,6 +99,7 @@ def checks_table(rows: list[ParticipantRow]) -> str:
                 # said nothing, so a reader had to open the file to find
                 # out. The window still uses the first two marks.
                 str(row.markers_found),
+                dash(None if window is None else window.width_s, 1),
                 "no log"
                 if row.no_blinks_detected
                 else dash(None if window is None else window.in_window),
@@ -273,6 +280,32 @@ def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
             "blinks than they wrote, so their window counts are a floor "
             "and not a count: "
             + ", ".join(f"{row.label} lost {row.blinks_lost}" for row in lost)
+            + ".",
+        ]
+    # Queued rule 3 of the round write-up, the half the tool can take
+    # without deciding a verdict: a mark can sit up to a second from
+    # its press, so a window narrower than that slack cannot separate
+    # its own count from the marker artefact. The verdict column still
+    # prints what the plan computes; what such a window MEANS is a
+    # rule for the next round's plan.
+    narrow = [
+        (row, row.window)
+        for row in rows
+        if row.window is not None
+        and row.window.width_s * 1000.0 < MARKER_SLACK_MS
+    ]
+    if narrow:
+        lines += [
+            "",
+            "WINDOW NARROWER THAN THE MARKER SLACK. A mark can sit up "
+            "to a second from the moment it was pressed, so these "
+            "windows cannot separate their own count from the marker "
+            "artefact, and their verdicts are printed as computed "
+            "rather than trusted: "
+            + ", ".join(
+                f"{row.label} ({window.width_s:.1f} s)"
+                for row, window in narrow
+            )
             + ".",
         ]
     return lines
