@@ -1,3 +1,18 @@
+**ROADMAP 7.9 IS DONE, 21 August 2026: the README's results summary
+is generated, not written.** A "Results at a glance" block between
+markers is built by tools/resultsBlock.mjs from the three committed
+result files: Eyeblink8's numbers through resultGuard's own parser,
+DROZY's null with its permission-required citation (the generator
+REFUSES a source that lost the cite or the null-verdict sentence),
+and the round's three criteria verdicts parsed from the published
+table. A test regenerates the block and fails when the committed
+README drifts from it, so a result file changing without npm run
+results:write is a red build, not a stale page; no TODO may remain
+in the block. Eight tests, the block-freshness ones watched failing
+against a README with no block. Unit tests are 636. With 7.8 below,
+Phase 7's achievable rows are all done; 7.5 and 7.6 stay HELD on
+data that does not exist.
+
 **ROADMAP 7.8 IS MEASURED, 21 August 2026: the alert's latency is
 500 ms plus at most one frame.** Time from eye closure to alert is
 deterministic and now pinned: the long closure detector fires on the
@@ -836,7 +851,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 628 unit tests, 20 end to end tests all run in Chromium
+Test count: 636 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
