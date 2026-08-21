@@ -243,10 +243,34 @@ WHAT THE MODEL SAYS
    126.7 frames per second are the same column. The 0.4 mm band does
    not close; it stops closing at the camera.
 
-2. THE IMPROVEMENT LIVES IN THE CAMERA. The same blink at the same
-   processing rate goes from 0.48 to 0.96 when the camera delivers 60
-   instead of 30. That is the whole of what a "faster machine" was
-   credited with.
+2. A FASTER CAMERA HELPS, BUT ONLY UP TO THE RATE THE MACHINE CAN
+   READ, AND NOT BEYOND IT. The same blink at the same processing rate
+   goes from 0.48 to 0.96 when the camera delivers 60 instead of 30.
+   That much is the improvement a "faster machine" was credited with.
+
+   CORRECTED BEFORE PUBLICATION, and the wrong version is printed here
+   rather than deleted, because it is the more memorable sentence and
+   somebody will reach for it again. The first draft of this section
+   said flatly "THE IMPROVEMENT LIVES IN THE CAMERA". That is false in
+   this model, and it was demonstrated at the single best case: 60
+   delivered against 60 processed, the one point where the two grids
+   are commensurate. Swept properly, at 60 processing:
+
+       delivered   30     45     60     75     90    120    180
+       caught    0.485  0.725  0.965  0.841  0.815  0.965  0.963
+
+   Detection is NOT monotone in the delivered rate. It peaks where the
+   two grids divide evenly and dips between, because a camera faster
+   than the reader shortens the time each frame is held while leaving
+   most frames unread. A 90 fps camera on this machine is worse than a
+   60 fps one. The 17 August experiment had a guard for exactly this
+   shape, "more frames never make detection worse"; the delivery
+   model's analogue is FALSE, and that is the finding rather than an
+   embarrassment.
+
+   What binds is the SLOWER of the two grids, and how evenly they
+   divide. Neither rate alone is the answer, which is why the export
+   carries both and their ratio.
 
 3. THE REASSURING REGION IS CONDITIONAL, and this is new. The table
    above says deep blinks at 2.80 mm are caught at every rate from 25
@@ -265,20 +289,56 @@ WHAT THE MODEL SAYS
    fails below the delivered rate is how long the lid stayed under the
    arm line, not how far under it went.
 
-   Region 1 of the 17 August table is therefore true for a camera
-   faster than the processing rate, and this is the first thing that
-   would make the 25 fps floor itself look too low. NOTHING IS CHANGED
-   ON THAT BASIS HERE: a floor moved because a synthetic table
-   suggested it would be a constant chosen from a model rather than
-   from a measurement.
+   CORRECTED BEFORE PUBLICATION, and again the wrong sentence stays.
+   The first draft ended this finding with "Region 1 of the 17 August
+   table is therefore true for a camera faster than the processing
+   rate". That is backwards, and the case that disproves it is the one
+   the finding is about: 25 processing on a 30 fps camera IS a camera
+   faster than the machine, and it is the case that fails.
+
+   It is not the ordering of the two rates at all. It is whether a
+   delivered frame is held long enough for a processing tick to land
+   on it. At 25 processing on a 30 fps camera the tick period is 40 ms
+   and a frame is held 33.3, so the deepest frame can fall between two
+   ticks. At 30 processing on a 60 fps camera the camera is TWICE the
+   machine and the same blink is always caught, because the arm window
+   still spans more than one tick period of delivered frames. Region 1
+   holds or fails on the ratio, not on which number is larger.
+
+   This is the first thing that would make the 25 fps floor itself
+   look too low. NOTHING IS CHANGED ON THAT BASIS HERE: a floor moved
+   because a synthetic table suggested it would be a constant chosen
+   from a model rather than from a measurement.
 
 THE PREDICTION, COMMITTED BEFORE ANY DEVICE IS OPENED
 -----------------------------------------------------
 
-This model is not yet measured against anything. The dry run recorded
-processing rates and never recorded a delivered rate, because nothing
-in the instrument measures one. So the following is written down first,
-in the arrangement this project uses for every question it cares about.
+This model is not yet measured against anything. So the following is
+written down first, in the arrangement this project uses for every
+question it cares about.
+
+FIRST, A CONTRADICTION THIS SECTION CARRIED AND NO LONGER DOES. The
+draft said the dry run "never recorded a delivered rate, because
+nothing in the instrument measures one", and then, three paragraphs
+later, leaned on `camera_declared_fps` being 30 everywhere as evidence
+about the gate. Both cannot be true. The instrument HAS recorded a
+camera rate since 15 August and the dry run recorded it: 30.0 for every
+one of the twelve sessions, `pcsony` and `iphone17promax` included.
+
+So the honest position, stated once and used consistently below.
+`camera_declared_fps` is `getSettings().frameRate`: the rate the track
+was NEGOTIATED at, which is an upper bound and a configuration, not a
+count of frames that arrived. A camera negotiated at 30 cannot deliver
+60, so a declared 30 does bound the delivered rate from above. What it
+cannot do is tell us what actually arrived underneath it: auto-exposure
+in a dim room routinely halves real delivery while the negotiated
+setting stays where it is, which is the whole reason a delivered rate
+is worth counting separately.
+
+THAT BOUND ALREADY DAMAGES THE PREDICTION BELOW, and it is better to
+say so before the measurement than to discover it after. If `pcsony`
+was negotiated at 30, it did not deliver 60, and the prediction that
+it did is very likely already wrong.
 
 What is predicted, for the four sessions whose baseline is sound AND
 whose marks are where the protocol asks, which is the set the dry
@@ -297,17 +357,34 @@ eventually account for too.
     iphone17promax   55.0 processing    delivers about 60
     pcsony          126.7 processing    delivers 60 or more
 
-THE DECISIVE CASE IS pcsony, AND IT CAN REFUTE THE MODEL OUTRIGHT.
-It caught 10 of 10 while processing at 126.7. If its camera delivered
-only 30, then under this model it had exactly the evidence a 30 fps
-machine has, and it should have missed blinks like `iphone2` did. It
-did not. So either that chain delivers 60 or more — a Sony A7 IV
-through a Cam Link 4K can — or the delivery model does not explain the
-dry run, and section 1 above is wrong about which rate binds.
+THE CASE THAT PRESSES HARDEST IS pcsony. It caught 10 of 10 while
+processing at 126.7. If its camera delivered only 30, then under this
+model it had exactly the evidence a 30 fps machine has, and `iphone2`
+at about the same delivered rate missed 3 of 10.
 
-If pcsony delivers 30 and still caught 10 of 10, THIS SECTION IS
-RETRACTED in a new dated section rather than quietly amended, and the
-existing claims below stand as they are.
+IT IS NOT DECISIVE ON ITS OWN, and the first draft called it decisive,
+which was too strong. The model only predicts a miss for blinks inside
+the marginal band: a deep or slow blink is caught at 30 delivered at
+every phase, as the table's own lower rows show. So a 10 of 10 at 30
+delivered refutes the model ONLY IF that session's blinks were
+marginal, and the blink log cannot answer that, because a missed blink
+writes no row and the amplitudes on file are the ones that were
+caught. That is the same censoring this file has already named as
+permanent.
+
+WHAT WOULD MAKE IT DECISIVE, and it is available without any new
+session: `pcsony` and `iphone2` are the same protocol, ten deliberate
+blinks each, and their recorded amplitude distributions can be
+compared. If pcsony's caught blinks are no deeper than iphone2's while
+its count is perfect, the two sessions had comparable material and the
+delivery model owes an explanation. If pcsony's are visibly deeper,
+the comparison says nothing and the model is untested by it. That
+comparison needs `$DATASETS`, so it is Mac-only, and it is named here
+so the measurement is not read as more decisive than it is.
+
+IF THE MEASUREMENT GOES AGAINST THE MODEL, this section is RETRACTED
+in a new dated section rather than quietly amended, and the claims
+below it stand as they are.
 
 WHAT MOVES UNDER EACH OUTCOME. The claim that the processing rate is
 the rate that matters is recorded in seven places, and a correction has
@@ -317,17 +394,33 @@ history is full of:
 
     src/core/fpsGate.ts        "The camera is not the cause and a
                                faster machine would count more"
+    test/core/fpsGate.test.ts  ASSERTS that sentence, so correcting
+                               the page without this turns the build
+                               red on the day of the correction
+    docs/UI.md                 the rate-warning row, which uiGuard
+                               holds to the page
     README.md                  the "how fast your computer is" bullet
     MODEL_CARD.md              "the machine rather than the camera",
                                and the tested-on paragraph
     STATE.md                   "The processing rate is set by the
                                COMPUTER, not the camera"
+    LEARNING.md                the D1 stage two entry, which teaches
+                               the sentence as the increment's lesson
     validation-dry-run.txt §3  the same sentence, as a finding
     validation-dry-run.txt §4  "The phone was never the problem. The
                                rate was."
     REMEDIATION.md D1          closed on the reasoning that every
                                camera declared 30 and the gate never
                                wrongly opened
+
+    Ten, not the seven the first draft listed, and three of the three
+    it missed are machine-enforced rather than prose: a test that
+    asserts the sentence, a guarded UI document, and a learning note.
+    The enumeration exists so a correction cannot reach the page and
+    leave the record behind, so an enumeration that is itself
+    incomplete is the failure it was written to prevent. Found by
+    grepping for the sentence rather than by remembering where it had
+    been written, which is the only method that works here.
 
     IF DELIVERY BINDS: every one of those gets a dated correction
     naming this file, and §4 keeps its conclusion while losing its
@@ -361,6 +454,20 @@ give slightly different landmarks. The reasoning for the model is that
 a repeated photograph carries no NEW information about where the lid
 was, so tracking can smooth but cannot add evidence; the reasoning
 against it is that smoothing is not nothing.
+
+IT TREATS A FRAME AS AN INSTANT, AND A CAMERA INTEGRATES. Every
+delivered frame here is `apertureAt` evaluated at one moment. A real
+frame is the average over its exposure, and because the arm line is a
+DEPTH and the lid moves fastest exactly where this model needs it
+deepest, motion blur raises the minimum aperture any frame can report.
+The bias runs one way: THIS MODEL IS OPTIMISTIC about the marginal
+band, which is the band the whole file is about. Re-running the sweep
+with the delivered aperture replaced by the mean over an exposure, all
+else identical, an ordinary 1/60 s shutter on a 30 fps camera moves
+the 3.40 mm row from 0.48 to 0.38 and empties the 3.50 row to 0.00
+in every column. Indoor auto-exposure commonly reaches 1/30 s, the
+whole frame period, where it would be larger still. Not modelled, and
+named here rather than discovered later.
 
 THE FALSIFIER, NAMED AND NOT YET RUN: measure one clip twice through
 the real page, once stepped and once watched. Stepped seeks to every

@@ -297,10 +297,13 @@ describe("what the CAMERA's delivery rate does, once it is modelled", () => {
     expect(slower).toBeLessThanOrEqual(matched);
   });
 
-  it("a faster CAMERA does what a faster machine was credited with", () => {
-    // If delivery binds, this is where the improvement actually lives:
-    // the same marginal blink, the same processing rate, a camera
-    // delivering 60 instead of 30.
+  it("a faster CAMERA helps only up to the rate the machine can read", () => {
+    // Half of this was published as "the improvement lives in the
+    // camera" and an adversarial review showed that is false past the
+    // processing rate. Both halves are pinned here so the claim cannot
+    // be restated in the simple form again.
+    //
+    // Up to the processing rate, a faster camera does help:
     const at30 = deliveredDetectionRate(MARGINAL, OPTICS, {
       deliveryHz: 30,
       processHz: 60,
@@ -311,6 +314,51 @@ describe("what the CAMERA's delivery rate does, once it is modelled", () => {
     });
     expect(at60).toBeGreaterThan(at30);
     expect(at60).toBe(1);
+  });
+
+  it("detection is NOT monotone in the delivered rate", () => {
+    // The review's finding, and the correction to the claim above.
+    // Two grids alias: detection peaks where they are commensurate and
+    // dips between. A 3.40 mm blink on a machine processing at 60 is
+    // caught 0.96 of the time by a 60 fps camera, 0.82 by a 90 fps
+    // camera, and 0.96 again by a 120. So a FASTER camera can lose
+    // blinks, and the 17 August guard "more frames never make
+    // detection worse" has no analogue here.
+    const shallow: Blink = { minMm: 3.4, closeMs: 50, openMs: 100 };
+    const at = (deliveryHz: number): number =>
+      deliveredDetectionRate(shallow, OPTICS, { deliveryHz, processHz: 60 });
+    expect(at(90)).toBeLessThan(at(60));
+    expect(at(120)).toBeGreaterThan(at(90));
+    // Stated as the shape rather than as three numbers: somewhere above
+    // the processing rate there is a delivery rate that is worse than
+    // one below it.
+    expect(at(90)).toBeLessThan(at(45) + 0.2);
+  });
+
+  it("a firm blink is missed when a frame is held for less than a tick", () => {
+    // Finding 3, which was published in the document and in STATE.md
+    // with no test behind it, which the review called out. The 17
+    // August table says a 2.80 mm blink is caught at every rate from
+    // 25 up. That holds only while the processing grid can see every
+    // delivered frame that matters.
+    const firm: Blink = { minMm: 2.8, closeMs: 50, openMs: 100 };
+    // 25 Hz processing on a 30 fps camera: the processing period, 40
+    // ms, is longer than the 33.3 ms a delivered frame is held, so the
+    // deepest frame can fall between two ticks.
+    expect(
+      deliveredDetectionRate(firm, OPTICS, { deliveryHz: 30, processHz: 25 }),
+    ).toBeLessThan(1);
+    // And it is NOT simply "the camera is faster than the machine": at
+    // 30 processing on a 60 fps camera the camera is twice the machine
+    // and the same blink is always caught, because the arm window
+    // still holds more than one processing period of delivered
+    // frames. The quantity is the ratio, not the ordering.
+    expect(
+      deliveredDetectionRate(firm, OPTICS, { deliveryHz: 60, processHz: 30 }),
+    ).toBe(1);
+    expect(
+      deliveredDetectionRate(firm, OPTICS, { deliveryHz: 30, processHz: 127 }),
+    ).toBe(1);
   });
 
   it("an infinitely fast camera agrees with the 17 August model to within a phase step", () => {
