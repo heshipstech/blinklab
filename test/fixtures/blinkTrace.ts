@@ -196,8 +196,17 @@ export function deliveredDetectionRate(
   blink: Blink,
   optics: Optics,
   sampling: Sampling,
-  deliverySteps = 50,
-  processSteps = 8,
+  // 200 x 16. Measured rather than picked: at 50 x 8 roughly half the
+  // cells of the published table were wrong in the second decimal, so
+  // the sweep was resolving about a fiftieth and the numbers printed a
+  // hundredth. 100 x 16, 200 x 16, 200 x 32 and 400 x 32 were compared
+  // cell by cell; 200 x 16 and 200 x 32 agree exactly and 400 x 32
+  // moves no cell by more than 0.0025, which is the residual quoted
+  // beside the table. Raising the PROCESS steps past 16 changes
+  // nothing, because the phase that decides which part of the lid's
+  // travel was photographed is the camera's, not the reader's.
+  deliverySteps = 200,
+  processSteps = 16,
 ): number {
   // With an infinite delivery grid there is no camera phase to sweep,
   // so spending part of the budget on it would sample the one axis

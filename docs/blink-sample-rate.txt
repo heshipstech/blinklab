@@ -193,7 +193,19 @@ falls against the camera's. The old model is kept as the special case
 deliveryHz = Infinity, and a test pins the two against each other so
 the new one cannot quietly move the published numbers above.
 
-Reproduce with the same command as the table above.
+Reproduce with the same command as the table above, which prints these
+two tables beneath it.
+
+THE SWEEP BUDGET, because the digits below depend on it. Both phases
+are swept on a grid of 200 camera offsets by 16 processing offsets.
+That is measured rather than picked: at the first budget tried, 50 by
+8, roughly half of these cells were wrong in the second decimal, so
+the sweep resolved about a fiftieth while the table printed a
+hundredth. 200 by 16 and 200 by 32 agree exactly, and 400 by 32 moves
+no cell by more than 0.0025. Read the second decimal as carrying about
+that much residual. Raising the PROCESSING offsets past 16 changes
+nothing at all, which is itself the finding: the phase that decides
+what was photographed is the camera's, not the reader's.
 
 A 150 ms blink (50 ms down, 100 ms up) on a camera DELIVERING 30 fps.
 Columns are the PROCESSING rate. The last column is what the model
@@ -202,25 +214,27 @@ above, with its infinitely fast camera, says at 126.7.
   min     ms below      25 Hz  29.2 Hz  30.7 Hz    55 Hz 126.7 Hz    infinite
   (mm)    arm line                                                    camera
 ------------------------------------------------------------------------------
-  3.50          2       0.03     0.04     0.04     0.04     0.04        0.20
-  3.40         16       0.41     0.49     0.50     0.50     0.50        1.00
-  3.30         22       0.57     0.67     0.68     0.68     0.68        1.00
-  3.20         27       0.68     0.80     0.82     0.82     0.82        1.00
-  3.10         31       0.78     0.92     0.94     0.94     0.94        1.00
-  3.00         35       0.83     0.97     1.00     1.00     1.00        1.00
-  2.90         38       0.85     0.98     1.00     1.00     1.00        1.00
-  2.80         40       0.87     0.98     1.00     1.00     1.00        1.00
+  3.50          2       0.04     0.05     0.05     0.05     0.05         0.20
+  3.40         16       0.40     0.47     0.48     0.48     0.48         1.00
+  3.30         22       0.56     0.65     0.67     0.67     0.67         1.00
+  3.20         27       0.68     0.79     0.81     0.81     0.81         1.00
+  3.10         31       0.78     0.91     0.94     0.94     0.94         1.00
+  3.00         35       0.84     0.97     1.00     1.00     1.00         1.00
+  2.90         38       0.85     0.98     1.00     1.00     1.00         1.00
+  2.80         40       0.87     0.98     1.00     1.00     1.00         1.00
+  2.40         49       0.91     0.99     1.00     1.00     1.00         1.00
+  2.00         55       0.94     0.99     1.00     1.00     1.00         1.00
 
-The same blinks, processed at 60, against what the CAMERA delivers:
+The same blinks processed at 60, against what the CAMERA delivers:
 
   min     30 delivered   60 delivered
--------------------------------------
-  3.50          0.04         0.10
-  3.40          0.50         0.98
-  3.30          0.68         1.00
-  3.20          0.82         1.00
-  3.10          0.94         1.00
-  3.00          1.00         1.00
+--------------------------------------
+  3.50          0.05           0.10
+  3.40          0.48           0.96
+  3.30          0.67           1.00
+  3.20          0.81           1.00
+  3.10          0.94           1.00
+  3.00          1.00           1.00
 
 WHAT THE MODEL SAYS
 -------------------
@@ -230,7 +244,7 @@ WHAT THE MODEL SAYS
    not close; it stops closing at the camera.
 
 2. THE IMPROVEMENT LIVES IN THE CAMERA. The same blink at the same
-   processing rate goes from 0.50 to 0.98 when the camera delivers 60
+   processing rate goes from 0.48 to 0.96 when the camera delivers 60
    instead of 30. That is the whole of what a "faster machine" was
    credited with.
 
@@ -239,12 +253,24 @@ WHAT THE MODEL SAYS
    up. With delivery modelled, a machine processing at 25 on a 30 fps
    camera catches that same firm blink 0.87 of the time: below the
    delivered rate the processing grid skips delivered frames, and a
-   held value can fall entirely between two ticks. Region 1 of the 17
-   August table is true for a camera faster than the processing rate,
-   and this is the first thing that would make the 25 fps floor itself
-   look too low. NOTHING IS CHANGED ON THAT BASIS HERE: a floor moved
-   because a synthetic table suggested it would be a constant chosen
-   from a model rather than from a measurement.
+   held value can fall entirely between two ticks.
+
+   AND DEPTH BARELY RESCUES IT, which is why the table carries two
+   rows far below anything the band needed. At 25 Hz processing on a
+   30 fps camera the same 150 ms blink reads 0.87 at 2.80 mm, 0.91 at
+   2.40 and 0.94 at 2.00: driving the lid almost shut buys seven
+   points. What does rescue it is DURATION. The harness's own deep
+   control, 1.5 mm over 180 ms rather than 150, returns 1.00 at every
+   processing rate on the same 30 fps camera. So the quantity that
+   fails below the delivered rate is how long the lid stayed under the
+   arm line, not how far under it went.
+
+   Region 1 of the 17 August table is therefore true for a camera
+   faster than the processing rate, and this is the first thing that
+   would make the 25 fps floor itself look too low. NOTHING IS CHANGED
+   ON THAT BASIS HERE: a floor moved because a synthetic table
+   suggested it would be a constant chosen from a model rather than
+   from a measurement.
 
 THE PREDICTION, COMMITTED BEFORE ANY DEVICE IS OPENED
 -----------------------------------------------------
@@ -254,7 +280,14 @@ processing rates and never recorded a delivered rate, because nothing
 in the instrument measures one. So the following is written down first,
 in the arrangement this project uses for every question it cares about.
 
-What is predicted, for the four sound dry-run sessions:
+What is predicted, for the four sessions whose baseline is sound AND
+whose marks are where the protocol asks, which is the set the dry
+run's own §2 table uses. The dry run has FIVE sound sessions; P1
+`iphone` is set aside here for its marks, not for its ruler, and that
+is said out loud because a prediction section that quietly skips a
+session which MISSED blinks would invite exactly the reading that it
+was skipped for being inconvenient. P1 is a case this model should
+eventually account for too.
 
     macbookair2      29.2 processing    delivers about 30, read
                                         fraction below 1: the machine

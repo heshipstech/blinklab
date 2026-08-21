@@ -4,8 +4,8 @@ YET.** The sampling-rate harness now models the CAMERA's own delivery
 grid beside the processing grid, sample and hold, both phases swept.
 What it says: above the delivered rate, processing buys nothing —
 30.7, 55 and 126.7 fps are the same column — and the improvement a
-"faster machine" was credited with actually lives in the camera, 0.50
-to 0.98 for one marginal blink when delivery goes 30 to 60. A third
+"faster machine" was credited with actually lives in the camera, 0.48
+to 0.96 for one marginal blink when delivery goes 30 to 60. A third
 finding is new and qualifies the 17 August table: below the delivered
 rate even a firm 2.80 mm blink is caught only 0.87 of the time,
 because the processing grid skips delivered frames. THE 25 FPS FLOOR
