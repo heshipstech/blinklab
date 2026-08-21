@@ -58,13 +58,15 @@ display's refresh rate as the clip's frame rate".
 
 NOTHING IS RETRACTED. The dry run's §4 prediction was committed first
 and held, and the evidence fits both models. The committed prediction
-in docs/blink-sample-rate.txt names the decisive case: `pcsony`
-caught 10 of 10 while processing at 126.7, so if its chain delivered
-only 30 the delivery model is REFUTED and the new section is
-retracted. It also enumerates all seven places the claim is recorded
-and says what happens to each under either outcome, and decides in
-advance what the gate does. Measuring the delivered rate is the next
-increment. Unit tests are 640.
+in docs/blink-sample-rate.txt names the case that presses hardest:
+`pcsony` caught 10 of 10 while processing at 126.7, so a 30 fps
+delivery there is bad for the model. It is NOT decisive on its own,
+because the model only predicts a miss for marginal blinks and the
+blink log is censored about which those were; the amplitude
+comparison against `iphone2` that would make it decisive is named
+there and is Mac-only. The file also enumerates the TEN places the
+claim is recorded, three of them machine-enforced, and decides in
+advance what the 25 fps gate does. Unit tests are 640 at that commit.
 
 **ROADMAP 7.9 IS DONE, 21 August 2026: the README's results summary
 is generated, not written.** A "Results at a glance" block between
@@ -237,15 +239,84 @@ correction adds `baseline_over_resting`, flagged above 1.25, and
 Last commit, as of the stamp below: 2026-08-21;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: NOTHING IS IN FLIGHT. The round is complete and
-published, both owner decisions are taken (#178 closed, D1 shipped),
-and both round-driven instrument fixes are merged and measured: the
-ruler freeze (fourth published number, 83.6/81.4) and the re-arm gate
-(fifth, 83.6/84.0). Next development, agreed with the owner: the
+Currently working: THE DELIVERED-RATE TRACK, on branch
+`claude/state-md-review-test-tmhlhh`, FIVE commits ahead of main and
+pushed, NO pull request opened yet. Paused 21 August for a break, and
+this paragraph is the handoff.
+
+2b511ae the camera's delivery grid in the harness, prediction first
+292ddfe publish that table at a sweep budget that resolves it
+a865af7 the pure reducer for delivered / sampled / read fraction
+b715660 wire it to the camera, the page and the export
+c17084c two claims in the section were wrong; both stay printed
+
+WHAT IS WAITING ON THE OWNER, and it is not a validation round: about
+30 seconds on each of the four dry-run devices, opening the page and
+reading the new `Camera delivery:` line. No volunteers, no dataset.
+That measurement scores the prediction committed in
+docs/blink-sample-rate.txt. Do NOT write the correction to the page's
+rate claim before that number exists; the ten places it is recorded
+are enumerated in that file, and three of them are machine-enforced
+so a partial correction turns the build red.
+
+EXPECT THE PREDICTION TO GO BADLY, and that is written before the
+measurement rather than after. `camera_declared_fps` was 30.0 in all
+twelve recorded sessions, and a track negotiated at 30 cannot deliver
+60, so the predicted "pcsony delivers 60 or more" is probably already
+wrong. If it is, the delivery section is RETRACTED in a new dated
+section, per its own rule.
+
+PARKED MID-INCREMENT: the contrast fix. tools/contrastGuard.mjs was
+written and then set aside when the review landed; the file is GONE
+with the container, but the measuring is the part that cost time and
+it is recorded here, computed from src/styles.css rather than from a
+checker:
+
+    ink #0f172a on surface #ffffff     17.85   pass
+    ink on page #f8fafc                17.06   pass
+    body #475569 on surface             7.58   pass
+    muted #94a3b8 on surface            2.56   FAIL
+    muted on page                       2.45   FAIL
+    accent #f97316 as text on surface   2.80   FAIL   <- .rate-warning
+    accent as text on page              2.68   FAIL
+    surface on accent                   2.80   FAIL   <- alerting banner
+
+So the honesty caveat added on 20 August is the LEAST readable text
+on the page, which makes roadmap 8.8's decline ("all text clears
+WCAG contrast") false the day after it was written. The replacements
+that clear 4.5 on BOTH grounds: --muted #64748b (4.76 / 4.55), a new
+--accent-text #b8500c (5.01 / 4.79) for .rate-warning only with
+--accent kept as the graph and icon colour, and the alerting banner
+going --ink on --accent (6.37) instead of white on orange.
+
+TWO TRAPS, both already paid for. The plan pinned "white on #0f172a
+= 15.13" and the real ratio is 17.85, so a test written to that pin
+would have failed for the right reason and been "fixed" by bending
+the constant. And the reviewer's own suggested --accent-text
+#c2540b measures 4.39 on --page: it clears on a card and fails on
+the page behind it, which is why the guard must check both grounds.
+
+REVIEW FINDINGS NOT YET ACTED ON, from the four-lens pass on the
+delivery increment. All medium, all recorded so they are declined
+rather than forgotten: the 3.20 row of the delivered table still
+prints two cells the 200-step sweep cannot resolve (exact values
+0.80 and 0.82); the model has an EXACT CLOSED FORM, so the sweep
+could become a test that the harness agrees with arithmetic rather
+than the source of the numbers; and BLINK_RISK_FPS, the 60 fps
+warning threshold, got no pre-decision while the 25 fps gate did,
+even though the warning is the surface the model says is wrong.
+
+Next development after this track, agreed with the owner: the
 big-feature ladder, machine-adaptive measurement, guided calibration,
-multi-signal alertness, longitudinal tracking. Three rules plus
-moderation are queued for the NEXT validation round in
-docs/validation-round.txt.
+multi-signal alertness, longitudinal tracking. THE CALIBRATION TRACK
+IS INDEPENDENT of the delivered-rate measurement and is the rung that
+answers the round's one FAILED criterion, so it is the thing to pick
+up if the devices are out of reach. Three rules plus moderation are
+queued for the NEXT validation round in docs/validation-round.txt.
+
+The full plan from here to v0.10, twelve increments across three
+releases with the adversarial review of the plan itself, is at
+https://claude.ai/code/artifact/60a3f037-b412-46a1-bc87-cfb90677ce8e
 
 A note for sessions running from a CLOUD checkout (claude.ai/code on
 an iPad, for instance): everything in this repository works there,
