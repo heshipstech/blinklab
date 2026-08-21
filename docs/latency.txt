@@ -1,0 +1,71 @@
+LATENCY, MEASURED (ROADMAP 7.8)
+===============================
+
+Written 21 August 2026. Reproducible with
+
+    BLINKLAB_PRINT_TABLE=1 npx vitest run test/core/alertLatency.test.ts
+
+Two questions, and they have different kinds of answers. The time
+from eye closure to alert is a property of the CODE, deterministic,
+the same on every machine, so its numbers below are exact. The
+per-frame compute cost is a property of the MACHINE, so its number
+below is one machine's reading with the command that re-measures it
+on yours.
+
+TIME FROM EYE CLOSURE TO ALERT
+------------------------------
+
+The long closure detector fires on the first frame STRICTLY beyond
+LONG_CLOSURE_THRESHOLD_MS (500 ms, aliased to the blink maximum so
+every closure lands in exactly one bin) after the closure began. The
+alert governor fires on that same frame when outside its debounce
+window. So the latency is 500 ms plus at most one frame period, and
+where in that band it lands depends only on where the frames fall:
+
+    25 Hz    520.0 ms
+    30 Hz    533.3 ms
+    60 Hz    516.7 ms
+
+It cannot be under 500 ms by design: an earlier alert would mean the
+blink / long-closure partition leaked, and a blink-sized closure
+would page somebody. The frame-period term ties this to the
+processing-rate finding (docs/blink-sample-rate.txt): a 29 Hz
+machine adds up to 34 ms, a 127 Hz machine up to 8, and neither
+matters against the 500.
+
+THE SECOND REGIME, stated rather than implied: within
+ALERT_DEBOUNCE_MS (5000 ms) of a firing, a new long closure is
+counted but not told, so the worst-case time from closure to a TOLD
+person is the debounce window plus the detection latency above. That
+is the governor's deliberate trade against alarm fatigue, with the
+suppressed count kept as a number rather than a silence.
+
+PER-FRAME COMPUTE COST OF THE CORE CHAIN
+----------------------------------------
+
+The reducers the frame handler runs on the closure-to-alert path, in
+main.ts's own order: baseline, blink, long closure, alert, PERCLOS.
+Measured over a realistic minute at 60 Hz, a blink every two seconds
+and one long closure, with the PERCLOS window fully loaded by the
+end, which is the worst case its per-frame filter pays:
+
+    41.8 microseconds per frame    (this machine, a cloud container)
+
+The test asserts a ceiling of 2 ms per frame, three orders of
+magnitude of headroom, so a noisy CI machine cannot turn it red
+while an accidental per-frame O(n) growth still would. The ceiling
+IS the check roadmap 7.8 asks for; the measured figure is what the
+command above prints.
+
+WHAT THIS DOES NOT INCLUDE, so nobody reads it as the whole story:
+the face model's own inference, about 6 ms recorded locally under
+roadmap 8.7, which CI cannot measure because its machines have no
+camera; the camera's exposure and delivery, which no page can see;
+and the display latency of the banner itself. The end-to-end number
+a person experiences is the 500-and-a-frame above plus those, and
+the model term is the only one of them this project has measured.
+
+The three latency tests were proven sensitive to the mechanism by
+mutation: removing the threshold comparison from longClosureStep
+turns them red. The debounce test survives that mutation, correctly,
+because it pins the governor and not the detector.
