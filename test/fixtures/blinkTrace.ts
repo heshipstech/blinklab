@@ -101,3 +101,126 @@ export function detectionRate(
   }
   return found / steps;
 }
+
+// THE CAMERA'S OWN GRID, added 21 August 2026.
+//
+// Everything above models an eyelid the page can read at any instant,
+// which is an infinitely fast camera. A real camera delivers frames on
+// its own clock and the page reads whichever one arrived last, so a
+// processing tick between two deliveries re-reads the older frame and
+// learns nothing new about the lid.
+//
+// This matters because src/io/frameLoop.ts drives the camera from
+// requestAnimationFrame with no check that a frame arrived, and
+// src/io/camera.ts requests a resolution and no frame rate. The same
+// file already refuses to make this mistake for CLIPS, in a comment
+// that explains exactly why: reading an interpolated clock at display
+// rate "would report the display's refresh rate as the clip's frame
+// rate". The camera path never got that treatment.
+
+/** How the frames the detector reads are produced. */
+export type Sampling = {
+  /** How often the page runs the detector: the processing rate. */
+  processHz: number;
+  /**
+   * How often the CAMERA hands over a new frame. Infinity is the model
+   * used above and in the 17 August table, kept as a special case so
+   * the two can be pinned against each other rather than diverging.
+   */
+  deliveryHz: number;
+};
+
+/**
+ * The aperture the detector actually reads at `tMs`: the most recent
+ * DELIVERED frame at or before it, held until the next arrives.
+ *
+ * Sample and hold, which is what a camera plus a display-rate loop
+ * physically is. The delivery grid runs through `deliveryPhaseMs` in
+ * both directions, so the settled second before the excursion is
+ * sampled on the same grid as the excursion itself.
+ */
+export function deliveredApertureAt(
+  blink: Blink,
+  optics: Optics,
+  tMs: number,
+  deliveryHz: number,
+  deliveryPhaseMs: number,
+): number {
+  if (!Number.isFinite(deliveryHz)) {
+    return apertureAt(blink, optics, tMs);
+  }
+  const periodMs = 1000 / deliveryHz;
+  const index = Math.floor((tMs - deliveryPhaseMs) / periodMs);
+  return apertureAt(blink, optics, deliveryPhaseMs + index * periodMs);
+}
+
+/** What the detector made of one excursion, at both grids and phases. */
+export function detectDelivered(
+  blink: Blink,
+  optics: Optics,
+  sampling: Sampling,
+  deliveryPhaseMs: number,
+  processPhaseMs: number,
+): { count: number; lastDurationMs: number | null } {
+  const periodMs = 1000 / sampling.processHz;
+  const total = blink.closeMs + blink.openMs;
+  let state = initialBlinkState;
+  for (let t = -1000 + processPhaseMs; t <= total + 1000; t += periodMs) {
+    state = blinkStep(
+      state,
+      t + 2000,
+      deliveredApertureAt(
+        blink,
+        optics,
+        t,
+        sampling.deliveryHz,
+        deliveryPhaseMs,
+      ),
+      optics.thresholdMm,
+    );
+  }
+  return { count: state.blinkCount, lastDurationMs: state.lastBlinkDurationMs };
+}
+
+/**
+ * The share of phase offsets at which the excursion is counted, now
+ * over BOTH uncontrolled phases: where the camera's grid falls against
+ * the blink, and where the processing grid falls against the camera's.
+ *
+ * The delivery phase is swept finely and the processing phase coarsely,
+ * because the first is the one that decides which part of the lid's
+ * travel was ever photographed. The second only decides which of the
+ * already-taken frames get read.
+ */
+export function deliveredDetectionRate(
+  blink: Blink,
+  optics: Optics,
+  sampling: Sampling,
+  deliverySteps = 50,
+  processSteps = 8,
+): number {
+  // With an infinite delivery grid there is no camera phase to sweep,
+  // so spending part of the budget on it would sample the one axis
+  // that DOES matter eight times and quietly report a coarser number
+  // than the 17 August table. Give the whole budget to the processing
+  // phase instead. Found by the pin test below disagreeing at 25 Hz.
+  const infinite = !Number.isFinite(sampling.deliveryHz);
+  const deliveryLoop = infinite ? 1 : deliverySteps;
+  const processLoop = infinite ? deliverySteps * processSteps : processSteps;
+  const deliveryPeriodMs = infinite ? 0 : 1000 / sampling.deliveryHz;
+  const processPeriodMs = 1000 / sampling.processHz;
+  let found = 0;
+  for (let d = 0; d < deliveryLoop; d += 1) {
+    for (let p = 0; p < processLoop; p += 1) {
+      const result = detectDelivered(
+        blink,
+        optics,
+        sampling,
+        (d / deliveryLoop) * deliveryPeriodMs,
+        (p / processLoop) * processPeriodMs,
+      );
+      if (result.count === 1) found += 1;
+    }
+  }
+  return found / (deliveryLoop * processLoop);
+}

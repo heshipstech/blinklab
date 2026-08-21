@@ -1,3 +1,34 @@
+**THERE ARE TWO RATES, AND THE PAGE MAY BE NAMING THE WRONG ONE,
+21 August 2026. A PREDICTION IS COMMITTED AND NOTHING IS CORRECTED
+YET.** The sampling-rate harness now models the CAMERA's own delivery
+grid beside the processing grid, sample and hold, both phases swept.
+What it says: above the delivered rate, processing buys nothing —
+30.7, 55 and 126.7 fps are the same column — and the improvement a
+"faster machine" was credited with actually lives in the camera, 0.50
+to 0.98 for one marginal blink when delivery goes 30 to 60. A third
+finding is new and qualifies the 17 August table: below the delivered
+rate even a firm 2.80 mm blink is caught only 0.87 of the time,
+because the processing grid skips delivered frames. THE 25 FPS FLOOR
+IS DELIBERATELY NOT MOVED ON THAT BASIS: a constant chosen from a
+model is fitting.
+
+Why it matters: `src/io/frameLoop.ts` drives the camera from
+requestAnimationFrame with no check that a frame arrived, and
+`src/io/camera.ts` asks for a resolution and no frame rate — while
+the same file already refuses that exact mistake for CLIPS, in a
+comment explaining that a display-rate tick "would report the
+display's refresh rate as the clip's frame rate".
+
+NOTHING IS RETRACTED. The dry run's §4 prediction was committed first
+and held, and the evidence fits both models. The committed prediction
+in docs/blink-sample-rate.txt names the decisive case: `pcsony`
+caught 10 of 10 while processing at 126.7, so if its chain delivered
+only 30 the delivery model is REFUTED and the new section is
+retracted. It also enumerates all seven places the claim is recorded
+and says what happens to each under either outcome, and decides in
+advance what the gate does. Measuring the delivered rate is the next
+increment. Unit tests are 640.
+
 **ROADMAP 7.9 IS DONE, 21 August 2026: the README's results summary
 is generated, not written.** A "Results at a glance" block between
 markers is built by tools/resultsBlock.mjs from the three committed
@@ -851,7 +882,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 636 unit tests, 20 end to end tests all run in Chromium
+Test count: 640 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 

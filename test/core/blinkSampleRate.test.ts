@@ -7,6 +7,7 @@ import {
 import {
   armLineMm,
   apertureAt,
+  deliveredDetectionRate,
   detectionRate,
   msBelow,
   type Blink,
@@ -178,6 +179,94 @@ describe("what the sampling rate does to blink detection", () => {
         expect(rate_).toBeGreaterThanOrEqual(previous);
         previous = rate_;
       }
+    }
+  });
+});
+
+// 21 August 2026. The experiment above swept ONE rate, the rate the
+// page runs its detector at, and treated the eyelid as continuously
+// readable: every processing tick got a fresh aperture. That models an
+// infinitely fast camera.
+//
+// A real camera delivers frames on its own grid, and the page reads
+// whichever frame arrived most recently. src/io/frameLoop.ts already
+// says this, for clips: ticking at display rate and reading
+// video.currentTime "would report the display's refresh rate as the
+// clip's frame rate", which is why a clip is driven by the frames
+// themselves. The camera path never got that treatment — it is
+// requestAnimationFrame only, with no check that a new frame arrived,
+// and src/io/camera.ts asks for a resolution and no frame rate at all.
+//
+// So there are TWO rates, and the question is which one binds. These
+// tests add the delivery grid to the harness and ask.
+describe("what the CAMERA's delivery rate does, once it is modelled", () => {
+  const MARGINAL: Blink = { minMm: 3.3, closeMs: 50, openMs: 100 };
+
+  it("processing faster than the camera buys nothing", () => {
+    // The finding, if it holds. A frame read four times carries no more
+    // information about the eyelid than a frame read once, so above the
+    // delivered rate the extra processing is spent re-reading. Compare
+    // against the continuous model, which says the same blink goes from
+    // 0.67 to certain across this range.
+    const atDelivery = deliveredDetectionRate(MARGINAL, OPTICS, {
+      deliveryHz: 30,
+      processHz: 30,
+    });
+    for (const processHz of [60, 90, 126.7]) {
+      expect(
+        deliveredDetectionRate(MARGINAL, OPTICS, { deliveryHz: 30, processHz }),
+      ).toBeCloseTo(atDelivery, 10);
+    }
+    // The contrast that makes the claim worth publishing: under the old
+    // continuous model those same rates were a certainty.
+    expect(detectionRate(MARGINAL, OPTICS, 90)).toBe(1);
+    expect(atDelivery).toBeLessThan(0.85);
+  });
+
+  it("processing SLOWER than the camera is still governed by processing", () => {
+    // The other side, and the reason the old experiment was not wrong,
+    // only incomplete: below the delivered rate the processing grid
+    // subsamples the delivered one, so a 29.2 fps machine on a 30 fps
+    // camera does NOT get 30 fps of evidence. macbookair2 is that case.
+    const slower = deliveredDetectionRate(MARGINAL, OPTICS, {
+      deliveryHz: 30,
+      processHz: 29.2,
+    });
+    const matched = deliveredDetectionRate(MARGINAL, OPTICS, {
+      deliveryHz: 30,
+      processHz: 30,
+    });
+    expect(slower).toBeLessThanOrEqual(matched);
+  });
+
+  it("a faster CAMERA does what a faster machine was credited with", () => {
+    // If delivery binds, this is where the improvement actually lives:
+    // the same marginal blink, the same processing rate, a camera
+    // delivering 60 instead of 30.
+    const at30 = deliveredDetectionRate(MARGINAL, OPTICS, {
+      deliveryHz: 30,
+      processHz: 60,
+    });
+    const at60 = deliveredDetectionRate(MARGINAL, OPTICS, {
+      deliveryHz: 60,
+      processHz: 60,
+    });
+    expect(at60).toBeGreaterThan(at30);
+    expect(at60).toBe(1);
+  });
+
+  it("an infinitely fast camera reproduces the 17 August table exactly", () => {
+    // The old model is not discarded, it is a special case: delivery at
+    // Infinity is a fresh aperture every tick. This pins the two models
+    // against each other so the new one cannot quietly move the old
+    // numbers, which are published in docs/blink-sample-rate.txt.
+    for (const rate of [25, 30, 60, 120]) {
+      expect(
+        deliveredDetectionRate(MARGINAL, OPTICS, {
+          deliveryHz: Infinity,
+          processHz: rate,
+        }),
+      ).toBeCloseTo(detectionRate(MARGINAL, OPTICS, rate), 1);
     }
   });
 });
