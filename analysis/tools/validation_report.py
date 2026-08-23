@@ -19,6 +19,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from blinklab.ruler_fit import RulerFitCrossCheck, ruler_fit_cross_check
 from blinklab.validation import (
     PairPaths,
     ValidationError,
@@ -311,14 +312,73 @@ def verdict_summary(rows: list[ParticipantRow]) -> list[str]:
     return lines
 
 
+def page_account_lines(
+    checks: list[tuple[str, RulerFitCrossCheck]],
+) -> list[str]:
+    """The page's own ruler-fit account, held to this tool's.
+
+    Not a plan rule: the plan's fifth check is computed by this tool
+    either way, and the table above prints THAT. This section only
+    says whether the page's live computation of the same statistic
+    (baselineOverResting, since 23 August 2026) lands on the same
+    bits, because two implementations of one check drift silently
+    unless a report says so out loud. Files from before the column
+    say nothing here — silence for a session that never spoke, never
+    a verdict about it.
+    """
+    carrying = [
+        (label, check) for label, check in checks if check.agrees is not None
+    ]
+    if not carrying:
+        return []
+    disagreeing = [
+        (label, check) for label, check in carrying if check.agrees is False
+    ]
+    if not disagreeing:
+        count = len(carrying)
+        stated = (
+            "the 1 session that carries it"
+            if count == 1
+            else f"all {count} sessions that carry it"
+        )
+        return [
+            "",
+            f"The page's own ruler-fit account matches this tool's "
+            f"recomputation exactly on {stated}.",
+        ]
+    # Full precision, deliberately: two wrong implementations can
+    # agree to two decimals, and this section exists to see past
+    # the rounding the table above applies.
+    return [
+        "",
+        "THE PAGE DISAGREES WITH THIS TOOL. baselineOverResting is "
+        "the page's live computation of the ruler-fit ratio and must "
+        "equal this tool's recomputation from the same rows to the "
+        "last bit. It does not, so one of the two implementations is "
+        "wrong, and nothing below this line should be trusted until "
+        "it is known which:",
+        *(
+            f"{label}  page {check.page_ratio!r}, recomputed "
+            f"{check.recomputed_ratio!r}"
+            for label, check in disagreeing
+        ),
+    ]
+
+
 def report(directory: Path) -> tuple[list[str], int]:
     """The whole report, and the number of participants it refused."""
     pairs = find_pairs(directory)
     rows: list[ParticipantRow] = []
+    accounts: list[tuple[str, RulerFitCrossCheck]] = []
     refusals: list[tuple[PairPaths, str]] = []
     for paths in pairs:
         try:
-            rows.append(row_for(load_pair(paths)))
+            pair = load_pair(paths)
+            row = row_for(pair)
+            rows.append(row)
+            accounts.append(
+                (row.label, ruler_fit_cross_check(pair.session.frame))
+            )
         except ValidationError as error:
             # Never a skip. A person missing from the table is a person
             # nobody looks for, so a refusal takes a line of its own
@@ -354,6 +414,7 @@ def report(directory: Path) -> tuple[list[str], int]:
         ]
         lines += [""]
     lines += verdict_summary(rows)
+    lines += page_account_lines(accounts)
     return lines, len(refusals)
 
 

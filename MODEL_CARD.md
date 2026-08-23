@@ -81,7 +81,9 @@ the ratio over the records SO FAR, so mid-session rows are not the
 published whole-session statistic; the final row is, for any session
 short enough to fit the export's 3600-row buffer. The two
 implementations share their 1.25 ceiling by a test that reads both
-sources, and neither this check nor the birth clip FIXES a bad
+sources, the validation report recomputes the exported ratio and
+says so, bit-exactly, when the page's account disagrees with its
+own, and neither this check nor the birth clip FIXES a bad
 baseline — a macbookair-shaped session is still mis-ruled, and is
 now told so while it can still be re-run.
 

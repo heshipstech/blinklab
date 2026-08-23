@@ -1,3 +1,26 @@
+**THE TWO IMPLEMENTATIONS NOW CHECK EACH OTHER ON EVERY REAL FILE,
+23 August 2026, the calibration track's third rung.** rulerFit.ts
+made the fifth check live in two languages, and two implementations
+of one statistic drift silently unless something compares them.
+analysis/blinklab/ruler_fit.py reads the LAST baselineOverResting
+the page wrote — its whole-file number — and holds it to this side's
+own baseline_settling derivation, EXACTLY: no tolerance, because the
+exporter writes shortest round-tripping decimals, the loader parses
+them back to the identical float64s (pinned by a test that pushes
+7.44/6.1's full seventeen digits through the real loader), and two
+wrong implementations can agree to two decimals. The validation
+report prints one line when all accounts match and a THE PAGE
+DISAGREES WITH THIS TOOL section at full precision when any does
+not. Legacy files say nothing there — silence for a session that
+never spoke, never a verdict about it; the one un-seeable case is
+stated in the module docstring (an all-NaN column cannot distinguish
+a legacy export from a new one that failed to write, and reads as
+not comparable). Four mutations all red: always-agree and 2dp
+rounding each kill 2 tests, first-instead-of-last 1 (after the test
+itself was fixed — its early wrong value 1.2 happened to equal the
+final ratio, so the mutation survived until the fixture
+discriminated), shrug-instead-of-disagree 1.
+
 **THE ROUND'S FIFTH CHECK NOW RUNS ON THE PAGE, 23 August 2026, the
 calibration track's second rung.** `baseline_over_resting` — the
 check that caught macbookair and P5, the one that decided which
@@ -345,11 +368,13 @@ the MacBook until about 29 August, so only offline-verifiable work
 ships; everything waiting on hardware is listed below and none of it
 blocks building.
 
-Queued next on this track: the Python side learning to READ
-`baselineOverResting` back and compare its own recomputation against
-the page's account row by row (the two-implementations cross-check
-on real files); then the refusal increment, gated on a corpus
-prediction the Mac must score.
+Done on this track today: increment B (rulerFit live, PR #293) and
+increment C (the Python cross-check of the page's account, this PR).
+Queued next, offline-verifiable: the closed-form arithmetic test for
+the delivery model, or the model-clock lift (#221, unit half only).
+The refusal increment stays gated on a corpus prediction the Mac
+must score, so it waits for ~29 August with the rest of the
+hardware list.
 
 WHAT IS WAITING ON THE OWNER, and it is not a validation round: about
 30 seconds on each of the four dry-run devices, opening the page and
@@ -1092,7 +1117,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 691 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 197 Python tests of which
+in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
