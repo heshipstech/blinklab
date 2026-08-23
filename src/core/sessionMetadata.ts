@@ -1,3 +1,4 @@
+import type { CalibrationWindow } from "./calibrationWindow";
 import type { DeliveryRates } from "./deliveryRate";
 import type { FeatureRecord } from "./featureRecord";
 import { percentile } from "./statistics";
@@ -152,6 +153,30 @@ export function deliveryMetadataRows(rates: DeliveryRates | null): string[] {
       "delivered_frames_read_fraction",
       rates.readFraction === null ? null : rates.readFraction.toFixed(3),
     ),
+  ];
+}
+
+/**
+ * The birth certificate of the session's ruler, in the export.
+ *
+ * Null when the baseline never became ready: a session whose ruler
+ * was never born has no birth to describe, and the per-second
+ * baselineMm column already shows that absence, so writing "unknown"
+ * rows here would invite a reader to look for a calibration that
+ * never happened. When a ruler WAS born, all three rows are written
+ * whatever they say — the macbookair failure was precisely a birth
+ * whose export said nothing about it.
+ */
+export function calibrationMetadataRows(
+  window: CalibrationWindow | null,
+): string[] {
+  if (window === null) {
+    return [];
+  }
+  return [
+    line("calibration_samples", window.sampleCount),
+    line("calibration_spread_ratio", window.spreadRatio.toFixed(3)),
+    line("calibration_ceiling_bound", window.ceilingBound ? "true" : "false"),
   ];
 }
 

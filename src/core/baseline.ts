@@ -1,12 +1,12 @@
 import {
+  describeCalibrationWindow,
+  type CalibrationWindow,
+} from "./calibrationWindow";
+import {
   BASELINE_LEARN_MS,
-  BASELINE_MEDIAN_CEILING_FACTOR,
-  BASELINE_MEDIAN_PERCENTILE,
   BASELINE_MIN_SAMPLES,
-  BASELINE_PERCENTILE,
   BASELINE_THRESHOLD_FRACTION,
 } from "./constants";
-import { percentile } from "./statistics";
 
 // The personal baseline: what does OPEN mean for this person's eyes.
 // Learned over thirty seconds, then FROZEN, like any instrument that
@@ -26,7 +26,11 @@ import { percentile } from "./statistics";
 // validation plan's own pre-registered implausibility line.
 export type BaselineState =
   | { kind: "learning"; startedAtMs: number; samples: number[] }
-  | { kind: "ready"; baselineMm: number };
+  // The ruler travels with its birth certificate. One value, one
+  // account: `window.baselineMm` and `baselineMm` are the same number
+  // by construction, and a test holds them together, so the export
+  // cannot describe a birth the page did not use.
+  | { kind: "ready"; baselineMm: number; window: CalibrationWindow };
 
 export function startBaseline(nowMs: number): BaselineState {
   return { kind: "learning", startedAtMs: nowMs, samples: [] };
@@ -51,9 +55,9 @@ export function baselineStep(
       elapsed >= BASELINE_LEARN_MS &&
       samples.length >= BASELINE_MIN_SAMPLES
     ) {
-      const baselineMm = boundedBaseline(samples);
-      if (baselineMm !== null) {
-        return { kind: "ready", baselineMm };
+      const window = describeCalibrationWindow(samples);
+      if (window !== null) {
+        return { kind: "ready", baselineMm: window.baselineMm, window };
       }
     }
     return { ...state, samples };
@@ -68,16 +72,13 @@ export function baselineStep(
   return state;
 }
 
-// The p90 of the learning window, held under a multiple of that
-// window's own median. Null only when the window is empty.
-function boundedBaseline(samples: readonly number[]): number | null {
-  const wide = percentile(samples, BASELINE_PERCENTILE);
-  const middle = percentile(samples, BASELINE_MEDIAN_PERCENTILE);
-  if (wide === null || middle === null) {
-    return wide;
-  }
-  return Math.min(wide, middle * BASELINE_MEDIAN_CEILING_FACTOR);
-}
+// The birth itself lives in calibrationWindow.ts since 23 August
+// 2026, DESCRIBED rather than computed in the dark: the p90, the
+// median, the spread and whether the ceiling bound are all values
+// now, because the macbookair failure was a silent clip nobody could
+// see until the Python side read the exported rows days later. The
+// birth formula is unchanged and a test re-derives it from the
+// plan's constants to prove it.
 
 export function personalThresholdMm(state: BaselineState): number | null {
   return state.kind === "ready"

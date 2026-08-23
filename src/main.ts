@@ -91,6 +91,7 @@ import {
 } from "./core/exportStatus";
 import {
   IRIS_SAMPLE_CAP,
+  calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   sessionMetadataRows,
@@ -1838,6 +1839,11 @@ function exportSession(): void {
       loadedClipDurationSeconds,
     ),
     ...deviceMetadataRows(deviceInfo),
+    ...calibrationMetadataRows(
+      baselineState !== null && baselineState.kind === "ready"
+        ? baselineState.window
+        : null,
+    ),
     ...deliveryMetadataRows(
       frameSource === "camera"
         ? deliveryRates(deliveryState, performance.now())
