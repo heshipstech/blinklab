@@ -1,3 +1,40 @@
+**THE HONEST TEXT IS NOW READABLE, 23 August 2026, and a guard keeps
+it that way.** Roadmap 8.8 was declined on 15 August because "all
+text clears WCAG contrast". That clause was FALSE, and it stopped
+being true the day after it was written: five colour pairs on the
+committed stylesheet failed AA, and the worst of them was
+`.rate-warning` at 2.80:1 — the processing-rate limitation shipped on
+the 20th, rendered in the least readable colour on the page. A
+limitation nobody can read is not a limitation in the open.
+
+Corrected: `--muted` #94a3b8 to #64748b (2.56 to 4.76 on a card, 2.45
+to 4.55 on the page), a new `--accent-text` #b8500c for the warning
+with `--accent` keeping its job as the graph and icon colour, and the
+alerting banner going ink-on-amber (2.80 to 6.37) instead of white on
+amber. All nine pairs the page renders text in now clear 4.5.
+
+`tools/contrastGuard.mjs` computes them, on BOTH grounds, because
+`--page` is a shade darker than `--surface` and a colour chosen
+against a card is chosen against the wrong ground: #c2540b was the
+first candidate for the warning and is rejected in the record at 4.39
+on the page. TWO HOLES FOUND BY MUTATING THE GUARD ITSELF: reverting
+the warning to `--accent` left every pair passing and the caveat
+unreadable, so the guard now checks which token each rule USES, not
+only that legible tokens exist; and lowering the threshold disarmed
+it silently, so 4.5 is pinned. ROADMAP 8.8 IS AMENDED ADDITIVELY, not
+reopened: the decline stands, what remained really is polish. What
+did not stand was checking a claim like that by eye.
+
+**HARDWARE IS OUT OF REACH UNTIL ABOUT 29 AUGUST.** The owner is away
+from the MacBook for a week, so `$DATASETS` and the four dry-run
+devices are both unavailable: no corpus runs, no Eyeblink8 re-run, no
+delivered-rate readings, and no `pcsony` amplitude comparison. Work
+this week must be verifiable offline. What that rules IN: the
+calibration track's window description and ruler-fit verdict, both
+checkable against numbers already published in docs/. What it rules
+OUT: refusing a contaminated window, which changes detector behaviour
+and owes a corpus re-run before it merges.
+
 **THE SECOND RATE IS NOW MEASURED, 21 August 2026, and the page shows
 it.** A passive observer rides beside the camera's measurement loop,
 counting frames as the camera DELIVERS them, and a pure reducer turns
@@ -563,7 +600,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 21 August 2026. When this file changes, this stamp changes
+Stamped: 23 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -990,7 +1027,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 656 unit tests, 20 end to end tests all run in Chromium
+Test count: 665 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
