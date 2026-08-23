@@ -1,3 +1,20 @@
+**THE DELIVERY TABLE IS NOW ARITHMETIC, NOT JUST NUMERICS, 23 August 2026.** Every number in docs/blink-sample-rate.txt came from a sweep,
+and this file's own budget correction proves a sweep can be wrong in
+ways that look fine. test/core/blinkClosedForm.test.ts pins the sweep
+against a closed form derived independently from the detector's
+mechanics — frac(La/Pd)·min(1, ceil·Pd/Pp) + (1−frac)·min(1,
+floor·Pd/Pp), La the ARM-line dwell — and across all 72 cells of a
+six-blink, twelve-regime grid the worst disagreement is 0.0060
+(bound pinned at 0.0075, chosen after measuring and said so). The
+non-monotone dip is IN the arithmetic. Degrading the sweep budget to
+50×8, the exact defect the 21 August review caught by hand, now
+turns five tests red by machine. Two wrong rederivations are pinned
+as disagreeing (threshold dwell instead of arm dwell; rounding
+instead of phase mixing). One mutation SURVIVES and is recorded as
+correct rather than papered over: holding the frame AFTER a delivery
+tick is a constant grid shift, invisible to any phase-averaged
+number, which is all this harness publishes.
+
 **THE TWO IMPLEMENTATIONS NOW CHECK EACH OTHER ON EVERY REAL FILE,
 23 August 2026, the calibration track's third rung.** rulerFit.ts
 made the fifth check live in two languages, and two implementations
@@ -368,13 +385,13 @@ the MacBook until about 29 August, so only offline-verifiable work
 ships; everything waiting on hardware is listed below and none of it
 blocks building.
 
-Done on this track today: increment B (rulerFit live, PR #293) and
-increment C (the Python cross-check of the page's account, this PR).
-Queued next, offline-verifiable: the closed-form arithmetic test for
-the delivery model, or the model-clock lift (#221, unit half only).
-The refusal increment stays gated on a corpus prediction the Mac
-must score, so it waits for ~29 August with the rest of the
-hardware list.
+Done today, one PR each: increment B (rulerFit live, PR #293),
+increment C (the Python cross-check of the page's account, PR #294),
+increment D (the delivery closed form, this PR). Queued next,
+offline-verifiable: the model-clock lift (#221, unit half only) or
+the BLINK_RISK_FPS pre-decision. The refusal increment stays gated
+on a corpus prediction the Mac must score, so it waits for ~29
+August with the rest of the hardware list.
 
 WHAT IS WAITING ON THE OWNER, and it is not a validation round: about
 30 seconds on each of the four dry-run devices, opening the page and
@@ -1116,7 +1133,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 691 unit tests, 20 end to end tests all run in Chromium
+Test count: 696 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 
