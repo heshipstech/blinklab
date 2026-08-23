@@ -77,9 +77,16 @@ import {
 } from "./core/fixation";
 import { fixationStats, type FixationStats } from "./core/fixationStats";
 import {
+  FEATURE_RECORD_CAP,
   assembleFeatureRecord,
   type FeatureRecord,
 } from "./core/featureRecord";
+import {
+  describeRulerFit,
+  initialRulerFitState,
+  rulerFitMessage,
+  rulerFitStep,
+} from "./core/rulerFit";
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
@@ -726,6 +733,7 @@ function setState(next: CameraState): void {
 function resetSession(): void {
   // Light, distance and even the person may have changed.
   baselineState = null;
+  rulerFitState = initialRulerFitState;
   rateState = null;
   blinkEvents = [];
   sessionStartMs = null;
@@ -750,6 +758,8 @@ function resetSession(): void {
   refreshKssLine();
   writeReadout(featureLabel, "");
   writeReadout(scoreLabel, "");
+  writeReadout(rulerFitLabel, "Ruler fit: waiting for the baseline");
+  rulerFitLabel.classList.remove("rate-warning");
   panelSummaryLabel.textContent = "";
   panelList.replaceChildren();
   // Review found this missing: without it the previous session's
@@ -1674,6 +1684,11 @@ let blinkState = initialBlinkState;
 
 const baselineLabel = document.createElement("p");
 let baselineState: BaselineState | null = null;
+// The round's fifth check, live: the frozen baseline against the
+// running median of the recorded apertures. Updated once per feature
+// record, because that is the series the published check reads.
+const rulerFitLabel = document.createElement("p");
+let rulerFitState = initialRulerFitState;
 let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
@@ -2764,6 +2779,27 @@ function processFrame(
       if (lastRecordAtMs === null || nowMs - lastRecordAtMs >= 1000) {
         lastRecordAtMs = nowMs;
         const lastShape = blinkEvents[blinkEvents.length - 1]?.shape ?? null;
+        // The ruler fit consumes exactly the aperture the record
+        // carries, one value per record, because the published check
+        // (analysis/blinklab/validation_checks.py) medians the FILE's
+        // apertureMm column: feeding it per frame would compute a
+        // different, unpublishable statistic.
+        const readyBaselineMm =
+          baselineState.kind === "ready" ? baselineState.baselineMm : null;
+        rulerFitState = rulerFitStep(
+          rulerFitState,
+          stabilityMm,
+          readyBaselineMm,
+        );
+        const rulerFit = describeRulerFit(rulerFitState, readyBaselineMm);
+        writeReadout(
+          rulerFitLabel,
+          rulerFitMessage(rulerFitState, readyBaselineMm),
+        );
+        rulerFitLabel.classList.toggle(
+          "rate-warning",
+          rulerFitState.shown === "tooLong",
+        );
         featureRecords = pushBounded(
           featureRecords,
           assembleFeatureRecord({
@@ -2771,8 +2807,8 @@ function processFrame(
             faceDetected: face !== undefined && faceTrusted,
             fps,
             apertureMm: stabilityMm,
-            baselineMm:
-              baselineState.kind === "ready" ? baselineState.baselineMm : null,
+            baselineMm: readyBaselineMm,
+            baselineOverResting: rulerFit?.ratio ?? null,
             shutBaselineMm: frozenShutBaselineMm,
             blinkRatePerMin: gatedBlinkRatePerMin(fps, rateState, nowMs),
             lastBlinkDurationMs: blinkState.lastBlinkDurationMs,
@@ -2786,7 +2822,7 @@ function processFrame(
             fixating: frameFixating,
             onScreen: frameOnScreen,
           }),
-          3600,
+          FEATURE_RECORD_CAP,
         );
         // Cadence is ABOUT one row per second (the gate re-arms on
         // the firing frame), and the cap drops the oldest row
@@ -2801,8 +2837,8 @@ function processFrame(
         refreshMarkButton();
         writeReadout(
           featureLabel,
-          featureRecords.length >= 3600
-            ? "Feature records: last 3600 kept, oldest discarded (about one per second)"
+          featureRecords.length >= FEATURE_RECORD_CAP
+            ? `Feature records: last ${String(FEATURE_RECORD_CAP)} kept, oldest discarded (about one per second)`
             : `Feature records: ${String(featureRecords.length)} this session (about one per second)`,
         );
 
@@ -3126,6 +3162,7 @@ const blinksBox = box(
   "Blinks",
   blinkLabel,
   baselineLabel,
+  rulerFitLabel,
   blinkShapeLabel,
   blinkLogList,
 );
@@ -3261,6 +3298,7 @@ for (const [element, initial] of [
   [headPoseLabel, "Head pose: no valid measurement"],
   [blinkLabel, "Blinks: 0"],
   [baselineLabel, "Personal blink threshold: not learned yet"],
+  [rulerFitLabel, "Ruler fit: waiting for the baseline"],
   [featureLabel, "Feature records: none yet (about one per second)"],
 ] as const) {
   // Through writeReadout, not textContent. Setting it directly skipped

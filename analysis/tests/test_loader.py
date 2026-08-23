@@ -10,10 +10,16 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from blinklab.loader import COLUMNS, SessionError, load_session
+from blinklab.loader import (
+    COLUMNS,
+    LEGACY_COLUMNS,
+    SessionError,
+    load_session,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "session-fixture.csv"
 HEADER = ",".join(COLUMNS)
+LEGACY_HEADER = ",".join(LEGACY_COLUMNS)
 
 
 def write(tmp_path: Path, text: str) -> Path:
@@ -25,7 +31,7 @@ def write(tmp_path: Path, text: str) -> Path:
 def a_row(timestamp: int = 1000) -> str:
     """One valid row: a face, an aperture, and nothing else measured."""
     cells = [str(timestamp), "true", "60", "7.0"] + [""] * 7
-    cells += ["0", "", "", "", ""]
+    cells += ["0", "", "", "", "", ""]
     return ",".join(cells)
 
 
@@ -59,6 +65,40 @@ class TestARealRecording:
         session = load_session(FIXTURE)
         assert session.frame["faceDetected"].dtype == "boolean"
         assert bool(session.frame["faceDetected"].iloc[0]) is True
+
+
+class TestThePreviousGenerationOfTheHeader:
+    """Files written before baselineOverResting existed still load.
+
+    The validation round's six files, the dry run's and everything in
+    docs/evidence carry the 16-column header, and the published
+    tables must stay reproducible from them. The rule is an exact
+    known generation, never "any subset": one column dropped from the
+    MIDDLE is still a refusal.
+    """
+
+    def test_a_legacy_header_loads(self, tmp_path: Path) -> None:
+        legacy_row = a_row().rsplit(",", 1)[0]
+        text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert list(session.frame.columns) == COLUMNS
+
+    def test_the_unmeasured_column_arrives_as_nan_not_zero(
+        self, tmp_path: Path
+    ) -> None:
+        legacy_row = a_row().rsplit(",", 1)[0]
+        text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert session.frame["baselineOverResting"].isna().all()
+
+    def test_a_legacy_row_count_is_judged_by_its_own_header(
+        self, tmp_path: Path
+    ) -> None:
+        # A 17-field row under a 16-column header is a broken file,
+        # not a file from the future.
+        text = f"{LEGACY_HEADER}\r\n{a_row()}\r\n"
+        with pytest.raises(SessionError, match="row 2 has 17 fields"):
+            load_session(write(tmp_path, text))
 
 
 class TestWhatItRefuses:

@@ -10,6 +10,16 @@
 // fields and a plan to grow one field per increment. The fields did
 // each arrive through their increments; 6.4 is where they assemble,
 // and SPEC.md now records the full contract.
+// How many rows the session keeps, and therefore how many rows the
+// export can hold: about an hour at one row per second, oldest
+// dropped first. Lives here rather than as a literal at the push
+// site because rulerFit.ts must bound its aperture series by the
+// SAME number — the published baseline_over_resting check reads the
+// file, and a live series that remembered more rows than the file
+// keeps would quietly stop agreeing with it in any session longer
+// than the buffer.
+export const FEATURE_RECORD_CAP = 3600;
+
 export type FeatureRecord = {
   timestampMs: number;
   // True when a face was present AND the landmark count was valid
@@ -23,6 +33,12 @@ export type FeatureRecord = {
   // closures). Both recorded, because both explain numbers here.
   baselineMm: number | null;
   shutBaselineMm: number | null;
+  // The validation round's fifth check, computed live: the baseline
+  // over the median aperture of the records SO FAR, so the final
+  // row of a session is the same number the round's table published
+  // for it (for sessions within the record cap). Null until the
+  // baseline is born. src/core/rulerFit.ts is the account.
+  baselineOverResting: number | null;
   blinkRatePerMin: number | null;
   lastBlinkDurationMs: number | null;
   lastBlinkAmplitudeMm: number | null;
@@ -80,6 +96,7 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     numberOrNull(record.apertureMm) &&
     numberOrNull(record.baselineMm) &&
     numberOrNull(record.shutBaselineMm) &&
+    nonNegativeOrNull(record.baselineOverResting) &&
     nonNegativeOrNull(record.blinkRatePerMin) &&
     nonNegativeOrNull(record.lastBlinkDurationMs) &&
     nonNegativeOrNull(record.lastBlinkAmplitudeMm) &&

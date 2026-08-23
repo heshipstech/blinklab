@@ -60,6 +60,7 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     apertureMm: null,
     baselineMm: null,
     shutBaselineMm: null,
+    baselineOverResting: null,
     blinkRatePerMin: null,
     lastBlinkDurationMs: null,
     lastBlinkAmplitudeMm: null,

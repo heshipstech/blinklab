@@ -24,6 +24,12 @@ export const CSV_COLUMNS = [
   "fixationMedianMs",
   "fixating",
   "onScreen",
+  // Appended 23 August 2026 rather than placed beside baselineMm,
+  // because the Python loader recognises the previous generation of
+  // this header as an exact prefix: files exported before this
+  // column existed stay loadable, and a trailing append is what
+  // keeps that relationship checkable in one line.
+  "baselineOverResting",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

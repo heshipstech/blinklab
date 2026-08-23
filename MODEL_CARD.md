@@ -73,6 +73,18 @@ person's own resting aperture. The detector itself missed nothing on
 the sessions whose baseline worked. Table and write-up in
 `docs/validation-round.txt`.
 
+Since 23 August 2026 the page runs that round's baseline-length check
+on itself while the session records (`src/core/rulerFit.ts`): the
+frozen baseline over the running median aperture, spoken on the page
+and exported per row as `baselineOverResting`. Each row's value is
+the ratio over the records SO FAR, so mid-session rows are not the
+published whole-session statistic; the final row is, for any session
+short enough to fit the export's 3600-row buffer. The two
+implementations share their 1.25 ceiling by a test that reads both
+sources, and neither this check nor the birth clip FIXES a bad
+baseline — a macbookair-shaped session is still mis-ruled, and is
+now told so while it can still be re-run.
+
 **Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught. Measured on twelve real sessions in August 2026, six of the author's and six volunteers', that case did not occur once: every camera declared 30 and the gate never wrongly opened, which is why a true camera rate is deliberately still not wired into the gate. The larger problem was the silence above the floor, addressed 20 August 2026 (remediation D1, stage two): see the next paragraph.** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
 The failure is currently near-silent: one line of small text, while
