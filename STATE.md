@@ -1,3 +1,35 @@
+**THE ROUND'S FIFTH CHECK NOW RUNS ON THE PAGE, 23 August 2026, the
+calibration track's second rung.** `baseline_over_resting` — the
+check that caught macbookair and P5, the one that decided which
+sessions could vote at all — lived only in Python, judging exported
+files days after the person had gone. src/core/rulerFit.ts computes
+the same ratio live, once per feature record: the frozen baseline
+over the running median of the file-so-far's apertureMm, printed
+beside the blink threshold ("Ruler fit: baseline is 1.35 x your
+resting eye, too long to trust") and exported per row as
+`baselineOverResting`, so the final row of any session inside the
+3600-row buffer IS the published statistic.
+
+The agreements between the two implementations are machine-held, not
+promised: a Python test reads the 1.25 ceiling out of the TypeScript
+source (mutating either side turns CI red); the median averages the
+middle pair exactly as pandas does, which the repo's own nearest-rank
+percentile() does NOT, so rulerFit carries its own median rather
+than bending one that serves published numbers; the closed-eye
+frames stay IN the median, pinned by a P5-shaped series where
+filtering by the blink line flips the verdict (the circularity the
+plan refused, validation_checks.py's own docstring). The six
+published ratios reproduce as verdicts — fits, fits, tooLong, fits,
+tooLong, fits — including P6's 1.23, the round's narrowest escape.
+The spoken verdict dwells 15 records before changing so a wobbling
+median cannot flap it; the exported ratio is never smoothed. The CSV
+contract grew its first GENERATION: the loader accepts exactly two
+headers, the current one and the pre-23-August one, and fills the
+new column with NaN for old files — the round's six CSVs and every
+evidence file stay loadable, their tables stay reproducible. Six
+mutations were run and every one turns tests red (ceiling value 8,
+median method 4, blink-line filter 2, strictness 1, dwell 1, cap 1).
+
 **THE RULER NOW TRAVELS WITH ITS BIRTH CERTIFICATE, 23 August 2026,
 the calibration track's first rung.** The baseline's median ceiling
 has clipped SILENTLY since the freeze: on the dry run's macbookair
@@ -301,19 +333,23 @@ Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
 correction adds `baseline_over_resting`, flagged above 1.25, and
 `macbookair` is the only session of the six that it flags.
-Last commit, as of the stamp below: 2026-08-21;
+Last commit, as of the stamp below: 2026-08-23;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
-Currently working: THE DELIVERED-RATE TRACK, on branch
-`claude/state-md-review-test-tmhlhh`, FIVE commits ahead of main and
-pushed, NO pull request opened yet. Paused 21 August for a break, and
-this paragraph is the handoff.
+Currently working: THE CALIBRATION TRACK, on branch
+`claude/state-md-review-test-tmhlhh`, one increment per PR since
+PR #291. Merged so far: the delivered-rate track (PR #291, five
+commits, rebase-merged 23 August), the birth certificate (PR #292),
+and this rulerFit increment is the next PR. The owner is away from
+the MacBook until about 29 August, so only offline-verifiable work
+ships; everything waiting on hardware is listed below and none of it
+blocks building.
 
-2b511ae the camera's delivery grid in the harness, prediction first
-292ddfe publish that table at a sweep budget that resolves it
-a865af7 the pure reducer for delivered / sampled / read fraction
-b715660 wire it to the camera, the page and the export
-c17084c two claims in the section were wrong; both stay printed
+Queued next on this track: the Python side learning to READ
+`baselineOverResting` back and compare its own recomputation against
+the page's account row by row (the two-implementations cross-check
+on real files); then the refusal increment, gated on a corpus
+prediction the Mac must score.
 
 WHAT IS WAITING ON THE OWNER, and it is not a validation round: about
 30 seconds on each of the four dry-run devices, opening the page and
@@ -1055,8 +1091,8 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 674 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 193 Python tests of which
+Test count: 691 unit tests, 20 end to end tests all run in Chromium
+in CI of which 2 rerun locally in WebKit, 197 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

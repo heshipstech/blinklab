@@ -15,6 +15,7 @@ const FULL: FeatureRecord = {
   apertureMm: 5.9,
   baselineMm: 7.2,
   shutBaselineMm: 7.2,
+  baselineOverResting: 1.16,
   blinkRatePerMin: 14,
   lastBlinkDurationMs: 133,
   lastBlinkAmplitudeMm: 3.4,
@@ -34,6 +35,7 @@ const EMPTY_ROW: FeatureRecord = {
   apertureMm: null,
   baselineMm: null,
   shutBaselineMm: null,
+  baselineOverResting: null,
   blinkRatePerMin: null,
   lastBlinkDurationMs: null,
   lastBlinkAmplitudeMm: null,
@@ -129,7 +131,7 @@ describe("serializeRecords", () => {
     const csv = serializeRecords([FULL]);
     const row = csv?.split("\r\n")[1] ?? "";
     expect(row).toBe(
-      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true",
+      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16",
     );
   });
 
@@ -138,7 +140,7 @@ describe("serializeRecords", () => {
     // was measured: a short row would shift every later column.
     const csv = serializeRecords([EMPTY_ROW]);
     const row = csv?.split("\r\n")[1] ?? "";
-    expect(row).toBe("1000,false,,,,,,,,,,0,,,,");
+    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,");
     expect(row.split(",")).toHaveLength(CSV_COLUMNS.length);
   });
 

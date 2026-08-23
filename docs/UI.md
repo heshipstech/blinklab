@@ -258,13 +258,14 @@ hidden**: the export keeps it, so the panel must not disagree with the file.
 An unmeasurable shape shows an em dash per cell rather than a blank, because a
 blank cell reads as a rendering fault.
 
-| Element            | Strings                                                                                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Blink count        | `Blinks: N` or `Blinks: N (last: T ms)`                                                                                                            |
-| Frame rate refusal | Blink metrics not measurable: F fps is below the 25 fps a short blink needs. _(or)_ Blink metrics not measurable: the frame rate is still unknown. |
-| Personal threshold | `Personal blink threshold: X mm (half of your Y mm baseline)` or `Learning your open eyes: N s left`                                               |
-| Last blink shape   | `Last blink shape: amplitude X mm, peak closing Y mm/s, A/V Z ms`, or empty until the first analysable blink                                       |
-| Blink log          | A list, **capped at 50 entries**, newest first. Each: `T s, D ms, A mm at V mm/s, A/V Z ms` or `T s, D ms, shape unavailable`                      |
+| Element            | Strings                                                                                                                                                                                      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Blink count        | `Blinks: N` or `Blinks: N (last: T ms)`                                                                                                                                                      |
+| Frame rate refusal | Blink metrics not measurable: F fps is below the 25 fps a short blink needs. _(or)_ Blink metrics not measurable: the frame rate is still unknown.                                           |
+| Personal threshold | `Personal blink threshold: X mm (half of your Y mm baseline)` or `Learning your open eyes: N s left`                                                                                         |
+| Ruler fit          | `Ruler fit: waiting for the baseline`, then `Ruler fit: baseline is R x your resting eye (ceiling 1.25)`, with `, too long to trust` added (and the warning colour) once the verdict settles |
+| Last blink shape   | `Last blink shape: amplitude X mm, peak closing Y mm/s, A/V Z ms`, or empty until the first analysable blink                                                                                 |
+| Blink log          | A list, **capped at 50 entries**, newest first. Each: `T s, D ms, A mm at V mm/s, A/V Z ms` or `T s, D ms, shape unavailable`                                                                |
 
 **The blink log is the only element with unbounded vertical growth up to
 its cap. At 50 entries it is by far the tallest thing on the page.**

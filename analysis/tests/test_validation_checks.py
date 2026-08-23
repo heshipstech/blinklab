@@ -53,7 +53,7 @@ def a_row(
     # timestampMs, faceDetected, fps, apertureMm, baselineMm, then the
     # rest empty except longClosureCount.
     cells = [str(timestamp), face, fps, aperture, baseline] + [""] * 6
-    cells += [closures, "", "", "", "true"]
+    cells += [closures, "", "", "", "true", ""]
     return ",".join(cells)
 
 

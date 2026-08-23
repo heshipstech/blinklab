@@ -51,7 +51,7 @@ def blink_file(
 
 def session_row(timestamp: int) -> str:
     cells = [str(timestamp), "true", "60", "7.0"] + [""] * 7
-    cells += ["0", "", "", "", ""]
+    cells += ["0", "", "", "", "", ""]
     return ",".join(cells)
 
 

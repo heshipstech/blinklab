@@ -37,6 +37,7 @@ EXPECTED_COLUMNS = [
     "fixationMedianMs",
     "fixating",
     "onScreen",
+    "baselineOverResting",
 ]
 
 
@@ -56,6 +57,29 @@ def test_the_typescript_source_is_where_we_think_it_is() -> None:
 
 def test_columns_match_between_the_languages() -> None:
     assert declared_columns() == EXPECTED_COLUMNS
+
+
+RULER_FIT_SOURCE = REPO_ROOT / "src" / "core" / "rulerFit.ts"
+
+
+def test_the_ruler_fit_ceiling_matches_between_the_languages() -> None:
+    """One check, two implementations, one number.
+
+    The browser judges the ratio live (src/core/rulerFit.ts) and the
+    round's tool judges it from the file (validation_checks.py). If
+    the two ceilings ever drift apart, a session could be told it
+    fits on the page and be flagged in the published table, and the
+    drift would be silent, so this reads the TypeScript constant out
+    of its source the same way declared_columns() reads the columns.
+    """
+    from blinklab.validation_checks import BASELINE_OVER_RESTING_CEILING
+
+    source = RULER_FIT_SOURCE.read_text(encoding="utf-8")
+    match = re.search(
+        r"export const BASELINE_OVER_RESTING_CEILING = ([0-9.]+);", source
+    )
+    assert match is not None, f"ceiling not found in {RULER_FIT_SOURCE}"
+    assert float(match.group(1)) == BASELINE_OVER_RESTING_CEILING
 
 
 def test_the_timestamp_column_comes_first() -> None:

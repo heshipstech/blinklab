@@ -35,7 +35,19 @@ COLUMNS: list[str] = [
     "fixationMedianMs",
     "fixating",
     "onScreen",
+    "baselineOverResting",
 ]
+
+# What the exporter wrote before 23 August 2026, when the browser
+# started writing its own account of the validation round's fifth
+# check (baselineOverResting, src/core/rulerFit.ts). The validation
+# round's six files, the dry run's and every session in the evidence
+# folders carry this header, and the published tables must stay
+# reproducible from them, so the loader accepts exactly this header
+# too — not "any subset", this one known generation — and fills the
+# newer column with NaN, which is the truth: those sessions did not
+# measure it.
+LEGACY_COLUMNS: list[str] = COLUMNS[:-1]
 
 BOOLEAN_COLUMNS = {"faceDetected", "fixating", "onScreen"}
 
@@ -97,9 +109,17 @@ def _read_metadata(path: Path) -> dict[str, str]:
     return metadata
 
 
-def _check_columns(found: list[str]) -> None:
+def _check_columns(found: list[str]) -> list[str]:
+    """The header's own generation of the contract, or a refusal.
+
+    Two headers are real: the current one and the one the exporter
+    wrote before 23 August 2026. Anything else is still refused
+    whole — a generation is an exact list, never a pattern.
+    """
     if found == COLUMNS:
-        return
+        return COLUMNS
+    if found == LEGACY_COLUMNS:
+        return LEGACY_COLUMNS
     missing = [name for name in COLUMNS if name not in found]
     unknown = [name for name in found if name not in COLUMNS]
     if missing:
@@ -149,16 +169,17 @@ def load_session(path: str | Path) -> Session:
     rows = list(csv.reader(kept))
     if not rows:
         raise SessionError("the file has no header, so it is not a session")
-    _check_columns(rows[0])
+    generation = _check_columns(rows[0])
     if len(rows) == 1:
         raise SessionError(
             "the file has a header and no rows, which claims a recording "
             "that did not happen"
         )
     for number, row in enumerate(rows[1:], start=2):
-        if len(row) != len(COLUMNS):
+        if len(row) != len(generation):
             raise SessionError(
-                f"row {number} has {len(row)} fields, expected {len(COLUMNS)}"
+                f"row {number} has {len(row)} fields, "
+                f"expected {len(generation)}"
             )
 
     frame = pd.read_csv(
@@ -169,6 +190,13 @@ def load_session(path: str | Path) -> Session:
         true_values=["true"],
         false_values=["false"],
     )
+    # A legacy file gets the newer columns as NaN so every consumer
+    # sees one shape of frame. NaN and not zero: those sessions never
+    # measured this, and the whole codebase's rule is that the two
+    # are different claims.
+    for name in COLUMNS:
+        if name not in generation:
+            frame[name] = float("nan")
     for name in BOOLEAN_COLUMNS:
         try:
             frame[name] = frame[name].astype("boolean")

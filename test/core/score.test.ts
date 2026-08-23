@@ -27,6 +27,7 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     apertureMm: 7,
     baselineMm: 7.2,
     shutBaselineMm: 7.2,
+    baselineOverResting: 1.03,
     blinkRatePerMin: 15,
     lastBlinkDurationMs: 120,
     lastBlinkAmplitudeMm: 4,
