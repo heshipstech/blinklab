@@ -128,7 +128,7 @@ Accepted on 2026-07-28, before any code:
 - [x] 8.5 Dependabot config, alerts on and reporting 0, SECURITY.md with a real threat model. Verified against the API 15 August.
 - [x] 8.6 Coverage floor on src/core as its own CI step: statements 98, branches 95, functions 100, lines 98, against a measured 98.61 / 95.52 / 100 / 98.57. Far above the 70 this row asked for. Proven able to fail.
 - [x] 8.7 Bundle size ceiling of 240 kB checked after every build, against 217.6 kB actual. Written against the one commit that bundles the 3.7 MB model rather than against creep. Inference time stays a locally recorded number, 6 ms, since CI machines have no camera.
-- [~] 8.8 DECLINED 15 August. The floor is already met: keyboard operable, focus visible, all text clears WCAG contrast. What remained was polish.
+- [~] 8.8 DECLINED 15 August. The floor is already met: keyboard operable, focus visible, all text clears WCAG contrast. What remained was polish. **AMENDED 22 August 2026, additively rather than reopened: one clause of that decline was false when it was written.** Five colour pairs failed AA on the committed stylesheet, and the worst of them was `.rate-warning` at 2.80:1 — the processing-rate limitation shipped the very next day, which made "limitations belong in the open" untrue on the page while this row sat closed. The palette is corrected and `tools/contrastGuard.mjs` now computes every pair, on both grounds, and checks that the page uses the legible tokens rather than merely declaring them. The decline itself STANDS: what remained after this really is polish. What did not stand was checking a claim like that by eye.
 
 ## Phase 9 and beyond (ideas, not commitments)
 

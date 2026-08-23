@@ -34,12 +34,27 @@
 :root {
   --ink: #0f172a;
   --body: #475569;
-  --muted: #94a3b8;
+  /* Was #94a3b8, which measured 2.56:1 on --surface and 2.45 on
+   * --page and carries every card label, the legend, the processing
+   * rate and the blink table. Slate 500 clears AA on both grounds
+   * (4.76 and 4.55). The margin on --page is thin by design rather
+   * than by accident: --page is a shade darker than --surface, so a
+   * colour chosen against a card alone is chosen against the wrong
+   * ground, and tools/contrastGuard.mjs checks both. */
+  --muted: #64748b;
   --border: #cbdbe6;
   --divider: #e2e8f0;
   --surface: #ffffff;
   --page: #f8fafc;
   --accent: #f97316;
+  /* The accent as TEXT, which the accent itself cannot be: #f97316
+   * measures 2.80:1 on --surface. --accent keeps its job as the graph
+   * and icon colour, where a 3:1 non-text bar applies and it clears.
+   * #b8500c is 5.01 and 4.79 on the two grounds. #c2540b was the
+   * first candidate and is rejected in the record: 4.60 on a card,
+   * 4.39 on the page behind it, which is the exact trap the guard's
+   * two-ground table exists to catch. */
+  --accent-text: #b8500c;
   --blue: #2196f3;
 
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -199,7 +214,10 @@ body {
 #status-banner.alerting {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--surface);
+  /* Was --surface on --accent, 2.80:1: the loudest element on the
+   * page was the hardest to read on it. Ink on the same amber is
+   * 6.37 and keeps the alarm colour doing the alarming. */
+  color: var(--ink);
 }
 #status-banner > p {
   margin: 0;
@@ -561,7 +579,7 @@ canvas {
   flex-basis: 100%;
   margin: 0;
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .rate-warning:empty {
   display: none;
