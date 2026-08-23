@@ -177,7 +177,20 @@ describe("per-frame compute cost of the core chain (roadmap 7.8)", () => {
     };
 
     const run = (): number => {
-      let baseline: BaselineState = { kind: "ready", baselineMm: BASELINE_MM };
+      let baseline: BaselineState = {
+        kind: "ready",
+        baselineMm: BASELINE_MM,
+        // A synthetic birth certificate for a synthetic session: one
+        // steady sample, spread one, nothing bound.
+        window: {
+          sampleCount: 1,
+          medianMm: BASELINE_MM,
+          p90Mm: BASELINE_MM,
+          spreadRatio: 1,
+          ceilingBound: false,
+          baselineMm: BASELINE_MM,
+        },
+      };
       let blink: BlinkState = initialBlinkState;
       let closure: LongClosureState = initialLongClosureState;
       let alert: AlertState = initialAlertState;

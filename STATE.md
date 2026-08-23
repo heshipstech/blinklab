@@ -1,3 +1,31 @@
+**THE RULER NOW TRAVELS WITH ITS BIRTH CERTIFICATE, 23 August 2026,
+the calibration track's first rung.** The baseline's median ceiling
+has clipped SILENTLY since the freeze: on the dry run's macbookair
+session a few frames dragged the p90 to 10.35 mm against a window
+median of 7.51, and nobody could see it until the Python side read
+the exported rows five days later. src/core/calibrationWindow.ts now
+describes every birth as a value — sample count, median, p90, spread
+ratio, whether the ceiling bound, and what the ruler was born at —
+the ready state carries it, and the export writes
+calibration_samples, calibration_spread_ratio and
+calibration_ceiling_bound. A session whose ruler was never born
+writes NOTHING rather than unknown, because there was no birth to
+describe.
+
+NOT ONE MEASURED NUMBER MOVES: a test re-derives the old birth
+formula from the plan's constants and holds the new module to it on
+every window, which is the only arrangement in which that test can
+disagree with the code. The macbookair shape is a fixture (spread
+1.378, ceiling bound, born at 9.3875 — still 1.35 times that
+session's resting eye, which is why the clip is a guess wearing a
+number's clothes and why REFUSAL is the next rung, gated on a corpus
+prediction the Mac must score). The owner's committed 300-frame
+fixture replays through the real aperture pipeline and lands under
+the ceiling, unbound. Two mutations each turn three tests red. One
+expectation was corrected the honest way: the window holds 301
+samples and not 350, because ready means FROZEN and the samples fed
+after the thirtieth second never enter.
+
 **THE HONEST TEXT IS NOW READABLE, 23 August 2026, and a guard keeps
 it that way.** Roadmap 8.8 was declined on 15 August because "all
 text clears WCAG contrast". That clause was FALSE, and it stopped
@@ -1027,7 +1055,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 665 unit tests, 20 end to end tests all run in Chromium
+Test count: 674 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 193 Python tests of which
 2 skip
 
