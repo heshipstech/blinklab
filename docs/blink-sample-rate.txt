@@ -490,3 +490,35 @@ finer turns the same two red. The other two survive both mutations,
 correctly: one is a direction check that holds under either model, and
 the other is the pin that holds the infinite-camera case to the 17
 August numbers.
+
+THE TABLE IS ARITHMETIC, 23 August 2026. Every number above comes from
+a numerical sweep, and a sweep can be wrong in ways that look fine —
+the budget correction earlier in this file is this file's own proof.
+So the sweep is now pinned against a closed form derived independently
+from the detector's mechanics, in test/core/blinkClosedForm.test.ts:
+
+    rate = frac(La/Pd) * min(1, ceil(La/Pd) * Pd/Pp)
+         + (1 - frac)  * min(1, floor(La/Pd) * Pd/Pp)
+
+where La is the time the true trace spends at or below the ARM line,
+Pd the delivery period and Pp the processing period; the infinite-
+camera limit min(1, La/Pp) is the 17 August experiment. Across all 72
+cells of a six-blink, twelve-regime grid the worst disagreement with
+the sweep is 0.0060, on the quick blink, whose arm dwell discretizes
+worst; the pinned bound is 0.0075. The non-monotone dip is in the
+arithmetic — frac and floor trading places as Pd shrinks — not just
+in the numerics.
+
+Reproduce: npx vitest run test/core/blinkClosedForm.test.ts
+
+MUTATIONS for this section: degrading the sweep budget to 50 x 8, the
+exact defect the 21 August review caught by hand, now turns five tests
+red by machine. Two deliberately wrong rederivations are pinned as
+disagreeing: a form built on the THRESHOLD dwell instead of the arm
+dwell (off by more than 0.05) and a form that rounds the photograph
+count instead of mixing the phases (off by more than 0.03). One
+mutation SURVIVES, correctly: shifting the delivery grid to hold the
+frame AFTER a tick instead of before is a constant time-shift of the
+grid, and every number this file publishes is a phase average, which a
+constant shift cannot move. Per-phase quantities such as latency would
+see it; none is published from this harness.
