@@ -182,13 +182,13 @@ normal operation. One failure string, and it is long:
 
 Visible only when running.
 
-| Element                 | Notes                                                      |
-| ----------------------- | ---------------------------------------------------------- |
-| Canvas                  | Sized to fit 640 px wide, aspect preserved from the source |
-| Mirror                  | Checkbox, **ticked** by default                            |
-| Eye markers             | Checkbox, **unticked** by default                          |
-| Face mesh               | Checkbox, **unticked** by default                          |
-| Resolution or clip line | Text                                                       |
+| Element                 | Notes                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Canvas                  | Sized to fit 640 px wide, aspect preserved from the source                                                                                                                                                                                                    |
+| Mirror                  | Checkbox. **Ticked** when the camera is the source, **unticked** when a clip loads (issue #301: a mirror is for a face looking at itself, and mirrored recordings showed backwards text). Toggling redraws the current frame even when no frames are flowing. |
+| Eye markers             | Checkbox, **unticked** by default                                                                                                                                                                                                                             |
+| Face mesh               | Checkbox, **unticked** by default                                                                                                                                                                                                                             |
+| Resolution or clip line | Text                                                                                                                                                                                                                                                          |
 
 The three checkboxes and the resolution line share one row.
 
