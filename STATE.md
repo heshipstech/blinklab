@@ -1,4 +1,4 @@
-**THE MODEL'S CLOCK IS NOW ONE RATCHET, 23 August 2026, issue #221's
+**THE MODEL'S CLOCK IS NOW ONE RATCHET, 24 August 2026, issue #221's
 unit half.** The face model demands a strictly increasing clock and
 the page had three to offer it: wall clock for the camera, wall
 clock for a watched clip, a lifted media clock for a stepped clip.
@@ -406,7 +406,7 @@ Readiness and drift both PASSED on that session, because a baseline born
 wrong does not move. Its drift was 0.0. The plan's second dated
 correction adds `baseline_over_resting`, flagged above 1.25, and
 `macbookair` is the only session of the six that it flags.
-Last commit, as of the stamp below: 2026-08-23;
+Last commit, as of the stamp below: 2026-08-24;
 `git log -1` is always the truth
 Live demo: https://heshipstech.github.io/blinklab/
 Currently working: THE CALIBRATION TRACK, on branch
