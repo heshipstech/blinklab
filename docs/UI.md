@@ -158,6 +158,8 @@ While a clip runs, the same line carries:
 - Measuring every frame: N done, P% of the clip, about T left.
 - Measuring every frame: N done, P% of the clip. _(before 5% is measured, no estimate yet)_
 - Measuring every frame: N done. This can take several minutes. _(clip length unknown)_
+- Measuring every frame: N done. Still working: S s reading the first frame. A large or high-resolution clip can take a while. _(heartbeat, issue #302: written once a second after 5 s with no completed frame, so stillness on this line genuinely means a frozen page)_
+- Measuring every frame: N done. Still working: S s since the last frame finished. _(same heartbeat, after the first frame)_
 - Stopping after this frame...
 - Measured N frames at R frames per second, in T s. Check that rate against your clip. Export the CSV, or pick another clip.
 - Stopped after N frames. Export the CSV to keep what was measured, or pick another clip.

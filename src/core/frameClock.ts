@@ -86,6 +86,33 @@ function humanDuration(seconds: number): string {
  * wildly wrong and then visibly shrink, which reads as a broken
  * estimate rather than an improving one.
  */
+/**
+ * How long the stepped status may sit unchanged before the heartbeat
+ * speaks. A healthy run finishes frames far faster, so this never
+ * interrupts one; five seconds of stillness is where a person starts
+ * wondering whether the page died. Issue #302 was exactly that
+ * wondering, at "0 done", for minutes, on a 1.43 GB screen recording
+ * whose calibration seeks each ran long.
+ */
+export const STEP_STALL_SECONDS = 5;
+
+/**
+ * The sentence for a stepped run that is working but has nothing new
+ * to count. Before the first frame it also says why the wait can be
+ * long, because the first frame is where a heavy clip stalls and
+ * where the old silence was read as a freeze.
+ */
+export function stalledStepMessage(
+  framesMeasured: number,
+  stalledSeconds: number,
+): string {
+  const counted = `Measuring every frame: ${String(framesMeasured)} done`;
+  const held = `${String(Math.round(stalledSeconds))} s`;
+  return framesMeasured === 0
+    ? `${counted}. Still working: ${held} reading the first frame. A large or high-resolution clip can take a while.`
+    : `${counted}. Still working: ${held} since the last frame finished.`;
+}
+
 export function steppingProgress(
   framesMeasured: number,
   mediaTimeSeconds: number,

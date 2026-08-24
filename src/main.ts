@@ -192,7 +192,7 @@ import {
   supportsVideoFrameCallback,
 } from "./io/frameLoop";
 import { loadVideoFile, unloadVideoFile } from "./io/videoFile";
-import { stepThroughVideo } from "./io/videoStepper";
+import { stepThroughVideo, type StepSummary } from "./io/videoStepper";
 import type { FrameClockState, FrameSource } from "./core/frameClock";
 import type { MeasurementMode } from "./core/frameClock";
 import {
@@ -202,6 +202,8 @@ import {
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
+  STEP_STALL_SECONDS,
+  stalledStepMessage,
   steppingProgress,
   steppingWarning,
 } from "./core/frameClock";
@@ -1008,9 +1010,18 @@ async function beginVideoFile(file: File): Promise<void> {
     const duration = Number.isFinite(clip.durationSeconds)
       ? `${clip.durationSeconds.toFixed(1)} s`
       : "unknown length";
+    // Full HD is the largest frame anything in the corpus uses, and
+    // seeking cost grows with pixel count: the owner's 2592 x 1960
+    // screen recording sat at "0 done" for minutes (issue #302). The
+    // note travels with the clip's own numbers so a reader connects
+    // the wait to its cause before the wait happens.
+    const largeNote =
+      clip.widthPx * clip.heightPx > 1920 * 1080
+        ? " Large frames seek slowly; a smaller export of the same video measures the same things, faster."
+        : "";
     writeReadout(
       resolutionLabel,
-      `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}`,
+      `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}.${largeNote}`,
     );
     resetSession();
     setState({ kind: "running" });
@@ -1047,33 +1058,60 @@ async function beginVideoFile(file: File): Promise<void> {
       stopClipButton.hidden = false;
       const startedAtMs = performance.now();
       status.textContent = "Measuring every frame: 0 done.";
-      const summary = await stepThroughVideo(
-        video,
-        ({ mediaTimeSeconds, index }) => {
-          const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
-          const clockStep = acceptFrame(frameClock, nowMs);
-          frameClock = clockStep.state;
-          if (!clockStep.accepted) return;
-          const stamped = stampModelClock(modelClock, nowMs);
-          modelClock = stamped.state;
-          if (stamped.modelClockMs === null) return;
-          processFrame(nowMs, stamped.modelClockMs, index);
-          // Every fifteenth frame, roughly twice a second of wall time.
-          // Writing it on every frame costs a layout for a number
-          // nobody can read that fast.
-          if (index % 15 === 0) {
-            status.textContent = steppingProgress(
-              index + 1,
-              mediaTimeSeconds,
-              loadedClipDurationSeconds,
-              performance.now() - startedAtMs,
-            );
-          }
-        },
-        // A newer source stops this run too: the flag alone is not
-        // enough, because the newer run clears it for its own use.
-        () => clipStopRequested || runToken !== sourceRunToken,
-      );
+      // The heartbeat, issue #302. Progress only spoke when a frame
+      // completed, and on a heavy clip the calibration seeks before
+      // the FIRST frame can run for minutes — the owner's 1.43 GB
+      // screen recording sat at "0 done" with no way to tell a slow
+      // run from a dead one. Once the silence passes the stall
+      // threshold, elapsed time is written every second, so stillness
+      // on this line now genuinely means a frozen page.
+      let stepFramesDone = 0;
+      let lastStepProgressAtMs = startedAtMs;
+      const heartbeat = setInterval(() => {
+        if (runToken !== sourceRunToken) return;
+        const stalledSeconds =
+          (performance.now() - lastStepProgressAtMs) / 1000;
+        if (stalledSeconds >= STEP_STALL_SECONDS) {
+          status.textContent = stalledStepMessage(
+            stepFramesDone,
+            stalledSeconds,
+          );
+        }
+      }, 1000);
+      let summary: StepSummary;
+      try {
+        summary = await stepThroughVideo(
+          video,
+          ({ mediaTimeSeconds, index }) => {
+            stepFramesDone = index + 1;
+            lastStepProgressAtMs = performance.now();
+            const nowMs = frameTimestampMs("file", 0, mediaTimeSeconds);
+            const clockStep = acceptFrame(frameClock, nowMs);
+            frameClock = clockStep.state;
+            if (!clockStep.accepted) return;
+            const stamped = stampModelClock(modelClock, nowMs);
+            modelClock = stamped.state;
+            if (stamped.modelClockMs === null) return;
+            processFrame(nowMs, stamped.modelClockMs, index);
+            // Every fifteenth frame, roughly twice a second of wall
+            // time. Writing it on every frame costs a layout for a
+            // number nobody can read that fast.
+            if (index % 15 === 0) {
+              status.textContent = steppingProgress(
+                index + 1,
+                mediaTimeSeconds,
+                loadedClipDurationSeconds,
+                performance.now() - startedAtMs,
+              );
+            }
+          },
+          // A newer source stops this run too: the flag alone is not
+          // enough, because the newer run clears it for its own use.
+          () => clipStopRequested || runToken !== sourceRunToken,
+        );
+      } finally {
+        clearInterval(heartbeat);
+      }
       if (runToken !== sourceRunToken) return;
       stopClipButton.hidden = true;
       // Finished or stopped early, the run is over either way and the
