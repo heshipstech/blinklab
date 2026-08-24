@@ -1,0 +1,64 @@
+EYEBLINK8: FROM THE PUBLIC DOWNLOAD TO A MEASURABLE FOLDER
+
+Written 24 August 2026, the day issue #309 was found: the published
+"HOW TO REPRODUCE THIS EXACTLY" depended on a conversion step that
+appeared nowhere in this repository, so it reproduced only on the
+one machine that already held the prepared folder. This file is that
+step, committed.
+
+WHERE THE DATASET COMES FROM. Eyeblink8 is a public research
+dataset: eight webcam recordings, 408 human-annotated blinks,
+downloadable from the blinkingmatters.com research page. Download
+the dataset archive and nothing else: the same site distributes a
+commercial blink application, and its installer is not the dataset.
+The dataset is a zip of folders; nothing about it installs.
+
+WHAT THE DOWNLOAD LOOKS LIKE. Extracted to $DATASETS, it is one
+folder per subject, each holding a recording as .avi beside its
+annotations:
+
+    $DATASETS/eyeblink8/eyeblink8/
+        <subject>/
+            <clip>.avi  <clip>.tag  <clip>.txt
+
+Eight clips across the subject folders.
+
+WHAT THE INSTRUMENT NEEDS INSTEAD. Two tools read this corpus and
+they want different halves. The measurement runner
+(tools/measure_corpus.mjs) reads FLAT .mp4 files at the top of the
+folder it is given: .mp4 because the measuring browser does not
+play these .avi files, flat because the runner deliberately reads
+one directory level and no more. The evaluator
+(analysis/tools/evaluate_eyeblink8.py) reads the .tag annotations
+wherever they sit below that same folder. So one folder serves
+both: the subject folders keep the annotations, and a converted
+flat copy of each clip sits beside them.
+
+THE PREPARATION, EXACTLY. With the download extracted as above and
+ffmpeg installed:
+
+    cd "$DATASETS/eyeblink8/eyeblink8"
+    for f in */*.avi; do ffmpeg -y -i "$f" -an -c:v libx264 -crf 10 -preset slow "$(basename "$f" .avi).mp4"; done
+
+One flat .mp4 per clip, basenames preserved, audio stripped
+(nothing here reads audio), H.264 because every browser this
+project measures in decodes it, CRF 10 because it sits near the
+lossless end of the scale: the conversion exists to change the
+container, not the pictures. Check it worked; expect eight names:
+
+    ls "$DATASETS/eyeblink8/eyeblink8"/*.mp4
+
+WHAT THIS DOES AND DOES NOT PROMISE. These are the settings of the
+24 August 2026 re-conversion and the committed standard from that
+day on. They are NOT provably the settings behind the published
+numbers: those conversions were never committed and their settings
+are lost with the machine that ran them (issue #309) — the same
+loss covers the `eyeblink8-mp4` folder that older operational notes
+name. Two consequences, both stated in docs/eyeblink8-m5max.txt
+before any new number existed: re-encoded pixels need not match the
+original run's re-encoded pixels, so a small count drift on
+threshold-hugging clips cannot be separated into transcode variance
+and CPU-level numeric drift; and what a transcode CANNOT change is
+the frame count the stepper visits, so the evaluator's coverage
+columns must still match the annotations exactly, and a coverage
+mismatch stops the line.
