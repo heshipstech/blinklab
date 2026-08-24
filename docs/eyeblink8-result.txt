@@ -38,6 +38,22 @@ HOW TO REPRODUCE THIS EXACTLY
         "$DATASETS/eyeblink8/eyeblink8" \
         "$DATASETS/eyeblink8-measured-rearm"
 
+A CORRECTION TO "EXACTLY", 24 August 2026. The heading above
+promised an exact reproduction and did not deliver one. The
+evaluation command is complete, but the folders it reads were not
+reproducible from this repository: the measured folder is generated
+by tools/measure_corpus.mjs, which reads flat .mp4 files, and the
+public dataset ships nested .avi files — the conversion between
+them was committed nowhere, so the command reproduced only on the
+one machine that already held the prepared folder, and that
+machine's conversion settings are lost with it (issue #309). The
+preparation step is now committed as docs/eyeblink8-preparation.txt.
+The first reproduction attempted from a rebuilt folder is
+docs/eyeblink8-m5max.txt, whose prediction was committed before its
+run and names the cost of the loss: re-encoded pixels need not
+match the original run's re-encoded pixels. The heading stays as
+written, because wrong answers stay published here.
+
 TWO INSTRUMENT CHANGES IN ONE DAY, EACH MEASURED SEPARATELY
 
 On 20 August 2026 the six-person validation round reported
