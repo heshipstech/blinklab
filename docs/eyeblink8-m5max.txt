@@ -41,3 +41,23 @@ a detection that sits exactly on a threshold. So:
 
 Whatever happens is appended below this line as a dated RESULT
 section, and this prediction is not edited.
+
+ADDENDUM, 24 August 2026, still before the measurement. The first
+attempt printed "0 clips to measure": the runner wants flat .mp4
+files and the public dataset ships nested .avi files, so the
+published reproduce command depended on an undocumented conversion
+whose settings are lost with the inaccessible machine (issue #309).
+This run therefore RE-CONVERTS, with the settings recorded here:
+
+    ffmpeg -i <clip>.avi -an -c:v libx264 -crf 10 -preset slow <clip>.mp4
+
+one flat .mp4 per .avi, basenames preserved, audio stripped, frame
+timing untouched. This adds a SECOND stated threat to exactness,
+named before the numbers exist: the original run also measured
+converted files, and two transcodes of the same source need not
+produce identical pixels, so the "a few blinks on threshold-hugging
+clips" outcome now covers transcode variance as well as CPU-level
+numeric drift, and the two cannot be separated by this run. What
+transcoding CANNOT change: the frame count the stepper visits, so
+the coverage columns must still match the annotations exactly, and
+a coverage mismatch still stops the line.
