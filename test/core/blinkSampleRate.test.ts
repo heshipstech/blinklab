@@ -361,31 +361,41 @@ describe("what the CAMERA's delivery rate does, once it is modelled", () => {
     ).toBe(1);
   });
 
-  it("an infinitely fast camera agrees with the 17 August model to within a phase step", () => {
-    // The old model is not discarded, it is a special case: delivery at
-    // Infinity is a fresh aperture every tick. This pins the two models
-    // against each other so the new one cannot quietly move the old
-    // numbers, which are published in docs/blink-sample-rate.txt.
-    //
-    // The tolerance is 0.005 and the name says "within a phase step"
-    // rather than "exactly", both corrected after review: the two
-    // sweeps use different phase budgets, so they agree to about one
-    // step of the coarser grid and not to the last digit. At the
-    // looser 0.05 this once used, a published cell could have drifted
-    // from 0.56 to 0.60 and stayed green, which is the drift the pin
-    // exists to catch. Every published depth is checked, not one.
-    for (const min of [3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8]) {
-      const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
-      for (const rate of [25, 30, 60, 120]) {
-        expect(
-          Math.abs(
-            deliveredDetectionRate(blink, OPTICS, {
-              deliveryHz: Infinity,
-              processHz: rate,
-            }) - detectionRate(blink, OPTICS, rate),
-          ),
-        ).toBeLessThanOrEqual(0.005);
+  // The explicit timeout is earned, not decorative: this pin runs 32
+  // full sweeps of real work — about 1.5 s on an idle machine — and a
+  // saturated CI worker multiplied that past vitest's 5 s default on
+  // 24 August (run 32759406916), turning an unrelated PR red. The
+  // loop is finite, so a generous ceiling cannot hide a hang; what it
+  // prevents is machine load impersonating a test failure.
+  it(
+    "an infinitely fast camera agrees with the 17 August model to within a phase step",
+    { timeout: 30_000 },
+    () => {
+      // The old model is not discarded, it is a special case: delivery at
+      // Infinity is a fresh aperture every tick. This pins the two models
+      // against each other so the new one cannot quietly move the old
+      // numbers, which are published in docs/blink-sample-rate.txt.
+      //
+      // The tolerance is 0.005 and the name says "within a phase step"
+      // rather than "exactly", both corrected after review: the two
+      // sweeps use different phase budgets, so they agree to about one
+      // step of the coarser grid and not to the last digit. At the
+      // looser 0.05 this once used, a published cell could have drifted
+      // from 0.56 to 0.60 and stayed green, which is the drift the pin
+      // exists to catch. Every published depth is checked, not one.
+      for (const min of [3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8]) {
+        const blink: Blink = { minMm: min, closeMs: 50, openMs: 100 };
+        for (const rate of [25, 30, 60, 120]) {
+          expect(
+            Math.abs(
+              deliveredDetectionRate(blink, OPTICS, {
+                deliveryHz: Infinity,
+                processHz: rate,
+              }) - detectionRate(blink, OPTICS, rate),
+            ),
+          ).toBeLessThanOrEqual(0.005);
+        }
       }
-    }
-  });
+    },
+  );
 });
