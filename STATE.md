@@ -1,3 +1,20 @@
+**A SLOW CLIP RUN NOW SOUNDS ALIVE, 24 August 2026, issue #302, and
+the mirror follows its source, issue #301 — the owner's remaining
+two finds from walking the freeze check.** The mirror (PR #305):
+clips draw unmirrored, the camera keeps its mirror, the toggle
+redraws the shown frame so it answers even when no frames flow;
+presentation only, the model reads the raw video. The heartbeat
+(this PR): stepping only spoke when a frame finished, and a heavy
+clip's calibration — up to sixty slow seeks before the FIRST frame —
+sat silent at "0 done" for minutes. After five stalled seconds
+(STEP_STALL_SECONDS, pinned) the status counts the wait out loud
+once a second, naming the first frame and the large-clip cause;
+stillness on that line now genuinely means a frozen page. Found
+already built: the stepper's per-seek timeouts and named refusals —
+giving up was implemented, waiting visibly was not. A clip larger
+than Full HD also gets a note beside its own numbers that smaller
+exports measure the same things faster.
+
 **THE CAMERA COMES BACK WHEN A CLIP RUN ENDS, 24 August 2026,
 issue #303, found by the owner walking #221's reproduction.** The
 start button hid whenever the state was running, and no clip
@@ -1227,7 +1244,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 706 unit tests, 20 end to end tests all run in Chromium
+Test count: 709 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

@@ -7,6 +7,8 @@ import {
   frameTimestampMs,
   sourceMetadataRows,
   startFrameClock,
+  STEP_STALL_SECONDS,
+  stalledStepMessage,
   steppingProgress,
   steppingWarning,
 } from "../../src/core/frameClock";
@@ -196,6 +198,34 @@ describe("coverageMetadataRows", () => {
   it("refuses to divide by a zero length clip", () => {
     const rows = coverageMetadataRows("stepped", 0, 0);
     expect(rows).toContain("# measured_fps: unknown");
+  });
+});
+
+describe("stalledStepMessage", () => {
+  // Issue #302, the owner's 1.43 GB screen recording: up to sixty
+  // calibration seeks can run before the first frame ever completes,
+  // and the status sat at "0 done" for minutes, indistinguishable
+  // from a hang. These are the sentences the heartbeat speaks while
+  // nothing else is speaking.
+  it("names the first frame while nothing has finished yet", () => {
+    expect(stalledStepMessage(0, 45.4)).toBe(
+      "Measuring every frame: 0 done. Still working: 45 s reading the " +
+        "first frame. A large or high-resolution clip can take a while.",
+    );
+  });
+
+  it("counts from the last finished frame after that", () => {
+    expect(stalledStepMessage(17, 12.6)).toBe(
+      "Measuring every frame: 17 done. Still working: 13 s since the " +
+        "last frame finished.",
+    );
+  });
+
+  it("speaks only past the stall threshold, which is pinned", () => {
+    // Five seconds: a healthy run finishes frames far faster, so the
+    // heartbeat never interrupts one, and five seconds of silence is
+    // where a person starts wondering if the page died.
+    expect(STEP_STALL_SECONDS).toBe(5);
   });
 });
 
