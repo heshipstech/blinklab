@@ -46,6 +46,7 @@ import { fileURLToPath } from "node:url";
 import { webkit } from "@playwright/test";
 
 import { checkBundle } from "./bundleGuard.mjs";
+import { selectClips } from "./corpusGuard.mjs";
 
 const [, , clipsDir, outDir] = process.argv;
 if (!clipsDir || !outDir) {
@@ -103,12 +104,26 @@ if (!guard.ok) {
 }
 console.log(`Serving the build we made: ${guard.bundle}\n`);
 
-await mkdir(outDir, { recursive: true });
-
-const clips = (await readdir(clipsDir))
-  .filter((f) => f.endsWith(".mp4"))
-  .sort();
+// Zero clips is a refusal, not a report. The first run against a
+// fresh public download printed "0 clips to measure" and finished
+// "done. 0 measured, 0 failed" — an empty run in a success shape,
+// with all eight recordings sitting right there as nested .avi files.
+// The guard reads the folder recursively so the refusal can say what
+// was actually found; the run itself still measures only the flat
+// .mp4 files, because the subfolders hold the raw halves the
+// evaluator reads. Issue #309.
+const selection = selectClips({
+  clipsDir,
+  entries: await readdir(clipsDir, { recursive: true }),
+});
+if (!selection.ok) {
+  console.error(selection.message);
+  process.exit(1);
+}
+const clips = selection.clips;
 console.log(`${clips.length} clips to measure\n`);
+
+await mkdir(outDir, { recursive: true });
 
 const browser = await webkit.launch();
 let failures = 0;
