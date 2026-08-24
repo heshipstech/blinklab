@@ -35,8 +35,8 @@ real-world contact for three days of work: the ruler-fit
 cross-check agrees BIT-EXACTLY (1.0461094018612334 both sides), the
 birth certificate reads healthy (3001 samples, spread 1.044,
 unbound), and the export's delivery rows did their job. Still
-unscored: pcsony >= 60 delivery, the remaining dry-run devices, the
-#221 live half.
+unscored: pcsony >= 60 delivery and the remaining dry-run devices
+(#221's live half was scored the same evening: verified, closed).
 
 **THE 60 FPS WARNING'S FUTURE IS DECIDED BEFORE ITS MEASUREMENT,
 24 August 2026.** docs/blink-sample-rate.txt gained a pre-decision
@@ -71,9 +71,11 @@ constant, so GAPS are untouched — the #174 non-negotiable, pinned
 by test. A backwards stamp inside a source returns null and the
 model is not called: refused, never repaired into a fake gap. Four
 mutations all red (allow-equal 5, negative offset 1, repair 1,
-re-offset-every-stamp 2). The issue stays OPEN: the live half —
-reproducing the freeze with a long clip and watching the fix hold —
-needs real hardware and belongs to the Mac phase.
+re-offset-every-stamp 2). (The live half was verified and the
+issue CLOSED later the same day: a 300 s synthetic clip stepped in
+under a minute on the M5 Max, then the camera — readouts ran,
+no freeze. It needed #303's fix first; the reproduction sequence
+was unreachable through the UI until the start button returned.)
 
 **THE NEW MACBOOK HAS ARRIVED (24 August): a 16-inch M5 Max, macOS
 Tahoe 26.5.1.** It is a NEW machine: `$DATASETS`, the corpus, and

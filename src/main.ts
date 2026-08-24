@@ -548,6 +548,19 @@ mirrorToggle.type = "checkbox";
 mirrorToggle.checked = mirrored;
 mirrorToggle.addEventListener("change", () => {
   mirrored = mirrorToggle.checked;
+  // Redraw the frame the canvas already shows, or the toggle looks
+  // dead whenever frames are not flowing — a finished clip, a stalled
+  // seek. Issue #301: the owner ticked it, nothing happened, and
+  // "might be a bug, might not" is a sentence a control should never
+  // earn. The next processFrame would repaint anyway; this covers the
+  // moments when there is no next frame.
+  if (canvasContext !== null && video.readyState >= 2) {
+    drawVideoFrame(
+      canvasContext,
+      video,
+      frameTransform(mirrored, canvas.width),
+    );
+  }
 });
 mirrorLabel.style.whiteSpace = "nowrap";
 mirrorLabel.append(mirrorToggle, " Mirror");
@@ -871,6 +884,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
     // Issue #221's missing half: a stepped clip may have left the
     // model's clock in the future, so the camera rebases too.
     modelClock = rebaseOnNextStamp(modelClock);
+    // Back to a mirror for a face looking at itself (issue #301).
+    // This does overwrite a preference set during a previous source;
+    // per-source memory would be state nobody asked for yet.
+    mirrored = true;
+    mirrorToggle.checked = true;
     loadedClipName = null;
     measurementMode = "live";
     loadedClipDurationSeconds = null;
@@ -978,6 +996,12 @@ async function beginVideoFile(file: File): Promise<void> {
     const clip = await loadVideoFile(video, file);
     if (runToken !== sourceRunToken) return;
     frameSource = "file";
+    // A mirror is how people expect to see THEMSELVES; recorded
+    // footage mirrored just shows backwards text. Issue #301: the
+    // camera default leaked onto clips. The default follows the
+    // source, and the box still obeys a person who flips it after.
+    mirrored = false;
+    mirrorToggle.checked = false;
     loadedClipName = clip.name;
     loadedClipDurationSeconds = clip.durationSeconds;
     fitCanvasTo(clip.widthPx, clip.heightPx);

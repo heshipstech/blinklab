@@ -65,6 +65,13 @@ test("a recorded clip loads and runs through the same pipeline @chromium-only", 
     page.getByRole("button", { name: "Calibrate gaze" }),
   ).toBeVisible({ timeout: 30_000 });
 
+  // Issue #301: a mirror is for a face looking at itself; recorded
+  // footage mirrored shows backwards text. Loading a clip turns the
+  // mirror default off.
+  await expect(
+    page.getByRole("checkbox", { name: "Mirror" }),
+  ).not.toBeChecked();
+
   // The load bearing assertion, and the one that replaced a weak
   // predecessor. The old test only checked that the frame rate label
   // had stopped saying "measuring...", which the display loop
