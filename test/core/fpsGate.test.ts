@@ -153,11 +153,42 @@ describe("the low-rate warning (remediation D1, stage two)", () => {
   });
 
   it("states the machine's own number and where the risk was measured", () => {
-    const message = rateRiskMessage(46.6);
+    // The machine-bound sentence: the instrument reads every frame
+    // the camera hands it and is still slow, so the machine IS the
+    // cause and the pre-correction claim stands for this shape.
+    const message = rateRiskMessage(46.6, 46.6);
     expect(message).toContain("47 frames per second");
     expect(message).toContain(`below ${String(BLINK_RISK_FPS)}`);
     expect(message).toContain("docs/blink-sample-rate.txt");
     // The dry run's core lesson, so a reader does not swap webcams.
     expect(message).toContain("The camera is not the cause");
+  });
+
+  it("names the camera when the camera is what binds, 24 August 2026", () => {
+    // The first delivered-rate measurement, the M5 Max: processing
+    // 120 on a camera delivering 30, every delivered frame read, so
+    // the evidence rate is 30 and blaming the machine would send a
+    // reader shopping for a faster computer that cannot help. The
+    // sentence is the one committed word for word in the
+    // pre-decision (docs/blink-sample-rate.txt) BEFORE this
+    // measurement existed.
+    expect(rateRiskMessage(30, 120)).toBe(
+      "Blink counts may be low with this camera: this instrument is " +
+        "reading 30 distinct camera frames per second, and below " +
+        `${String(BLINK_RISK_FPS)} quick or shallow blinks can be ` +
+        "missed. A faster machine would not help; the camera's " +
+        "delivery is the limit. Measured in docs/blink-sample-rate.txt.",
+    );
+  });
+
+  it("attribution needs a clear gap, priced like the hysteresis band", () => {
+    // Within five fps the two rates are the same number seen through
+    // the measurement wobble the enter/clear pair already prices, so
+    // the older machine sentence stands; past it, the camera is
+    // named. Exactly five is still inside.
+    expect(rateRiskMessage(55, 60)).toContain("The camera is not the cause");
+    expect(rateRiskMessage(54, 60)).toContain(
+      "the camera's delivery is the limit",
+    );
   });
 });

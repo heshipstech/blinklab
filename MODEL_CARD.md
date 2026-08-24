@@ -111,6 +111,18 @@ of this still happens above its floor. Measured in
 `docs/blink-sample-rate.txt`, with the sessions in
 `docs/validation-dry-run.txt`.
 
+Corrected 24 August 2026, and the paragraph above stays as the record:
+"the machine rather than the camera" held only while no machine
+outran its camera. The first delivered-rate measurement — an M5 Max
+processing 120 frames per second on a camera delivering 30 — read
+exactly 30 distinct frames per second: the evidence rate is the
+LOWER of what the camera delivers and what the machine reads, and
+past the camera's rate a faster machine re-reads old frames and
+buys nothing. The warning now judges the measured rate of distinct
+camera frames read and blames whichever side binds. The thresholds
+and the 25 fps floor did not move; the decision rule was committed
+in `docs/blink-sample-rate.txt` before the measurement was seen.
+
 **It misses blinks that are plainly there.** Of the blinks it missed on
 Eyeblink8, 70.1% contained at least one frame a human marked as fully
 closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%

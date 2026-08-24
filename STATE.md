@@ -1,3 +1,24 @@
+**THE FALSE SILENCE IS CLOSED, 24 August 2026: the warning now
+judges the rate that matters, because the first device read proved
+the old one wrong.** The M5 Max's first export (18:56 UTC, 52
+minutes after the pre-decision merged): declared 30, delivered
+30.0, sampled 30.0, read fraction 1.002, processing 120. Four times
+faster than its camera, reading exactly the camera's 30, warning
+silent — the false-silence shape, observed. Rule one fired: the
+warning's input is the measured sampled_fps where the browser
+reports delivery, processing rate where it cannot; rule three's
+committed sentence ships verbatim ("A faster machine would not
+help; the camera's delivery is the limit"), chosen when the gap
+exceeds the enter/clear pair's own five fps wobble price; rules two
+and the 25 floor hold. All ten enumerated places carry dated
+corrections, the originals kept. ALSO VERIFIED ON THAT FILE, first
+real-world contact for three days of work: the ruler-fit
+cross-check agrees BIT-EXACTLY (1.0461094018612334 both sides), the
+birth certificate reads healthy (3001 samples, spread 1.044,
+unbound), and the export's delivery rows did their job. Still
+unscored: pcsony >= 60 delivery, the remaining dry-run devices, the
+#221 live half.
+
 **THE 60 FPS WARNING'S FUTURE IS DECIDED BEFORE ITS MEASUREMENT,
 24 August 2026.** docs/blink-sample-rate.txt gained a pre-decision
 section for the warning band, mirroring the 25 fps floor's: four
@@ -548,7 +569,11 @@ actual round has twelve cores and runs at 45, while the Sony machine has
 twelve and runs at 127. So how many blinks this
 instrument reports depends on how fast the viewer's computer is, and the
 page tells them nothing about it. That is larger than D1 as written,
-which is about a slow camera holding the gate open.
+which is about a slow camera holding the gate open. (Corrected 24
+August 2026: up to what the camera delivers, and no further — the
+M5 Max measurement showed a machine four times faster than its
+camera reads exactly the camera's 30. The paragraph stands as the
+record of the claim's original form.)
 
 **RETRACTED, and the write-up records it:** the 16 August version of
 this said blink duration moves with the processing rate. `macbookair2`
@@ -1181,7 +1206,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 704 unit tests, 20 end to end tests all run in Chromium
+Test count: 706 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 
