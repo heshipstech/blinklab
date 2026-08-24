@@ -124,15 +124,15 @@ rather than the page.
 
 **Always visible, in every state.** The only box present before starting.
 
-| Element                    | Type                            | Visible when                        | Disabled when |
-| -------------------------- | ------------------------------- | ----------------------------------- | ------------- |
-| Start camera               | Button                          | Not `running`, not `requesting`     | Never         |
-| Or measure a recorded clip | File input                      | Always                              | Never         |
-| Measure every frame        | Checkbox, **ticked** by default | Always                              | Never         |
-| Stop measuring             | Button                          | Only during a stepped clip run      | Never         |
-| Camera picker              | Dropdown                        | Only if more than one camera exists | Never         |
-| Status line                | Text                            | Always                              | n/a           |
-| Model status               | Text                            | Always, but usually empty           | n/a           |
+| Element                    | Type                            | Visible when                                                                                                                                                                                              | Disabled when |
+| -------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Start camera               | Button                          | Not `running`, not `requesting` — or `running` after a clip run ended (issue #303: the finished-clip sentence invites a next source, and hiding this button made the camera unreachable without a reload) | Never         |
+| Or measure a recorded clip | File input                      | Always                                                                                                                                                                                                    | Never         |
+| Measure every frame        | Checkbox, **ticked** by default | Always                                                                                                                                                                                                    | Never         |
+| Stop measuring             | Button                          | Only during a stepped clip run                                                                                                                                                                            | Never         |
+| Camera picker              | Dropdown                        | Only if more than one camera exists                                                                                                                                                                       | Never         |
+| Status line                | Text                            | Always                                                                                                                                                                                                    | n/a           |
+| Model status               | Text                            | Always, but usually empty                                                                                                                                                                                 | n/a           |
 
 #### Status line, every possible string
 
