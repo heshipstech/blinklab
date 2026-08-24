@@ -522,3 +522,70 @@ frame AFTER a tick instead of before is a constant time-shift of the
 grid, and every number this file publishes is a phase average, which a
 constant shift cannot move. Per-phase quantities such as latency would
 see it; none is published from this harness.
+
+WHAT THE 60 FPS WARNING DOES, DECIDED NOW RATHER THAN AFTER THE
+NUMBERS ARE SEEN, 24 August 2026. The 25 fps floor's pre-decision
+above covers refusal; this one covers the WARNING BAND, because its
+sentence is the most exposed claim this file threatens. The page
+warns below BLINK_RISK_FPS (60, clearing at 65) reading the
+PROCESSING rate, and the warning says "The camera is not the cause
+and a faster machine would count more." Under the delivery model
+that sentence is false whenever delivery binds, and worse than the
+false attribution is the FALSE SILENCE: a machine processing at 127
+on a camera delivering 30 shows no warning at all while sitting in
+the middle of the risk band the warning exists to name.
+
+The decision rules, committed before any dry-run device is read.
+The measurement that scores them: the `camera_delivered_fps` and
+`sampled_fps` rows exported by each of the four dry-run devices
+over at least 30 seconds of steady session, plus the same rows from
+the new M5 Max MacBook, which joins the device set. Nothing below
+is edited after those files exist; a wrong rule gets a dated
+correction beside it.
+
+RULE ONE, the quantity. If any device shows sustained
+sampled_fps below its processing rate — the false-silence shape —
+the warning's input moves from the processing rate to the MEASURED
+`sampled_fps`, the rate of distinct delivered frames the detector
+actually read. Not min(delivered, processing) computed from parts:
+the min is the MODEL's prediction of what sampled_fps will read,
+and where an observation exists it outranks the formula that
+predicts it. Where the browser cannot measure delivery (no
+requestVideoFrameCallback), the warning falls back to the
+processing rate and today's behaviour, because warning from a
+number that does not exist would be a guess; that a false silence
+survives on exactly those browsers is recorded here as the
+fallback's known cost.
+
+RULE TWO, the thresholds. BLINK_RISK_FPS 60 and
+BLINK_RISK_CLEAR_FPS 65 do not move under any outcome of this
+measurement. They come from the offline band closing by 60 Hz,
+which is a fact about the evidence rate however it is produced.
+Retuning a threshold while changing the quantity it reads would be
+two moves under one measurement, and only the quantity is in
+question.
+
+RULE THREE, the sentence. When the binding rate is the camera's,
+the committed replacement is: "Blink counts may be low with this
+camera: this instrument is reading N distinct camera frames per
+second, and below 60 quick or shallow blinks can be missed. A
+faster machine would not help; the camera's delivery is the limit.
+Measured in docs/blink-sample-rate.txt." When the processing rate
+is the lower of the two, today's sentence stands, because then the
+machine IS the cause. The ten places enumerated above get their
+dated corrections in the same increment, three of them by failing
+the build until corrected.
+
+RULE FOUR, what the warning will never do, decided now so a later
+increment cannot drift into it: it will not model the aliasing dip.
+The non-monotone loss at commensurate grids is real, bounded, and
+in the closed form above, but it depends on the relationship
+between two rates, flickers with either, and a warning that comes
+and goes reads as a glitch. The warning reads one rate against one
+line; the dip lives in this file.
+
+IF NO DEVICE SHOWS THE FALSE-SILENCE SHAPE — every sampled_fps
+within wobble of its processing rate — then nothing moves, this
+section joins the delivery model in the retraction the section
+above already commits to, and the warning keeps its sentence
+because the observation, not the model, is what a gate moves on.
