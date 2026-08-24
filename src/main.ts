@@ -525,11 +525,18 @@ video.addEventListener("ended", () => {
   if (frameSource !== "file") return;
   clipLoop?.stop();
   clipLoop = null;
-  status.textContent =
-    "The clip finished. Export the CSV, or pick another clip.";
-  // The sentence above invites a next source; the camera is one.
+  // The finished sentence invites a next source, and the camera is
+  // one, so the run marks itself ended and re-renders to bring the
+  // start button back. Render FIRST: render() rewrites the status
+  // line from the state machine, whose running-state message is
+  // empty, and the first version of this ordering erased the
+  // finished sentence the moment it was written — caught by the
+  // watched-path e2e test in CI, invisible locally where clips
+  // cannot decode.
   clipRunEnded = true;
   render();
+  status.textContent =
+    "The clip finished. Export the CSV, or pick another clip.";
 });
 
 // People expect to see themselves as a mirror shows them.
