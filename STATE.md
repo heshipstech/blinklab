@@ -1,3 +1,18 @@
+**THE 60 FPS WARNING'S FUTURE IS DECIDED BEFORE ITS MEASUREMENT,
+24 August 2026.** docs/blink-sample-rate.txt gained a pre-decision
+section for the warning band, mirroring the 25 fps floor's: four
+rules committed before any dry-run device is read. The quantity
+moves to the MEASURED sampled_fps only if a device shows the
+false-silence shape (processing fast, delivery slow, no warning);
+the 60/65 thresholds never move under this measurement; the
+replacement sentence is written now, word for word, so the
+correction is mechanical; and the warning will never model the
+aliasing dip. If no device shows the shape, nothing moves and the
+section retracts with the model. The scoring measurement is named:
+camera_delivered_fps and sampled_fps rows from the four dry-run
+devices plus the new M5 Max, 30+ seconds each. Docs only — the page
+changes nothing until the numbers exist, which is the point.
+
 **THE MODEL'S CLOCK IS NOW ONE RATCHET, 24 August 2026, issue #221's
 unit half.** The face model demands a strictly increasing clock and
 the page had three to offer it: wall clock for the camera, wall
