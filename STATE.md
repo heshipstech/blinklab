@@ -1,3 +1,22 @@
+**THE CAMERA COMES BACK WHEN A CLIP RUN ENDS, 24 August 2026,
+issue #303, found by the owner walking #221's reproduction.** The
+start button hid whenever the state was running, and no clip
+SUCCESS path ever leaves running — so after "The clip finished.
+Export the CSV, or pick another clip." the camera was unreachable
+without a reload, and a reload resets the model clock, which made
+#221's live confirmation impossible through the UI on a one-camera
+machine. One flag now marks a finished or stopped clip run (all
+three end sites: stepped finished, stepped stopped, watched ended);
+the button returns while the session's data and exports stay; any
+new source clears it. Two e2e assertions pin it on both clip paths.
+Three more owner-found defects filed the same hour: #301 (a clip
+draws mirrored by default and the toggle looks dead while no frames
+flow), #302 (a stepped run can sit at "0 done" indefinitely on a
+slow-seeking file with no sign of life). The lesson in LEARNING.md:
+a fix whose confirmation needs an unusual action sequence should
+have that sequence WALKED before shipping — the walk itself found
+three bugs no test ever met.
+
 **THE FALSE SILENCE IS CLOSED, 24 August 2026: the warning now
 judges the rate that matters, because the first device read proved
 the old one wrong.** The M5 Max's first export (18:56 UTC, 52

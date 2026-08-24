@@ -86,6 +86,15 @@ test("a recorded clip loads and runs through the same pipeline @chromium-only", 
     page.getByText("The clip finished", { exact: false }),
   ).toBeVisible({ timeout: 60_000 });
 
+  // Issue #303: that sentence invites picking a next source, and the
+  // camera is one. The button must come back when a clip run ends,
+  // or a one-camera machine can only return to the camera by
+  // reloading — which resets the model clock and made issue #221's
+  // live reproduction unreachable.
+  await expect(
+    page.getByRole("button", { name: "Start camera" }),
+  ).toBeVisible();
+
   // Deliberately NOT asserted: that the frame rate readout matches the
   // clip's 10 frames per second. On a CI machine the model runs on the
   // CPU and takes seconds per frame, so a clip playing in real time is
@@ -154,6 +163,12 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
 
   const finished = page.getByText("Measured", { exact: false });
   await expect(finished).toBeVisible({ timeout: 240_000 });
+
+  // Issue #303, the stepped side: a finished stepped run offers the
+  // camera back too.
+  await expect(
+    page.getByRole("button", { name: "Start camera" }),
+  ).toBeVisible();
 
   const text = (await finished.textContent()) ?? "";
   const measured = Number(/Measured (\d+)/.exec(text)?.[1] ?? Number.NaN);

@@ -527,6 +527,9 @@ video.addEventListener("ended", () => {
   clipLoop = null;
   status.textContent =
     "The clip finished. Export the CSV, or pick another clip.";
+  // The sentence above invites a next source; the camera is one.
+  clipRunEnded = true;
+  render();
 });
 
 // People expect to see themselves as a mirror shows them.
@@ -638,6 +641,16 @@ const status = document.createElement("p");
 
 let state: CameraState = { kind: "idle" };
 
+// A clip run that ENDED leaves the page in the running state on
+// purpose — the readouts and exports still describe a real session —
+// but it must not keep hiding the way back to the camera. Issue
+// #303, found by the owner attempting #221's live reproduction,
+// which this had made unreachable on a one-camera machine: the only
+// way back was a reload, and a reload resets the very clock the bug
+// needs. Set where a clip run finishes or stops, cleared on any new
+// source start.
+let clipRunEnded = false;
+
 function render(): void {
   const running = state.kind === "running";
   status.textContent = cameraStateMessage(state);
@@ -717,7 +730,8 @@ function render(): void {
     alertBanner.hidden = true;
   }
 
-  startButton.hidden = running || state.kind === "requesting";
+  startButton.hidden =
+    (running && !clipRunEnded) || state.kind === "requesting";
   retryModelButton.hidden = state.kind !== "modelFailed";
 }
 
@@ -737,6 +751,7 @@ function setState(next: CameraState): void {
 // blink duration into the next session's score.
 function resetSession(): void {
   // Light, distance and even the person may have changed.
+  clipRunEnded = false;
   baselineState = null;
   rulerFitState = initialRulerFitState;
   rateState = null;
@@ -1030,6 +1045,12 @@ async function beginVideoFile(file: File): Promise<void> {
       );
       if (runToken !== sourceRunToken) return;
       stopClipButton.hidden = true;
+      // Finished or stopped early, the run is over either way and the
+      // camera comes back on offer. The failure branches below leave
+      // the running state through setState, which restores the button
+      // by itself; this covers the outcomes that keep the session.
+      clipRunEnded = true;
+      render();
       const tookSeconds = Math.round((performance.now() - startedAtMs) / 1000);
       // Deliberately NOT "measured every frame". The instrument cannot
       // know how many frames a file contains, only how many it looked
