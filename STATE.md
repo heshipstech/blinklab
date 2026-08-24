@@ -1,3 +1,36 @@
+**THE MODEL'S CLOCK IS NOW ONE RATCHET, 23 August 2026, issue #221's
+unit half.** The face model demands a strictly increasing clock and
+the page had three to offer it: wall clock for the camera, wall
+clock for a watched clip, a lifted media clock for a stepped clip.
+Only the stepped path lifted, so a clip stepped faster than real
+time left the model's clock in the future — a 4-minute clip stepped
+in 90 seconds leaves it ~150 s ahead — and the next camera OR
+watched-clip frame handed it a smaller number: MediaPipe throws, the
+throw kills the display loop before it re-arms, the page freezes
+silently. src/core/modelClock.ts is one pure ratchet every model
+stamp now passes through: each source START rebases (offset = what
+lifts this source's first stamp strictly above everything already
+sent, ZERO when no lift is needed, so a fresh camera still hands
+the model the plain wall clock), and within a source the offset is
+constant, so GAPS are untouched — the #174 non-negotiable, pinned
+by test. A backwards stamp inside a source returns null and the
+model is not called: refused, never repaired into a fake gap. Four
+mutations all red (allow-equal 5, negative offset 1, repair 1,
+re-offset-every-stamp 2). The issue stays OPEN: the live half —
+reproducing the freeze with a long clip and watching the fix hold —
+needs real hardware and belongs to the Mac phase.
+
+**THE NEW MACBOOK HAS ARRIVED (24 August): a 16-inch M5 Max, macOS
+Tahoe 26.5.1.** It is a NEW machine: `$DATASETS`, the corpus, and
+the six validation-round CSVs live on the old MacBook Air and are
+NOT yet on it, so the first Mac-phase task is environment setup and
+data transfer before any measurement runs. The dry-run device
+readings, the #221 live reproduction, and the Eyeblink8 re-run all
+queue behind that. Note also: an M5 Max is far faster than any
+machine in the published tables — its processing rates will not
+resemble macbookair's, which matters for which sessions can be
+compared to which.
+
 **THE DELIVERY TABLE IS NOW ARITHMETIC, NOT JUST NUMERICS, 23 August 2026.** Every number in docs/blink-sample-rate.txt came from a sweep,
 and this file's own budget correction proves a sweep can be wrong in
 ways that look fine. test/core/blinkClosedForm.test.ts pins the sweep
@@ -1133,7 +1166,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 696 unit tests, 20 end to end tests all run in Chromium
+Test count: 704 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 
