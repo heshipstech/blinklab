@@ -66,6 +66,16 @@ export function fpsGateMessage(fps: number | null): string {
  * half of that fix: below BLINK_RISK_FPS the risk is real and
  * measured, so the page says so.
  *
+ * Since 24 August 2026 the rate judged is the EVIDENCE rate: the
+ * measured sampled_fps — distinct camera frames the detector read —
+ * where the browser can see delivery, and the processing rate where
+ * it cannot. The first delivered-rate measurement forced this: an
+ * M5 Max processing 120 on a camera delivering 30 sat squarely in
+ * the risk band with the warning silent, because 120 was the number
+ * being judged and 30 was the number that mattered. The rule was
+ * committed in docs/blink-sample-rate.txt BEFORE that file was
+ * read; the thresholds deliberately did not move with it.
+ *
  * Stateful on purpose, as enter and clear thresholds five apart. The
  * rate is measured over a two second window and wobbles, so a single
  * threshold would flick the warning on and off on any machine
@@ -74,14 +84,17 @@ export function fpsGateMessage(fps: number | null): string {
  * readout beside it already says "measuring...", and warning about a
  * number that does not exist yet would be a guess.
  */
-export function rateRiskActive(previous: boolean, fps: number | null): boolean {
-  if (fps === null) {
+export function rateRiskActive(
+  previous: boolean,
+  evidenceFps: number | null,
+): boolean {
+  if (evidenceFps === null) {
     return false;
   }
-  if (fps < BLINK_RISK_FPS) {
+  if (evidenceFps < BLINK_RISK_FPS) {
     return true;
   }
-  if (fps >= BLINK_RISK_CLEAR_FPS) {
+  if (evidenceFps >= BLINK_RISK_CLEAR_FPS) {
     return false;
   }
   return previous;
@@ -91,11 +104,34 @@ export function rateRiskActive(previous: boolean, fps: number | null): boolean {
  * The warning itself. Live camera sessions only: on a clip the
  * processing rate rides the media clock, the risk belongs to the
  * RECORDING's own rate, and the export already carries that number.
+ *
+ * Two sentences since 24 August 2026, choosing by which rate binds,
+ * because the single machine-blaming sentence was measured FALSE on
+ * the first device read: it would have sent an M5 Max owner shopping
+ * for a faster computer that cannot help. Attribution needs a clear
+ * gap before the blame moves — within the same five fps the
+ * enter/clear pair already prices as wobble, the two rates are one
+ * number seen twice and the older machine sentence stands.
  */
-export function rateRiskMessage(fps: number): string {
+export function rateRiskMessage(
+  evidenceFps: number,
+  processingFps: number,
+): string {
+  const cameraBound =
+    processingFps - evidenceFps > BLINK_RISK_CLEAR_FPS - BLINK_RISK_FPS;
+  if (cameraBound) {
+    return (
+      `Blink counts may be low with this camera: this instrument is ` +
+      `reading ${String(Math.round(evidenceFps))} distinct camera ` +
+      `frames per second, and below ${String(BLINK_RISK_FPS)} quick ` +
+      `or shallow blinks can be missed. A faster machine would not ` +
+      `help; the camera's delivery is the limit. Measured in ` +
+      `docs/blink-sample-rate.txt.`
+    );
+  }
   return (
     `Blink counts may be low on this computer: it is processing ` +
-    `${String(Math.round(fps))} frames per second, and below ` +
+    `${String(Math.round(evidenceFps))} frames per second, and below ` +
     `${String(BLINK_RISK_FPS)} quick or shallow blinks can be missed. ` +
     `The camera is not the cause and a faster machine would count ` +
     `more. Measured in docs/blink-sample-rate.txt.`

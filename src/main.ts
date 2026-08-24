@@ -2145,18 +2145,28 @@ function processFrame(
   // so every decoded frame is read exactly once by construction and a
   // delivery rate there would be the clip's own frame rate wearing a
   // different name.
-  deliveryLabel.textContent =
+  const delivery =
     state.kind !== "running" || frameSource !== "camera"
-      ? ""
-      : deliveryRateMessage(deliveryRates(deliveryState, performance.now()));
+      ? null
+      : deliveryRates(deliveryState, performance.now());
+  deliveryLabel.textContent =
+    delivery === null ? "" : deliveryRateMessage(delivery);
   // Camera sessions only: on a clip the number rides the media clock
   // and the risk belongs to the recording's own rate, which the
-  // export already carries.
+  // export already carries. The rate judged is the EVIDENCE rate —
+  // the measured sampled_fps where the browser reports delivery, the
+  // processing rate where it cannot (pre-decision rule one,
+  // docs/blink-sample-rate.txt, triggered by the M5 Max measurement
+  // of 24 August 2026: processing 120, reading 30).
+  const evidenceFps = delivery?.sampledFps ?? fps;
   rateRiskShown =
     state.kind === "running" && frameSource === "camera"
-      ? rateRiskActive(rateRiskShown, fps)
+      ? rateRiskActive(rateRiskShown, evidenceFps)
       : false;
-  const riskText = rateRiskShown && fps !== null ? rateRiskMessage(fps) : "";
+  const riskText =
+    rateRiskShown && evidenceFps !== null && fps !== null
+      ? rateRiskMessage(evidenceFps, fps)
+      : "";
   if (rateWarningLabel.textContent !== riskText) {
     rateWarningLabel.textContent = riskText;
   }

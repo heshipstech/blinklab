@@ -589,3 +589,41 @@ within wobble of its processing rate — then nothing moves, this
 section joins the delivery model in the retraction the section
 above already commits to, and the warning keeps its sentence
 because the observation, not the model, is what a gate moves on.
+
+THE FIRST DELIVERED-RATE MEASUREMENT, 24 August 2026, and the rules
+above executed against it. A 16-inch M5 Max MacBook Pro (the device
+set's newest member), Chrome, built-in camera, 116.5 seconds of
+steady session, exported at 18:56 UTC — 52 minutes AFTER the
+pre-decision above merged, so the rules provably predate the number:
+
+    camera_declared_fps             30
+    camera_delivered_fps            30.0
+    sampled_fps                     30.0
+    delivered_frames_read_fraction  1.002
+    processing rate (median)        120.0
+
+THE FALSE-SILENCE SHAPE, OBSERVED ON THE FIRST DEVICE READ. The
+machine processes four times faster than the camera delivers and
+reads exactly the 30 distinct frames the camera hands it. The
+evidence rate is 30, inside the warning band; the warning was
+silent, because it judged the 120. RULE ONE therefore fires: the
+warning's input is now the measured sampled_fps where the browser
+reports delivery, the processing rate where it cannot. RULE THREE's
+committed sentence ships verbatim. RULE TWO holds: 60 and 65 did
+not move. The 25 fps floor's own pre-decision does NOT fire:
+nothing has delivered below 25.
+
+THE IF-DELIVERY-BINDS CLAUSE IS EXECUTED: all ten enumerated places
+carry dated corrections as of this section's commit, the three
+machine-enforced ones by turning the build red until corrected.
+Section 4 of the dry run keeps its conclusion and loses its
+mechanism, exactly as pre-written.
+
+WHAT THIS ONE DEVICE CANNOT SAY: the pcsony >= 60 delivery
+prediction is still unscored, and the remaining dry-run devices are
+unread. One device also cannot say whether ANY consumer camera
+under ordinary indoor light delivers above 30; the M5 Max's did
+not, despite the fastest machine this project has touched sitting
+behind it. Attribution inside the warning uses a five fps gap (the
+enter/clear pair's own wobble price) before blaming the camera, so
+near-equal rates keep the older machine sentence.

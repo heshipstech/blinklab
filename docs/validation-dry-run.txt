@@ -152,6 +152,18 @@ What this found
 
    The phone was never the problem. The rate was.
 
+   [Correction, 24 August 2026. The conclusion above HOLDS and the
+   mechanism it named does not: "the rate" meant the processing
+   rate, and the first delivered-rate measurement (an M5 Max
+   processing 120 on a camera delivering 30, reading exactly 30)
+   shows the rate that decides is the rate of distinct camera
+   frames READ — the lower of delivery and processing. The iPhone
+   17's 55 fps processing very likely rode a camera delivering at
+   least that, so the prediction held for a reason this section did
+   not name. A prediction that held for the wrong mechanism is
+   recorded as exactly that, not reread as a mistake. The account
+   is docs/blink-sample-rate.txt.]
+
    This also agrees with the offline experiment in
    `docs/blink-sample-rate.txt`, which was run before either phone
    session and predicted the vulnerable band closes by 60 Hz. Field data

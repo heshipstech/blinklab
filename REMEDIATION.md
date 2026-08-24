@@ -256,6 +256,20 @@ The 25 fps refusal is unchanged, and a true camera rate is
 deliberately still not wired into the gate: twelve real sessions never
 once produced the case it would catch.
 
+**D1 STAGE THREE, 24 August 2026, triggered by the rule committed
+before the measurement.** The first delivered-rate reading (M5 Max:
+camera declared 30, delivered 30.0, distinct frames read 30.0,
+processing 120) produced the false-silence shape stage two could
+not see: a machine in the risk band with the warning off, because
+the warning judged the 120. The warning now judges the measured
+rate of distinct camera frames read where the browser reports it,
+falling back to the processing rate where it cannot, and its
+sentence names whichever side binds. The stage-two paragraph above
+stays as written; its premise — that the case did not occur in
+twelve sessions — was true, and the thirteenth session is where it
+stopped being. The 25 fps refusal still reads the processing rate:
+no device has yet delivered below it.
+
 ---
 
 ## Stage E. Close what the audit never examined
