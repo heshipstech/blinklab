@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 21 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 24 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
