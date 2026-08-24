@@ -82,6 +82,11 @@ import {
   type FeatureRecord,
 } from "./core/featureRecord";
 import {
+  initialModelClock,
+  rebaseOnNextStamp,
+  stampModelClock,
+} from "./core/modelClock";
+import {
   describeRulerFit,
   initialRulerFitState,
   rulerFitMessage,
@@ -841,6 +846,9 @@ async function beginCamera(deviceId?: string): Promise<void> {
     const frame = await startCamera(video, deviceId);
     if (runToken !== sourceRunToken) return;
     frameSource = "camera";
+    // Issue #221's missing half: a stepped clip may have left the
+    // model's clock in the future, so the camera rebases too.
+    modelClock = rebaseOnNextStamp(modelClock);
     loadedClipName = null;
     measurementMode = "live";
     loadedClipDurationSeconds = null;
@@ -983,12 +991,12 @@ async function beginVideoFile(file: File): Promise<void> {
       // machine's speed. See issue #145.
       measurementMode = "stepped";
       // MediaPipe refuses a timestamp that goes backwards, and a clip's
-      // media clock restarts at zero. So the clip's clock is lifted
-      // above anything already sent. The offset is constant for the
-      // whole clip, and the model reads the GAPS between timestamps
-      // rather than their absolute value, so lifting them changes
-      // nothing about the measurement while keeping it monotonic.
-      clipModelClockBaseMs = Math.ceil(performance.now()) + 1;
+      // media clock restarts at zero, so the model clock rebases here.
+      // Issue #221: the lift used to run in this direction ONLY, and a
+      // clip stepped faster than real time left the model's clock in
+      // the future for the next camera frame to violate. Every source
+      // start rebases now; src/core/modelClock.ts is the account.
+      modelClock = rebaseOnNextStamp(modelClock);
       clipStopRequested = false;
       stopClipButton.hidden = false;
       const startedAtMs = performance.now();
@@ -1000,7 +1008,10 @@ async function beginVideoFile(file: File): Promise<void> {
           const clockStep = acceptFrame(frameClock, nowMs);
           frameClock = clockStep.state;
           if (!clockStep.accepted) return;
-          processFrame(nowMs, clipModelClockBaseMs + nowMs, index);
+          const stamped = stampModelClock(modelClock, nowMs);
+          modelClock = stamped.state;
+          if (stamped.modelClockMs === null) return;
+          processFrame(nowMs, stamped.modelClockMs, index);
           // Every fifteenth frame, roughly twice a second of wall time.
           // Writing it on every frame costs a layout for a number
           // nobody can read that fast.
@@ -1110,6 +1121,10 @@ async function beginVideoFile(file: File): Promise<void> {
     // frame rate readout describes frames actually measured, and the
     // export records the mode so an analysis can tell the two apart.
     measurementMode = "played";
+    // A watched clip hands the model the WALL clock, so after a fast
+    // stepped clip it dies exactly the way issue #221's camera does.
+    // Same rebase, same cure.
+    modelClock = rebaseOnNextStamp(modelClock);
     clipLoop = startVideoFrameLoop(
       video,
       (mediaTimeSeconds) => {
@@ -1117,7 +1132,10 @@ async function beginVideoFile(file: File): Promise<void> {
         const clockStep = acceptFrame(frameClock, nowMs);
         frameClock = clockStep.state;
         if (!clockStep.accepted) return;
-        processFrame(nowMs, performance.now());
+        const stamped = stampModelClock(modelClock, performance.now());
+        modelClock = stamped.state;
+        if (stamped.modelClockMs === null) return;
+        processFrame(nowMs, stamped.modelClockMs);
       },
       (error) => {
         // This loop belongs to one clip, so no page-wide flag: the
@@ -1147,6 +1165,9 @@ async function beginVideoFile(file: File): Promise<void> {
     // run's to write.
     if (runToken !== sourceRunToken) return;
     frameSource = "camera";
+    // The display loop resumes driving the camera path here, so the
+    // model clock rebases the same way beginCamera's path does.
+    modelClock = rebaseOnNextStamp(modelClock);
     loadedClipName = null;
     clipLoop?.stop();
     clipLoop = null;
@@ -2073,8 +2094,10 @@ let gazeTraces = emptyGazeTraces();
 // capped to the same 10 second window as the traces.
 let gazeSamples: GazeSample[] = [];
 
-// Set when a clip starts. See the comment at the assignment.
-let clipModelClockBaseMs = 0;
+// The one clock the face model is ever handed. Every source start
+// rebases it above everything already sent; src/core/modelClock.ts
+// carries the account (issue #221).
+let modelClock = initialModelClock;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
@@ -3405,7 +3428,10 @@ startFrameLoop(
     const clockStep = acceptFrame(frameClock, wallClockMs);
     frameClock = clockStep.state;
     if (!clockStep.accepted) return;
-    processFrame(wallClockMs, wallClockMs);
+    const stamped = stampModelClock(modelClock, wallClockMs);
+    modelClock = stamped.state;
+    if (stamped.modelClockMs === null) return;
+    processFrame(wallClockMs, stamped.modelClockMs);
   },
   (error) => {
     // The loop is dead for the life of the page, and the flag is what
