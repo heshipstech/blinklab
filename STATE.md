@@ -1,3 +1,18 @@
+**"0 CLIPS TO MEASURE" IS NOW A REFUSAL, NOT A REPORT, 24 August
+2026, closing issue #309.** The first reproduction attempt from a
+fresh public download printed that line and then finished "done. 0
+measured, 0 failed" — an empty run in a success shape, with all
+eight recordings sitting right there as the nested .avi files the
+public dataset ships. Both halves fixed: the preparation step is
+committed (docs/eyeblink8-preparation.txt — the exact 24 August
+ffmpeg settings, and what they do not promise, since the originals
+are lost), and tools/corpusGuard.mjs — same arrangement as
+bundleGuard: pure, tested, every refusal carries the remedy — makes
+the runner exit at zero clips naming what it looked for (flat .mp4,
+one directory level), what it found instead (a raw download's .avi
+count, or converted clips stranded in subfolders), and the
+committed step between the two.
+
 **A SLOW CLIP RUN NOW SOUNDS ALIVE, 24 August 2026, issue #302, and
 the mirror follows its source, issue #301 — the owner's remaining
 two finds from walking the freeze check.** The mirror (PR #305):
@@ -1265,7 +1280,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 709 unit tests, 20 end to end tests all run in Chromium
+Test count: 715 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

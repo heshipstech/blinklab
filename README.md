@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
-> Revised 23 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 24 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
@@ -587,7 +587,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 709 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 206 Python tests of which 2 skip, all green.
+Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 715 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 206 Python tests of which 2 skip, all green.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
