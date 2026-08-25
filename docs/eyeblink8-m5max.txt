@@ -219,3 +219,65 @@ the lost conversion is a live suspect after all, and that every
 published corpus number is conditional on settings nobody recorded.
 
 83.6 / 84.0 / 83.8 remains the standing result.
+
+THE SWEEP IS FINISHED, AND IT IS THE MACHINE, 25 August 2026. One
+clip, 27122013_152435_cam, converted from the same .avi at four
+qualities spanning lossless to visibly lossy, each measured on this
+machine:
+
+  conversion            found  miss  false   coverage
+  -crf 0 (lossless)        37     4      3       5134
+  -crf 10                  37     4      3       5134
+  -crf 23 (x264 default)   37     4      3       5134
+  -crf 28                  37     4      2       5134
+  ---
+  the published run        36     5     19       5134
+
+Found and missed never move. Across the entire practical range of
+transcoding, the worst disagreement is ONE false alarm, at the
+lossiest setting. The published run differs by SIXTEEN on this clip.
+Transcoding cannot explain a gap of that size, and the likeliest
+lost setting of all, x264's default crf 23, sits exactly on the
+lossless answer.
+
+THE ENUMERATION, checked rather than assumed, because an elimination
+is only as good as its list. The code: exonerated by measurement
+above. The files: exonerated by this sweep. The face model:
+public/models/face_landmarker.task is a committed file, unchanged
+since 2026. The model runtime and the browser: package-lock.json is
+tracked and has not moved since the published run's commit —
+@mediapipe/tasks-vision 1.0.1 and @playwright/test 1.62.1, and a
+pinned Playwright version pins the WebKit build with it.
+
+What is left is the MACHINE: its processor, its operating system,
+and the browser binary built for them. Same code, same model, same
+pinned runtime, same frames, materially different false alarms.
+
+THE IRONY IS WORTH STATING PLAINLY, because it is the finding.
+src/io/videoStepper.ts opens by saying that watching a clip measures
+it "at whatever rate the model manages on that machine, so the same
+file yields different data on different hardware. For a benchmark
+that is fatal: a result that depends on the reviewer's laptop is not
+a result." Stepping was built to remove exactly that dependence, and
+IT DOES remove it where it was aimed: coverage is identical to the
+frame, and the found-blink counts barely move (341 to 347 across the
+corpus). But threshold-hugging events are not protected by reading
+every frame. Near-line flutter — which is what the published run's
+false alarms are, as docs/eyeblink8-result.txt itself says — is
+decided by micrometres of aperture, and those are machine-dependent
+in a way frame scheduling is not. The instrument achieved frame
+determinism and was read as though it had achieved measurement
+determinism.
+
+ONE HONEST GAP, unmeasurable now: the old machine's installed
+node_modules is asserted to match its lock file, not verified. If
+that tree had drifted from the lock, the runtime would be a suspect
+again. The machine is inaccessible, so this cannot be closed, only
+declared.
+
+WHAT THIS DOES TO THE PUBLISHED NUMBER. 83.6 / 84.0 / 83.8 is not
+wrong, and it is not the instrument's number either: it is what this
+instrument measured ON THAT MACHINE. The same is true of
+85.0 / 96.4 / 90.4 on this one. Neither is "the" result until the
+project decides what a machine-conditional benchmark publishes, and
+that decision is the owner's, not this document's.

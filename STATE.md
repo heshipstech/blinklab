@@ -1,3 +1,29 @@
+**IT IS THE MACHINE, 25 August 2026, issue #316 answered.** One clip
+converted from the same .avi at four qualities — lossless, crf 10,
+crf 23 (x264's default), crf 28 — measured 37/4/3, 37/4/3, 37/4/3,
+37/4/2, coverage 5134 every time. Found and missed never move; the
+worst transcode disagreement is ONE false alarm at the lossiest
+setting, against SIXTEEN between here and the published run.
+Enumeration checked rather than assumed: code exonerated by the A/B,
+files by this sweep, the face model is a committed file unchanged
+since 2026, and package-lock.json has not moved since the published
+run's commit (@mediapipe/tasks-vision 1.0.1, @playwright/test 1.62.1,
+which pins the WebKit build). What is left is the MACHINE — its
+processor, its OS, and the browser binary built for them. THE
+FINDING, and it is a big one: stepping removed the hardware
+dependence it was aimed at (coverage identical to the frame, found
+counts 341 -> 347) but NOT the one that matters for precision.
+Near-line flutter is decided by micrometres of aperture, and those
+are machine-dependent in a way frame scheduling is not; the
+instrument achieved FRAME determinism and was read as though it had
+achieved MEASUREMENT determinism. One honest gap, unmeasurable: the
+old machine's node_modules is asserted to match its lock, not
+verified, and that machine is inaccessible. Consequence: 83.6 / 84.0
+/ 83.8 is what this instrument measured ON THAT MACHINE, and
+85.0 / 96.4 / 90.4 is what it measures on this one. Neither is "the"
+result until the owner decides what a machine-conditional benchmark
+publishes.
+
 **THE TRANSCODE IS NOT THE VARIABLE, TWO POINTS IN, 25 August 2026,
 issue #316.** 27122013_152435_cam converted a second time from the
 same .avi, LOSSLESSLY (-crf 0), measured 37/4/3 with coverage 5134 —
