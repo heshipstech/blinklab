@@ -1,3 +1,25 @@
+**THE CORPUS CLIPS DO NOT BEGIN AT ZERO, AND THE INSTRUMENT
+BELIEVED THEY DID, 25 August 2026.** All eight Eyeblink8 clips
+refused on the M5 Max with "could not work out this clip's frame
+rate" while a sixty second cut of the BYTE-IDENTICAL stream
+measured perfectly. The clips' first frame sits at 1.700 s
+(ffprobe: `start: 1.700000`); WebKit on this machine reports
+`seekable: 0.00-527.83`. The stepper read the seekable range as
+"where the frames are", probed empty space where seeks complete and
+decode nothing, and refused — blaming the file, which was clean
+H.264 at a constant 30 fps with a frame count matching the
+published coverage exactly. The stepper's own comment had
+documented this trap (a clip beginning at 1.633 s) and "fixed" it
+by trusting `seekable`, which is a true answer to a different
+question; no test could see it because every fixture begins at
+zero. The origin is now SEARCHED FOR (src/core/frameSearch.ts:
+doubling probe to cross the gap, binary search to pin the first
+frame within 4 ms, refusal rather than an invented origin), with
+the whole stepper exercised against a fake video whose frames start
+1.7 s in. An ordinary clip still costs one probe. NOTE: this
+changes WHERE stepping starts on offset clips only; a clip that
+measured before measures identically.
+
 **THE CLIP LOADER NEVER ACTUALLY WAITED, 24 August 2026, found by
 the M5 Max reproduction.** Every corpus clip failed with "could not
 work out this clip's frame rate" — a sentence about the file,
@@ -1300,7 +1322,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 719 unit tests, 20 end to end tests all run in Chromium
+Test count: 734 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

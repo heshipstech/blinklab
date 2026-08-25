@@ -1,3 +1,4 @@
+import { findFirstFrame } from "../core/frameSearch";
 import type { VideoWithFrameCallback } from "./frameLoop";
 
 // Stepping a clip, rather than watching it.
@@ -126,14 +127,22 @@ function seekTo(
  * samples disagree, and the caller then falls back to a nominal rate.
  */
 /**
- * Where the clip's timeline actually begins.
+ * Where the clip's timeline CLAIMS to begin — a hint, never trusted.
  *
  * Not always zero. A file remuxed from another container can carry a
- * start offset: one corpus clip here begins at 1.633 seconds, and
- * seeking to zero on it lands before the video exists. Every frame
+ * start offset: the Eyeblink8 clips begin about 1.7 seconds in, and
+ * seeking to zero on one lands before the video exists. Every frame
  * request then fails, calibration reports an unknown rate, and the run
- * burns its budget on empty time before giving up. `seekable` is the
- * browser's own answer to "what can I ask for".
+ * burns its budget on empty time before giving up.
+ *
+ * `seekable` used to be treated as the browser's own answer to "what
+ * can I ask for", and therefore as the answer to "where is the first
+ * frame". Those are different questions, and on 25 August 2026 a new
+ * machine answered them differently: `seekable: 0.00-527.83` for a
+ * clip whose first frame is at 1.700. The whole corpus refused while a
+ * sixty second cut of the byte-identical stream measured perfectly.
+ * The origin is now SEARCHED FOR rather than believed, and this is
+ * only where the search starts looking.
  */
 function timelineStart(video: VideoWithFrameCallback): number {
   if (video.seekable.length === 0) return 0;
@@ -149,11 +158,28 @@ function timelineEnd(video: VideoWithFrameCallback): number | null {
   return Number.isFinite(video.duration) ? video.duration : null;
 }
 
+/**
+ * Seek somewhere and report the frame we landed on, or null.
+ *
+ * Only a frame callback counts as a landing. An imprecise answer
+ * reports the time we ASKED for rather than a frame that exists, so
+ * treating one as a frame is how empty space came to look occupied.
+ */
+function frameProbe(
+  video: VideoWithFrameCallback,
+): (timeSeconds: number) => Promise<number | null> {
+  return async (timeSeconds) => {
+    const landing = await seekTo(video, timeSeconds);
+    return landing !== null && landing.exact ? landing.mediaTimeSeconds : null;
+  };
+}
+
 async function measureFrameInterval(
   video: VideoWithFrameCallback,
+  originSeconds: number,
 ): Promise<number | null> {
   const times: number[] = [];
-  let probe = timelineStart(video);
+  let probe = originSeconds;
   for (let attempt = 0; attempt < CALIBRATION_ATTEMPTS; attempt += 1) {
     const landing = await seekTo(video, probe);
     if (landing === null) break;
@@ -223,7 +249,25 @@ export async function stepThroughVideo(
 ): Promise<StepSummary> {
   video.pause();
 
-  const interval = await measureFrameInterval(video);
+  // Where the frames really start, found rather than believed. A clip
+  // that begins where it claims costs one probe; one that begins 1.7
+  // seconds in costs about twenty, and would otherwise refuse.
+  const found = await findFirstFrame(
+    frameProbe(video),
+    timelineStart(video),
+    timelineEnd(video),
+  );
+  const origin = found.firstFrameSeconds;
+  if (origin === null) {
+    return {
+      framesMeasured: 0,
+      lastMediaTimeSeconds: null,
+      frameIntervalSeconds: null,
+      stoppedEarly: true,
+    };
+  }
+
+  const interval = await measureFrameInterval(video, origin);
   // REFUSED rather than guessed, and this is the whole lesson of the
   // first corpus run. The old fallback assumed 60 frames per second
   // when calibration failed. On a 30 fps clip that halves the step, so
@@ -240,9 +284,6 @@ export async function stepThroughVideo(
     };
   }
   const step = interval;
-
-  // Where this clip's timeline begins, which is not always zero.
-  const origin = timelineStart(video);
 
   let index = 0;
   let lastMediaTimeSeconds: number | null = null;
