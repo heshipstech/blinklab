@@ -186,3 +186,36 @@ Either answer is a finding this project has to publish. Until one of
 them is measured, 83.6 / 84.0 / 83.8 remains the standing result and
 the numbers at the top of this section are not published as its
 replacement.
+
+THE TRANSCODE IS NOT THE VARIABLE, so far as two points can say it,
+25 August 2026. The same clip converted a second time from the same
+.avi, LOSSLESSLY this time (-crf 0, so the decoded pixels are the
+decoder's own), measured on this machine:
+
+  27122013_152435_cam   found 37, miss 4, false 3, coverage 5134
+
+Identical to the -crf 10 conversion, to the last decimal of recall
+and precision, and identical to what the published run's own code
+produced on that conversion. Two transcodes of one recording, one of
+them lossless, are indistinguishable to this instrument.
+
+WHAT THAT DOES AND DOES NOT ESTABLISH. It establishes that the
+detector is insensitive to pixel differences ACROSS THE NEAR-
+LOSSLESS RANGE. It does not yet exonerate transcoding, because the
+published run's conversion settings are unknown and could sit well
+outside that range: the likeliest lost setting of all is x264's
+DEFAULT, -crf 23, which is visibly lossier than either point
+measured here. A sensitivity claim tested only between crf 0 and crf
+10 cannot speak for crf 23.
+
+So the sweep is finished rather than declared: the same clip at crf
+23 and at crf 28. Three points spanning lossless to visibly lossy,
+all landing on 37/4/3, would exonerate transcoding across the whole
+practical range and leave the MACHINE as the only remaining
+explanation for the published table — which would make that table a
+property of the laptop it was measured on, and a finding this
+project has to publish. Counts that move at crf 23 would instead say
+the lost conversion is a live suspect after all, and that every
+published corpus number is conditional on settings nobody recorded.
+
+83.6 / 84.0 / 83.8 remains the standing result.
