@@ -1,6 +1,13 @@
 export type CameraState =
   | { kind: "idle" }
   | { kind: "requesting" }
+  // A clip is being read and decoded. Its own state, not "requesting",
+  // because that state's sentence is about the camera permission
+  // prompt, and showing it while a file loads was a lie: brief while
+  // the loader resolved on bare metadata, but the loader now honestly
+  // waits until the clip can decode, and a gigabyte recording makes
+  // that wait long enough to read.
+  | { kind: "loadingClip" }
   | { kind: "running" }
   | { kind: "denied" }
   | { kind: "noCamera" }
@@ -43,6 +50,8 @@ export function cameraStateMessage(state: CameraState): string {
       return 'The camera is off. Click "Start camera" to begin.';
     case "requesting":
       return "Waiting for your answer to the camera permission prompt.";
+    case "loadingClip":
+      return "Reading the clip into this browser. A large recording can take a while to become seekable.";
     case "running":
       return "";
     case "denied":

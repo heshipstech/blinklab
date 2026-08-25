@@ -31,6 +31,7 @@ describe("cameraStateMessage", () => {
     const states: CameraState[] = [
       { kind: "idle" },
       { kind: "requesting" },
+      { kind: "loadingClip" },
       { kind: "denied" },
       { kind: "noCamera" },
       { kind: "failed", reason: "AbortError" },
@@ -40,6 +41,18 @@ describe("cameraStateMessage", () => {
     for (const state of states) {
       expect(cameraStateMessage(state).length).toBeGreaterThan(10);
     }
+  });
+
+  it("loading a clip never mentions the camera or its permissions", () => {
+    // Loading a clip used to show the "requesting" state, whose text is
+    // about the camera permission prompt — a lie that lasted
+    // milliseconds while the loader resolved on bare metadata. Once
+    // loading honestly waits for decodable frames, a large clip shows
+    // this state for many seconds, so the sentence must describe the
+    // actual wait.
+    const message = cameraStateMessage({ kind: "loadingClip" });
+    expect(message).toContain("clip");
+    expect(message).not.toMatch(/camera|permission/i);
   });
 
   it("stays silent while the camera runs", () => {
