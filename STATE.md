@@ -1,3 +1,21 @@
+**THE TRANSCODE IS NOT THE VARIABLE, TWO POINTS IN, 25 August 2026,
+issue #316.** 27122013_152435_cam converted a second time from the
+same .avi, LOSSLESSLY (-crf 0), measured 37/4/3 with coverage 5134 —
+identical to the -crf 10 conversion and to what the published run's
+own code produced on it. Two transcodes of one recording, one
+lossless, are indistinguishable to this instrument. What that does
+NOT yet establish: the published run's settings are unknown and the
+likeliest lost setting of all is x264's DEFAULT -crf 23, visibly
+lossier than either point measured. The sweep is being finished
+rather than declared — crf 23 and crf 28 on the same clip. Three
+points from lossless to visibly lossy all landing on 37/4/3 would
+exonerate transcoding across the practical range and leave the
+MACHINE as the only remaining explanation for the published table,
+making it a property of the laptop it was measured on. Counts moving
+at crf 23 would keep the lost conversion a live suspect and make
+every published corpus number conditional on settings nobody
+recorded.
+
 **THE CODE IS EXONERATED; IT IS THE FILES OR THE MACHINE, 25 August
 2026, issue #316.** The A/B ran: the published run's own measurement
 code, carrying only the two load-and-seek fixes without which it
