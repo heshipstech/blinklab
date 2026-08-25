@@ -104,9 +104,61 @@ export function parseRoundVerdicts(text) {
 }
 
 /** The whole generated block, markers included. */
+/**
+ * The second machine's numbers, parsed from the same result file.
+ *
+ * Written 25 August 2026, when the corpus was re-measured on
+ * different hardware and precision moved 12.4 points on identical
+ * frames. The summary block cannot hand-write those numbers for the
+ * same reason it cannot hand-write the first machine's: prose beside
+ * a number drifts from it, and the whole point of this generator is
+ * that the prose IS the parse. Throws rather than skipping, so a
+ * result file that stops carrying the pair is a red build instead of
+ * a README that quietly goes back to claiming one table.
+ */
+export function parseSecondMachine(text) {
+  const grab = (pattern, what) => {
+    const match = text.match(pattern);
+    if (match === null) {
+      throw new Error(`result file: could not find ${what}`);
+    }
+    return match;
+  };
+  const recall = grab(
+    /Recall\s+[\d.]+% \(\d+\/\d+\)\s+([\d.]+)% \((\d+)\/(\d+)\)/,
+    "the second machine's recall line",
+  );
+  const precision = grab(
+    /Precision\s+[\d.]+% \(\d+ made\)\s+([\d.]+)% \((\d+) made\)/,
+    "the second machine's precision line",
+  );
+  const f1 = grab(/F1\s+[\d.]+%\s+([\d.]+)%/, "the second machine's F1 line");
+  const recallSpread = grab(
+    /recall\s+[\d.]+% vs [\d.]+%,\s+([\d.]+) points apart/,
+    "the recall spread",
+  );
+  const precisionSpread = grab(
+    /precision\s+[\d.]+% vs [\d.]+%,\s+([\d.]+) points apart/,
+    "the precision spread",
+  );
+  return {
+    recallPercent: recall[1],
+    found: Number(recall[2]),
+    annotated: Number(recall[3]),
+    precisionPercent: precision[1],
+    invented: Number(precision[2]),
+    f1Percent: f1[1],
+    recallSpread: recallSpread[1],
+    precisionSpread: precisionSpread[1],
+  };
+}
+
 export function buildResultsBlock(root) {
   const run = parseResultFile(readRepoFile("docs/eyeblink8-result.txt", root));
   const drozy = parseDrozyResult(readRepoFile("docs/drozy-result.txt", root));
+  const second = parseSecondMachine(
+    readRepoFile("docs/eyeblink8-result.txt", root),
+  );
   const round = parseRoundVerdicts(
     readRepoFile("docs/validation-round.txt", root),
   );
@@ -119,7 +171,7 @@ export function buildResultsBlock(root) {
     "",
     "## Results at a glance",
     "",
-    `- **Does it find the blinks a human found?** On Eyeblink8, recall ${run.recallPercent}% (${String(run.found)} of ${String(run.annotated)} found), precision ${run.precisionPercent}% (${String(run.invented)} invented), F1 ${run.f1Percent}%, measured from \`${run.reproDir}\`. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).`,
+    `- **Does it find the blinks a human found?** On Eyeblink8, recall ${run.recallPercent}% (${String(run.found)} of ${String(run.annotated)} found), precision ${run.precisionPercent}% (${String(run.invented)} invented), F1 ${run.f1Percent}%, measured from \`${run.reproDir}\`. **That table is a property of the machine it was measured on.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall ${second.recallPercent}% (${String(second.found)} of ${String(second.annotated)}), precision ${second.precisionPercent}% (${String(second.invented)} invented), F1 ${second.f1Percent}%. Recall travels across machines (${second.recallSpread} points apart); precision does not (${second.precisionSpread} points), because a false alarm is near-line flutter and whether flutter crosses the line turns on micrometres of aperture that differ between processors. Both tables are published, each named with its machine. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).`,
     `- **Does any of it track reported sleepiness?** No. A null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the ${String(drozy.analysed)} of ${String(drozy.measured)} DROZY sessions this instrument can measure. Full record: [docs/drozy-result.txt](docs/drozy-result.txt). Cite: ${drozy.cite}`,
     `- **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion ${round.detector}, the baseline's criterion ${round.baseline}, the frame-rate gate's criterion ${round.gate}. Full record: [docs/validation-round.txt](docs/validation-round.txt).`,
     "- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; and the alertness score has never been shown to correspond to anyone's actual sleepiness.",

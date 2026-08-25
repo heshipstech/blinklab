@@ -1,3 +1,21 @@
+**BOTH TABLES ARE PUBLISHED NOW, EACH NAMED WITH ITS MACHINE, 25
+August 2026.** The owner's call, after the cause was established.
+docs/eyeblink8-result.txt carries the pair, the elimination that
+found the machine, and the REPRODUCIBILITY BOUND the pair buys:
+found blinks 341 vs 347 (a spread of 6 in 408), false alarms 65 vs
+13, recall 1.4 points apart, precision 12.4. Recall travels;
+precision does not. README and MODEL_CARD say so where the numbers
+are read, not in a footnote. The headline stays on the old machine's
+table for one narrow reason, stated rather than dressed up: the miss
+breakdown behind the result file was run on that measurement, so
+promoting the M5 Max table means re-running that analysis first —
+never preferring the better-looking column, which is exactly the one
+to distrust. The README bullet is GENERATED: tools/resultsBlock.mjs
+now parses the second machine's numbers and the spread out of the
+result file, because prose beside a number drifts from it, and a
+file that stops carrying the pair is a red build rather than a
+README that quietly goes back to claiming one table.
+
 **IT IS THE MACHINE, 25 August 2026, issue #316 answered.** One clip
 converted from the same .avi at four qualities — lossless, crf 10,
 crf 23 (x264's default), crf 28 — measured 37/4/3, 37/4/3, 37/4/3,
@@ -1410,7 +1428,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 734 unit tests, 20 end to end tests all run in Chromium
+Test count: 736 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 
