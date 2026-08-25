@@ -753,7 +753,9 @@ function render(): void {
   }
 
   startButton.hidden =
-    (running && !clipRunEnded) || state.kind === "requesting";
+    (running && !clipRunEnded) ||
+    state.kind === "requesting" ||
+    state.kind === "loadingClip";
   retryModelButton.hidden = state.kind !== "modelFailed";
 }
 
@@ -976,7 +978,10 @@ async function beginCamera(deviceId?: string): Promise<void> {
 async function beginVideoFile(file: File): Promise<void> {
   sourceRunToken += 1;
   const runToken = sourceRunToken;
-  setState({ kind: "requesting" });
+  // Its own state, not "requesting": no permission prompt is coming,
+  // and the loader below waits until the clip can actually decode, so
+  // on a large recording this state is on screen long enough to read.
+  setState({ kind: "loadingClip" });
   clipStopRequested = true;
   stopDeliveryObserver();
   stopCamera(video);

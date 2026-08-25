@@ -1,3 +1,23 @@
+**THE CLIP LOADER NEVER ACTUALLY WAITED, 24 August 2026, found by
+the M5 Max reproduction.** Every corpus clip failed with "could not
+work out this clip's frame rate" — a sentence about the file,
+produced by the loader. The 8 August Safari fix (#154) said in its
+message and its comment that loading waits for `canplay` rather
+than `loadedmetadata`; it ADDED the canplay listener without
+removing the metadata one, so the promise resolved on whichever
+fired first, which is always metadata. The intended wait never
+existed, hidden for sixteen days because `preload="auto"` made
+every clip tried so far decodable before the stepper's first seek
+timed out. A short cut of the SAME byte-identical stream measured
+perfectly; the full 8.8-minute clip lost the race. Fixed by
+removing the stray listener, with a test that observes the ordering
+(the belief had lived only in prose). The status line also stopped
+claiming a camera permission prompt while a clip loads: loadingClip
+is its own state now, because an honest wait is long enough to
+read. NOTE for anyone reading old numbers: this changes WHEN
+stepping starts, not what it measures — a clip that measured before
+measures identically.
+
 **"0 CLIPS TO MEASURE" IS NOW A REFUSAL, NOT A REPORT, 24 August
 2026, closing issue #309.** The first reproduction attempt from a
 fresh public download printed that line and then finished "done. 0
@@ -1280,7 +1300,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 715 unit tests, 20 end to end tests all run in Chromium
+Test count: 719 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

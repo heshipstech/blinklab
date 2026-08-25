@@ -59,14 +59,24 @@ export async function loadVideoFile(
     }
     function cleanup(): void {
       video.removeEventListener("canplay", onLoaded);
-      video.removeEventListener("loadedmetadata", onLoaded);
       video.removeEventListener("error", onError);
     }
-    // canplay rather than loadedmetadata: metadata gives dimensions
-    // and duration, but a stepped run needs actual frame data, and
+    // canplay and ONLY canplay: metadata gives dimensions and
+    // duration, but a stepped run needs actual frame data, and
     // starting to seek before any exists is what stalled Safari.
+    //
+    // The first version of this fix (#154) said exactly that in its
+    // commit message — and then added the canplay listener WITHOUT
+    // removing the loadedmetadata one, so the promise resolved on
+    // whichever fired first, which is always metadata. The intended
+    // wait never existed. Nobody noticed for sixteen days because
+    // preload="auto" made every clip tried so far decodable before the
+    // stepper's first seek timed out; the first 8.8 minute corpus clip
+    // on a fresh machine lost that race, and the stepper refused with
+    // "could not work out this clip's frame rate" — blaming the file
+    // for the loader's impatience, at the cost of a day of debugging
+    // the file's encoding, which was innocent.
     video.addEventListener("canplay", onLoaded);
-    video.addEventListener("loadedmetadata", onLoaded);
     video.addEventListener("error", onError);
   });
 
