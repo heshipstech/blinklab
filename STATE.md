@@ -1,3 +1,26 @@
+**THE CODE IS EXONERATED; IT IS THE FILES OR THE MACHINE, 25 August
+2026, issue #316.** The A/B ran: the published run's own measurement
+code, carrying only the two load-and-seek fixes without which it
+cannot open these files at all, measured two clips and reproduced
+YESTERDAY'S numbers exactly (37/4/3 and 67/5/0), not the published
+ones (36/5/19 and 67/5/11). Coverage identical in every arm,
+percentages identical to the last decimal. So the thirteen commits
+merged after the published run change NOTHING this instrument
+measures — which is also a determinism result the project did not
+have. What the comparison cannot see: the two fixes common to both
+arms, untested here (the reasoning that they cannot matter is in
+docs/eyeblink8-m5max.txt, offered as reasoning, not measurement).
+What remains is DIFFERENT FILES versus DIFFERENT MACHINE, still
+entangled, because the original .mp4 files and the machine that made
+them are the same inaccessible place. The discriminating experiment
+is a new measurement rather than an old one: convert one clip from
+the same .avi a SECOND time, losslessly, and measure it here — only
+the file differs. Counts moving between two transcodes of one
+recording makes every published corpus number conditional on a
+conversion nobody recorded until 24 August; counts identical makes
+the published table a property of the laptop it was measured on.
+83.6 / 84.0 / 83.8 remains the standing result either way.
+
 **THE REPRODUCTION RAN, AND THE PREDICTION BROKE, 25 August 2026,
 issue #316.** The M5 Max measured the corpus against a prediction
 committed before the run (docs/eyeblink8-m5max.txt): recall 85.0%

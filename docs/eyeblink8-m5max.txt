@@ -133,3 +133,56 @@ They are separable, and cheaply, by ONE experiment: check out
 Filed as an issue. Until it is answered, this document is the
 record: a prediction committed before the run, and a measurement
 that broke it.
+
+THE ANSWER, 25 August 2026, and it is not the code. The experiment
+above ran: the published run's own measurement code, carrying only
+the two load-and-seek fixes without which it cannot open these files
+on this machine at all, measured two of the clips. It reproduced
+YESTERDAY'S numbers exactly, not the published ones.
+
+  clip                    published    new code   published code
+  27122013_152435_cam       36/5/19      37/4/3           37/4/3
+  27122013_153916_cam       67/5/11      67/5/0           67/5/0
+                                      (found / miss / false)
+
+Coverage identical in every arm. Recall and precision identical to
+the last decimal. So the thirteen commits merged after the published
+run are EXONERATED: they change nothing about what this instrument
+measures. That is also a determinism result the project did not
+have — the same input, through thirteen commits of change, gives the
+same answer digit for digit.
+
+WHAT THIS DOES NOT EXONERATE, stated because the comparison cannot
+see it: the two fixes present in BOTH arms. They are common to
+every run here, so nothing above tests them. The reasoning, offered
+as reasoning and not as measurement, is that neither can matter: one
+changes only when loading finishes, and the other only where
+stepping begins — and coverage is identical to the published run,
+so the same frames were visited either way, and the same frames
+carry the same pixels.
+
+WHAT REMAINS, and it is now sharp. The published run differs from
+this one in exactly two remaining ways: DIFFERENT FILES (its
+conversion's settings are lost) and a DIFFERENT MACHINE. This
+experiment removed the code from the list; it did not separate those
+two from each other, and nothing available can, because the original
+.mp4 files and the machine that made them are the same inaccessible
+place.
+
+They can, however, be told apart by a NEW measurement rather than an
+old one: convert a clip from the same .avi a SECOND time with
+different settings — losslessly, so the pixels are the decoder's own
+— and measure that on this machine. Only the file differs.
+
+  - counts move between two transcodes of one recording -> transcode
+    sensitivity is real, large, and the likely explanation, which
+    makes every published corpus number conditional on a conversion
+    this project never recorded until yesterday;
+  - counts identical across both transcodes -> the file is not the
+    variable and the machine is, which makes the published table a
+    property of the laptop it was measured on.
+
+Either answer is a finding this project has to publish. Until one of
+them is measured, 83.6 / 84.0 / 83.8 remains the standing result and
+the numbers at the top of this section are not published as its
+replacement.
