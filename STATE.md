@@ -1,3 +1,24 @@
+**THE REPRODUCTION RAN, AND THE PREDICTION BROKE, 25 August 2026,
+issue #316.** The M5 Max measured the corpus against a prediction
+committed before the run (docs/eyeblink8-m5max.txt): recall 85.0%
+(347 of 408), precision 96.4% (13 invented), F1 90.4%, against a
+predicted 83.6 / 84.0 / 83.8. COVERAGE IS IDENTICAL on all eight
+clips, so the stepper visited exactly the same frames; what changed
+is what it did with them. Fifty-two false alarms disappeared
+(19 -> 3, 14 -> 1, 11 -> 0 on the worst clips), and the
+pre-registered rule for counts moving by tens is that it STOPS THE
+LINE. Applied as written: the new numbers are NOT published, do not
+enter README or the model card, and 83.6 / 84.0 / 83.8 remains the
+standing result until explained. A better number arriving
+unexplained is still an unexplained number. Two candidates, one
+experiment: build 003184a (the published run's code) and measure
+THESE files with THAT code — ~65 false alarms means an increment
+changed behaviour unnoticed (the model-clock ratchet 1761e33 and the
+baseline birth move 89658cb are the suspects, both nominally
+behaviour preserving on a stepped clip); ~13 means two transcodes of
+one recording differ by fifty-two false alarms, a far larger
+sensitivity than this project has assumed.
+
 **THE CORPUS CLIPS DO NOT BEGIN AT ZERO, AND THE INSTRUMENT
 BELIEVED THEY DID, 25 August 2026.** All eight Eyeblink8 clips
 refused on the M5 Max with "could not work out this clip's frame
@@ -888,7 +909,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 24 August 2026. When this file changes, this stamp changes
+Stamped: 25 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026

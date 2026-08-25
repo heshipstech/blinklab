@@ -61,3 +61,75 @@ numeric drift, and the two cannot be separated by this run. What
 transcoding CANNOT change: the frame count the stepper visits, so
 the coverage columns must still match the annotations exactly, and
 a coverage mismatch still stops the line.
+
+RESULT, 25 August 2026. The run happened. The prediction is WRONG,
+and wrong in the direction that is hardest to be honest about: the
+instrument scored BETTER than the table it was predicting.
+
+  measured on the M5 Max          predicted (the published table)
+  Recall     85.0% (347 of 408)   83.6% (341 of 408)
+  Precision  96.4% (13 invented)  84.0% (65 invented)
+  F1         90.4%                83.8%
+
+Per clip, found and false, published then measured:
+
+  26122013_223310_cam   28 ->  29  (+1)    5 ->  5   (0)
+  26122013_224532_cam   80 ->  80   (0)   10 ->  1   (-9)
+  26122013_230103_cam   43 ->  43   (0)    2 ->  1   (-1)
+  26122013_230654_cam   23 ->  23   (0)    0 ->  1   (+1)
+  27122013_151644_cam   26 ->  29  (+3)   14 ->  1  (-13)
+  27122013_152435_cam   36 ->  37  (+1)   19 ->  3  (-16)
+  27122013_153916_cam   67 ->  67   (0)   11 ->  0  (-11)
+  27122013_154548_cam   38 ->  39  (+1)    4 ->  1   (-3)
+  TOTAL                341 -> 347  (+6)   65 -> 13  (-52)
+
+COVERAGE IS IDENTICAL. Every clip's measured-frames count matches
+the published run exactly — 15784, 11182, 9216, 5405, 10663, 5134,
+9077, 4895 — against the same annotated counts. The stepper visited
+the same frames, so nothing here is about which frames were seen.
+That clause of the pre-decision did not fire.
+
+THE OTHER CLAUSE DID. "Counts moving by tens is a real defect and
+stops the line." Fifty-two false alarms disappeared. That is not the
+"few blinks on threshold-hugging clips" that landmark-level numeric
+drift or transcode variance was allowed to explain, and the shape is
+not noise either: the losses concentrate exactly on the clips that
+had the most false alarms (19 -> 3, 14 -> 1, 11 -> 0), which is what
+a MECHANISM change looks like, not a jitter.
+
+So the pre-registered verdict is applied as written: THIS STOPS THE
+LINE. The published table is not reproduced. The new numbers are NOT
+published as a replacement, do not enter README, STATE or the model
+card, and 83.6 / 84.0 / 83.8 remains the project's standing result
+until this is explained. A better number arriving unexplained is
+still an unexplained number, and this is precisely the moment a
+project stops asking questions because it likes the answer.
+
+WHAT IS ACTUALLY IN QUESTION. Two things changed between the
+published run and this one, and only one of them can be the cause:
+
+  1. THE CODE. Thirteen commits touched src/ after the published run
+     (003184a, the re-arm gate). Among them, one rewrote every
+     timestamp the face model receives (1761e33, the model-clock
+     ratchet) and one moved the baseline birth arithmetic into its
+     own module (89658cb). Both are supposed to be behaviour
+     preserving on a stepped clip. Supposed to is not measured.
+
+  2. THE FILES. These clips were re-converted, because the original
+     conversion's settings are lost with the inaccessible machine,
+     and the addendum above named transcode variance as a threat.
+
+They are separable, and cheaply, by ONE experiment: check out
+003184a, build it, and measure THESE files with THAT code.
+
+  - old code, new files, gives ~65 false alarms -> the files are
+    innocent and an increment changed the instrument's behaviour
+    without anybody noticing. Whichever commit it is owes a test.
+  - old code, new files, gives ~13 -> the code is innocent and two
+    transcodes of one recording differ by fifty-two false alarms,
+    which is a far larger transcode sensitivity than this project
+    has ever assumed, and a finding in its own right.
+
+Filed as an issue. Until it is answered, this document is the
+record: a prediction committed before the run, and a measurement
+that broke it.
