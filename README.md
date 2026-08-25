@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
-> Revised 24 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 25 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
@@ -42,7 +42,7 @@ when the committed README drifts from it. -->
 
 ## Results at a glance
 
-- **Does it find the blinks a human found?** On Eyeblink8, recall 83.6% (341 of 408 found), precision 84.0% (65 invented), F1 83.8%, measured from `eyeblink8-measured-rearm`. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+- **Does it find the blinks a human found?** On Eyeblink8, recall 83.6% (341 of 408 found), precision 84.0% (65 invented), F1 83.8%, measured from `eyeblink8-measured-rearm`. **That table is a property of the machine it was measured on.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall 85.0% (347 of 408), precision 96.4% (13 invented), F1 90.4%. Recall travels across machines (1.4 points apart); precision does not (12.4 points), because a false alarm is near-line flutter and whether flutter crosses the line turns on micrometres of aperture that differ between processors. Both tables are published, each named with its machine. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 - **Does any of it track reported sleepiness?** No. A null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the 20 of 36 DROZY sessions this instrument can measure. Full record: [docs/drozy-result.txt](docs/drozy-result.txt). Cite: Massoz, Langohr, Francois and Verly, WACV 2016.
 - **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion not met, the baseline's criterion FAILED, the frame-rate gate's criterion not met. Full record: [docs/validation-round.txt](docs/validation-round.txt).
 - **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; and the alertness score has never been shown to correspond to anyone's actual sleepiness.
@@ -587,7 +587,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 734 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 206 Python tests of which 2 skip, all green.
+Phases 0 through 6 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, and the rolling state with the demo score. Phase 7, the honest evaluation track, is under way: a Python analysis folder, a session loader and plots, a licensing gate, and video upload mode so a recorded clip runs through the same pipeline as the live camera. That is 736 unit tests, 20 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 206 Python tests of which 2 skip, all green.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 

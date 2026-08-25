@@ -35,3 +35,17 @@ export function spliceResultsBlock(readmeText: string, block: string): string;
 
 /** The committed block as it stands in the README. */
 export function committedResultsBlock(readmeText: string): string;
+
+/** The second machine's numbers, and the spread between the pair. */
+export type SecondMachine = {
+  recallPercent: string;
+  found: number;
+  annotated: number;
+  precisionPercent: string;
+  invented: number;
+  f1Percent: string;
+  recallSpread: string;
+  precisionSpread: string;
+};
+
+export function parseSecondMachine(text: string): SecondMachine;

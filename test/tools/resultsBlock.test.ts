@@ -7,6 +7,7 @@ import {
   parseDrozyResult,
   parseRoundVerdicts,
   spliceResultsBlock,
+  parseSecondMachine,
 } from "../../tools/resultsBlock.mjs";
 
 // Roadmap 7.9: the README's results-at-a-glance block is GENERATED
@@ -84,5 +85,30 @@ describe("the generated results block (roadmap 7.9)", () => {
       baseline: "FAILED",
       gate: "not met",
     });
+  });
+});
+
+describe("the second machine's numbers, parsed rather than typed", () => {
+  // 25 August 2026: the corpus re-measured on different hardware moved
+  // precision 12.4 points on identical frames. The summary block may
+  // not hand-write that pair for the same reason it may not hand-write
+  // the first machine's — prose beside a number drifts from it.
+  const results = readRepoFile("docs/eyeblink8-result.txt", repoRoot());
+
+  it("reads the second machine's table out of the committed file", () => {
+    const second = parseSecondMachine(results);
+    expect(Number(second.recallPercent)).toBeGreaterThan(0);
+    expect(second.found).toBeLessThanOrEqual(second.annotated);
+    expect(Number(second.precisionSpread)).toBeGreaterThan(
+      Number(second.recallSpread),
+    );
+  });
+
+  it("refuses a file that has stopped carrying the pair", () => {
+    // A result file that quietly goes back to one table is a red
+    // build, not a README that silently drops the caveat.
+    expect(() => parseSecondMachine("8 clips, one table, no pair")).toThrow(
+      /could not find/,
+    );
   });
 });
