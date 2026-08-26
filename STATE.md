@@ -1,3 +1,24 @@
+**THE CALIBRATION REFUSAL IS PRE-DECIDED, 26 August 2026, before
+any code exists.** docs/calibration-refusal.txt commits the last rung
+of the calibration track in writing: the refusal fires on ceilingBound
+alone — the signal computed and exported since 23 August — and
+introduces NO new constant, because no benchmark of spread ratios
+across good sessions exists to choose one from. What refusal means is
+fixed there too: ruler-dependent numbers (blink count, rate,
+durations, PERCLOS, long closures, alertness) are withheld, ruler-free
+ones (aperture trace, face presence, rates, gaze) stay live, the
+export still writes rows plus `calibration_refused: true`, and the
+sentence shown to the person is written verbatim. Four predictions are
+committed before anything is scored: none of the eight Eyeblink8
+clips is ceiling-bound (scored by grep on the existing measured
+exports, no re-run); therefore the post-code corpus re-run reproduces
+the published table digit for digit before the increment merges; if
+any clip IS bound the increment stops before wiring and the criterion
+is reconsidered in the open; and the refused state is reachable by
+test, a synthetic window shaped like macbookair's (spread 1.378)
+refusing while the fixture's does not. The owner scores prediction 1;
+the code increment starts only after that grep comes back.
+
 **THE PREDICTION IS CONFIRMED, DIGIT FOR DIGIT, 26 August 2026, and
 issue #316 closes.** The full corpus, prepared by the committed
 remux tool, measured on the M5 Max: recall 83.6% (341 of 408),
