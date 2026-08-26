@@ -1,0 +1,100 @@
+THE CALIBRATION REFUSAL: CRITERIA COMMITTED BEFORE THE CODE
+
+Written 26 August 2026, before any implementation exists. This is the
+calibration track's last rung, gated since 23 August on "a corpus
+prediction the Mac must score" — a gate the corpus reproduction
+cleared this morning. The rule of this document is the project's
+oldest: decide now, in writing, what each possible observation will
+change, because a decision made after seeing the data can always be
+bent to fit it.
+
+WHY A REFUSAL AT ALL. Every blink number this instrument produces is
+a comparison against the calibrated ruler, and the August validation
+round found the ruler broken on three of six machines. The freeze
+(docs/baseline-freeze.txt) fixed the drift class by construction and
+narrowed born-too-long with the median ceiling. What remains is the
+macbookair shape: a learning window whose top and middle DISAGREE —
+p90 at 10.35 mm against a median of 7.51, spread 1.378 — where the
+ceiling binds and the ruler is born AT the ceiling, 9.3875 mm, still
+1.35 times that session's resting eye. Today the page prints that
+birth certificate and proceeds. A clipped birth is a guess wearing a
+number's clothes, and proceeding on it is the last silent success in
+the calibration story.
+
+THE CRITERION, AND WHY IT ADDS NO CONSTANT. The refusal fires on
+exactly one signal: ceilingBound — the learning window's p90 exceeds
+BASELINE_MEDIAN_CEILING_FACTOR (1.25) times the window's own median,
+computed in src/core/calibrationWindow.ts since 23 August, exported
+in every session as calibration_ceiling_bound, and pinned
+cross-language by test. No new threshold is introduced, because no
+benchmark of spread ratios across many good sessions exists to
+choose one from, and this project does not choose constants against
+data it has not read. The ceiling factor already on the books says
+what "top and middle disagree" means; the refusal only changes what
+the instrument DOES about it: today it clips, from this increment it
+refuses.
+
+WHAT THE REFUSAL DOES, EXACTLY.
+
+  - At the moment the learning window freezes ceiling-bound, the
+    session enters a refused-calibration state instead of running
+    with a clipped ruler.
+  - WITHHELD, because each depends on the blink line the ruler
+    defines: blink count, blink rate, blink durations, PERCLOS, long
+    closures and their alerts, and the alertness score.
+  - STILL SHOWN, because none of them consult the ruler: the live
+    aperture trace, face presence, processing and delivery rates,
+    and gaze.
+  - THE SENTENCE, verbatim: "Calibration was refused: while learning
+    your baseline, the widest eye openings disagreed with the middle
+    ones by more than the instrument allows, which usually means
+    blinks or a squint contaminated the learning period. Numbers
+    that depend on the blink line are withheld rather than guessed.
+    Restart the camera and keep your eyes comfortably open for the
+    first thirty seconds."
+  - THE EXPORT still writes: per-second aperture rows, the full
+    birth certificate, and calibration_refused: true in the
+    metadata. A refused session is a result, not an accident, and
+    an analysis must be able to count refusals.
+
+WHAT BIRTH CANNOT SEE, STATED SO THE REFUSAL DOES NOT OVERCLAIM.
+Two pathologies remain invisible at calibration time and are NOT
+covered: a window that reads uniformly high (macbookair's learning
+median 7.51 against a whole-session median of 6.93 — the future is
+not available at birth), and a ruler born SHORT through a squint,
+visible only analysis-side as over_resting below 1.0. Both stay
+where they are: the analysis-side soundness check, and the short-
+ruler rule already queued for the next validation round.
+
+THE PREDICTIONS, COMMITTED BEFORE ANYTHING IS SCORED.
+
+  1. NONE of the eight Eyeblink8 clips is ceiling-bound. Scored
+     without a re-run, from the birth certificates already in the
+     measured exports:
+
+         grep -H "calibration_ceiling_bound" \
+             "$DATASETS/eyeblink8-measured-m5max-remux"/*.seconds.csv
+
+     Every line reading false confirms it. The owner's committed
+     300-frame fixture is already pinned unbound by test.
+
+  2. THEREFORE the refusal changes NOTHING on the corpus: after the
+     code lands, a full corpus re-run must reproduce the published
+     table digit for digit, exactly as the 26 August reproduction
+     did. That re-run happens before the increment merges, per the
+     standing rule that anything touching detector behaviour owes a
+     corpus run.
+
+  3. IF ANY CLIP IS BOUND, prediction 1 is wrong and the criterion
+     would rewrite the published table. Then this document's rule
+     is: the increment STOPS before wiring, the finding is published
+     here as a dated section, and the criterion is reconsidered in
+     the open — because a refusal that silently deletes a benchmark
+     is worse than the clipped ruler it replaces.
+
+  4. The refused state must be REACHABLE by test: a synthetic
+     window shaped like macbookair's (spread 1.378) refuses, and
+     the fixture's window does not. Mutations on both directions.
+
+Whatever the grep shows is appended below as a dated section, and
+this prediction is not edited.
