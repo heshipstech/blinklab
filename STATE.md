@@ -1,3 +1,17 @@
+**THE INERT AUDIT FINDING WENT LIVE, AND IS FIXED, 26 August 2026.**
+The stepper aims at `origin + (index + 0.5) * step` but its fallback
+for an imprecise landing read `index * step`, dropping the origin
+entirely. The August audit found it and correctly called it inert,
+"only because prepare_eyeblink8.py normalises the origin to zero"
+(docs/audit/appendix-chunk-4-all-findings.md). Making offset clips
+measurable made it live, and its symptom would be silent: every
+frame measured after a browser stops reporting where it landed is
+reported early by the whole offset, on a benchmark indexed BY FRAME
+NUMBER. Fixed, with a test that watches a fake browser answer twenty
+frame callbacks and then go quiet mid-run; two mutations (dropping
+the origin again, and freezing the fallback at the origin) each turn
+it red.
+
 **THE PREPARATION WAS NEVER LOST, AND THE MACHINE CONCLUSION IS
 SUSPENDED, 26 August 2026.** analysis/tools/prepare_eyeblink8.py has
 carried the corpus preparation since #158, with its own dependency
@@ -1461,7 +1475,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 736 unit tests, 20 end to end tests all run in Chromium
+Test count: 737 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

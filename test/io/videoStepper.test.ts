@@ -24,6 +24,13 @@ type FakeOptions = {
   claimsStartAt?: number;
   /** A browser that never reports which frame it landed on. */
   silentFrameCallback?: boolean;
+  /**
+   * A browser that answers this many frame callbacks and then stops
+   * saying where it landed. Calibration still succeeds; the main loop
+   * then falls back to its own schedule, which is where the origin
+   * used to be dropped.
+   */
+  answersOnly?: number;
 };
 
 /**
@@ -44,12 +51,14 @@ function fakeVideo(options: FakeOptions): {
     frames,
     claimsStartAt = 0,
     silentFrameCallback = false,
+    answersOnly = Number.POSITIVE_INFINITY,
   } = options;
   const lastFrameStart = startsAt + (frames - 1) * interval;
   const end = lastFrameStart + interval;
   const seeks: number[] = [];
   let currentTime = 0;
   let displayed: number | null = null;
+  let answered = 0;
   const seekedListeners = new Set<() => void>();
   const pending: ((mediaTime: number) => void)[] = [];
 
@@ -78,7 +87,13 @@ function fakeVideo(options: FakeOptions): {
         // A frame callback only fires when a NEW frame is decoded:
         // empty space decodes nothing, and landing on the frame
         // already showing decodes nothing either.
-        if (landed !== null && landed !== displayed && !silentFrameCallback) {
+        if (
+          landed !== null &&
+          landed !== displayed &&
+          !silentFrameCallback &&
+          answered < answersOnly
+        ) {
+          answered += 1;
           displayed = landed;
           const waiting = pending.splice(0, pending.length);
           for (const resolve of waiting) resolve(landed);
@@ -149,6 +164,42 @@ describe("stepping a clip whose timeline does not start at zero", () => {
     await stepThroughVideo(video, () => {});
     const beforeTheFirstFrame = seeks.filter((at) => at < 1.7).length;
     expect(beforeTheFirstFrame).toBeLessThan(30);
+  }, 30_000);
+
+  it("keeps the origin when the browser stops saying where it landed", async () => {
+    // The August audit found this and called it inert: the schedule
+    // aims at `origin + (index + 0.5) * step` but the fallback for an
+    // imprecise landing returned `index * step`, dropping the origin
+    // entirely. It was inert only because the committed preparation
+    // tool normalises every corpus clip's timeline to zero. A clip
+    // that really does start late makes it live, and the symptom is
+    // silent: every frame after the browser goes quiet is reported
+    // 1.7 seconds early, which on a benchmark indexed by frame number
+    // would shift the annotations against the video.
+    const startsAt = 1.7;
+    const { video } = fakeVideo({
+      startsAt,
+      interval: 1 / 30,
+      frames: 40,
+      claimsStartAt: 0,
+      // Enough answers for the origin search and calibration, then
+      // the browser goes quiet for the rest of the run.
+      answersOnly: 20,
+    });
+    const seen: number[] = [];
+    const summary = await stepThroughVideo(video, (frame) => {
+      seen.push(frame.mediaTimeSeconds);
+    });
+
+    expect(summary.framesMeasured).toBeGreaterThan(8);
+    // No frame may be reported before the clip begins.
+    for (const at of seen) {
+      expect(at).toBeGreaterThanOrEqual(startsAt - 1e-9);
+    }
+    // And the times must still march forward, one frame apart.
+    for (let i = 1; i < seen.length; i += 1) {
+      expect(seen[i] ?? 0).toBeGreaterThan(seen[i - 1] ?? 0);
+    }
   }, 30_000);
 
   it("refuses, rather than inventing an origin, when nothing decodes", async () => {
