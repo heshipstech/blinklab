@@ -62,3 +62,69 @@ and CPU-level numeric drift; and what a transcode CANNOT change is
 the frame count the stepper visits, so the evaluator's coverage
 columns must still match the annotations exactly, and a coverage
 mismatch stops the line.
+
+A CORRECTION, 26 August 2026: THIS DOCUMENT PRESCRIBED THE WRONG
+CONVERSION, AND ITS PREMISE WAS FALSE.
+
+Everything above was written on the belief that the corpus
+preparation had never been committed and that its settings were lost
+with an inaccessible machine. That belief was wrong. The step was in
+this repository the whole time:
+
+    analysis/tools/prepare_eyeblink8.py
+
+committed with the corpus runner itself (#158), with its own
+dependency group in analysis/pyproject.toml ("uv sync --group
+corpus"). Nobody looked in analysis/tools. Issue #309 was filed on
+the false premise, and this file, the correction it added to
+docs/eyeblink8-result.txt, and the addendum in
+docs/eyeblink8-m5max.txt all inherit it.
+
+WHAT THE COMMITTED TOOL ACTUALLY DOES, and it is not what is
+prescribed above. It REMUXES: the H.264 bitstream is copied byte for
+byte into an MP4 container, "-c:v copy", never re-encoded. Its own
+docstring says why, and the reason is the strongest one in this
+project: the ground truth is indexed BY FRAME NUMBER, so a conversion
+that dropped, duplicated or resampled a single frame would silently
+shift every annotation against the video and produce a confident,
+wrong accuracy figure. A remux cannot do that, and the tool verifies
+the decoded frame count on both sides rather than trusting the claim.
+
+The re-encode prescribed above is exactly the class of conversion the
+tool exists to avoid.
+
+AND IT NORMALISES THE ORIGIN. The committed remux passes
+"-avoid_negative_ts make_zero -muxpreload 0 -muxdelay 0", and its
+comment explains: remuxing from AVI can leave a start offset, one
+clip here began at 1.633 s, "Chrome silently clamps every earlier
+seek to the first frame, while Safari never answers them at all. Both
+report `seekable` as starting at zero regardless, so the code cannot
+even detect the situation."
+
+That is a word-for-word description of the failure that consumed 25
+August: eight clips refusing, every seek finishing, no frame ever
+arriving, `seekable` reporting 0.00 for a file whose first frame sits
+at 1.700. The re-encode above reintroduced the exact hazard the
+committed tool was written to remove, and then the instrument was
+changed to survive it.
+
+WHAT STANDS AND WHAT DOES NOT. src/core/frameSearch.ts stands on its
+own merits: a clip with a real start offset should be measurable
+rather than refused, and the August audit had already flagged the
+matching inconsistency in the stepper's inexact-landing fallback.
+But it was NOT needed to measure this corpus, and the story told in
+its commit message — that the corpus clips legitimately begin 1.7
+seconds in — describes files this project should never have made.
+
+THE CORRECT PREPARATION, superseding everything above:
+
+    cd analysis
+    uv sync --group corpus
+    uv run python tools/prepare_eyeblink8.py \
+        "$DATASETS/eyeblink8/eyeblink8" \
+        "$DATASETS/eyeblink8-mp4"
+
+It prints "N frames in, N out, OK" per clip and refuses to bless a
+file whose count changed. The measured folder that produced the
+published table came from THAT, which is also why the old operational
+note named a folder called eyeblink8-mp4.
