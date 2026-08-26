@@ -18,10 +18,12 @@ import { percentile } from "./statistics";
 //
 // This module only DESCRIBES. It moves no measured number — a test
 // re-derives the old birth formula from the plan's constants and
-// holds this one to it — and it decides nothing: whether a window
-// this describes as top-heavy should be REFUSED rather than clipped
-// is the next increment, and that one owes a corpus prediction before
-// it merges.
+// holds this one to it — and it decides nothing: what to DO about a
+// bound ceiling lives in baseline.ts, which since the refusal
+// (docs/calibration-refusal.txt) refuses the birth outright. So
+// `baselineMm` on a bound window is now purely descriptive — the
+// ruler the clipping era would have used — because no such ruler is
+// born any more.
 
 /** The birth certificate of one learned baseline. */
 export type CalibrationWindow = {

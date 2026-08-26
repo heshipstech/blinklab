@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CALIBRATION_REFUSED_SENTENCE,
   baselineStep,
   learningSecondsLeft,
   personalThresholdMm,
@@ -143,45 +144,86 @@ describe("the birth ceiling, fix #126 tightened by the round", () => {
   // 1.25 check. The learner must not produce a ruler the plan calls
   // implausible on sight, so the ceiling now IS the plan's line.
   //
-  // With the ruler frozen at birth, the ceiling has exactly one job:
-  // bounding the birth estimate. The p90 stays because blinks during
-  // learning must not drag "open" down.
+  // Since the refusal (docs/calibration-refusal.txt) the ceiling's
+  // job changed once more: it no longer bounds the birth estimate,
+  // it REFUSES the birth. A window the ceiling binds produced a
+  // clipped ruler that was still 1.35 times one session's resting
+  // eye — a guess wearing a number's clothes — so a bound window now
+  // births nothing at all. Every ready ruler is a raw, unclipped p90.
 
   it("pins the ceiling factor to the plan's pre-registered line", () => {
     expect(BASELINE_MEDIAN_CEILING_FACTOR).toBe(1.25);
   });
 
-  it("bounds the birth estimate against a surprised learning window", () => {
-    // A person who was surprised during the learning window would
-    // otherwise start the session with a broken line and carry it,
-    // frozen, to the end. The wide samples are INTERLEAVED: birth
-    // happens at the 30 second mark, so a tail appended after it
-    // would never be seen, and the first draft of this test proved
+  it("refuses the surprised learning window rather than clipping it", () => {
+    // A person who was surprised during the learning window used to
+    // start the session with a clipped line and carry it, frozen, to
+    // the end. The wide samples are INTERLEAVED: birth happens at
+    // the 30 second mark, so a tail appended after it would never be
+    // seen, and the first draft of the clipping-era test proved
     // exactly nothing for exactly that reason. Every sixth sample at
     // 12 mm puts the raw p90 at 12 while the median stays 6.5.
     const surprised = Array.from({ length: 350 }, (_, i) =>
       i % 6 === 5 ? 12 : 6.5,
     );
     const state = feed(startBaseline(0), 0, surprised);
-    const baseline = state.kind === "ready" ? state.baselineMm : 0;
-    expect(baseline).toBeLessThanOrEqual(6.5 * BASELINE_MEDIAN_CEILING_FACTOR);
-    expect(baseline).toBeLessThan(12);
-    expect(personalThresholdMm(state) ?? Infinity).toBeLessThan(6.5);
+    expect(state.kind).toBe("refused");
   });
 
-  it("keeps the blink line below the eye it is measuring", () => {
-    // The property that actually matters, stated directly: half the
-    // baseline must stay under the typical open aperture, or the eye
-    // reads closed at rest. Interleaved for the same reason as above,
-    // and the excursion reads 14 mm because a smaller one leaves half
-    // the uncapped p90 under the aperture anyway, and this test would
-    // hold with the ceiling deleted, which the mutation run proved.
+  it("publishes no blink line at all from a window the ceiling binds", () => {
+    // The clipping era held "the blink line stays below the eye" by
+    // clipping the baseline. The refusal holds the deeper property:
+    // a line the instrument cannot vouch for is not drawn low, it is
+    // not drawn.
     const surprised = Array.from({ length: 350 }, (_, i) =>
       i % 5 === 4 ? 14 : 6.5,
     );
     const state = feed(startBaseline(0), 0, surprised);
-    const threshold = personalThresholdMm(state) ?? Infinity;
-    expect(threshold).toBeLessThan(6.5);
+    expect(personalThresholdMm(state)).toBeNull();
+  });
+
+  it("refuses the macbookair window, the failure the refusal exists for", () => {
+    // The dry run's recorded shape, the same one the birth
+    // certificate tests pin: a median of 7.51 mm with enough frames
+    // at 10.35 to drag the p90 to them, spread 1.378. Under the
+    // clipping era this window birthed a ruler at 9.3875 mm, still
+    // 1.35 times that session's resting eye. Interleaved every ninth
+    // sample so the outliers are inside the window when the thirty
+    // seconds elapse: 33 of the 301 samples at birth, just over the
+    // p90's reach.
+    const macbookair = Array.from({ length: 350 }, (_, i) =>
+      i % 9 === 8 ? 10.35 : 7.51,
+    );
+    const state = feed(startBaseline(0), 0, macbookair);
+    expect(state.kind).toBe("refused");
+    if (state.kind !== "refused") return;
+    // The refused state carries the full birth certificate: an
+    // analysis must be able to say WHY a session was refused.
+    expect(state.window.spreadRatio).toBeCloseTo(10.35 / 7.51, 6);
+    expect(state.window.ceilingBound).toBe(true);
+    expect(personalThresholdMm(state)).toBeNull();
+    expect(learningSecondsLeft(state, 60_000)).toBeNull();
+  });
+
+  it("refusal is frozen: a calm eye afterwards does not un-refuse", () => {
+    // The exit the person is offered is a restart, in the refusal
+    // sentence itself. Silently re-learning mid-session would be the
+    // P3 failure again: a ruler that appears while the measurement
+    // runs is a ruler that moved.
+    const macbookair = Array.from({ length: 350 }, (_, i) =>
+      i % 9 === 8 ? 10.35 : 7.51,
+    );
+    const refused = feed(startBaseline(0), 0, macbookair);
+    const calm = Array.from({ length: 700 }, () => 7);
+    const after = feed(refused, 60_000, calm);
+    expect(after.kind).toBe("refused");
+    expect(personalThresholdMm(after)).toBeNull();
+  });
+
+  it("pins the refusal sentence verbatim to docs/calibration-refusal.txt", () => {
+    expect(CALIBRATION_REFUSED_SENTENCE).toBe(
+      "Calibration was refused: while learning your baseline, the widest eye openings disagreed with the middle ones by more than the instrument allows, which usually means blinks or a squint contaminated the learning period. Numbers that depend on the blink line are withheld rather than guessed. Restart the camera and keep your eyes comfortably open for the first thirty seconds.",
+    );
   });
 
   it("leaves a healthy birth untouched, the ceiling never binding", () => {

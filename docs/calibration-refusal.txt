@@ -98,3 +98,11 @@ THE PREDICTIONS, COMMITTED BEFORE ANYTHING IS SCORED.
 
 Whatever the grep shows is appended below as a dated section, and
 this prediction is not edited.
+
+PREDICTION 1 IS CONFIRMED, 26 August 2026. The owner ran the grep
+over the eight measured remux exports on the M5 Max: every line
+reads calibration_ceiling_bound false. No Eyeblink8 clip is
+ceiling-bound, the criterion rewrites nothing on the corpus, and by
+this document's own rules the code increment may begin. Prediction 2
+remains open until the post-code corpus re-run reproduces the
+published table digit for digit, before that increment merges.

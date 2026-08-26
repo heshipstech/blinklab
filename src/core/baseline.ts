@@ -20,17 +20,37 @@ import {
 // under the measurement is not a ruler. The full evidence and the
 // corpus predictions are in docs/baseline-freeze.txt.
 //
-// Fix #126's ceiling survives with exactly one job left: bounding
-// the BIRTH estimate, because the baseline is a p90 and a p90 is
-// what a surprised learning window inflates. The factor is the
-// validation plan's own pre-registered implausibility line.
+// Fix #126's ceiling survives with exactly one job left, and since
+// the refusal (docs/calibration-refusal.txt) that job is REFUSING
+// the birth rather than bounding it: a p90 is what a surprised
+// learning window inflates, and a window the ceiling binds used to
+// birth a clipped ruler that was still 1.35 times one session's
+// resting eye — a guess wearing a number's clothes. Bound windows
+// now birth nothing; every ready ruler is a raw, unclipped p90. The
+// factor is the validation plan's own pre-registered implausibility
+// line.
 export type BaselineState =
   | { kind: "learning"; startedAtMs: number; samples: number[] }
   // The ruler travels with its birth certificate. One value, one
   // account: `window.baselineMm` and `baselineMm` are the same number
   // by construction, and a test holds them together, so the export
   // cannot describe a birth the page did not use.
-  | { kind: "ready"; baselineMm: number; window: CalibrationWindow };
+  | { kind: "ready"; baselineMm: number; window: CalibrationWindow }
+  // The window's top and middle disagreed by more than the ceiling
+  // allows, so no ruler exists: numbers that depend on the blink
+  // line are withheld rather than guessed. The certificate still
+  // travels, because a refused session is a result, not an accident,
+  // and an analysis must be able to say why each refusal happened.
+  | { kind: "refused"; window: CalibrationWindow };
+
+/**
+ * What the person is told, verbatim from docs/calibration-refusal.txt
+ * and pinned there by test. The only exit it offers is a restart:
+ * silently re-learning mid-session would be the P3 failure again, a
+ * ruler that moves while the measurement runs.
+ */
+export const CALIBRATION_REFUSED_SENTENCE =
+  "Calibration was refused: while learning your baseline, the widest eye openings disagreed with the middle ones by more than the instrument allows, which usually means blinks or a squint contaminated the learning period. Numbers that depend on the blink line are withheld rather than guessed. Restart the camera and keep your eyes comfortably open for the first thirty seconds.";
 
 export function startBaseline(nowMs: number): BaselineState {
   return { kind: "learning", startedAtMs: nowMs, samples: [] };
@@ -57,18 +77,22 @@ export function baselineStep(
     ) {
       const window = describeCalibrationWindow(samples);
       if (window !== null) {
-        return { kind: "ready", baselineMm: window.baselineMm, window };
+        return window.ceilingBound
+          ? { kind: "refused", window }
+          : { kind: "ready", baselineMm: window.baselineMm, window };
       }
     }
     return { ...state, samples };
   }
 
-  // Ready means frozen. No sample after birth moves the ruler in
-  // either direction: not a droop (fix #126's non-negotiable) and,
-  // since the round, not a widening either, because in a live
-  // session a genuine widening and the P3 failure are the same
-  // signal. The trade this makes, a ruler born short stays short,
-  // is stated in docs/baseline-freeze.txt rather than hidden.
+  // Ready means frozen, and refused means frozen too. No sample
+  // after birth moves the ruler in either direction: not a droop
+  // (fix #126's non-negotiable) and, since the round, not a widening
+  // either, because in a live session a genuine widening and the P3
+  // failure are the same signal. The trade this makes, a ruler born
+  // short stays short, is stated in docs/baseline-freeze.txt rather
+  // than hidden. A refusal is equally final: a calm eye afterwards
+  // does not un-refuse, the sentence offers a restart instead.
   return state;
 }
 
