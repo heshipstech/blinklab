@@ -141,6 +141,25 @@ both are real — but the CAUSE printed between them is not yet
 established. See docs/eyeblink8-m5max.txt for the command that
 settles it.
 
+THE SUSPENSION IS RESOLVED, 26 August 2026: THE CAUSE WAS THE
+FILES, AND "THE MACHINE" IS REFUTED. The committed preparation tool
+rebuilt the corpus by remux on the second machine, and one clip
+answered the question by the rule stated before the number existed:
+27122013_152435_cam measured found 36, miss 5, false 19 — the row in
+the table at the top of this file, DIGIT FOR DIGIT, on different
+hardware. The 12.4-point precision gap between the two tables above
+was never machines. It was preparations: the second machine's table
+was measured from RE-ENCODED derivatives, while this file's table
+was measured from the committed remux, and re-encoding collapses
+this clip's false alarms from 19 to 3 at every quality from lossless
+to visibly lossy. The second table stays published as what it is — a
+real measurement of the wrong files, and the discovery of a
+preparation sensitivity nobody suspected — but it is NOT an
+Eyeblink8 result and the machine-conditionality read of the pair is
+withdrawn. The full-corpus remux run on the second machine, scoring
+the prediction docs/eyeblink8-m5max.txt committed on 24 August, is
+in progress as this is written; its result will be recorded here.
+
 TWO INSTRUMENT CHANGES IN ONE DAY, EACH MEASURED SEPARATELY
 
 On 20 August 2026 the six-person validation round reported
