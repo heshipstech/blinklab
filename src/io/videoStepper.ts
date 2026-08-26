@@ -320,9 +320,21 @@ export async function stepThroughVideo(
 
     // Prefer the frame's own time; fall back to the schedule, which is
     // correct for constant frame rate video and honest for the rest.
+    //
+    // The fallback counts from the ORIGIN, not from zero. It used to
+    // read `index * step` while the target above read `origin +
+    // (index + 0.5) * step`, so on any clip that does not begin at
+    // zero every imprecise landing was reported earlier than it
+    // happened — by the whole origin. The August audit found this and
+    // correctly called it inert, because the committed preparation
+    // tool normalises every corpus clip's timeline to zero. It stops
+    // being inert the moment a clip that really does start late is
+    // measurable, which is what the origin search made possible, and
+    // the symptom would be silent: a benchmark indexed by frame
+    // number, shifted against its own annotations.
     const mediaTimeSeconds = landing.exact
       ? landing.mediaTimeSeconds
-      : index * step;
+      : origin + index * step;
 
     // The last frame, twice. Near the end of a clip the schedule can
     // aim at a target that is still inside the duration but lands on
