@@ -1,3 +1,23 @@
+**THE DISCRIMINATOR ANSWERED — IT WAS THE FILES, DIGIT FOR DIGIT,
+26 August 2026, issue #316.** The committed preparation tool rebuilt
+the corpus by remux and the M5 Max measured 27122013_152435_cam from
+it: found 36, miss 5, false 19 — the published table's row for this
+clip EXACTLY, on different hardware. By the rule stated before the
+number existed, "it is the machine" is REFUTED: the 12.4-point
+precision gap between the two published tables was re-encoded files
+against remuxed ones, never processors. The "not likely" reasoning
+(a lossless re-encode should decode to identical pixels) is refuted
+by the same row — remux 19 false alarms, every re-encode from crf 0
+to crf 28 gives 2 or 3 — and the MECHANISM of that difference is
+recorded as an open question, not explained away. The first M5 Max
+table (85.0 / 96.4 / 90.4) is re-labelled everywhere it appears: a
+real measurement of wrongly prepared files, the discovery of a
+preparation sensitivity nobody suspected, and NOT an Eyeblink8
+result. The full-corpus remux run is in progress on the M5 Max,
+scoring the ORIGINAL 24 August prediction (identical reproduction,
+per-clip counts and all) on its own pre-registered terms; one clip
+of eight has already reproduced digit for digit.
+
 **THE INERT AUDIT FINDING WENT LIVE, AND IS FIXED, 26 August 2026.**
 The stepper aims at `origin + (index + 0.5) * step` but its fallback
 for an imprecise landing read `index * step`, dropping the origin
@@ -1041,7 +1061,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 25 August 2026. When this file changes, this stamp changes
+Stamped: 26 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
