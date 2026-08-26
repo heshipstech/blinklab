@@ -1,3 +1,22 @@
+**THE PREDICTION IS CONFIRMED, DIGIT FOR DIGIT, 26 August 2026, and
+issue #316 closes.** The full corpus, prepared by the committed
+remux tool, measured on the M5 Max: recall 83.6% (341 of 408),
+precision 84.0% (65 invented), F1 83.8%, every per-clip row, the
+glasses split and every coverage count IDENTICAL to
+docs/eyeblink8-result.txt. The 24 August prediction is confirmed on
+its own pre-registered terms — identical counts confirm the design
+claim outright — across a different processor generation, operating
+system, WebKit binary and fifteen merged commits of instrument
+change. Every intermediate conclusion from the re-encoded files
+("the prediction broke", "it is the machine", the 12.4-point
+"reproducibility bound") is superseded; what survives as findings:
+the 24-26 August code changes are measurement-neutral by A/B, and
+false alarms depend materially on transcoding (19 vs 2-3 on the
+worst clip), so THE PREPARATION IS PART OF THE RESULT — stated in
+the model card and the generated README bullet. The published
+number is now a measured property of the instrument and the
+prepared files, on two machines.
+
 **THE DISCRIMINATOR ANSWERED — IT WAS THE FILES, DIGIT FOR DIGIT,
 26 August 2026, issue #316.** The committed preparation tool rebuilt
 the corpus by remux and the M5 Max measured 27122013_152435_cam from
