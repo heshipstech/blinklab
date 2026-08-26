@@ -159,16 +159,19 @@ export function deliveryMetadataRows(rates: DeliveryRates | null): string[] {
 /**
  * The birth certificate of the session's ruler, in the export.
  *
- * Null when the baseline never became ready: a session whose ruler
- * was never born has no birth to describe, and the per-second
- * baselineMm column already shows that absence, so writing "unknown"
- * rows here would invite a reader to look for a calibration that
- * never happened. When a ruler WAS born, all three rows are written
- * whatever they say — the macbookair failure was precisely a birth
- * whose export said nothing about it.
+ * Null when the learning window never froze: a session with no
+ * certificate has nothing to describe, and the per-second baselineMm
+ * column already shows that absence, so writing "unknown" rows here
+ * would invite a reader to look for a calibration that never
+ * happened. When the window DID freeze — into a ruler or into a
+ * refusal — all four rows are written whatever they say: the
+ * macbookair failure was precisely a birth whose export said nothing
+ * about it, and a refused session is a result an analysis must be
+ * able to count (docs/calibration-refusal.txt).
  */
 export function calibrationMetadataRows(
   window: CalibrationWindow | null,
+  refused: boolean,
 ): string[] {
   if (window === null) {
     return [];
@@ -177,6 +180,7 @@ export function calibrationMetadataRows(
     line("calibration_samples", window.sampleCount),
     line("calibration_spread_ratio", window.spreadRatio.toFixed(3)),
     line("calibration_ceiling_bound", window.ceilingBound ? "true" : "false"),
+    line("calibration_refused", refused ? "true" : "false"),
   ];
 }
 

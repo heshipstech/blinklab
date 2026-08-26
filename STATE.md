@@ -1,3 +1,32 @@
+**THE REFUSAL IS CODE, 26 August 2026, and prediction 2 gates its
+merge.** Prediction 1 came back exactly as committed: the owner's
+grep over the eight measured remux exports read
+calibration_ceiling_bound false on every line, so the criterion
+rewrites nothing and the increment proceeded. baseline.ts now
+freezes a ceiling-bound learning window into a third state,
+`refused`, instead of birthing a clipped ruler: no personal
+threshold exists, the blink reducer is fed nothing (the generic
+fallback would otherwise keep counting against a line the
+instrument just disowned), blink count, rate, durations, PERCLOS,
+long closures and the alertness score all read "withheld,
+calibration was refused", while the aperture trace, face presence,
+the rates and gaze stay live. The refusal sentence is a core
+constant pinned verbatim to docs/calibration-refusal.txt by test;
+the export writes the full birth certificate plus a new
+calibration_refused row, true or false, out loud either way. The
+macbookair-shaped synthetic window (spread 1.378) refuses in test,
+the healthy fixture-shaped window still rides to ready, refusal is
+frozen (a calm eye afterwards does not un-refuse — the sentence
+offers a restart instead), and mutations in both directions plus an
+inverted export row each went red before being restored. The
+clipping-era tests are rewritten to the new contract, which is the
+document's own sentence: today it clips, from this increment it
+refuses. What remains before merge is prediction 2, owed by the
+standing rule that anything touching detector behaviour gets a
+corpus run first: the full remux corpus on the M5 Max must
+reproduce the published table digit for digit. No clip is
+ceiling-bound, so the refusal must change nothing there.
+
 **THE CALIBRATION REFUSAL IS PRE-DECIDED, 26 August 2026, before
 any code exists.** docs/calibration-refusal.txt commits the last rung
 of the calibration track in writing: the refusal fires on ceilingBound
@@ -1535,7 +1564,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 737 unit tests, 20 end to end tests all run in Chromium
+Test count: 741 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 206 Python tests of which
 2 skip
 

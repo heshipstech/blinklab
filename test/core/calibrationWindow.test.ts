@@ -58,11 +58,11 @@ describe("describing the window a baseline is born from", () => {
   it("reproduces the macbookair birth, the failure this exists for", () => {
     // The dry run's recorded shape: a window whose median read 7.51 mm
     // while a handful of frames near the start read up to 10.35, and
-    // whose p90 followed the outliers. The ceiling clips the birth to
-    // 7.51 * 1.25 = 9.3875 — still 1.35 times that session's resting
-    // median of 6.93, which is why clipping is a guess wearing a
-    // number's clothes and why refusal is the NEXT increment. This one
-    // only makes the clip visible.
+    // whose p90 followed the outliers. The clipping era birthed this
+    // window at 7.51 * 1.25 = 9.3875 — still 1.35 times that
+    // session's resting median of 6.93, a guess wearing a number's
+    // clothes — which is why baseline.ts now REFUSES it. The
+    // baselineMm here is the description of that never-born ruler.
     const samples = [
       ...Array.from({ length: 89 }, () => 7.51),
       ...Array.from({ length: 11 }, () => 10.35),
@@ -152,19 +152,46 @@ describe("describing the window a baseline is born from", () => {
 });
 
 describe("the birth certificate in the export", () => {
-  it("writes all three rows, whatever they say", () => {
-    const rows = calibrationMetadataRows({
-      sampleCount: 301,
-      medianMm: 7.51,
-      p90Mm: 10.35,
-      spreadRatio: 1.3782,
-      ceilingBound: true,
-      baselineMm: 9.3875,
-    });
+  it("writes all four rows for a refused session, whatever they say", () => {
+    // A refused session is a result, not an accident: the export
+    // carries the full certificate plus the refusal itself, so an
+    // analysis can count refusals and say why each one happened.
+    const rows = calibrationMetadataRows(
+      {
+        sampleCount: 301,
+        medianMm: 7.51,
+        p90Mm: 10.35,
+        spreadRatio: 1.3782,
+        ceilingBound: true,
+        baselineMm: 9.3875,
+      },
+      true,
+    );
     expect(rows).toEqual([
       "# calibration_samples: 301",
       "# calibration_spread_ratio: 1.378",
       "# calibration_ceiling_bound: true",
+      "# calibration_refused: true",
+    ]);
+  });
+
+  it("a ready session says refused false out loud, not by omission", () => {
+    const rows = calibrationMetadataRows(
+      {
+        sampleCount: 301,
+        medianMm: 7,
+        p90Mm: 7.9,
+        spreadRatio: 1.1286,
+        ceilingBound: false,
+        baselineMm: 7.9,
+      },
+      false,
+    );
+    expect(rows).toEqual([
+      "# calibration_samples: 301",
+      "# calibration_spread_ratio: 1.129",
+      "# calibration_ceiling_bound: false",
+      "# calibration_refused: false",
     ]);
   });
 
@@ -173,6 +200,6 @@ describe("the birth certificate in the export", () => {
     // per-second baselineMm column already shows the absence. Writing
     // unknown rows would invite a reader to look for a birth that
     // never happened.
-    expect(calibrationMetadataRows(null)).toEqual([]);
+    expect(calibrationMetadataRows(null, false)).toEqual([]);
   });
 });

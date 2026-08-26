@@ -26,6 +26,7 @@ import {
 } from "./core/constants";
 import { apertureMm, aperturePx, irisWidthPx } from "./core/aperture";
 import {
+  CALIBRATION_REFUSED_SENTENCE,
   baselineStep,
   learningSecondsLeft,
   personalThresholdMm,
@@ -1971,9 +1972,13 @@ function exportSession(): void {
     ),
     ...deviceMetadataRows(deviceInfo),
     ...calibrationMetadataRows(
-      baselineState !== null && baselineState.kind === "ready"
+      // The certificate travels with a refusal exactly as with a
+      // birth: both are frozen windows, and the refused export is
+      // the one an analysis most needs to explain.
+      baselineState !== null && baselineState.kind !== "learning"
         ? baselineState.window
         : null,
+      baselineState !== null && baselineState.kind === "refused",
     ),
     ...deliveryMetadataRows(
       frameSource === "camera"
@@ -2711,11 +2716,19 @@ function processFrame(
       );
       const personalMm = personalThresholdMm(baselineState);
       const secondsLeft = learningSecondsLeft(baselineState, nowMs);
+      // The refusal: no ruler exists, and every number that depends
+      // on the blink line is withheld rather than guessed. What
+      // stays live below never consults the ruler: the aperture
+      // trace, face presence, the rates, and gaze. The account is
+      // docs/calibration-refusal.txt.
+      const calibrationRefused = baselineState.kind === "refused";
       writeReadout(
         baselineLabel,
-        baselineState.kind === "ready" && personalMm !== null
-          ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
-          : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
+        calibrationRefused
+          ? CALIBRATION_REFUSED_SENTENCE
+          : baselineState.kind === "ready" && personalMm !== null
+            ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
+            : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
       );
 
       const blinkCountBefore = blinkState.blinkCount;
@@ -2728,7 +2741,11 @@ function processFrame(
       blinkState = blinkStep(
         blinkState,
         nowMs,
-        blinkMeasurable ? stabilityMm : null,
+        // A refused session feeds the blink reducer nothing: the
+        // generic fallback threshold below would otherwise keep
+        // counting blinks against a line the instrument just said it
+        // cannot vouch for.
+        blinkMeasurable && !calibrationRefused ? stabilityMm : null,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       rateState ??= startRate(nowMs);
@@ -2794,7 +2811,9 @@ function processFrame(
           }),
         );
       }
-      if (!blinkMeasurable) {
+      if (calibrationRefused) {
+        writeReadout(blinkLabel, "Blinks: withheld, calibration was refused");
+      } else if (!blinkMeasurable) {
         writeReadout(blinkLabel, fpsGateMessage(fps));
       } else {
         const ratePerMin = gatedBlinkRatePerMin(fps, rateState, nowMs);
@@ -2854,7 +2873,14 @@ function processFrame(
         alertBanner.textContent = `Alert: long eye closure (alerts: ${String(alertState.firedCount)}, suppressed: ${String(alertState.suppressedCount)})`;
       }
       alertBanner.hidden = !alertVisible(alertState, nowMs);
-      if (frozenShutBaselineMm === null) {
+      if (calibrationRefused) {
+        // Not "waiting": in a refused session the baseline is never
+        // coming, and a label that promises one is a quiet lie.
+        writeReadout(
+          longClosureLabel,
+          "Long closures: withheld, calibration was refused",
+        );
+      } else if (frozenShutBaselineMm === null) {
         // An asserted zero built on frames the detector never saw
         // would break the null-never-zero rule: say why instead.
         writeReadout(
@@ -2896,9 +2922,11 @@ function processFrame(
       const perclos = perclosValue(perclosState, nowMs);
       writeReadout(
         perclosLabel,
-        perclos === null
-          ? "PERCLOS (eyes closed share, last 60 s): measuring..."
-          : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`,
+        calibrationRefused
+          ? "PERCLOS (eyes closed share, last 60 s): withheld, calibration was refused"
+          : perclos === null
+            ? "PERCLOS (eyes closed share, last 60 s): measuring..."
+            : `PERCLOS (eyes closed share, last 60 s): ${(perclos * 100).toFixed(1)}%`,
       );
 
       // One typed row per second. The assembler's identity shape is
@@ -2938,7 +2966,11 @@ function processFrame(
             baselineMm: readyBaselineMm,
             baselineOverResting: rulerFit?.ratio ?? null,
             shutBaselineMm: frozenShutBaselineMm,
-            blinkRatePerMin: gatedBlinkRatePerMin(fps, rateState, nowMs),
+            // Withheld under a refusal, and null rather than the
+            // zero a never-fed reducer would report: null-never-zero.
+            blinkRatePerMin: calibrationRefused
+              ? null
+              : gatedBlinkRatePerMin(fps, rateState, nowMs),
             lastBlinkDurationMs: blinkState.lastBlinkDurationMs,
             lastBlinkAmplitudeMm: lastShape?.amplitudeMm ?? null,
             lastBlinkPeakVelocityMmPerS:
@@ -2984,11 +3016,13 @@ function processFrame(
         // that while letting the number actually be the headline.
         writeReadout(
           scoreLabel,
-          breakdown !== null
-            ? `Alertness score: ${String(breakdown.score)} / 100`
-            : noFaceNow === false
-              ? "Alertness score: no face in frame"
-              : "Alertness score: measuring...",
+          calibrationRefused
+            ? "Alertness score: withheld, calibration was refused"
+            : breakdown !== null
+              ? `Alertness score: ${String(breakdown.score)} / 100`
+              : noFaceNow === false
+                ? "Alertness score: no face in frame"
+                : "Alertness score: measuring...",
         );
 
         // The panel speaks only when a score exists: with no score
