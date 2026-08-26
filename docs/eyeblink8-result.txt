@@ -119,6 +119,28 @@ Promoting the M5 Max table means re-running that analysis first,
 not preferring the better-looking column. The better-looking column
 is exactly the one to distrust.
 
+A CORRECTION TO BOTH CORRECTIONS ABOVE, 26 August 2026. The 24
+August note says the conversion between the public download and this
+runner "was committed nowhere" and that its settings "are lost". Both
+statements are false. analysis/tools/prepare_eyeblink8.py has carried
+that step since #158, with its own dependency group in
+analysis/pyproject.toml, and it REMUXES rather than re-encodes: the
+H.264 bitstream copied byte for byte, the timeline normalised to
+zero, the decoded frame count verified on both sides. Nobody looked
+in analysis/tools. Issue #309 was filed on the false premise and
+docs/eyeblink8-preparation.txt was written to it.
+
+The consequence for the section above is specific and it is not
+cosmetic. The second machine measured RE-ENCODED files; the published
+run measured REMUXED ones. The transcode sweep offered as clearing
+the files swept four re-encodes and never the remux, so "the cause is
+the machine" rests on an incomplete elimination and is SUSPENDED
+until the committed tool's own output is measured on the second
+machine. The pair of tables above is unaffected — both were measured,
+both are real — but the CAUSE printed between them is not yet
+established. See docs/eyeblink8-m5max.txt for the command that
+settles it.
+
 TWO INSTRUMENT CHANGES IN ONE DAY, EACH MEASURED SEPARATELY
 
 On 20 August 2026 the six-person validation round reported

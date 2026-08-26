@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 25 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 26 August 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -26,7 +26,7 @@ measurements can be checked.
 | --------------- | ------ | ------------------------------------------- | --------------------------------------------------- |
 | Blink detection | events | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **84.0%**, F1 **83.8%** |
 
-**These numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. Recall is stable across the two machines (1.4 points); precision is not (12.4 points), because a false alarm is near-line flutter and whether flutter crosses the line turns on micrometres of aperture that differ between processors. Read any precision figure on this page as belonging to a machine, not to the instrument. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+**These numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. Recall is stable across the two machines (1.4 points); precision is not (12.4 points). Read any precision figure on this page as belonging to a particular run, not to the instrument. **What causes the gap is not yet established, corrected 26 August 2026:** the two runs also differ in how their clips were prepared — the published run remuxed with the committed tool, the second re-encoded — and the elimination that pointed at the machine never measured the remux. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 | Eyelid aperture | millimetres | iris as a physical ruler | not validated against a physical measurement |
 | Blink duration, amplitude, closing velocity | ms, mm, mm/s | nothing external | unvalidated |
 | Gaze direction | screen region | nine point calibration, one person | reliable near the centre, degrades at the corners |

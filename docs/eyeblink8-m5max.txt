@@ -281,3 +281,50 @@ instrument measured ON THAT MACHINE. The same is true of
 85.0 / 96.4 / 90.4 on this one. Neither is "the" result until the
 project decides what a machine-conditional benchmark publishes, and
 that decision is the owner's, not this document's.
+
+THE CONCLUSION ABOVE IS SUSPENDED, 26 August 2026. "It is the
+machine" was reached by eliminating the code, the files, the model
+and the runtime. The elimination of the FILES is now known to be
+incomplete, and the reason is an error of this project's own making.
+
+The corpus preparation was never lost. It has been committed since
+#158 as analysis/tools/prepare_eyeblink8.py, and it REMUXES — the
+H.264 bitstream copied byte for byte, "-c:v copy" — while normalising
+the timeline to zero with "-avoid_negative_ts make_zero". The
+published run's files came from that tool. Every file measured on
+this machine came instead from a RE-ENCODE prescribed by a document
+written on the false premise that the settings were gone.
+
+So the four-point crf sweep, which was offered as clearing the files,
+swept the wrong family. All four points were re-encodes carrying the
+1.700 second start offset that the committed tool exists to remove.
+The conversion the published run actually used was never measured
+here. A sweep inside one family cannot speak for the family next
+door — the same mistake, in miniature, as testing crf 0 against crf
+10 and calling transcoding exonerated.
+
+WHAT IS AND IS NOT LIKELY. A lossless re-encode reproduces its input
+exactly, so the decoded pixels of the crf 0 point and of a remux
+should be identical, and on that reasoning the machine conclusion
+would survive. That is REASONING, not measurement, and this document
+has already been wrong once this week about which of two plausible
+stories was true.
+
+THE MEASUREMENT THAT SETTLES IT, one command and about ninety
+seconds, using the committed tool rather than a hand-written ffmpeg
+line:
+
+    cd analysis
+    uv sync --group corpus
+    uv run python tools/prepare_eyeblink8.py \
+        "$DATASETS/eyeblink8/eyeblink8" "$DATASETS/eyeblink8-mp4"
+
+then measuring 27122013_152435_cam from that folder. Nineteen false
+alarms would mean the files were the variable all along and the
+machine is innocent. Three would mean the remux and the re-encode
+agree, the files are genuinely cleared, and the machine conclusion
+stands on measurement instead of on an argument.
+
+Until that number exists, this document claims a suspended
+conclusion, and 83.6 / 84.0 / 83.8 remains the standing result for
+the reason it always did.

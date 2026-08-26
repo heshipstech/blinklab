@@ -1,3 +1,36 @@
+**THE PREPARATION WAS NEVER LOST, AND THE MACHINE CONCLUSION IS
+SUSPENDED, 26 August 2026.** analysis/tools/prepare_eyeblink8.py has
+carried the corpus preparation since #158, with its own dependency
+group in analysis/pyproject.toml. Nobody looked in analysis/tools.
+Issue #309 was filed on the false premise that the step was
+uncommitted and its settings lost; docs/eyeblink8-preparation.txt was
+written to that premise, and three merged increments inherit it. THE
+COMMITTED TOOL REMUXES — "-c:v copy", the H.264 bitstream byte for
+byte, decoded frame counts verified both sides — precisely because
+the ground truth is indexed BY FRAME NUMBER and a re-encode can
+silently shift every annotation. It also normalises the timeline with
+"-avoid_negative_ts make_zero", and its comment describes the 25
+August failure word for word: an AVI remux can leave a start offset,
+"Safari never answers them at all", "both report `seekable` as
+starting at zero regardless, so the code cannot even detect the
+situation". The re-encode this project prescribed reintroduced the
+exact hazard the tool exists to remove, and the instrument was then
+changed to survive it. CONSEQUENCE: the four-point crf sweep that
+cleared the FILES swept only re-encodes, never the remux the
+published run actually used, so "it is the machine" rests on an
+incomplete elimination and is SUSPENDED. A lossless re-encode should
+decode to identical pixels, so the conclusion will probably survive —
+but that is reasoning, and this week has already been wrong once
+about which plausible story was true. The settling measurement is one
+command (prepare_eyeblink8.py, then measure 27122013_152435_cam):
+nineteen false alarms means the files were the variable all along,
+three means the machine conclusion stands on measurement. Both
+published tables are unaffected; only the CAUSE between them is
+withdrawn. src/core/frameSearch.ts stands on its own merits — the
+August audit had already flagged the stepper's inexact-landing
+fallback as inconsistent for any clip with a non-zero origin — but it
+was not needed to measure this corpus.
+
 **BOTH TABLES ARE PUBLISHED NOW, EACH NAMED WITH ITS MACHINE, 25
 August 2026.** The owner's call, after the cause was established.
 docs/eyeblink8-result.txt carries the pair, the elimination that
