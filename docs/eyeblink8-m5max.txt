@@ -328,3 +328,51 @@ stands on measurement instead of on an argument.
 Until that number exists, this document claims a suspended
 conclusion, and 83.6 / 84.0 / 83.8 remains the standing result for
 the reason it always did.
+
+THE DISCRIMINATOR ANSWERED, 26 August 2026: IT WAS THE FILES. The
+committed preparation tool rebuilt the corpus by remux, and this
+machine measured 27122013_152435_cam from that folder:
+
+  found 36, miss 5, false 19  —  recall 87.8%, precision 65.5%,
+  coverage 5134
+
+That is the published run's row for this clip DIGIT FOR DIGIT. The
+suspended conclusion is therefore REFUTED, by the rule stated before
+the number existed: nineteen false alarms means the files were the
+variable all along and the machine is innocent.
+
+Two things fall out of one row, and both were wrong in this
+document's earlier sections:
+
+  1. "IT IS THE MACHINE" WAS FALSE. The 12.4-point precision gap
+     between the published table and this machine's first table was
+     never about processors. It was re-encoded files against remuxed
+     ones. The same machine, handed the same preparation the
+     published run used, reproduces the published row exactly.
+
+  2. THE "NOT LIKELY" REASONING WAS FALSE TOO. The section above
+     argued a lossless re-encode should decode to identical pixels,
+     so the machine conclusion would probably survive. Measured: a
+     remux gives 19 false alarms where every re-encode from crf 0 to
+     crf 28 gives 2 or 3. Two preparations of one recording differ by
+     SIXTEEN false alarms on this clip, and "lossless" did not
+     protect the number. The mechanism is NOT established here —
+     candidates include what the encoder does to the original
+     stream's own compression noise, and container timing — and it
+     is recorded as an open question, not an explanation.
+
+WHAT THE FIRST M5 MAX TABLE NOW IS. The 85.0 / 96.4 / 90.4 table
+above was measured from re-encoded derivatives, not from Eyeblink8
+as this project prepares it. It stays published as what it is — a
+real measurement of the wrong files, and the measurement that
+exposed a preparation sensitivity nobody suspected — but it is not
+an Eyeblink8 result and must not be compared against the published
+table as one.
+
+WHAT REMAINS TO SCORE. The original prediction at the top of this
+document — the published table reproduces identically, recall 83.6%,
+precision 84.0%, per-clip counts identical — was written for exactly
+the run now possible: this machine, the committed preparation. One
+clip of eight has reproduced digit for digit. The full corpus run
+from the remux folder scores that prediction properly, and its
+outcome classes stand as written on 24 August.
