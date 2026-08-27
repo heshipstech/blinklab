@@ -19,6 +19,12 @@ import argparse
 import sys
 from pathlib import Path
 
+from blinklab.round2 import (
+    RefusedCalibration,
+    Round2Rules,
+    refused_calibration,
+    round2_rules,
+)
 from blinklab.ruler_fit import RulerFitCrossCheck, ruler_fit_cross_check
 from blinklab.validation import (
     PairPaths,
@@ -365,17 +371,89 @@ def page_account_lines(
     ]
 
 
-def report(directory: Path) -> tuple[list[str], int]:
+def calibration_refused_lines(
+    refused: list[RefusedCalibration],
+) -> list[str]:
+    """Rule 1: refusals counted first, each with its certificate."""
+    if not refused:
+        return []
+    lines = ["CALIBRATION REFUSED", ""]
+    for refusal in refused:
+        lines.append(
+            f"{refusal.label}  samples {dash(refusal.samples)}, "
+            f"spread ratio {dash(refusal.spread_ratio, 3)}. The "
+            f"instrument withheld every ruler-dependent number; this "
+            f"session contributes no detector columns."
+        )
+        if refusal.violates_refusal_contract:
+            lines.append(
+                f"{refusal.label}  INSTRUMENT DEFECT: this refusal is "
+                f"not ceiling-bound, and ceiling-bound is the only "
+                f"signal a refusal can fire on. The committed "
+                f"prediction in docs/validation-plan-round2.md is "
+                f"broken and the round's analysis stops here until "
+                f"this is explained."
+            )
+    return [*lines, ""]
+
+
+def round2_rule_lines(rules: list[Round2Rules]) -> list[str]:
+    """Rules 2-5, answered per session, mechanically."""
+    lines = [
+        "ROUND II RULES (docs/validation-plan-round2.md). Round II's "
+        "failure criteria are registered with its protocol, not here; "
+        "these are the mechanical rule outcomes:",
+        "",
+    ]
+    for rule in rules:
+        parts = [
+            f"evidence rate {dash(rule.evidence_fps, 1)}"
+            + (
+                ""
+                if rule.evidence_source is None
+                else f" ({rule.evidence_source})"
+            )
+        ]
+        if rule.evidence_unsound:
+            parts.append("BELOW THE 25 FPS FLOOR, not detector evidence")
+        parts.append(
+            "FREEZE DEFECT: baseline moved inside the marked window"
+            if rule.freeze_defect
+            else "baseline constant across the marked window"
+        )
+        if rule.short_ruler:
+            parts.append("SHORT RULER: baseline below the resting median")
+        if rule.zero_width_window:
+            parts.append("ZERO-WIDTH WINDOW, refused to score")
+        lines.append(f"{rule.label}  " + "; ".join(parts) + ".")
+    if not rules:
+        lines.append("no scoreable sessions")
+    return lines
+
+
+def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     """The whole report, and the number of participants it refused."""
+    round2 = rules == "round2"
     pairs = find_pairs(directory)
     rows: list[ParticipantRow] = []
     accounts: list[tuple[str, RulerFitCrossCheck]] = []
     refusals: list[tuple[PairPaths, str]] = []
+    calibration_refusals: list[RefusedCalibration] = []
+    rule_outcomes: list[Round2Rules] = []
     for paths in pairs:
         try:
             pair = load_pair(paths)
+            if round2:
+                refusal = refused_calibration(pair)
+                if refusal is not None:
+                    # Rule 1: a refusal is a result, counted first,
+                    # and it contributes no detector columns.
+                    calibration_refusals.append(refusal)
+                    continue
             row = row_for(pair)
             rows.append(row)
+            if round2:
+                rule_outcomes.append(round2_rules(pair, row))
             accounts.append(
                 (row.label, ruler_fit_cross_check(pair.session.frame))
             )
@@ -390,6 +468,7 @@ def report(directory: Path) -> tuple[list[str], int]:
         f"Validation round: {len(pairs)} {noun} in {directory}",
         f"Ground truth between the two marks: {EXPECTED_BLINKS} blinks.",
         "",
+        *calibration_refused_lines(calibration_refusals),
         "CHECKS",
         "",
         checks_table(rows) if rows else "no readable sessions",
@@ -413,7 +492,11 @@ def report(directory: Path) -> tuple[list[str], int]:
             for paths, reason in refusals
         ]
         lines += [""]
-    lines += verdict_summary(rows)
+    # Round I's three criteria belong to round I's plan; round II
+    # prints its own rules section instead. Both keep the page account.
+    lines += (
+        round2_rule_lines(rule_outcomes) if round2 else verdict_summary(rows)
+    )
     lines += page_account_lines(accounts)
     return lines, len(refusals)
 
@@ -427,9 +510,20 @@ def main() -> int:
         type=Path,
         help="folder holding the exported session and blink CSVs",
     )
+    parser.add_argument(
+        "--rules",
+        choices=("round1", "round2"),
+        default="round1",
+        help=(
+            "which plan's rules read the files. The default is round I "
+            "and is FROZEN: the published tables must stay reproducible. "
+            "round2 applies docs/validation-plan-round2.md and is never "
+            "inferred from the files."
+        ),
+    )
     arguments = parser.parse_args()
     try:
-        lines, refused = report(arguments.directory)
+        lines, refused = report(arguments.directory, rules=arguments.rules)
     except ValidationError as error:
         # A folder-level refusal stops the run. Reporting on five people
         # while a sixth's file sits unread is not acceptable.
