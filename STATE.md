@@ -1,3 +1,17 @@
+**THE ROUND'S RAW FILES ARE RECOVERED AND THE PUBLISHED TABLE
+RE-DERIVES, 27 August 2026.** Four of the six validation-round
+exports (P2, P4, P5, P6) plus the dry run's macbookair session — the
+learning-window failure the calibration refusal was built from —
+were recovered from the volunteers' original channels and devices.
+Verification was the published claim itself: validation_report.py on
+the recovered files reproduces those four rows of both published
+tables digit for digit, and the macbookair session's whole-session
+median re-computes to the published 6.93 mm. P1 and P3 are still
+missing, P3 being the round's most important failure (the 34.6
+percent drift), and that search stays open. The files stay outside
+the repository, as the round document requires; the dated account is
+in docs/validation-round.txt.
+
 **THE SECOND DELIVERED-RATE READING SCORES A ROW AND REOPENS THE
 TWO-PHONE PUZZLE, 27 August 2026.** The owner read the delivery line
 on iphone17promax: the camera delivers 30 frames per second and the
