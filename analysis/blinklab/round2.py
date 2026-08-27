@@ -20,9 +20,14 @@ Two named constants, neither of them tuned:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
-from blinklab.validation import SessionPair, session_markers_ms
+from blinklab.validation import (
+    SessionPair,
+    ValidationError,
+    session_markers_ms,
+)
 from blinklab.validation_checks import ParticipantRow
 
 ROUND2_EVIDENCE_FLOOR_FPS = 25.0
@@ -59,9 +64,23 @@ class RefusedCalibration:
 
 
 def _flag(pair: SessionPair, key: str) -> bool | None:
+    """A calibration flag, read strictly: true, false, or absent.
+
+    The exporter writes only lowercase true and false for these keys,
+    so any other value — probe A's capitalized True included — is a
+    hand-edited or damaged file, and reading it as false would score
+    a refused session as an ordinary participant with nothing said.
+    Refusing beats guessing.
+    """
     raw = pair.session.metadata.get(key)
-    if raw is None or raw == "unknown":
+    if raw is None:
         return None
+    if raw not in ("true", "false"):
+        raise ValidationError(
+            f"the metadata says {key}: {raw!r}, and the exporter "
+            f"writes only true or false for it, so this file has "
+            f"been edited or damaged and cannot be scored"
+        )
     return raw == "true"
 
 
@@ -70,9 +89,13 @@ def _number(pair: SessionPair, key: str) -> float | None:
     if raw is None or raw == "unknown":
         return None
     try:
-        return float(raw)
+        value = float(raw)
     except ValueError:
         return None
+    # Probe B: NaN parses as a float and compares below no floor, so
+    # a damaged sampled_fps sailed through as sound evidence. A
+    # non-finite value is not a measurement.
+    return value if math.isfinite(value) else None
 
 
 def refused_calibration(pair: SessionPair) -> RefusedCalibration | None:
@@ -106,8 +129,10 @@ class Round2Rules:
     evidence_source: str | None
     # Rule 3: the freeze makes the baseline a constant, so this is
     # not a percentage, it is a count of distinct values between the
-    # marks. More than one is the freeze broken in the field.
-    freeze_defect: bool
+    # marks. More than one is the freeze broken in the field. None
+    # means there is no marked window to judge — probe C caught this
+    # tool asserting constancy over a window that did not exist.
+    freeze_defect: bool | None
     # Rule 4.
     short_ruler: bool
     # Rule 5: only zero width refuses; the width itself is already a
@@ -143,7 +168,9 @@ def round2_rules(pair: SessionPair, row: ParticipantRow) -> Round2Rules:
         evidence = None if window_fps.empty else float(window_fps.median())
         source = None if evidence is None else FALLBACK_SOURCE
 
-    distinct = windowed["baselineMm"].dropna().nunique()
+    freeze: bool | None = None
+    if len(markers) >= 2:
+        freeze = windowed["baselineMm"].dropna().nunique() > 1
 
     over = row.baseline.over_resting
     window = row.window
@@ -151,7 +178,7 @@ def round2_rules(pair: SessionPair, row: ParticipantRow) -> Round2Rules:
         label=row.label,
         evidence_fps=evidence,
         evidence_source=source,
-        freeze_defect=distinct > 1,
+        freeze_defect=freeze,
         short_ruler=over is not None and over < ROUND2_SHORT_RULER_FLOOR,
         zero_width_window=window is not None and window.width_s == 0,
     )

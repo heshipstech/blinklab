@@ -416,11 +416,17 @@ def round2_rule_lines(rules: list[Round2Rules]) -> list[str]:
         ]
         if rule.evidence_unsound:
             parts.append("BELOW THE 25 FPS FLOOR, not detector evidence")
-        parts.append(
-            "FREEZE DEFECT: baseline moved inside the marked window"
-            if rule.freeze_defect
-            else "baseline constant across the marked window"
-        )
+        # Probe C: with no marked window this line used to assert
+        # "baseline constant across the marked window" anyway. None
+        # now means there was nothing to judge, and the line says so.
+        if rule.freeze_defect is None:
+            parts.append("no marked window to judge the freeze")
+        elif rule.freeze_defect:
+            parts.append(
+                "FREEZE DEFECT: baseline moved inside the marked window"
+            )
+        else:
+            parts.append("baseline constant across the marked window")
         if rule.short_ruler:
             parts.append("SHORT RULER: baseline below the resting median")
         if rule.zero_width_window:

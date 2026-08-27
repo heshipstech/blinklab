@@ -290,3 +290,84 @@ class TestTheDefaultIsFrozen:
         # The refused session contributes no detector columns: with
         # the only session refused, the checks table has nobody left.
         assert "no readable sessions" in text
+
+
+class TestWhatTheAdversarialPassFound:
+    """docs/validation-round2-adversarial.txt, probes A, B and C."""
+
+    def test_an_unrecognized_refused_flag_is_a_loud_refusal(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe A: `calibration_refused: True`, capital T. The
+        # exporter writes only lowercase, so this file was edited or
+        # damaged, and scoring it as an ordinary participant is the
+        # silent wrong result the probe predicted. Refusing beats
+        # guessing.
+        import pytest
+
+        from blinklab.validation import ValidationError
+
+        pair = loaded(
+            write_pair(
+                tmp_path,
+                [
+                    "# calibration_ceiling_bound: true",
+                    "# calibration_refused: True",
+                ],
+                marked_rows(),
+            )
+        )
+        with pytest.raises(ValidationError, match="calibration_refused"):
+            refused_calibration(pair)
+
+    def test_a_refusal_with_a_damaged_ceiling_flag_is_a_loud_refusal(
+        self, tmp_path: Path
+    ) -> None:
+        # A refused session whose ceiling flag is unreadable is a
+        # damaged file, not an instrument defect: the defect line is
+        # reserved for a file that legibly says refused-but-unbound.
+        import pytest
+
+        from blinklab.validation import ValidationError
+
+        pair = loaded(
+            write_pair(
+                tmp_path,
+                [
+                    "# calibration_ceiling_bound: maybe",
+                    "# calibration_refused: true",
+                ],
+                marked_rows(baseline=""),
+            )
+        )
+        with pytest.raises(ValidationError, match="calibration_ceiling_bound"):
+            refused_calibration(pair)
+
+    def test_a_nan_sampled_rate_falls_back_instead_of_passing(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe B: NaN parses as a float and compares below no floor,
+        # so it sailed through as sound evidence. A non-finite rate
+        # is not a measurement: the per-second column decides, and
+        # the source says so.
+        pair = loaded(
+            write_pair(
+                tmp_path,
+                [*MARKS, "# sampled_fps: NaN"],
+                marked_rows(),
+            )
+        )
+        rules = round2_rules(pair, row_for(pair))
+        assert rules.evidence_fps == 60.0
+        assert rules.evidence_source == "per-second fps over the marked window"
+
+    def test_no_marked_window_is_said_not_asserted_constant(
+        self, tmp_path: Path
+    ) -> None:
+        # Probe C: with no marks the tool printed "baseline constant
+        # across the marked window" for a session that has no marked
+        # window. The freeze verdict is None there, and the report
+        # says so instead of asserting constancy over nothing.
+        pair = loaded(write_pair(tmp_path, [], marked_rows()))
+        rules = round2_rules(pair, row_for(pair))
+        assert rules.freeze_defect is None

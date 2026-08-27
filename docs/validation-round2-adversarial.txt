@@ -75,3 +75,50 @@ rules, each outcome is appended below as a dated section, every
 finding of MISLEADING or worse gets a failing test before its fix,
 and the fixes land in the same increment as this document's
 outcomes commit.
+
+THE OUTCOMES, 27 August 2026, appended after the probes ran
+------------------------------------------------------------
+
+Probe A: CONFIRMED, silent wrong result. The capitalized flag was
+read as not-true and the refused session was scored as an ordinary
+participant, ruler columns and all. FIXED: the flag reader accepts
+only the two strings the exporter writes; any other value raises a
+loud refusal naming the key and the value, the pair lands in the
+REFUSED section, and the exit code is nonzero. The same strictness
+covers calibration_ceiling_bound on a refused session, so a damaged
+ceiling flag is a damaged file, not an INSTRUMENT DEFECT line — that
+line is reserved for a file that legibly says refused-but-unbound.
+
+Probe B: CONFIRMED, silent wrong result. float("NaN") parsed, nan
+compared below no floor, and the rules line printed the word nan as
+sound evidence. FIXED: a non-finite metadata number reads as absent,
+so a damaged sampled_fps falls back to the per-second fps column
+over the marked window, with the fallback named in the output.
+
+Probe C: CONFIRMED, misleading. "baseline constant across the marked
+window" printed for a session with no marks. FIXED: the freeze
+verdict is three-valued now, and a session with no marked window
+prints "no marked window to judge the freeze" instead of asserting
+constancy over nothing.
+
+Probe D: PREDICTION WRONG, and the record keeps it. The reversed
+markers never reached the round II rules: the round I reader refuses
+them one layer down ("numbered in one order and timed in another"),
+exit 1. The defence predicted missing already existed. The
+misleading sentence this probe predicted was real, but only probe
+C's route (no marks at all) could reach it.
+
+Probe E: CONFIRMED CORRECT. The junk spread ratio printed as a dash
+and the refusal was counted with its sample count intact.
+
+Probe F: CONFIRMED CORRECT. Refusal counted first, empty tables
+honest, rules section says "no scoreable sessions", exit 0 — a
+refused calibration is a result, not a reader failure.
+
+Each fix had its test watched failing against the merged rules
+before the fix landed; the four tests live in
+tests/test_round2.py under TestWhatTheAdversarialPassFound. The
+score for the pass: two silent wrong results and one misleading
+sentence found and fixed, one prediction wrong in the good
+direction, two defences proven. The round II rules are now cleared
+for the first real file, whenever the owner schedules the round.
