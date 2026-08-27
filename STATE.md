@@ -1,3 +1,26 @@
+**THE ROUND II RULES SURVIVED THEIR ADVERSARIAL PASS, 27 August
+2026, three findings fixed.** Six probes, each prediction committed
+in its own commit before any probe ran
+(docs/validation-round2-adversarial.txt). Two silent wrong results
+confirmed and fixed: a hand-capitalized calibration_refused flag was
+scored as an ordinary participant (the flag reader now accepts only
+the exporter's two strings and refuses loudly on anything else), and
+a NaN sampled_fps parsed, compared below no floor, and passed as
+sound evidence (non-finite metadata numbers now read as absent and
+fall back to the named per-second column). One misleading sentence
+fixed: the freeze line asserted "constant across the marked window"
+for sessions with no marked window; the verdict is three-valued now
+and says "no marked window to judge the freeze". One prediction
+wrong in the good direction, kept in the record: reversed markers
+never reach the round II rules because the round I reader refuses
+them a layer down. Two defences proven correct as predicted: a junk
+spread ratio prints a dash without losing the refusal, and a folder
+of only refusals exits zero, because a refused calibration is a
+result. Every fix had its test watched failing first
+(TestWhatTheAdversarialPassFound); 224 Python tests. The rules are
+cleared for the first real round II file, whenever the owner
+schedules the round.
+
 **ROUND II'S RULES ARE CODE, 27 August 2026, and the default is
 frozen.** analysis/blinklab/round2.py implements the plan's
 mechanical rules with tests watched failing first: a
@@ -1662,7 +1685,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 741 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 220 Python tests of which
+in CI of which 2 rerun locally in WebKit, 224 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
