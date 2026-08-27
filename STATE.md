@@ -1,3 +1,25 @@
+**ROUND II'S RULES ARE PRE-REGISTERED, 27 August 2026, before any
+session exists.** docs/validation-plan-round2.md commits the six
+rules that will read the next round's files, written in the round I
+plan's own discipline: a refused session is a first-class REFUSED
+row with its birth certificate printed; frame-rate soundness judges
+the EVIDENCE rate (sampled_fps) over the marked window, not
+processing over the session; drift's pass line is zero because the
+freeze makes any movement a defect; a short ruler is flagged at the
+natural 1.0 line, no tuned constant; the window's length prints
+beside its counts and only zero width refuses (a minimum width
+would be a constant chosen against no benchmark); and the round is
+moderated, per round I's own compliance findings. The tool
+constraint is stated as non-negotiable: round I's published tables
+must stay reproducible, so the new rules run only behind explicit
+selection and the default invocation is frozen. Structural
+predictions committed: zero drift everywhere, every refusal
+ceiling-bound, and any unusable ruler that slips both nets is
+published as a hole in the calibration story. Participants and
+scheduling stay the owner's decisions. The implementation owes
+failing-first tests and an adversarial pass on synthetic files
+before the first real file is opened.
+
 **THE ROUND'S RAW FILES ARE RECOVERED AND THE PUBLISHED TABLE
 RE-DERIVES, 27 August 2026.** Four of the six validation-round
 exports (P2, P4, P5, P6) plus the dry run's macbookair session — the
