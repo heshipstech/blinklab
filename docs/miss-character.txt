@@ -1,0 +1,73 @@
+THE MISS CHARACTER QUESTION: ARE THEY THE SAME BLINKS?
+======================================================
+
+Written 27 August 2026, before any overlap is computed. The README's
+miss paragraph ends on an open question: 47 of the 67 missed blinks
+contain a frame the human marked fully closed, "that is a real
+weakness and nobody has explained it yet". Explaining WHY needs a
+frame-level aperture trace around each miss, which the exports do
+not carry and a future instrument increment will have to add. What
+CAN be answered today, from tables already committed, is a prior
+question that shapes that whole investigation: is the instrument
+missing THE SAME blinks run after run, or a shifting population of
+the same size?
+
+THE TABLES, all committed under docs/evidence/, one row per missed
+blink, joined on (clip, blink_id) — the corpus annotation's own
+identity, stable across runs by construction:
+
+    2026-08-09/tables-current-run   50 misses   capfix era, ratchet ruler
+    2026-08-20-frozen               67 misses   frozen ruler
+    2026-08-21-rearm                67 misses   frozen ruler, the
+                                                published run
+
+WHY IDENTITY IS A STRONGER CLAIM THAN COUNT. Every reproduction this
+project has published — including the 26 August digit-for-digit
+confirmation — compares COUNTS: found, missed, false, per clip. Two
+runs can match every count while missing different blinks, and no
+published number would notice. The committed miss tables make the
+identity question decidable for the misses, and it has never been
+asked.
+
+THE PREDICTIONS, committed before anything is joined.
+
+  1. FROZEN vs REARM: the two 67-row tables are IDENTICAL sets, all
+     67 shared. The rearm change (a deterministic clock, #189) was
+     proven measurement-neutral at count level; if it moved even one
+     miss identity while keeping every count, that is a finding the
+     count-level A/B could not see, and it is published as one.
+
+  2. CAPFIX vs REARM: at least 40 of the capfix era's 50 misses (80
+     percent) persist in the rearm 67. The freeze was predicted and
+     measured to LOWER recall — a frozen line late in a clip demands
+     deeper dips — so the rearm set should be mostly the capfix set
+     plus blinks the freeze newly lost, not a reshuffle.
+
+  3. THE PERSISTENT CORE CARRIES THE CLOSED-FRAME CHARACTER: among
+     the misses present in BOTH the capfix and rearm tables, the
+     share containing a fully-closed frame is within a few points of
+     the overall 70.1 percent — the weakness the README names is a
+     stable property of particular blinks, not an artefact of run
+     churn.
+
+WHAT EACH OUTCOME CHANGES.
+
+  - Prediction 1 wrong: the determinism claim gets a dated caveat
+    everywhere it is published (counts reproduce, identities do
+    not), and the miss investigation must treat every run's miss
+    list as a sample rather than a census.
+  - Prediction 2 wrong in the LOW direction (large reshuffle): the
+    README's sentence that freezing "changed how many blinks are
+    missed and not the character of what is missed" is corrected in
+    the open — aggregate shares hid an identity-level reshaping.
+  - Prediction 3 wrong: the closed-frame weakness concentrates in
+    the churn, which would point the frame-level investigation at
+    the ruler's late-clip behaviour rather than at the aperture
+    signal itself.
+
+HOW IT IS SCORED. A committed tool, analysis/tools/miss_overlap.py,
+joins two miss tables on (clip, blink_id) and prints the set sizes,
+the intersection, each difference, and the fully-closed-frame share
+of each group. Its tests are watched failing first, on synthetic
+tables. The outcomes are appended below as a dated section, and
+these predictions are not edited.
