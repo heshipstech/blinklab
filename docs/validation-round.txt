@@ -215,3 +215,24 @@ Written 20 August 2026, the day the sixth file arrived. The analysis
 tool that produced the table was adversarially tested before this
 document was published; that record is
 docs/validation-tool-adversarial.txt.
+
+THE RAW FILES ARE RECOVERED, AND THE TABLE RE-DERIVES, 27 August
+2026. The round's exports lived outside this repository by design,
+and for a while four of them lived nowhere the project could reach.
+The owner recovered them from the volunteers' original channels and
+devices on 26 August: the session and blink exports behind P2, P4,
+P5 and P6. Verification was not a checksum but the published claim
+itself: analysis/tools/validation_report.py, run fresh on the
+recovered files, reproduces those four rows of both tables above
+DIGIT FOR DIGIT — every check column and every condition column.
+One wrinkle worth recording: P5 exists as two exports of the same
+session made about ten seconds apart, and the published row derives
+from the earlier, 174.0-second one; both copies are kept. The same
+recovery also returned the dry run's macbookair session, the
+learning-window failure the calibration refusal was built from; its
+whole-session median re-computes to 6.93 mm, matching the published
+figure. P1 and P3 remain missing — P3 being the round's most
+important failure, the 34.6 percent mid-measurement drift — and the
+search for those two files stays open. The files themselves remain
+outside the repository, exactly as this document's header says they
+must.
