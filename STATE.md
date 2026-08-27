@@ -1,3 +1,25 @@
+**THE SECOND DELIVERED-RATE READING SCORES A ROW AND REOPENS THE
+TWO-PHONE PUZZLE, 27 August 2026.** The owner read the delivery line
+on iphone17promax: the camera delivers 30 frames per second and the
+instrument reads all 30. The blink-sample-rate table's "delivers
+about 60" row for that device is wrong by measurement — the
+declared-30 bound had said so before any reading existed — and the
+24 August correction's guess that the dry-run session "rode a camera
+delivering at least 55" is refuted by the same numbers: the dry run
+itself recorded declared 30, which already forbade it. The
+consequence is real: with both phones reading about thirty distinct
+frames a second, the evidence rate no longer explains iphone2
+missing 3 of 10 while iphone17promax caught 10 of 10. Section 4 of
+the dry run carries a second dated correction saying exactly what
+stands (the committed session's refutation of the iOS/WebKit/camera
+hypothesis as written) and what falls (the discrimination itself —
+something that co-varied with processing speed, not the evidence
+rate, made the difference), and the 17 August two-phone puzzle is
+open again with that section's own confound list as the suspects.
+The gate does not move: nothing has been measured delivering below 25. pcsony's >= 60 row stays unscored — pcsony, iphone2 and
+macbookair2 are not physically accessible for an extended period.
+Two devices read under ordinary indoor light; both deliver 30.
+
 **PREDICTION 2 IS CONFIRMED AND THE CALIBRATION TRACK'S LAST RUNG
 IS CLIMBED, 27 August 2026.** With the refusal code built, the owner
 remeasured the full remux corpus on the M5 Max: 8 measured, 0

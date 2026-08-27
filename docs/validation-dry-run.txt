@@ -164,6 +164,28 @@ What this found
    recorded as exactly that, not reread as a mistake. The account
    is docs/blink-sample-rate.txt.]
 
+   [Second correction, 27 August 2026. The guess above is refuted
+   by measurement, and it contradicted the record all along: this
+   dry run recorded camera_declared_fps 30.0 for iphone17promax, a
+   camera negotiated at 30 cannot have delivered 55, and on 27
+   August the same device's delivery line read 30 delivered, 30
+   read. So both phones read about thirty distinct camera frames a
+   second, and the evidence rate cannot explain why one missed 3 of
+   10 and the other caught 10 of 10. What stands: the committed
+   discriminating session's outcome, which refuted "iOS, WebKit or
+   the front camera will miss roughly 3 of ten regardless" as
+   written. What falls: the discrimination itself — the observable
+   that was supposed to implicate the rate came true while the
+   mechanism behind it is now measured false, so something that
+   co-varied with processing speed, not the evidence rate, made the
+   difference. The 17 August puzzle this section believed closed
+   ("a rate that is the same in both cannot explain a difference of
+   three times") is open again, and the confounds listed below —
+   Front Camera against Front Ultra Wide Camera, iOS 26.5.2 against
+   26.6.1, Chrome 151 against 152, one session per device on one
+   face — are the remaining suspects. The account is
+   docs/blink-sample-rate.txt.]
+
    This also agrees with the offline experiment in
    `docs/blink-sample-rate.txt`, which was run before either phone
    session and predicted the vulnerable band closes by 60 Hz. Field data
