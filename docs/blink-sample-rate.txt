@@ -627,3 +627,40 @@ not, despite the fastest machine this project has touched sitting
 behind it. Attribution inside the warning uses a five fps gap (the
 enter/clear pair's own wobble price) before blaming the camera, so
 near-equal rates keep the older machine sentence.
+
+THE SECOND DELIVERED-RATE READING, 27 August 2026: iphone17promax,
+one of the dry run's own devices, read from the live demo's
+delivery line after about thirty seconds of ordinary indoor use:
+
+    camera delivery                 30 frames per second
+    of which this instrument read   30
+
+THE TABLE'S iphone17promax ROW IS WRONG. "Delivers about 60" was
+inferred from 55 fps processing; the camera delivers 30 and the
+instrument reads every frame of it. The declared-30 bound stated
+above — a camera negotiated at 30 cannot deliver 60 — said this
+before any measurement existed, and the measurement agrees.
+Delivery binds on this device exactly as on the M5 Max: the machine
+outruns the camera, and the evidence rate is the camera's.
+
+THE 24 AUGUST GUESS IS REFUTED, AND IT CONTRADICTED THIS FILE ALL
+ALONG. The if-delivery-binds clause above speculated the iPhone 17
+"very likely ran a 60 fps camera", and section 4 of the dry run was
+corrected with that guess inside it. But the dry run recorded
+camera_declared_fps 30.0 for iphone17promax — this file says so —
+and by this file's own bound that camera did not deliver 55 on the
+dry run's day either. Today's reading measures what the bound
+already implied. The consequence is not cosmetic: with BOTH phones
+reading about thirty distinct frames a second, the rate no longer
+explains why iphone2 missed 3 of 10 while iphone17promax caught 10
+of 10. Section 4 now carries a second dated correction saying
+exactly that; the 17 August puzzle it believed closed is open
+again, with the confounds that section always listed as the
+remaining suspects.
+
+WHAT REMAINS OPEN, now shorter by one row. The pcsony >= 60
+prediction is still unscored, and pcsony, iphone2 and macbookair2
+are not physically accessible for an extended period, so their rows
+wait. Two devices have now been read under ordinary indoor light
+and both deliver 30: no camera in this project has yet been
+observed delivering above it.
