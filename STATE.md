@@ -1,3 +1,24 @@
+**THE MISSES ARE THE SAME BLINKS, 27 August 2026, all three
+predictions confirmed.** docs/miss-character.txt asked, before any
+join was computed, whether the instrument misses the same blinks run
+after run — a question no published count could answer, because two
+runs can match every count while missing different blinks. A
+committed tool (analysis/tools/miss_overlap.py, tests failing first,
+join-to-union mutation red) joined the three committed miss tables
+on the corpus's own (clip, blink_id) identity. Frozen vs rearm:
+IDENTICAL, all 67 shared — the determinism claim is now an
+identity-level fact, not only a count-level one. Capfix vs rearm: 46
+of 50 persist (92 percent, above the predicted 80), the freeze added
+21 and recovered 4 — an accumulation, not a reshuffle. The
+closed-frame character rides everything: 69.6 percent in the
+persistent core, 71.4 in the freeze-added misses, against 70.1
+overall, so the README's "changed how many, not the character" now
+has identity-level support. What this sets up: the frame-level "why"
+investigation has a fixed target, a persistent core of 46 blinks
+missed under two ruler regimes, and its next tool is an instrument
+increment adding a per-frame aperture trace around each miss. The
+suite grew to 228 Python tests of which 2 skip.
+
 **THE ROUND II RULES SURVIVED THEIR ADVERSARIAL PASS, 27 August
 2026, three findings fixed.** Six probes, each prediction committed
 in its own commit before any probe ran
@@ -1685,7 +1706,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 741 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 224 Python tests of which
+in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
