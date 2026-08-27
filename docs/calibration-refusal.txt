@@ -106,3 +106,18 @@ ceiling-bound, the criterion rewrites nothing on the corpus, and by
 this document's own rules the code increment may begin. Prediction 2
 remains open until the post-code corpus re-run reproduces the
 published table digit for digit, before that increment merges.
+
+PREDICTION 2 IS CONFIRMED, 27 August 2026, AND THE INCREMENT MAY
+MERGE. With the refusal code built and running, the owner remeasured
+the full remux corpus on the M5 Max and evaluated it fresh: 8
+measured, 0 failed, recall 83.6% (341 of 408), precision 84.0% (65
+invented), F1 83.8%, every per-clip row (28/10/5, 80/8/10, 43/22/2,
+23/8/0, 26/4/14, 36/5/19, 67/5/11, 38/5/4), the glasses split
+(88.4/90.5 against 83.0/83.2) and every coverage count IDENTICAL to
+docs/eyeblink8-result.txt. The refusal changed nothing on the
+corpus, exactly as a criterion that binds on no clip must, and both
+of this document's scoreable predictions have now been scored on
+their own pre-registered terms. Prediction 4 — the refused state
+reachable by test, the macbookair-shaped window refusing while the
+fixture-shaped one does not, mutations both directions — was proven
+during the increment itself and is recorded in its tests.
