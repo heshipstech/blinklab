@@ -1,3 +1,26 @@
+**ROUND II'S RULES ARE CODE, 27 August 2026, and the default is
+frozen.** analysis/blinklab/round2.py implements the plan's
+mechanical rules with tests watched failing first: a
+calibration_refused file becomes a CALIBRATION REFUSED line with its
+birth certificate and contributes no detector columns, and a refusal
+that is not ceiling-bound prints as an INSTRUMENT DEFECT because the
+committed prediction says that cannot happen; the evidence rate
+prefers the export's own sampled_fps and names the per-second
+fallback out loud, with 25 as the floor because that is the page's
+own gate, not a new constant; the freeze defect counts distinct
+baseline values inside the marked window, where more than one is the
+freeze broken in the field, not a percentage; the short ruler flags
+below 1.0; and only a zero-width window refuses to score. The report
+tool takes --rules round2 and the default invocation is proven
+frozen by test: a refused-calibration file read without the flag
+reports exactly as round I's rules always did, so the published
+tables stay reproducible. Five mutations (short-ruler inverted,
+freeze defect silenced, contract inverted, refusal still scored,
+default unfrozen) each went red and were restored. 220 Python tests.
+What the rules still owe before any real round II file is opened:
+the adversarial pass on synthetic files, as
+docs/validation-tool-adversarial.txt did for round I.
+
 **ROUND II'S RULES ARE PRE-REGISTERED, 27 August 2026, before any
 session exists.** docs/validation-plan-round2.md commits the six
 rules that will read the next round's files, written in the round I
@@ -1639,7 +1662,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 741 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 206 Python tests of which
+in CI of which 2 rerun locally in WebKit, 220 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
