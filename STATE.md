@@ -1,3 +1,19 @@
+**PREDICTION 2 IS CONFIRMED AND THE CALIBRATION TRACK'S LAST RUNG
+IS CLIMBED, 27 August 2026.** With the refusal code built, the owner
+remeasured the full remux corpus on the M5 Max: 8 measured, 0
+failed, and the evaluation IDENTICAL to the published table digit
+for digit — 83.6 / 84.0 / 83.8, every per-clip row, the glasses
+split and every coverage count. The refusal changed nothing on the
+corpus, exactly as a criterion that binds on no clip must, and the
+increment merged on that result. The calibration story now ends the
+way the 23 August paragraph said it should: a window whose top and
+middle disagree births nothing, says the committed sentence out
+loud, withholds every ruler-dependent number, and exports
+calibration_refused so an analysis can count refusals. What birth
+cannot see stays stated and uncovered: the uniformly-high window and
+the short ruler remain analysis-side, the short-ruler rule still
+queued for round II.
+
 **THE REFUSAL IS CODE, 26 August 2026, and prediction 2 gates its
 merge.** Prediction 1 came back exactly as committed: the owner's
 grep over the eight measured remux exports read
@@ -1130,7 +1146,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 26 August 2026. When this file changes, this stamp changes
+Stamped: 27 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
