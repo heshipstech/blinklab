@@ -71,3 +71,33 @@ the intersection, each difference, and the fully-closed-frame share
 of each group. Its tests are watched failing first, on synthetic
 tables. The outcomes are appended below as a dated section, and
 these predictions are not edited.
+
+THE OUTCOMES, 27 August 2026, all three predictions confirmed
+--------------------------------------------------------------
+
+FROZEN vs REARM: identical sets, all 67 shared, zero in either
+difference. Prediction 1 holds, and the determinism claim is now an
+identity-level fact for the misses: the rearm run did not just
+reproduce the counts, it missed exactly the same blinks.
+
+CAPFIX vs REARM: 46 of the capfix era's 50 misses persist — 92
+percent, above prediction 2's 80 — with 21 misses added by the
+freeze and 4 recovered. The rearm miss list is the capfix list plus
+what the frozen line newly lost, not a reshuffle.
+
+THE CHARACTER RIDES THE CORE, AND THE CHURN TOO. The persistent 46
+carry a closed-frame share of 69.6 percent against the overall 70.1
+— prediction 3 holds. The 21 freeze-added misses carry 71.4 percent,
+the same character again, and the 4 recovered were all closed-frame
+(four rows, so a note rather than a number). The README's sentence
+that freezing changed "how many blinks are missed and not the
+character of what is missed" now has identity-level support, not
+only aggregate shares.
+
+WHAT THIS SETS UP. The frame-level "why" investigation has a fixed
+target now: a persistent core of 46 blinks, missed under two
+different ruler regimes and two different runs, seventy percent of
+them containing a frame a human marked fully closed. Whatever
+explanation is found must explain THOSE blinks, and an instrument
+increment that adds a per-frame aperture trace around a miss is the
+tool that investigation needs first.
