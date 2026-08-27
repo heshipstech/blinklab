@@ -1,0 +1,77 @@
+ADVERSARIAL TESTING OF THE ROUND II RULES
+=========================================
+
+Written 27 August 2026, after the rules merged and before any round
+II session exists — the plan says this pass is owed BEFORE the first
+real file is opened, on synthetic files only. The tool under test is
+the round II path added to the reader:
+
+    analysis/blinklab/round2.py
+    analysis/tools/validation_report.py   (the --rules round2 branch)
+
+The round I paths were attacked on 20 August
+(docs/validation-tool-adversarial.txt) and are not re-attacked here;
+these probes aim only at what the new rules added. Every hostile
+file lives in a throwaway folder outside the repository.
+
+THE RULE THIS DOCUMENT FOLLOWS, unchanged from round I: every
+prediction below is committed before its probe is run — this
+predictions section is committed on its own, and the outcomes are a
+later commit — and a prediction that turns out wrong stays in the
+record, wrong. Severity classes as before: SILENT WRONG RESULT,
+WHOLE-TABLE CRASH, MISLEADING REFUSAL, COSMETIC. One addition for
+this pass: CORRECT, a probe whose predicted behaviour is the right
+one, run to prove the defence exists rather than to find a hole.
+
+THE PROBES, EACH WITH ITS PREDICTION
+------------------------------------
+
+Probe A. A session whose metadata reads `calibration_refused: True`,
+capital T — the exporter writes only lowercase, so this is a
+hand-edited or transformed file.
+  PREDICTION: SILENT WRONG RESULT. The reader compares against the
+  lowercase string, so True is not true, the refusal is not seen,
+  and the session is scored as an ordinary participant — ruler
+  columns and all — with nothing anywhere saying its calibration
+  was refused.
+
+Probe B. A session whose metadata reads `sampled_fps: NaN` — the
+browser's toFixed prints NaN if a rate computation ever goes wrong,
+so this is a plausible damaged export.
+  PREDICTION: SILENT WRONG RESULT. Python's float("NaN") parses, so
+  the evidence rate becomes nan; nan compared below the 25 floor is
+  False, so the session is treated as sound evidence, and the rules
+  line prints the word nan as if it were a measurement.
+
+Probe C. An otherwise healthy session with NO marks at all, read
+under --rules round2.
+  PREDICTION: MISLEADING (a wrong sentence, not a wrong verdict).
+  With no marked window the windowed frame is empty, zero distinct
+  baseline values counts as not-a-defect, and the rules line prints
+  "baseline constant across the marked window" for a session that
+  has no marked window to be constant across.
+
+Probe D. Marks reversed: marker_1 at 12 s, marker_2 at 2 s.
+  PREDICTION: MISLEADING, same sentence as probe C. The window mask
+  selects nothing, so the freeze line asserts constancy over an
+  empty window, and the evidence fallback quietly finds no rows and
+  prints a dash without saying the window was backwards.
+
+Probe E. A refused session whose `calibration_spread_ratio` cell is
+the word junk.
+  PREDICTION: CORRECT. The number reader returns None for a
+  non-number, the certificate prints a dash for the spread, and the
+  refusal is still counted with its sample count intact.
+
+Probe F. A folder whose only session is refused, read under
+--rules round2.
+  PREDICTION: CORRECT. The refusal is counted first, the checks
+  table prints "no readable sessions", the rules section prints "no
+  scoreable sessions", and the exit code is zero — a refused
+  calibration is a result the round can carry, not a reader failure.
+
+WHAT HAPPENS NEXT. The probes run against a build of the merged
+rules, each outcome is appended below as a dated section, every
+finding of MISLEADING or worse gets a failing test before its fix,
+and the fixes land in the same increment as this document's
+outcomes commit.
