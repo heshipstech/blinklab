@@ -308,17 +308,18 @@ strip plus the footer below.
 
 #### Box: Session
 
-| Element          | Type   | Notes                                                                                                                                                          |
-| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Feature records  | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)` |
-| Export CSV       | Button | Disabled until at least one record exists                                                                                                                      |
-| Mark this moment | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
-| Export state     | Text   | Empty until an export is attempted. See the four strings below                                                                                                 |
-| Sleepiness       | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label         |
-| Marks            | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
-| Export blink log | Button | Disabled until at least one blink exists                                                                                                                       |
-| Sleepiness panel | Panel  | See below                                                                                                                                                      |
-| Record fixture   | Button | **Development builds only.** Never on the live site                                                                                                            |
+| Element            | Type   | Notes                                                                                                                                                          |
+| ------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feature records    | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)` |
+| Export CSV         | Button | Disabled until at least one record exists                                                                                                                      |
+| Mark this moment   | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
+| Export state       | Text   | Empty until an export is attempted. See the five strings below                                                                                                 |
+| Sleepiness         | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label         |
+| Marks              | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
+| Export blink log   | Button | Disabled until at least one blink exists                                                                                                                       |
+| Export frame trace | Button | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                            |
+| Sleepiness panel   | Panel  | See below                                                                                                                                                      |
+| Record fixture     | Button | **Development builds only.** Never on the live site                                                                                                            |
 
 **Every export outcome says what happened, including the successful one.**
 The button had three outcomes and only one was visible, so a click that was
@@ -327,6 +328,7 @@ merely waiting looked like a broken button:
 - `Almost there: answer the sleepiness question below and the file will download.`
 - `Nothing to export yet: no measurements have been recorded in this session.`
 - `Nothing to export yet: no blinks have been detected in this session.`
+- `Nothing to export yet: the frame trace is recorded for measured clips only.`
 - `Exported NAME. Check your downloads.`
 
 From `core/exportStatus.ts`. The sleepiness panel also scrolls itself into
