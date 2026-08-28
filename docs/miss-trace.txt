@@ -1,0 +1,66 @@
+THE PER-FRAME TRACE: THE TOOL THE MISS INVESTIGATION NEEDS FIRST
+================================================================
+
+Written 27 August 2026, before the code exists. The miss-identity
+result (docs/miss-character.txt) left a fixed target: a persistent
+core of 46 blinks, missed under two ruler regimes and two runs,
+seventy percent containing a frame a human marked fully closed. The
+open question is WHY the aperture did not dip below the blink line
+on those frames — and no export can answer it, because a clip's
+export carries one row per second while a seven-frame blink lives
+entirely between two rows. This increment adds the missing
+instrument: a per-frame trace, exported beside the seconds and
+blinks files, joinable to the corpus ground truth by frame number.
+
+WHAT IS EXPORTED, AND WHEN. Clip measurements only. A camera session
+never buffers frames: hours of per-frame face data is a different
+memory and privacy surface, and nothing in the miss investigation
+needs it. For a measured clip, a third export writes one row per
+measured frame:
+
+    frameIndex        the frame the stepper aimed at, the same
+                      numbering the corpus annotations use
+    mediaTimeSeconds  the clip's own clock at that frame
+    apertureMm        what the instrument read, null when no trusted
+                      face was measured on that frame
+    blinkLineMm       the EFFECTIVE line the detector compared
+                      against on that frame — the personal threshold
+                      once the ruler is ready, the generic constant
+                      before it — because "did it dip below the
+                      line" is the whole question, and the line a
+                      reader reconstructs is a guess where the line
+                      the detector used is a fact
+
+The cap follows BLINK_LOG_RECORD_CAP's precedent rather than
+inventing a second convention: 20,000 frames, above the longest
+Eyeblink8 clip's 15,784, with the blink log's own truncation-note
+convention when it ever binds.
+
+WHAT THIS MUST NOT CHANGE, stated as a prediction. The trace is a
+pure export: it reads values the frame loop already computes and
+moves no measured number. THE PREDICTION: the first trace-collecting
+corpus run on the M5 Max reproduces the published table digit for
+digit, exactly as the 26 and 27 August runs did. That run is not a
+merge gate — the change touches no detector behaviour — but it is
+the trace's first real data and its own A/B, and if the table moves,
+the trace is not the pure export this document claims and the
+finding is published before anything else uses the data.
+
+WHAT THE AUTOPSY DOES WITH IT, so the design is judged against its
+use. For each of the 46 persistent misses, the trace rows between
+the annotation's startFrame and endFrame (plus a few frames either
+side) show the aperture the instrument read while a human saw a full
+closure. The hypotheses that trace can separate, none of which the
+per-second exports could touch: the aperture dipped but not below
+the line (a threshold-margin story); the aperture never dipped at
+all (a landmark story, the model's lids not following the real
+ones); or the dip fell between measured frames (a sampling story —
+which the identical frame coverage should preclude for stepped runs,
+and the trace would prove it). Which of those stories the 46 tell is
+the next dated section of docs/miss-character.txt, not this file.
+
+HOW IT SHIPS. The serializer is pure core with tests watched failing
+first; the buffer and button wire into the clip path only; the
+corpus runner saves the third file beside the two it already saves.
+The owner's corpus run collects the first traces and scores the
+prediction above.

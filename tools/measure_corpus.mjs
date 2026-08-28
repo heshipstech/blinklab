@@ -190,6 +190,9 @@ for (const [i, clip] of clips.entries()) {
     for (const [testId, suffix] of [
       ["export-blinks", "blinks"],
       ["export-csv", "seconds"],
+      // The per-frame trace (docs/miss-trace.txt): the file the miss
+      // autopsy joins to ground truth by frame number.
+      ["export-frames", "frames"],
     ]) {
       const button = page.locator(`[data-testid="${testId}"]`);
       if ((await button.count()) === 0 || (await button.isDisabled())) continue;

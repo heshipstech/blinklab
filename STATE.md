@@ -1,3 +1,27 @@
+**THE PER-FRAME TRACE IS BUILT, 27 August 2026, and the owner's next
+corpus run collects the first data.** docs/miss-trace.txt decided the
+design before the code: clips only (a camera session never buffers
+frames — memory and privacy both), one row per measured frame
+carrying frameIndex in the annotators' own numbering, the clip's
+clock, the aperture read, and the EFFECTIVE blink line the reducer
+was actually handed on that frame — the fact of what was compared,
+not a reconstruction, null on frames where the reducer was fed
+nothing. The cap follows the blink log's 20,000 convention, above
+the longest corpus clip's 15,784, but the capped behaviour differs
+deliberately and the test says why: the trace keeps its PREFIX and
+declares what fell off the end, because a file whose first frame
+silently moves breaks every join anchored at the front, where the
+blink log rightly drops its oldest. src/core/frameTrace.ts is pure
+core with tests watched failing first and two mutations red
+(drop-oldest, silenced truncation note); the third export button
+rides beside the other two, the corpus runner saves the .frames.csv
+beside seconds and blinks, the download pattern is gitignored (that
+guard caught its absence, as designed), and docs/UI.md carries the
+new row and fifth export string. The committed prediction: the first
+trace-collecting corpus run reproduces the published table digit for
+digit, because the trace reads values the loop already computes and
+moves nothing. 747 unit tests.
+
 **THE MISSES ARE THE SAME BLINKS, 27 August 2026, all three
 predictions confirmed.** docs/miss-character.txt asked, before any
 join was computed, whether the instrument misses the same blinks run
@@ -1705,7 +1729,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 741 unit tests, 20 end to end tests all run in Chromium
+Test count: 747 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 

@@ -35,3 +35,7 @@ export function exportedMessage(filename: string): string {
 /** Shown when a blink log was asked for before any blink was seen. */
 export const EXPORT_NO_BLINKS =
   "Nothing to export yet: no blinks have been detected in this session.";
+
+/** Shown when a frame trace was asked for outside a measured clip. */
+export const EXPORT_NO_FRAMES =
+  "Nothing to export yet: the frame trace is recorded for measured clips only.";

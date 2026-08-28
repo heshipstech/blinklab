@@ -99,9 +99,15 @@ import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
 import {
   EXPORT_NOTHING_RECORDED,
   EXPORT_NO_BLINKS,
+  EXPORT_NO_FRAMES,
   EXPORT_WAITING_FOR_KSS,
   exportedMessage,
 } from "./core/exportStatus";
+import {
+  appendFrameTraceRow,
+  serialiseFrameTrace,
+  type FrameTraceRow,
+} from "./core/frameTrace";
 import {
   IRIS_SAMPLE_CAP,
   calibrationMetadataRows,
@@ -793,6 +799,8 @@ function resetSession(): void {
   lastRecordAtMs = null;
   exportButton.disabled = true;
   exportBlinksButton.disabled = true;
+  frameTraceRows = [];
+  exportFramesButton.disabled = true;
   exportStatus.textContent = "";
   sessionStartedAtEpochMs = null;
   kssBefore = null;
@@ -2058,6 +2066,38 @@ exportBlinksButton.addEventListener("click", () => {
   );
 });
 
+const exportFramesButton = document.createElement("button");
+exportFramesButton.textContent = "Export frame trace";
+exportFramesButton.disabled = true;
+exportFramesButton.setAttribute("data-testid", "export-frames");
+exportFramesButton.addEventListener("click", () => {
+  const csv = serialiseFrameTrace(
+    frameTraceRows,
+    [
+      ...sourceMetadataRows(frameSource, loadedClipName),
+      ...coverageMetadataRows(
+        measurementMode,
+        framesMeasured,
+        loadedClipDurationSeconds,
+      ),
+    ],
+    // The measurement's own count, so a capped trace declares the
+    // frames that fell off its end rather than looking complete.
+    framesMeasured,
+  );
+  if (csv === null) {
+    exportStatus.textContent = EXPORT_NO_FRAMES;
+    return;
+  }
+  const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("Z", "");
+  exportStatus.textContent = exportedMessage(
+    downloadTextFile(`blinklab-frames-${stamp}.csv`, csv, "text/csv"),
+  );
+});
+
 exportButton.addEventListener("click", () => {
   // The after answer is asked once, on the first export, so the
   // question arrives when the session is actually over rather than
@@ -2125,6 +2165,11 @@ const blinkLogList = document.createElement("div");
 blinkLogList.className = "blink-table-scroll";
 blinkLogList.append(blinkTable);
 let blinkEvents: BlinkEvent[] = [];
+// The per-frame trace, clips only: docs/miss-trace.txt. A camera
+// session never buffers frames — hours of per-frame face data is a
+// different memory and privacy surface, and nothing in the miss
+// investigation needs it.
+let frameTraceRows: FrameTraceRow[] = [];
 let sessionStartMs: number | null = null;
 type StabilitySample = {
   timestampMs: number;
@@ -2748,6 +2793,21 @@ function processFrame(
         blinkMeasurable && !calibrationRefused ? stabilityMm : null,
         personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
+      // The per-frame trace, clips only (docs/miss-trace.txt). The
+      // line recorded is the one the reducer was just handed: the
+      // fact of what was compared, not a reconstruction, and null on
+      // frames where the reducer was fed nothing.
+      if (frameSource === "file" && currentFrameIndex !== null) {
+        frameTraceRows = appendFrameTraceRow(frameTraceRows, {
+          frameIndex: currentFrameIndex,
+          mediaTimeSeconds: nowMs / 1000,
+          apertureMm: stabilityMm,
+          blinkLineMm:
+            blinkMeasurable && !calibrationRefused
+              ? (personalMm ?? BLINK_APERTURE_THRESHOLD_MM)
+              : null,
+        });
+      }
       rateState ??= startRate(nowMs);
       if (wasOpen && blinkState.eye === "closed") {
         closureStartFrame = currentFrameIndex;
@@ -2991,6 +3051,7 @@ function processFrame(
         sessionStartedAtEpochMs ??= Date.now();
         exportButton.disabled = featureRecords.length === 0;
         exportBlinksButton.disabled = blinkEvents.length === 0;
+        exportFramesButton.disabled = frameTraceRows.length === 0;
         // The marker rides the same gate as the exports: there is
         // nothing to mark until at least one record exists to mark
         // against.
@@ -3249,11 +3310,12 @@ document.addEventListener("visibilitychange", () => {
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
-  // Mark first: it is used DURING a session while the two exports end
+  // Mark first: it is used DURING a session while the exports end
   // one, so the order is the order a person needs them in.
   markButton,
   exportButton,
   exportBlinksButton,
+  exportFramesButton,
   ...(recorder !== null ? [recorder.button] : []),
 );
 
