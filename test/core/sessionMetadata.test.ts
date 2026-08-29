@@ -9,6 +9,7 @@ import {
   medianIrisWidthPx,
   observedDurationSeconds,
   provenanceMetadataRows,
+  pseudonymMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
@@ -326,5 +327,17 @@ describe("provenance rows", () => {
       "# app_commit: abc1234",
     );
     expect(provenanceMetadataRows(null)).toContain("# app_commit: unknown");
+  });
+});
+
+describe("the pseudonym row", () => {
+  it("appears only when a pseudonym exists — declined identity is absence", () => {
+    // Not "unknown": identity here is voluntary, and an unknown row
+    // would imply there was something to find. A session with no
+    // pseudonym writes no row at all (docs/assessment-pilot-plan.md).
+    expect(pseudonymMetadataRows(null)).toEqual([]);
+    expect(pseudonymMetadataRows("maple 7")).toEqual([
+      "# participant_pseudonym: maple 7",
+    ]);
   });
 });

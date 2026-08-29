@@ -353,3 +353,13 @@ export function sessionMetadataRows(
 export function provenanceMetadataRows(appCommit: string | null): string[] {
   return [line("protocol", PROTOCOL_ID), line("app_commit", appCommit)];
 }
+
+/**
+ * The voluntary identity row, only when one exists. Not "unknown"
+ * when absent: identity here is voluntary, an unknown row would
+ * imply there was something to find, and a session with no pseudonym
+ * writes no row at all (docs/assessment-pilot-plan.md).
+ */
+export function pseudonymMetadataRows(pseudonym: string | null): string[] {
+  return pseudonym === null ? [] : [line("participant_pseudonym", pseudonym)];
+}

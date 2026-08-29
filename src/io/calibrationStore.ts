@@ -17,11 +17,49 @@ import type { StorageProbe } from "../core/storedData";
 // say, visibly, that the profile will not survive a reload.
 const STORAGE_KEY = "blinklab-calibration-samples-v1";
 const PROFILE_KEY = "blinklab-calibration-profile-v1";
+const PSEUDONYM_KEY = "blinklab-participant-pseudonym-v1";
 
 // Everything this page stores, in one array, so the probe and the
-// erase below cannot fall out of step with the two keys above. The
+// erase below cannot fall out of step with the keys above. The
 // visitor-facing descriptions live in core/storedData.ts.
-const ALL_KEYS = [PROFILE_KEY, STORAGE_KEY] as const;
+const ALL_KEYS = [PROFILE_KEY, STORAGE_KEY, PSEUDONYM_KEY] as const;
+
+/**
+ * The saved pseudonym, or null. A failed read reports null here —
+ * the page then simply shows no pseudonym — while the probe above
+ * reports the same failure as UNREADABLE, because a privacy control
+ * that says "nothing stored" when it was refused permission to look
+ * has told the one lie it exists to prevent. Same split as the
+ * calibration loaders.
+ */
+export function loadPseudonym(): string | null {
+  try {
+    return localStorage.getItem(PSEUDONYM_KEY);
+  } catch (error: unknown) {
+    console.warn("the pseudonym could not be read:", error);
+    return null;
+  }
+}
+
+/** Save, or say it did not survive. Created only by explicit action. */
+export function savePseudonym(value: string): boolean {
+  try {
+    localStorage.setItem(PSEUDONYM_KEY, value);
+    return true;
+  } catch (error: unknown) {
+    console.warn("the pseudonym could not be saved:", error);
+    return false;
+  }
+}
+
+/** Remove only the pseudonym: saving an empty field is this action. */
+export function removePseudonym(): void {
+  try {
+    localStorage.removeItem(PSEUDONYM_KEY);
+  } catch (error: unknown) {
+    console.warn("the pseudonym could not be removed:", error);
+  }
+}
 
 /**
  * What the browser is actually holding right now.
