@@ -1,3 +1,30 @@
+**THE ADVERSARIAL PASS RAN, 29 August 2026 — pilot increment 10
+of 11, and one prediction was wrong in the worse direction.** Ten
+probes against the verdict mirror, the renderer and the pilot flag,
+every prediction committed to docs/pilot-adversarial.txt before any
+probe ran, synthetic files only. Four predicted crashes confirmed
+(inf and abc in numeric metadata cells: bare tracebacks, no key
+named). The fifth prediction missed the worst case: a nan pose
+fraction crashed nothing — Decimal quantizes a quiet NaN through
+without trapping — and the mirror derived a calm verdict saying
+"NaN percent of frames". Nonsense rendered calmly, the exact
+failure this repository exists to refuse; the wrong prediction
+stays published. The fix, tests watched failing first: every
+numeric metadata cell reads through one strict helper refusing BY
+KEY on anything not parsing to a finite number, and the fps column
+refuses on ANY non-finite cell — the fix's own first version
+checked only the median and the probe's inf hid in the tail of the
+sort at a finite 60.0, one more proof that a check on the summary
+is not a check on the data (LEARNING.md carries both shapes). The
+non-findings held as predicted: the deleted marker row already
+refused by name, a CRLF report still agrees, the withheld-score
+fallback is covered; the content-identical decoy report and the
+restraint-vocabulary pseudonym stand recorded as stated
+limitations. All six probes re-ran green: VerdictError, key named,
+every time. The suite is 798 unit tests and
+261 Python tests of which 2 skip. Next on the ladder: increment
+11, the owner's dry run — the gate before any volunteer.
+
 **THE RESEARCHER TOOL SPEAKS PILOT, 29 August 2026 — pilot
 increment 9 of 11.** validation_report.py gained --rules pilot:
 round II's gating plus a verdict table that re-derives every
@@ -2007,7 +2034,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 798 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 255 Python tests of which
+in CI of which 2 rerun locally in WebKit, 261 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
