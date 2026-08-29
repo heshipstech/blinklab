@@ -1,3 +1,26 @@
+**THE EXPORT CARRIES THE PILOT'S PRIMARY FACTS, 29 August 2026 —
+pilot increment 4 of 11.** Five facts, all appended after every row
+a reader already parses: each interruption's timestamp on the record
+clock, where the count row now derives from the same array so the
+two can never disagree; the visibility counter at each marker, which
+is what lets an analysis place an interruption on one side of the
+marks instead of shrugging over the whole session; the pose-valid
+fraction, carried as two counts so the pure side decides that a gate
+which never ran reads unknown, never 0.000; a protocol row naming
+docs/assessment-pilot-plan.md and its date — provenance about the
+app, not a claim that the session followed the steps; and the app
+commit, read from the meta tag the build already stamps (REMEDIATION
+E2), so the file and the page can never claim two different origins.
+The frozen round I reader takes unknown keys into its metadata dict
+and refuses only duplicates, so pilot files stay round-II-readable
+without touching it. The plan's merge gate is a corpus run on the
+owner's machine before this increment merges. Predicted before that
+run: the evaluation table matches docs/eyeblink8-result.txt digit
+for digit, because the new rows are written at export, after the
+measurement, and cannot reach the reducer. The suite is
+775 unit tests. Next on the ladder: increment 5, the Python verdict
+mirror.
+
 **THE SESSION VERDICT EXISTS, 29 August 2026 — pilot increment 3
 of 11.** src/core/sessionVerdict.ts assembles the eight per-session
 refusal surfaces the instrument already computes — calibration,
@@ -1848,7 +1871,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 770 unit tests, 20 end to end tests all run in Chromium
+Test count: 775 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 

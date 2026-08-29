@@ -74,7 +74,35 @@ export type MeasurementFrame = {
 export type SessionMarker = {
   atMs: number;
   index: number;
+  /**
+   * The visibility-change counter at the moment of marking. The
+   * counter alone says the record has a gap somewhere; the counter AT
+   * each marker says which side of the marks it sits on, which is
+   * what lets an analysis decide whether the marked window itself was
+   * disturbed instead of shrugging over the whole session
+   * (docs/assessment-pilot-plan.md).
+   */
+  visibilityChangesAt: number;
 };
+
+/**
+ * How many frames the pose gate judged, and how many it passed. Kept
+ * as the two counts rather than a precomputed fraction so the pure
+ * function decides what zero judged frames means: unknown, never 0.0.
+ */
+export type PoseFrameCounts = {
+  gated: number;
+  valid: number;
+};
+
+/**
+ * The protocol this build's exports belong to: the pilot plan and the
+ * date it was merged. A provenance statement about the app, not a
+ * claim that any given session followed the protocol's steps — the
+ * plan's own rule 6 is that the steps live in the document, not in
+ * an enforcing sequencer.
+ */
+export const PROTOCOL_ID = "docs/assessment-pilot-plan.md, 29 August 2026";
 
 /**
  * The iris width sample cap, following BLINK_LOG_RECORD_CAP's precedent
@@ -222,8 +250,9 @@ export function sessionMetadataRows(
   records: readonly FeatureRecord[],
   irisWidths: readonly number[],
   markers: readonly SessionMarker[],
-  visibilityChanges: number,
+  interruptionTimesMs: readonly number[],
   measurementFrame: MeasurementFrame | null,
+  poseFrames: PoseFrameCounts,
 ): string[] {
   const duration = observedDurationSeconds(records);
   const median = medianIrisWidthPx(irisWidths);
@@ -258,7 +287,10 @@ export function sessionMetadataRows(
     // so it survives any display scale; this number does not, which is
     // why it is pinned to a stated frame.
     line("median_iris_width_px", median === null ? null : median.toFixed(1)),
-    line("visibility_changes", visibilityChanges),
+    // The count row and the per-interruption timestamp rows below come
+    // from the one array, so they cannot disagree — the same argument
+    // that keeps the derived verdict out of the export.
+    line("visibility_changes", interruptionTimesMs.length),
   ];
   if (irisWidths.length >= IRIS_SAMPLE_CAP) {
     // The blink log's WARNING precedent: a truncated record says so in
@@ -276,5 +308,48 @@ export function sessionMetadataRows(
       line(`marker_${marker.index}_seconds`, (marker.atMs / 1000).toFixed(3)),
     );
   }
+  // Everything from here down is the pilot's appended block
+  // (docs/assessment-pilot-plan.md): new keys after the old ones, so
+  // every row a reader already parses keeps its exact position.
+  for (const marker of markers) {
+    rows.push(
+      line(
+        `marker_${marker.index}_visibility_changes`,
+        marker.visibilityChangesAt,
+      ),
+    );
+  }
+  // Uncapped like the markers, not capped like the frame trace: an
+  // interruption is a person-scale event — a tab switch, a sleep —
+  // not a per-frame stream, so a cap would be a constant chosen
+  // against no benchmark.
+  interruptionTimesMs.forEach((atMs, position) => {
+    rows.push(
+      line(`interruption_${position + 1}_seconds`, (atMs / 1000).toFixed(3)),
+    );
+  });
+  rows.push(
+    line(
+      "pose_valid_fraction",
+      // A gate that never ran judged nothing. Rendering that as 0.000
+      // would read as "every frame failed", the exact opposite.
+      poseFrames.gated === 0
+        ? null
+        : (poseFrames.valid / poseFrames.gated).toFixed(3),
+    ),
+  );
   return rows;
+}
+
+/**
+ * Which code and which protocol produced this file, inside the file.
+ *
+ * The build already stamps its commit into a meta tag (REMEDIATION
+ * E2, vite.config.ts); this is the same fact travelling in the
+ * export, so a CSV separated from its page keeps its provenance. The
+ * commit arrives as a parameter because reading the meta tag is the
+ * page's job, and "unknown" is the honest answer when there is none.
+ */
+export function provenanceMetadataRows(appCommit: string | null): string[] {
+  return [line("protocol", PROTOCOL_ID), line("app_commit", appCommit)];
 }
