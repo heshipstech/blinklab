@@ -1,3 +1,31 @@
+**THE RESEARCHER TOOL SPEAKS PILOT, 29 August 2026 — pilot
+increment 9 of 11.** validation_report.py gained --rules pilot:
+round II's gating plus a verdict table that re-derives every
+session from primary facts (blinklab/pilot.py over
+blinklab/verdict.py), prints one line per session — headline,
+status counts, report agreement, pseudonym — and, by the plan's own
+restraint, NO detection figure and NO aggregate of the unvalidated
+heuristic. The defect gate is live: a session whose exported report
+file does not carry the re-derived findings raises
+INSTRUMENT DEFECT and the cohort analysis stops whole (exit 3),
+never a per-row shrug; a session with no report file is a row that
+says so, because nothing exists to disagree with. The
+cross-language pin runs on committed artifacts alone: the rebuilt
+"STATUS — surface: sentence" lines from increment 5's session CSV
+must sit verbatim in increment 7's report snapshot, so the Python
+line format cannot drift from the page's without going red. Round
+I is now BYTE-FROZEN by test over a deterministic pair
+(tests/fixtures/round1_report_frozen.txt), and its stray policy is
+untouched: a report file in a round I folder still refuses the
+round; only --rules pilot expects them, by stamp, with orphans
+refused. Freezing it caught a fixture flaw the same hour: the
+synthetic sessions carried a rounded baselineOverResting, the
+page-account cross-check flagged the disagreement exactly as
+designed, and the fixtures now carry the page's full float. The
+suite is 798 unit tests and
+255 Python tests of which 2 skip. Next on the ladder: increment
+10, the adversarial pass.
+
 **THE PSEUDONYM EXISTS ONLY BY CHOICE, 29 August 2026 — pilot
 increment 8 of 11.** One new stored key,
 blinklab-participant-pseudonym-v1, created only when a person types
@@ -1979,7 +2007,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 798 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 246 Python tests of which
+in CI of which 2 rerun locally in WebKit, 255 Python tests of which
 2 skip
 
 ## DROZY, which is also ready

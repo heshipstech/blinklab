@@ -33,7 +33,7 @@
 # protocol: docs/assessment-pilot-plan.md, 29 August 2026
 # app_commit: dev
 timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting
-1000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.129
-42000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.129
-55500,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.129
-60000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.129
+1000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.1285714285714286
+42000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.1285714285714286
+55500,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.1285714285714286
+60000,true,60,7.0,7.9,,,,,,,0,0,,false,true,1.1285714285714286

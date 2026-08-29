@@ -31,6 +31,7 @@ from blinklab.loader import Session, SessionError, load_session
 
 SESSION_PREFIX = "blinklab-session-"
 BLINKS_PREFIX = "blinklab-blinks-"
+REPORT_TXT_PREFIX = "blinklab-report-"
 
 # `# marker_1_seconds: 42.500`, written by sessionMetadataRows in
 # src/core/sessionMetadata.ts.
@@ -337,6 +338,11 @@ class PairPaths:
     # None means the page wrote no blink log, which is a RESULT and not
     # an accident. See find_pairs.
     blinks_path: Path | None
+    # The page's own exported report, paired by stamp; only pilot
+    # folders carry these (find_pairs pilot_reports). None in every
+    # round I and round II folder, and for a pilot session whose
+    # report was never exported.
+    report_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -354,7 +360,9 @@ class SessionPair:
         return self.blinks is None
 
 
-def find_pairs(directory: str | Path) -> list[PairPaths]:
+def find_pairs(
+    directory: str | Path, *, pilot_reports: bool = False
+) -> list[PairPaths]:
     """Pair the exports in a folder, refusing anything unaccounted for.
 
     A session file with no blink log is NOT an error, and this is the
@@ -380,6 +388,7 @@ def find_pairs(directory: str | Path) -> list[PairPaths]:
 
     sessions: dict[str, Path] = {}
     blinks: dict[str, Path] = {}
+    reports: dict[str, Path] = {}
     strays: list[str] = []
     # Every entry in the folder is accounted for, not just `*.csv`.
     # The old glob was case sensitive and extension bound, so a blinks
@@ -400,6 +409,17 @@ def find_pairs(directory: str | Path) -> list[PairPaths]:
             if path.name.startswith(BLINKS_PREFIX):
                 blinks[path.name[len(BLINKS_PREFIX) : -len(".csv")]] = path
                 continue
+        # Only a pilot folder expects the page's exported reports; in
+        # a round I or round II folder one is still a stray, and the
+        # frozen refusal below still fires. Opt in, never inferred.
+        if (
+            pilot_reports
+            and path.is_file()
+            and path.name.startswith(REPORT_TXT_PREFIX)
+            and path.name.endswith(".txt")
+        ):
+            reports[path.name[len(REPORT_TXT_PREFIX) : -len(".txt")]] = path
+            continue
         strays.append(path.name)
 
     if strays:
@@ -407,6 +427,12 @@ def find_pairs(directory: str | Path) -> list[PairPaths]:
             "these files are in the folder and are not exports this "
             f"round knows how to read: {', '.join(strays)}. A renamed "
             "file would otherwise be skipped without a word."
+        )
+    report_orphans = sorted(set(reports) - set(sessions))
+    if report_orphans:
+        raise ValidationError(
+            "these report files have no matching session export, so "
+            f"whose session they describe cannot be known: {report_orphans}"
         )
     orphans = sorted(set(blinks) - set(sessions))
     if orphans:
@@ -423,6 +449,7 @@ def find_pairs(directory: str | Path) -> list[PairPaths]:
             stamp=stamp,
             session_path=sessions[stamp],
             blinks_path=blinks.get(stamp),
+            report_path=reports.get(stamp),
         )
         # Sorted by the stamp, which is an ISO time with its colons
         # swapped for dashes, so it sorts by name and by time at once.
