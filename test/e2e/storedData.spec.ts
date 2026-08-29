@@ -34,7 +34,7 @@ test("erasing empties the storage and takes the live profile with it", async ({
   await page.goto("./");
 
   await expect(
-    page.getByText("Stored on this device now: 2 of 2."),
+    page.getByText("Stored on this device now: 2 of 3."),
   ).toBeVisible();
 
   // The session must be RUNNING before the heatmap assertion below
