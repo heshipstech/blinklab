@@ -1,0 +1,45 @@
+{
+  "surfaces": [
+    {
+      "surface": "calibration",
+      "status": "refused",
+      "sentence": "Calibration was refused: while learning your baseline, the widest eye openings disagreed with the middle ones by more than the instrument allows, which usually means blinks or a squint contaminated the learning period. Numbers that depend on the blink line are withheld rather than guessed. Restart the camera and keep your eyes comfortably open for the first thirty seconds."
+    },
+    {
+      "surface": "evidenceRate",
+      "status": "ok",
+      "sentence": "The evidence rate was 60.0 frames per second (the measured rate of distinct frames read), above the 60 risk band."
+    },
+    {
+      "surface": "interruptions",
+      "status": "ok",
+      "sentence": "The page stayed visible throughout the measurement."
+    },
+    {
+      "surface": "rulerFit",
+      "status": "unknown",
+      "sentence": "The ruler-fit check had not settled by the end of this session."
+    },
+    {
+      "surface": "cameraOutcome",
+      "status": "ok",
+      "sentence": "The session ran and ended without a camera failure."
+    },
+    {
+      "surface": "pose",
+      "status": "ok",
+      "sentence": "Head pose was within the measurement limits for 98 percent of frames; frames outside the limits were refused individually as they happened."
+    },
+    {
+      "surface": "modelTrust",
+      "status": "ok",
+      "sentence": "The face model's output passed its trust checks."
+    },
+    {
+      "surface": "markedWindow",
+      "status": "ok",
+      "sentence": "The marked window spans 13.5 seconds, undisturbed."
+    }
+  ],
+  "headline": "refused"
+}

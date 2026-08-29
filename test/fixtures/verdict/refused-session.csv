@@ -1,0 +1,39 @@
+# source: camera
+# camera: Fixture Cam
+# camera_resolution: 1280x720
+# camera_declared_fps: 60
+# facing_mode: user
+# user_agent: FixtureBrowser/1.0
+# hardware_concurrency: 8
+# viewport: 1200x800
+# screen: 1512x982
+# device_pixel_ratio: 2
+# orientation: landscape-primary
+# calibration_samples: 301
+# calibration_spread_ratio: 1.378
+# calibration_ceiling_bound: true
+# calibration_refused: true
+# camera_delivered_fps: 60.0
+# sampled_fps: 60.0
+# delivered_frames_read_fraction: 1.000
+# observed_duration_seconds: 59.000
+# records: 4
+# face_detected_fraction: 1.000
+# measurement_frame: 1280x720
+# median_iris_width_px: 30.0
+# visibility_changes: 0
+# markers: 2
+# marker_1_seconds: 42.000
+# marker_2_seconds: 55.500
+# marker_1_visibility_changes: 0
+# marker_2_visibility_changes: 0
+# pose_valid_fraction: 0.980
+# kss_before: 3
+# kss_after: 4
+# protocol: docs/assessment-pilot-plan.md, 29 August 2026
+# app_commit: dev
+timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting
+1000,true,60,7.0,,,,,,,,0,0,,false,true,
+42000,true,60,7.0,,,,,,,,0,0,,false,true,
+55500,true,60,7.0,,,,,,,,0,0,,false,true,
+60000,true,60,7.0,,,,,,,,0,0,,false,true,
