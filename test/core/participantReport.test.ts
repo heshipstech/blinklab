@@ -130,6 +130,17 @@ describe("the participant report", () => {
       },
     };
     refused.verdict = assessSession(verdictInputs);
+    // On a refused session every ruler-dependent line is withheld
+    // with its reason, and section 5 must account for each one.
+    refused.measured = [
+      {
+        label: "Blinks detected",
+        value: {
+          kind: "withheld",
+          reason: "the calibration was refused",
+        },
+      },
+    ];
     const report = buildParticipantReport(refused);
     // The report may not paraphrase the refusal: the pinned sentence
     // itself, byte for byte.
@@ -140,6 +151,14 @@ describe("the participant report", () => {
     const firstOk = report.indexOf("OK — ");
     expect(refusedAt).toBeGreaterThan(-1);
     expect(firstOk).toBeGreaterThan(refusedAt);
+    const sectionFive = report.slice(
+      report.indexOf("5. WHAT WAS WITHHELD"),
+      report.indexOf("6. WHAT THIS INSTRUMENT"),
+    );
+    expect(sectionFive).toContain("Withheld values, each with its reason:");
+    expect(sectionFive).toContain(
+      "Blinks detected: withheld — the calibration was refused",
+    );
   });
 
   it("renders the three absences distinctly, and never as a zero", () => {
