@@ -17,7 +17,11 @@ without touching it. The plan's merge gate is a corpus run on the
 owner's machine before this increment merges. Predicted before that
 run: the evaluation table matches docs/eyeblink8-result.txt digit
 for digit, because the new rows are written at export, after the
-measurement, and cannot reach the reducer. The suite is
+measurement, and cannot reach the reducer. Measured 29 August 2026
+on the owner's machine, from a checkout verified at this
+increment's own commit: identical, digit for digit — the headline,
+all eight per-clip rows, the glasses split and the coverage block.
+The gate passes. The suite is
 775 unit tests. Next on the ladder: increment 5, the Python verdict
 mirror.
 
