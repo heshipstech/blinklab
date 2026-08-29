@@ -1,0 +1,87 @@
+THE PILOT'S ADVERSARIAL PASS — PREDICTIONS, COMMITTED BEFORE ANY PROBE
+
+Written 29 August 2026, pilot increment 10 of 11
+(docs/assessment-pilot-plan.md). The subjects are the three pieces
+the pilot added: the verdict mirror (analysis/blinklab/verdict.py),
+the report renderer (src/core/participantReport.ts and its committed
+snapshots), and the researcher tool's pilot flag
+(analysis/blinklab/pilot.py, tools/validation_report.py). Synthetic
+files only; no real session file is opened during this pass, and the
+pass is written up before any is. Each probe's PREDICTION is
+committed in this section before the probe runs; outcomes are
+appended, dated, in the section below, and wrong predictions stay
+published — that is the point of writing them first.
+
+The stance, inherited from the round II pass: the failure worth
+hunting is the crash that is not a refusal. Every reader in this
+repository is supposed to refuse a damaged file BY NAME. A bare
+Python traceback on a hand-edited cell is a defect even when the
+file is garbage, because a traceback stops a cohort run without
+saying which participant's file to look at, and because "crashed"
+and "refused" must never be the same outcome.
+
+THE PROBES, AND WHAT I PREDICT
+
+P1. pose_valid_fraction: inf (and nan) in the session metadata.
+    The mirror computes float(raw) * 100 and hands it to
+    js_to_fixed, which quantizes a Decimal. Decimal(inf) cannot
+    quantize. PREDICTION: an InvalidOperation traceback, not a
+    VerdictError — a FINDING. The round II reader already treats
+    non-finite numbers as a refusal; the mirror missed that
+    discipline.
+
+P2. sampled_fps: inf in the session metadata. Same shape:
+    float("inf") passes both threshold comparisons and reaches
+    js_to_fixed. PREDICTION: the same InvalidOperation traceback —
+    the same finding from a second door.
+
+P3. calibration_spread_ratio: abc, with calibration_refused: false.
+    The mirror calls float(spread) inside the ok branch.
+    PREDICTION: a bare ValueError, not a VerdictError — a finding.
+
+P4. visibility_changes: abc. The mirror calls int(raw) directly.
+    PREDICTION: a bare ValueError — the same finding, third door.
+
+P5. marker_1_seconds: abc with markers: 2. float(first) in the
+    marked-window branch. PREDICTION: a bare ValueError — fourth
+    door.
+
+P6. markers: 2 with the marker_2_seconds row deleted. PREDICTION:
+    already handled — the mirror raises VerdictError naming the
+    lost row ("does not list them"). NOT a finding.
+
+P7. A report file that has been through a Windows editor: CRLF
+    line endings. The defect gate searches for each rebuilt line as
+    a substring without a trailing newline. PREDICTION: the search
+    still matches (the needle carries no newline), so CRLF alone
+    does NOT false-positive the defect gate. NOT a finding.
+
+P8. A report file from a DIFFERENT session renamed to a matching
+    stamp. PREDICTION: the defect gate catches it ONLY when the two
+    sessions' verdict sentences differ (a different spread ratio,
+    rate, width or count reaches the sentences); two sessions whose
+    eight findings are sentence-identical are indistinguishable by
+    content, and the stamp pairing is the only defence. Recorded as
+    a stated limitation, not fixable from file content alone.
+
+P9. A pseudonym whose text is "recall 99%, score 100" — chosen
+    words that collide with the table's restraint vocabulary.
+    PREDICTION: the pilot table prints it verbatim in the pseudonym
+    column. The restraint is about the TOOL's own figures, not about
+    quoting a participant's chosen name; recorded as intended
+    behaviour with the collision named, so the restraint test is
+    understood as a claim about the tool's vocabulary only.
+
+P10. The renderer, handed a withheld score AND a scoreWithheldReason
+    of null (a caller bug the types allow at the JS boundary).
+    PREDICTION: the report renders the fallback sentence naming the
+    absence of a reason as itself a defect worth reporting — the
+    branch exists and is covered; NOT a finding.
+
+WHAT A FINDING COSTS. P1 through P5, if confirmed, share one fix:
+the mirror reads every numeric metadata cell through one strict
+helper that raises VerdictError, by key, on anything that does not
+parse to a FINITE number — the round II discipline, applied to the
+mirror. The fix lands in this same increment, tests watched failing
+first, and the probes re-run green before the pass is written up as
+done.
