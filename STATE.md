@@ -1,3 +1,26 @@
+**THE SESSION VERDICT EXISTS, 29 August 2026 — pilot increment 3
+of 11.** src/core/sessionVerdict.ts assembles the eight per-session
+refusal surfaces the instrument already computes — calibration,
+evidence rate, interruptions, ruler fit, camera outcome, pose, model
+trust, marked window — into one pure derived object: each surface a
+closed status (ok, refused, warned, unknown, notApplicable) carrying
+its reason sentence, and a headline that takes the worst status,
+refused over warned over unknown, with notApplicable never leading.
+The refused-calibration finding IS the test-pinned refusal sentence,
+never a paraphrase; a zero-interruption session is asserted
+positively rather than implied by silence; pose states its fraction
+and judges nothing, because no benchmark of pose-valid fractions
+exists to choose a line from; a zero-width marked window refuses to
+score; and interruptions that cannot be attributed to a phase leave
+the window unknown, never silently ok. The verdict is DERIVED, NEVER
+EXPORTED — the export keeps carrying primary facts only, and
+increment 5 makes Python re-derive this same object with a
+byte-exact fixture pin. Fourteen tests watched failing first; nine
+mutations, one per surface plus the headline order, each went red on
+exactly one test and were restored. The suite is
+770 unit tests. Next on the ladder: increment 4, the new primary
+export facts.
+
 **THE CANNOT-SEE BLOCK IS GENERATED, 29 August 2026 — pilot
 increment 2 of 11.** src/core/cannotSee.ts is a committed, generated
 module: tools/cannotSeeBlock.mjs derives seven claims from the
@@ -1825,7 +1848,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 756 unit tests, 20 end to end tests all run in Chromium
+Test count: 770 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 
