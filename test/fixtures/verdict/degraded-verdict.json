@@ -1,0 +1,45 @@
+{
+  "surfaces": [
+    {
+      "surface": "calibration",
+      "status": "ok",
+      "sentence": "Calibration accepted: 301 samples, spread ratio 1.180, ceiling unbound."
+    },
+    {
+      "surface": "evidenceRate",
+      "status": "warned",
+      "sentence": "The evidence rate was 30.0 frames per second (the processing rate, because this browser does not report delivery): quick or shallow blinks can be missed below 60."
+    },
+    {
+      "surface": "interruptions",
+      "status": "warned",
+      "sentence": "The page was hidden or the machine slept 2 time(s) during this session; determinism is a claim about an uninterrupted measurement."
+    },
+    {
+      "surface": "rulerFit",
+      "status": "warned",
+      "sentence": "The ruler measured too long against this session's own resting eye, so blink durations run long."
+    },
+    {
+      "surface": "cameraOutcome",
+      "status": "ok",
+      "sentence": "The session ran and ended without a camera failure."
+    },
+    {
+      "surface": "pose",
+      "status": "ok",
+      "sentence": "Head pose was within the measurement limits for 62 percent of frames; frames outside the limits were refused individually as they happened."
+    },
+    {
+      "surface": "modelTrust",
+      "status": "ok",
+      "sentence": "The face model's output passed its trust checks."
+    },
+    {
+      "surface": "markedWindow",
+      "status": "ok",
+      "sentence": "The marked window spans 13.5 seconds, undisturbed."
+    }
+  ],
+  "headline": "warned"
+}

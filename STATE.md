@@ -1,3 +1,34 @@
+**PYTHON RE-DERIVES THE VERDICT, 29 August 2026 — pilot increment
+5 of 11.** analysis/blinklab/verdict.py derives the same
+SessionVerdict object the page assembles, from primary facts in the
+exported file alone, and three committed fixtures under
+test/fixtures/verdict/ — a GOOD, a REFUSED and a DEGRADED session,
+each a synthetic CSV beside its canonical verdict JSON — pin the
+two implementations byte for byte: the TypeScript side reproduces
+each JSON from literal inputs, the Python side from the CSV, so a
+mutation on either side lands on the same committed bytes (flipping
+one byte in a fixture went red in BOTH suites). The committed
+derivation rules: the evidence rate is the file's own sampled_fps
+or the pandas median of the per-second fps column; the ruler-fit
+verdict REPLAYS the page's fifteen-record dwell machine over the
+exported aperture and baseline columns, landing on the spoken word
+rather than the instantaneous ratio; camera outcome and model trust
+are structural, because a file with rows exists only through a
+session that ran and a trust gate that passed; and number
+formatting follows ECMAScript's toFixed, ties away from zero, not
+Python's banker's rounding — 62.5 is 63 on both sides, proven by
+test. The refusal sentence is pinned verbatim to the decision
+document from Python exactly as from TypeScript; the thresholds are
+read out of src/core/constants.ts rather than re-chosen; a file
+missing the visibility counter, a count row disagreeing with its
+timestamp rows, or a calibration flag that is not lowercase
+true/false refuses by name. The export stays clean of all of it: a
+guard test holds main.ts free of the verdict module until the
+report panel arrives, and must then narrow to the export path
+rather than vanish. The suite is
+779 unit tests and 246 Python tests of which 2 skip. Next on the
+ladder: increment 6, the in-page report panel.
+
 **THE EXPORT CARRIES THE PILOT'S PRIMARY FACTS, 29 August 2026 —
 pilot increment 4 of 11.** Five facts, all appended after every row
 a reader already parses: each interruption's timestamp on the record
@@ -1875,8 +1906,8 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 775 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 228 Python tests of which
+Test count: 779 unit tests, 20 end to end tests all run in Chromium
+in CI of which 2 rerun locally in WebKit, 246 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
