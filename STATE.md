@@ -1,3 +1,23 @@
+**THE CANNOT-SEE BLOCK IS GENERATED, 29 August 2026 — pilot
+increment 2 of 11.** src/core/cannotSee.ts is a committed, generated
+module: tools/cannotSeeBlock.mjs derives seven claims from the
+published record — the deterministic 67-of-408 miss with its 70.1
+percent closed-frame share, the unexplained two-phone difference,
+the instrument-adjusted PERCLOS, the censored blink log, the two
+birth-time calibration blind spots plus the short-ruler trade, the
+demographic unknowns, and the unvalidated score beside the DROZY
+null with its required citation. Every claim is quote-pinned against
+the exact sentence in its source document, whitespace-collapsed so a
+hard-wrapped source cannot fail its own pin; a missing number, a
+vanished sentence, or an absent citation refuses the build rather
+than emitting a weaker block. The resultsBlock discipline applies
+whole: a drift test compares the committed module byte for byte to
+the generator's output (hand-editing it went red and regenerating
+restored green), npm run cannotsee:write regenerates, and the
+emitted module is prettier-stable as generated. The suite is
+756 unit tests. Next on the ladder: increment 3, the SessionVerdict
+core.
+
 **THE ASSESSMENT PILOT IS PRE-DECIDED, 29 August 2026, and its
 framing collision is resolved in the open.** The roadmap's next
 milestone called itself "a workplace-alertness assessment a client
@@ -1805,7 +1825,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 751 unit tests, 20 end to end tests all run in Chromium
+Test count: 756 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 
