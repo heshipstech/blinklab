@@ -85,3 +85,39 @@ parse to a FINITE number — the round II discipline, applied to the
 mirror. The fix lands in this same increment, tests watched failing
 first, and the probes re-run green before the pass is written up as
 done.
+
+THE OUTCOMES, 29 August 2026, APPENDED AFTER THE PROBES RAN
+
+P1a (pose inf): CONFIRMED — InvalidOperation traceback, as
+predicted. P1b (pose nan): the prediction was WRONG, in the worse
+direction: no traceback at all. Decimal quantizes a quiet NaN
+through without trapping, so the mirror derived a calm verdict whose
+sentence read "NaN percent of frames". Nonsense rendered calmly is
+exactly the failure this repository exists to refuse, and a crash
+would have been the better bug. The wrong prediction stays here.
+
+P2 (sampled inf): CONFIRMED, the same InvalidOperation. P3, P4, P5
+(abc in a float cell, an int cell, a marker cell): CONFIRMED, bare
+ValueError tracebacks, no key named.
+
+P6 (deleted marker row): NOT a finding, as predicted — VerdictError
+naming the lost row. P7 (CRLF report): NOT a finding, as predicted —
+the substring search carries no newline and the defect gate still
+agrees. P10 (withheld score with a null reason): NOT a finding — the
+fallback sentence branch exists and its unit test covers it.
+
+P8 and P9 stand as recorded: the content-identical decoy report is
+undetectable from file content alone (the stamp pairing is the
+defence, stated as a limitation), and a pseudonym may quote any
+words it likes because the restraint is a claim about the tool's own
+vocabulary, not about participants' chosen names.
+
+THE FIX, landed in this same increment, tests watched failing
+first: every numeric metadata cell in the mirror now reads through
+one strict helper that refuses BY KEY on anything that does not
+parse to a finite number, and the fps column refuses on ANY
+non-finite cell — the first version of the fix checked only the
+median, and the probe's own inf hid in the tail of the sort while
+the median stayed finite at 60.0, which is one more small proof
+that a check on the summary is not a check on the data. All six
+probes re-ran green: VerdictError, key named, every time.

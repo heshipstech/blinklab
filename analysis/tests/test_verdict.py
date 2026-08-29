@@ -244,3 +244,58 @@ class TestDerivationRules:
         )
         assert finding["status"] == "warned"
         assert "processing rate" in finding["sentence"]
+
+
+class TestDamagedNumbers:
+    """The adversarial pass's findings, docs/pilot-adversarial.txt.
+
+    Probes P1-P5 confirmed the mirror crashed with bare tracebacks on
+    non-numeric metadata cells, and P1b found worse: a nan pose
+    fraction derived a verdict that calmly said "NaN percent". Every
+    numeric cell now goes through one strict reader that refuses, by
+    key, anything that does not parse to a finite number — crashed
+    and refused must never be the same outcome, and neither may
+    nonsense rendered calmly.
+    """
+
+    def test_a_non_finite_pose_fraction_refuses_by_key(self) -> None:
+        for poison in ("inf", "nan", "-inf"):
+            session = fixture_session("good")
+            session.metadata["pose_valid_fraction"] = poison
+            with pytest.raises(VerdictError, match="pose_valid_fraction"):
+                derive_verdict(session)
+
+    def test_a_non_finite_sampled_rate_refuses_by_key(self) -> None:
+        session = fixture_session("good")
+        session.metadata["sampled_fps"] = "inf"
+        with pytest.raises(VerdictError, match="sampled_fps"):
+            derive_verdict(session)
+
+    def test_a_non_numeric_spread_refuses_by_key(self) -> None:
+        session = fixture_session("good")
+        session.metadata["calibration_spread_ratio"] = "abc"
+        with pytest.raises(VerdictError, match="calibration_spread_ratio"):
+            derive_verdict(session)
+
+    def test_a_non_numeric_counter_refuses_by_key(self) -> None:
+        session = fixture_session("good")
+        session.metadata["visibility_changes"] = "abc"
+        with pytest.raises(VerdictError, match="visibility_changes"):
+            derive_verdict(session)
+
+    def test_a_non_numeric_marker_refuses_by_key(self) -> None:
+        session = fixture_session("good")
+        session.metadata["marker_1_seconds"] = "abc"
+        with pytest.raises(VerdictError, match="marker_1_seconds"):
+            derive_verdict(session)
+
+    def test_a_non_finite_fps_column_refuses_by_name(self) -> None:
+        # The fallback rate is the median of the per-second fps
+        # column; an inf cell would make the median inf and the
+        # sentence nonsense. The column is named like the keys are.
+        session = fixture_session("good")
+        session.metadata["sampled_fps"] = "unknown"
+        session.frame["fps"] = session.frame["fps"].astype(float)
+        session.frame.loc[0, "fps"] = float("inf")
+        with pytest.raises(VerdictError, match="fps"):
+            derive_verdict(session)

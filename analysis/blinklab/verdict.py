@@ -42,6 +42,7 @@ precedent.
 from __future__ import annotations
 
 import json
+import math
 from decimal import ROUND_HALF_UP, Decimal
 
 import pandas as pd
@@ -109,6 +110,47 @@ def _flag(metadata: dict[str, str], key: str) -> bool | None:
     return raw == "true"
 
 
+def _finite(metadata: dict[str, str], key: str) -> float:
+    """A numeric row, read strictly: a finite number or a refusal.
+
+    The adversarial pass (docs/pilot-adversarial.txt) found the
+    mirror crashing with bare tracebacks on non-numeric cells and,
+    worse, deriving a calm "NaN percent" sentence from a nan pose
+    fraction. Crashed and refused must never be the same outcome,
+    and neither may nonsense rendered calmly, so every numeric cell
+    comes through here and refuses BY KEY.
+    """
+    raw = metadata.get(key)
+    try:
+        value = float(raw) if raw is not None else math.nan
+    except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        raise VerdictError(
+            f"the metadata says {key}: {raw!r}, which is not a finite "
+            "number the exporter could have written — this file was "
+            "edited or damaged on its way here"
+        )
+    return value
+
+
+def _int_cell(metadata: dict[str, str], key: str) -> int:
+    """A whole-number row, read with the same strictness."""
+    raw = metadata.get(key)
+    try:
+        return int(raw) if raw is not None else _raise_int(key, raw)
+    except ValueError:
+        return _raise_int(key, raw)
+
+
+def _raise_int(key: str, raw: str | None) -> int:
+    raise VerdictError(
+        f"the metadata says {key}: {raw!r}, which is not the whole "
+        "number the exporter writes — this file was edited or damaged "
+        "on its way here"
+    )
+
+
 def _calibration(metadata: dict[str, str]) -> dict[str, str]:
     refused = _flag(metadata, "calibration_refused")
     if refused is None:
@@ -135,18 +177,30 @@ def _calibration(metadata: dict[str, str]) -> dict[str, str]:
     return _finding(
         "calibration",
         "ok",
-        f"Calibration accepted: {int(samples)} samples, spread ratio "
-        f"{js_to_fixed(float(spread), 3)}, ceiling unbound.",
+        f"Calibration accepted: "
+        f"{_int_cell(metadata, 'calibration_samples')} samples, "
+        f"spread ratio "
+        f"{js_to_fixed(_finite(metadata, 'calibration_spread_ratio'), 3)}, "
+        f"ceiling unbound.",
     )
 
 
 def _evidence(session: Session) -> dict[str, str]:
     sampled = session.metadata.get("sampled_fps")
     if sampled is not None and sampled != "unknown":
-        rate: float | None = float(sampled)
+        rate: float | None = _finite(session.metadata, "sampled_fps")
         source = "the measured rate of distinct frames read"
     else:
         fps = session.frame["fps"].dropna()
+        # ANY non-finite cell refuses, not just a non-finite median:
+        # an inf hiding in the tail of the sort leaves the median
+        # finite while the file is still damaged.
+        if not fps.map(math.isfinite).all():
+            raise VerdictError(
+                "the fps column holds a non-finite value, so no "
+                "evidence rate can be computed — this file was edited "
+                "or damaged on its way here"
+            )
         rate = None if fps.empty else float(fps.median())
         source = (
             "the processing rate, because this browser does not "
@@ -192,7 +246,7 @@ def _interruption_count(metadata: dict[str, str]) -> int:
             "the pilot's export contract and no verdict can be "
             "derived from it"
         )
-    count = int(raw)
+    count = _int_cell(metadata, "visibility_changes")
     listed = sum(
         1
         for key in metadata
@@ -296,7 +350,7 @@ def _pose(metadata: dict[str, str]) -> dict[str, str]:
             "unknown",
             "No pose-validity fraction was recorded for this session.",
         )
-    percent = js_to_fixed(float(raw) * 100, 0)
+    percent = js_to_fixed(_finite(metadata, "pose_valid_fraction") * 100, 0)
     return _finding(
         "pose",
         "ok",
@@ -319,7 +373,7 @@ def _model_trust() -> dict[str, str]:
 def _marked_window(
     metadata: dict[str, str], interruption_count: int
 ) -> dict[str, str]:
-    if int(metadata.get("markers", "0")) < 2:
+    if ("markers" in metadata and _int_cell(metadata, "markers") or 0) < 2:
         return _finding(
             "markedWindow",
             "notApplicable",
@@ -334,7 +388,9 @@ def _marked_window(
             "them — the exporter writes both from one array, so this "
             "file was edited or damaged on its way here"
         )
-    width = float(second) - float(first)
+    width = _finite(metadata, "marker_2_seconds") - _finite(
+        metadata, "marker_1_seconds"
+    )
     if width == 0:
         return _finding(
             "markedWindow",
@@ -347,7 +403,8 @@ def _marked_window(
     inside = (
         None
         if at_first is None or at_second is None
-        else int(at_second) - int(at_first)
+        else _int_cell(metadata, "marker_2_visibility_changes")
+        - _int_cell(metadata, "marker_1_visibility_changes")
     )
     if inside is None and interruption_count > 0:
         return _finding(
