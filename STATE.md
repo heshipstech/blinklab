@@ -1,3 +1,27 @@
+**THE TRACE'S NEUTRALITY PREDICTION IS BROKEN, 28 August 2026, and
+the data is quarantined.** The first trace-collecting corpus run did
+not reproduce the published table: recall 80.6 against 83.6, with
+every digit of the difference in ONE clip — 27122013_153916_cam read
+55 / 17 / 8 against the published 67 / 5 / 11 — while the other
+seven rows and every coverage count, that clip's included, are
+identical. The same 9,077 frames were measured; twelve fewer blinks
+were found among them. By docs/miss-trace.txt's own rule the finding
+is published before anything uses the data: the 46-blink autopsy
+does NOT run on these files. The only src change since the run that
+reproduced digit for digit is the trace increment itself — prime
+suspect, not yet a mechanism; the named candidate is the trace
+buffer's copy-per-frame allocation pattern, hundreds of megabytes of
+transient arrays across a long clip, though the longest clip
+reproducing exactly argues against its simplest form. Two
+single-clip discriminators are committed in the document before
+running: D1 re-runs the same build (55 again = deterministic, 67 =
+the determinism claim itself is broken and gains a dated caveat);
+D2 runs the pre-trace build (67 expected; 55 there would exonerate
+the diff and indict the files or environment). Eyeblink8's published
+result is unaffected — it derives from the rearm run and reproduced
+twice since — but no trace is used and no detector work starts until
+the discriminators answer.
+
 **THE PER-FRAME TRACE IS BUILT, 27 August 2026, and the owner's next
 corpus run collects the first data.** docs/miss-trace.txt decided the
 design before the code: clips only (a camera session never buffers
@@ -1295,7 +1319,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 27 August 2026. When this file changes, this stamp changes
+Stamped: 28 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
