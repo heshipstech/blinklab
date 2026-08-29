@@ -1,3 +1,35 @@
+**THE ASSESSMENT PILOT IS PRE-DECIDED, 29 August 2026, and its
+framing collision is resolved in the open.** The roadmap's next
+milestone called itself "a workplace-alertness assessment a client
+pays for", and the repository's own tested record forbids that in
+five places — the demo notice, the model card's out-of-scope list,
+the project non-goals, no-data-leaves-the-device, and the model
+card's sentence that the score has never been shown to correspond to
+sleepiness. The owner chose to reframe rather than amend: a RESEARCH
+PILOT, consented volunteers, participant-facing report, researcher
+table, no third party receiving anyone's numbers.
+docs/assessment-pilot-plan.md commits the design before code, built
+from three independent design passes judged against the repo's own
+constraints (the winner had zero constraint violations; the losers'
+fatal flaws are recorded so they are not re-invented): the pilot
+session IS a round II session read by the frozen reader unchanged; a
+rejected protocol-enforcing step-sequencer is recorded as rejected
+because the frozen plan says the steps do not change; one pure
+SessionVerdict object over the refusal surfaces, derived and never
+exported, re-derived by Python from primary facts with a byte-exact
+fixture pin, mismatch on a real session declared an instrument
+defect that stops the analysis; an interruption policy closing the
+live-session gap with positive zero-assertion; an eight-section
+participant report whose refusals lead, whose three absence
+renderings are pinned distinct, and whose cannot-see block is
+GENERATED from the five source documents plus the fresh ground truth
+and quote-pinned against them; the score report-only and out of the
+files; a voluntary pseudonym and no history ring; a researcher tool
+as a sibling of validation_report.py with round II's publication
+restraint. Eleven increments, one PR each, ending in the owner's
+dry run before any volunteer. Structural predictions committed,
+round II's included.
+
 **D1 ANSWERED AND THE SUSPENSION GUARD IS BUILT, 29 August 2026.**
 The discriminator ran with the machine kept awake: 67 / 5 / 11, the
 published row exactly, on the same trace build — so the anomaly
