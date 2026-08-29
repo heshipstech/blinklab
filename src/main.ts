@@ -170,6 +170,7 @@ import {
   type TimedSample,
 } from "./core/sparkline";
 import { coefficientOfVariation } from "./core/statistics";
+import { suspensionRefusal } from "./core/suspensionGuard";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
@@ -1070,6 +1071,11 @@ async function beginVideoFile(file: File): Promise<void> {
       modelClock = rebaseOnNextStamp(modelClock);
       clipStopRequested = false;
       stopClipButton.hidden = false;
+      // The suspension guard's baseline: the visibility counter's
+      // value when stepping begins, so only changes DURING the
+      // measurement can refuse it. src/core/suspensionGuard.ts is
+      // the account of why a delta refuses.
+      const visibilityChangesAtStepStart = visibilityChanges;
       const startedAtMs = performance.now();
       status.textContent = "Measuring every frame: 0 done.";
       // The heartbeat, issue #302. Progress only spoke when a frame
@@ -1141,6 +1147,19 @@ async function beginVideoFile(file: File): Promise<void> {
       // latter. It said "measured every frame: 6655 of them" about a
       // clip holding 12,626. Reporting the rate instead lets a person
       // check it against a clip they know: 60 here means 60 there.
+      // The suspension guard, before any other verdict: a run the
+      // environment interrupted cannot keep stepped mode's exactness
+      // promise, and on 28 August one that looked complete carried
+      // twelve quietly wrong blinks. This outranks even a deliberate
+      // early stop, because "export the CSV to keep what was
+      // measured" is not a safe promise about suspended data.
+      const suspension = suspensionRefusal(
+        visibilityChanges - visibilityChangesAtStepStart,
+      );
+      if (suspension !== null) {
+        setState({ kind: "clipFailed", reason: suspension });
+        return;
+      }
       const rate =
         summary.frameIntervalSeconds === null
           ? "unknown rate"
