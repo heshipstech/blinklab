@@ -123,6 +123,7 @@ import {
   deliveryMetadataRows,
   deviceMetadataRows,
   provenanceMetadataRows,
+  pseudonymMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
@@ -187,6 +188,9 @@ import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import {
   eraseStoredData,
+  loadPseudonym,
+  removePseudonym,
+  savePseudonym,
   loadCalibrationProfile,
   probeStoredData,
   saveCalibrationProfile,
@@ -197,6 +201,7 @@ import {
   eraseButtonLabel,
   eraseOutcomeMessage,
   hasSomethingToErase,
+  normalizePseudonym,
   storedSummary,
 } from "./core/storedData";
 import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
@@ -1562,6 +1567,54 @@ for (const item of STORED_ITEMS) {
   entry.append(name, document.createTextNode(`, ${item.why} (${item.key})`));
   storedList.append(entry);
 }
+// The pilot's voluntary identity (increment 8): a pseudonym exists
+// only when a person types one and saves it — never invented on
+// load, the deviceId refusal's principle. The input shows what is
+// stored; only the Save click ever writes.
+const pseudonymInput = document.createElement("input");
+pseudonymInput.type = "text";
+pseudonymInput.setAttribute("data-testid", "pseudonym-input");
+pseudonymInput.setAttribute("aria-label", "Pseudonym");
+pseudonymInput.placeholder = "Pseudonym (optional, yours to choose)";
+pseudonymInput.value = loadPseudonym() ?? "";
+const pseudonymSaveButton = document.createElement("button");
+pseudonymSaveButton.textContent = "Save pseudonym";
+pseudonymSaveButton.setAttribute("data-testid", "save-pseudonym");
+const pseudonymStatus = document.createElement("p");
+pseudonymStatus.dataset.testid = "pseudonym-status";
+pseudonymStatus.hidden = true;
+
+pseudonymSaveButton.addEventListener("click", () => {
+  const decision = normalizePseudonym(pseudonymInput.value);
+  if (decision.kind === "tooLong") {
+    // Refused, not truncated: a silent truncation would export a
+    // name the person never chose.
+    pseudonymStatus.textContent = `Not saved: a pseudonym is one short name, at most ${String(decision.limit)} characters.`;
+    pseudonymStatus.hidden = false;
+    return;
+  }
+  if (decision.kind === "none") {
+    removePseudonym();
+    pseudonymInput.value = "";
+    pseudonymStatus.textContent =
+      "Pseudonym removed. Your exports will carry no name.";
+    pseudonymStatus.hidden = false;
+    refreshStoredBox();
+    return;
+  }
+  const saved = savePseudonym(decision.value);
+  pseudonymInput.value = decision.value;
+  pseudonymStatus.textContent = saved
+    ? `Saved. Your exports will carry the name "${decision.value}".`
+    : "This browser refused the write, so the pseudonym was NOT saved and your exports will carry no name.";
+  pseudonymStatus.hidden = false;
+  refreshStoredBox();
+});
+
+const pseudonymRow = document.createElement("div");
+pseudonymRow.className = "button-row";
+pseudonymRow.append(pseudonymInput, pseudonymSaveButton);
+
 const eraseButton = document.createElement("button");
 eraseButton.dataset.testid = "erase-stored-data";
 const eraseStatus = document.createElement("p");
@@ -1596,6 +1649,9 @@ eraseButton.addEventListener("click", () => {
   eraseArmed = false;
   eraseStatus.textContent = eraseOutcomeMessage(after);
   eraseStatus.hidden = false;
+  // The erase takes the pseudonym too, and the input must not keep
+  // showing a name the storage no longer holds.
+  pseudonymInput.value = loadPseudonym() ?? "";
   // The profile was also held in memory, and leaving it there would
   // keep the heatmap reachable from data the visitor just asked this
   // page to forget. Remediation B5 was the same bug facing the other
@@ -2070,6 +2126,9 @@ function exportSession(): void {
         .querySelector('meta[name="build-commit"]')
         ?.getAttribute("content") ?? null,
     ),
+    // Only when one exists: declined identity is absence, never a
+    // row saying unknown (docs/assessment-pilot-plan.md).
+    ...pseudonymMetadataRows(loadPseudonym()),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -3789,6 +3848,8 @@ const storedDataBox = box(
   "Stored on this device",
   storedSummaryLabel,
   storedList,
+  pseudonymRow,
+  pseudonymStatus,
   eraseButton,
   eraseStatus,
 );

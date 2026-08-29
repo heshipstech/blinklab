@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PSEUDONYM_MAX_CHARS,
   STORED_ITEMS,
   type StorageProbe,
   eraseButtonLabel,
   eraseOutcomeMessage,
   hasSomethingToErase,
+  normalizePseudonym,
   storedSummary,
 } from "../../src/core/storedData";
 
@@ -132,5 +134,46 @@ describe("eraseOutcomeMessage", () => {
     const message = eraseOutcomeMessage(refused);
     expect(message).toContain("cannot be confirmed");
     expect(message).not.toContain("Erased.");
+  });
+});
+
+describe("the pseudonym, voluntary identity (pilot increment 8)", () => {
+  it("documents the pseudonym key beside the calibration keys", () => {
+    // One new stored key, created only by explicit action — never
+    // auto-generated on load — preserving the deviceId refusal's
+    // principle that identity is voluntary
+    // (docs/assessment-pilot-plan.md).
+    const item = STORED_ITEMS.find(
+      (entry) => entry.key === "blinklab-participant-pseudonym-v1",
+    );
+    expect(item).toBeDefined();
+    expect(item?.what.length).toBeGreaterThan(0);
+    expect(item?.why.length).toBeGreaterThan(0);
+  });
+
+  it("normalizes a pseudonym to one trimmed line, or says why not", () => {
+    // A newline would break the export's one-line metadata row, so
+    // whitespace collapses; an empty save is an explicit removal, not
+    // a pseudonym of nothing.
+    expect(normalizePseudonym("  maple 7  ")).toEqual({
+      kind: "ok",
+      value: "maple 7",
+    });
+    expect(normalizePseudonym("a\n b")).toEqual({ kind: "ok", value: "a b" });
+    expect(normalizePseudonym("   ")).toEqual({ kind: "none" });
+    expect(normalizePseudonym("")).toEqual({ kind: "none" });
+  });
+
+  it("refuses an over-long pseudonym rather than truncating it", () => {
+    // Truncating silently would export a name the person never chose.
+    const long = "x".repeat(PSEUDONYM_MAX_CHARS + 1);
+    expect(normalizePseudonym(long)).toEqual({
+      kind: "tooLong",
+      limit: PSEUDONYM_MAX_CHARS,
+    });
+    expect(normalizePseudonym("x".repeat(PSEUDONYM_MAX_CHARS))).toEqual({
+      kind: "ok",
+      value: "x".repeat(PSEUDONYM_MAX_CHARS),
+    });
   });
 });

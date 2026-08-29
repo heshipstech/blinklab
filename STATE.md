@@ -1,3 +1,25 @@
+**THE PSEUDONYM EXISTS ONLY BY CHOICE, 29 August 2026 — pilot
+increment 8 of 11.** One new stored key,
+blinklab-participant-pseudonym-v1, created only when a person types
+a name and clicks save — never invented on load, the deviceId
+refusal's principle that identity is voluntary. It joins
+STORED_ITEMS with its what and why (the stored list and the report's
+section 7 render it automatically, and the report snapshots caught
+the new line as a reviewable diff, exactly their job), it joins
+ALL_KEYS so the probe and the global erase picked it up without new
+code, and the unreadable-is-never-absent split holds: a read the
+browser refuses reports unreadable in the probe while the loader
+quietly shows no name. The normalizer keeps a pseudonym to one
+trimmed line (a newline would break the metadata row) and REFUSES an
+over-long paste with its reason rather than truncating — a silent
+truncation would export a name the person never chose; saving an
+empty field is the explicit removal. The export writes
+participant_pseudonym only when one exists: declined identity is
+absence, never a row saying unknown, because an unknown row would
+imply there was something to find. The suite is
+798 unit tests. Next on the ladder: increment 9, the researcher
+tool.
+
 **THE REPORT LEAVES AS A FILE, 29 August 2026 — pilot increment 7
 of 11.** The Report box gained an Export report button: the SAME
 bytes the panel shows, written as blinklab-report-<stamp>.txt in
@@ -1956,7 +1978,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 794 unit tests, 20 end to end tests all run in Chromium
+Test count: 798 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 246 Python tests of which
 2 skip
 

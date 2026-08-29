@@ -32,7 +32,46 @@ export const STORED_ITEMS: readonly StoredItem[] = [
     what: "The measurements that profile was solved from",
     why: "so the profile can be re-solved without sitting through the nine dots again",
   },
+  // The pilot's voluntary identity (docs/assessment-pilot-plan.md,
+  // increment 8): created only when a person types one and saves it,
+  // never invented on load — the deviceId refusal's principle. It
+  // enters the export as a row only when it exists.
+  {
+    key: "blinklab-participant-pseudonym-v1",
+    what: "Your chosen pseudonym",
+    why: "so your exported files can carry a name you picked, and only if you picked one",
+  },
 ];
+
+/**
+ * The longest pseudonym the page will save. Not a benchmark-derived
+ * number: a pseudonym is one metadata line a human reads, so anything
+ * longer is almost certainly a paste error, and it is REFUSED with
+ * its reason rather than truncated — a silent truncation would export
+ * a name the person never chose.
+ */
+export const PSEUDONYM_MAX_CHARS = 64;
+
+export type PseudonymDecision =
+  | { kind: "ok"; value: string }
+  | { kind: "none" }
+  | { kind: "tooLong"; limit: number };
+
+/**
+ * One trimmed line, or the reason there is none. Whitespace collapses
+ * because a newline would break the export's one-line metadata row;
+ * an empty save is an explicit removal, not a pseudonym of nothing.
+ */
+export function normalizePseudonym(raw: string): PseudonymDecision {
+  const value = raw.replace(/\s+/g, " ").trim();
+  if (value === "") {
+    return { kind: "none" };
+  }
+  if (value.length > PSEUDONYM_MAX_CHARS) {
+    return { kind: "tooLong", limit: PSEUDONYM_MAX_CHARS };
+  }
+  return { kind: "ok", value };
+}
 
 /**
  * The result of asking the browser what it is holding.
