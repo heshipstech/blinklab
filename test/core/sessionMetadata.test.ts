@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { FeatureRecord } from "../../src/core/featureRecord";
 import {
   IRIS_SAMPLE_CAP,
+  PROTOCOL_ID,
   deviceMetadataRows,
   faceDetectedFraction,
   medianIrisWidthPx,
   observedDurationSeconds,
+  provenanceMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
@@ -146,11 +148,19 @@ describe("what the session itself reveals", () => {
 describe("session rows", () => {
   const records = [record(0, true), record(1000, true), record(2000, false)];
   const FRAME: MeasurementFrame = { widthPx: 1920, heightPx: 1080 };
+  // A session whose pose gate never ran: no trusted face, no frames
+  // to judge. The fraction must read unknown, never zero.
+  const NO_POSE = { gated: 0, valid: 0 };
 
   it("carries the numbers that make two devices comparable", () => {
-    const rows = sessionMetadataRows(records, [30, 40, 50], [], 0, FRAME).join(
-      "\n",
-    );
+    const rows = sessionMetadataRows(
+      records,
+      [30, 40, 50],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
     expect(rows).toContain("# observed_duration_seconds: 2.000");
     expect(rows).toContain("# records: 3");
     expect(rows).toContain("# face_detected_fraction: 0.667");
@@ -165,15 +175,84 @@ describe("session rows", () => {
       records,
       [30],
       [
-        { atMs: 42000, index: 1 },
-        { atMs: 55500, index: 2 },
+        { atMs: 42000, index: 1, visibilityChangesAt: 0 },
+        { atMs: 55500, index: 2, visibilityChangesAt: 0 },
       ],
-      0,
+      [],
       FRAME,
+      NO_POSE,
     ).join("\n");
     expect(rows).toContain("# markers: 2");
     expect(rows).toContain("# marker_1_seconds: 42.000");
     expect(rows).toContain("# marker_2_seconds: 55.500");
+  });
+
+  it("writes the visibility counter at each marker, so an interruption can be placed", () => {
+    // The counter alone says the record has a gap somewhere; the
+    // counter AT each marker says which side of the marks it sits on.
+    // That attribution is what lets an analysis decide whether the
+    // marked window itself was disturbed, instead of shrugging over
+    // the whole session (docs/assessment-pilot-plan.md).
+    const rows = sessionMetadataRows(
+      records,
+      [30],
+      [
+        { atMs: 42000, index: 1, visibilityChangesAt: 0 },
+        { atMs: 55500, index: 2, visibilityChangesAt: 2 },
+      ],
+      [43000, 50000],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
+    expect(rows).toContain("# marker_1_visibility_changes: 0");
+    expect(rows).toContain("# marker_2_visibility_changes: 2");
+  });
+
+  it("writes each interruption's timestamp, and derives the count from the same list", () => {
+    // One source of truth: the count row and the timestamp rows come
+    // from the one array, so they cannot disagree — the same argument
+    // that keeps the verdict out of the export.
+    const rows = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [12500, 80000],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
+    expect(rows).toContain("# visibility_changes: 2");
+    expect(rows).toContain("# interruption_1_seconds: 12.500");
+    expect(rows).toContain("# interruption_2_seconds: 80.000");
+    const quiet = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
+    expect(quiet).toContain("# visibility_changes: 0");
+    expect(quiet).not.toContain("interruption_");
+  });
+
+  it("reports the pose-valid fraction, and absence is unknown, never zero", () => {
+    const rows = sessionMetadataRows(records, [30], [], [], FRAME, {
+      gated: 4,
+      valid: 3,
+    }).join("\n");
+    expect(rows).toContain("# pose_valid_fraction: 0.750");
+    const ungated = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
+    // A gate that never ran judged nothing. Rendering that as 0.000
+    // would read as "every frame failed", the exact opposite.
+    expect(ungated).toContain("# pose_valid_fraction: unknown");
+    expect(ungated).not.toContain("# pose_valid_fraction: 0");
   });
 
   it("admits when the iris sample was truncated", () => {
@@ -181,11 +260,18 @@ describe("session rows", () => {
     // the file rather than looking complete. Without this the median
     // would silently describe the opening stretch of a long session.
     const capped = new Array(IRIS_SAMPLE_CAP).fill(30) as number[];
-    const rows = sessionMetadataRows(records, capped, [], 0, FRAME).join("\n");
+    const rows = sessionMetadataRows(
+      records,
+      capped,
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
     expect(rows).toContain("median_iris_width_note");
     expect(rows).toContain("not sampled");
     expect(
-      sessionMetadataRows(records, [30], [], 0, FRAME).join("\n"),
+      sessionMetadataRows(records, [30], [], [], FRAME, NO_POSE).join("\n"),
     ).not.toContain("median_iris_width_note");
   });
 
@@ -195,21 +281,50 @@ describe("session rows", () => {
     // understated the real resolution by exactly the display scale and
     // said "px" without saying whose. It misled its own author within a
     // day of being added.
-    const rows = sessionMetadataRows(records, [26], [], 0, FRAME).join("\n");
+    const rows = sessionMetadataRows(
+      records,
+      [26],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
     expect(rows).toContain("# measurement_frame: 1920x1080");
     expect(rows).toContain("# median_iris_width_px: 26.0");
   });
 
   it("says the frame is unknown rather than guessing at the canvas", () => {
     expect(
-      sessionMetadataRows(records, [26], [], 0, null).join("\n"),
+      sessionMetadataRows(records, [26], [], [], null, NO_POSE).join("\n"),
     ).toContain("# measurement_frame: unknown");
   });
 
   it("survives a session that recorded nothing", () => {
-    const rows = sessionMetadataRows([], [], [], 0, null).join("\n");
+    const rows = sessionMetadataRows([], [], [], [], null, NO_POSE).join("\n");
     expect(rows).toContain("# observed_duration_seconds: unknown");
     expect(rows).toContain("# records: 0");
     expect(rows).toContain("# median_iris_width_px: unknown");
+  });
+});
+
+describe("provenance rows", () => {
+  it("names the protocol document and its date", () => {
+    // A pilot file must say which protocol produced it, from the file
+    // alone — a reader holding six CSVs and two app versions cannot
+    // reconstruct that from anywhere else.
+    const rows = provenanceMetadataRows("abc1234").join("\n");
+    expect(rows).toContain(`# protocol: ${PROTOCOL_ID}`);
+    expect(PROTOCOL_ID).toContain("assessment-pilot-plan");
+    expect(PROTOCOL_ID).toContain("29 August 2026");
+  });
+
+  it("carries the app commit, and says unknown when the page has none", () => {
+    // The build already stamps its commit into a meta tag
+    // (REMEDIATION E2); this row is the same fact travelling INSIDE
+    // the file, so a CSV separated from its page keeps its provenance.
+    expect(provenanceMetadataRows("abc1234")).toContain(
+      "# app_commit: abc1234",
+    );
+    expect(provenanceMetadataRows(null)).toContain("# app_commit: unknown");
   });
 });

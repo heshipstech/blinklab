@@ -113,6 +113,7 @@ import {
   calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
+  provenanceMetadataRows,
   sessionMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
@@ -442,6 +443,15 @@ let irisWidthSamples: number[] = [];
 let measurementFrame: MeasurementFrame | null = null;
 let sessionMarkers: SessionMarker[] = [];
 let visibilityChanges = 0;
+// When each visibility change happened, on the record clock. The
+// export's count row derives from this array's length so the two can
+// never disagree; the counter above stays for the suspension guard.
+let interruptionTimesMs: number[] = [];
+// How many frames the pose gate judged, and how many it passed. The
+// per-frame refusals already happened on screen; these two counts let
+// the export state the session-level fraction as a primary fact.
+let poseGateFrames = 0;
+let poseValidFrames = 0;
 // How many frames the blink gate ACCEPTED. Zero after a whole clip means
 // the frame rate never once cleared the floor, which is a refusal and not
 // a failure, and the two must not read the same. Issue #192.
@@ -848,6 +858,9 @@ function resetSession(): void {
   measurementFrame = null;
   sessionMarkers = [];
   visibilityChanges = 0;
+  interruptionTimesMs = [];
+  poseGateFrames = 0;
+  poseValidFrames = 0;
   refreshMarkButton();
   framesBlinkMeasurable = 0;
   currentFrameIndex = null;
@@ -2016,10 +2029,20 @@ function exportSession(): void {
       featureRecords,
       irisWidthSamples,
       sessionMarkers,
-      visibilityChanges,
+      interruptionTimesMs,
       measurementFrame,
+      { gated: poseGateFrames, valid: poseValidFrames },
     ),
     ...kssMetadataRows(kssBefore, kssAfter),
+    // Appended last: new keys after every row a reader already
+    // parses. The commit comes from the meta tag the build stamps
+    // (REMEDIATION E2), so the file and the page can never claim two
+    // different origins.
+    ...provenanceMetadataRows(
+      document
+        .querySelector('meta[name="build-commit"]')
+        ?.getAttribute("content") ?? null,
+    ),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -2434,6 +2457,10 @@ function processFrame(
         );
         const gate = poseValidity(pose);
         gateLabel.textContent = poseValidityMessage(gate);
+        poseGateFrames += 1;
+        if (gate.kind === "valid") {
+          poseValidFrames += 1;
+        }
 
         if (gate.kind === "valid") {
           const rightEye = eyeLandmarksFromFace(face, RIGHT_EYE_EAR_INDICES);
@@ -3314,7 +3341,11 @@ markButton.addEventListener("click", () => {
   const atMs = lastRecordAtMs ?? 0;
   sessionMarkers = [
     ...sessionMarkers,
-    { atMs, index: sessionMarkers.length + 1 },
+    {
+      atMs,
+      index: sessionMarkers.length + 1,
+      visibilityChangesAt: visibilityChanges,
+    },
   ];
   refreshMarkButton();
 });
@@ -3324,6 +3355,10 @@ markButton.addEventListener("click", () => {
 // switches lets the analysis tell one from the other.
 document.addEventListener("visibilitychange", () => {
   visibilityChanges += 1;
+  // Stamped on the same clock the records use, like a marker: the
+  // last record is the last moment the measurement was alive, which
+  // is where the gap this change opened actually sits in the file.
+  interruptionTimesMs = [...interruptionTimesMs, lastRecordAtMs ?? 0];
 });
 
 const exportRow = document.createElement("div");
