@@ -64,3 +64,49 @@ first; the buffer and button wire into the clip path only; the
 corpus runner saves the third file beside the two it already saves.
 The owner's corpus run collects the first traces and scores the
 prediction above.
+
+THE PREDICTION IS BROKEN, 28 August 2026, AND THE TRACE DATA IS
+QUARANTINED. The first trace-collecting run did NOT reproduce the
+published table: recall 80.6 percent against 83.6, and every digit
+of the difference sits in one clip, 27122013_153916_cam — 55 found,
+17 missed, 8 false against the published 67 / 5 / 11 — while the
+other seven rows and EVERY coverage count, that clip's included, are
+identical. The same 9,077 frames were measured and twelve fewer
+blinks were found among them. By this document's own rule, the trace
+is not yet the pure export it claimed to be, this finding is
+published before anything uses the data, and the 46-blink autopsy
+does NOT run on these files.
+
+WHAT IS KNOWN AND WHAT IS NOT. The only src change between the run
+that reproduced the table digit for digit (27 August, the refusal
+build) and this one is the trace increment itself, which makes it
+the prime suspect — but suspicion is not a mechanism. One candidate
+is named now so the discriminators can be read against it: the trace
+buffer copies itself once per frame, an O(n squared) allocation
+pattern producing on the order of hundreds of megabytes of transient
+arrays across a nine-thousand-frame clip, and memory pressure at
+that scale could plausibly disturb the browser's frame delivery in
+ways the stepper's fallback paths then measure. That is a story, not
+a finding, and the longest clip (15,784 frames) reproducing exactly
+argues against its simplest form.
+
+THE DISCRIMINATORS, decided before they run, one clip each
+(27122013_153916_cam, the clip that moved):
+
+  D1, same build, run again. If it prints 55 / 17 / 8 again, the
+  difference is DETERMINISTIC and the trace diff causes it — go to
+  D2 to prove the direction. If it prints 67 / 5 / 11, the
+  measurement is NONDETERMINISTIC under the trace build, the
+  determinism claim gains a dated caveat everywhere it is published,
+  and the mechanism hunt starts from resource sensitivity rather
+  than from the diff.
+
+  D2, the build at the commit before the trace merged, same clip.
+  Expected 67 / 5 / 11, because that code path produced it twice.
+  If D1 reproduced 55 and D2 produces 67, the trace increment
+  changed the measurement and is reverted or fixed before any trace
+  is used; if D2 ALSO produces 55, the files or environment changed
+  under both builds and the diff is exonerated.
+
+Whatever the discriminators print is appended below, and this
+section is not edited.
