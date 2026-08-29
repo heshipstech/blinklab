@@ -1,0 +1,89 @@
+BLINKLAB PARTICIPANT REPORT
+
+1. WHAT THIS IS
+
+Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.
+
+This report belongs to a research pilot session, run with your consent to test the instrument, not you. The alertness score is an unvalidated heuristic: it has never been shown to correspond to how sleepy anyone actually is.
+
+2. WAS THIS MEASUREMENT SOUND?
+
+Headline: REFUSED.
+
+A refused calibration is a result, not a failure.
+REFUSED — calibration: Calibration was refused: while learning your baseline, the widest eye openings disagreed with the middle ones by more than the instrument allows, which usually means blinks or a squint contaminated the learning period. Numbers that depend on the blink line are withheld rather than guessed. Restart the camera and keep your eyes comfortably open for the first thirty seconds.
+UNKNOWN — rulerFit: The ruler-fit check had not settled by the end of this session.
+OK — evidenceRate: The evidence rate was 60.0 frames per second (the measured rate of distinct frames read), above the 60 risk band.
+OK — interruptions: The page stayed visible throughout the measurement.
+OK — cameraOutcome: The session ran and ended without a camera failure.
+OK — pose: Head pose was within the measurement limits for 98 percent of frames; frames outside the limits were refused individually as they happened.
+OK — modelTrust: The face model's output passed its trust checks.
+OK — markedWindow: The marked window spans 13.5 seconds, undisturbed.
+
+3. WHAT WAS MEASURED
+
+Blinks detected: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+Blink rate: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+PERCLOS (instrument-adjusted threshold, not comparable to published PERCLOS): withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+Long closures: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+
+Alertness score: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+The alertness score is an unvalidated heuristic: it has never been shown to correspond to how sleepy anyone actually is.
+
+4. CONDITIONS
+
+Camera: Fixture Cam
+Sampled rate (distinct frames this page read): 60.0 frames per second
+KSS before: 3 of 9
+KSS after: skipped
+Markers (stamped on the record clock, about one second of slack): 2
+
+5. WHAT WAS WITHHELD, REFUSED, OR TRUNCATED
+
+Every surface, and what it decided:
+  calibration: REFUSED
+  evidenceRate: OK
+  interruptions: OK
+  rulerFit: UNKNOWN
+  cameraOutcome: OK
+  pose: OK
+  modelTrust: OK
+  markedWindow: OK
+
+Withheld values, each with its reason:
+  Blinks detected: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+  Blink rate: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+  PERCLOS (instrument-adjusted threshold, not comparable to published PERCLOS): withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+  Long closures: withheld — the calibration was refused, so every number that depends on the blink line is withheld rather than guessed
+
+6. WHAT THIS INSTRUMENT CANNOT SEE
+
+- Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. The mechanism is unexplained.
+  (docs/eyeblink8-result.txt; docs/miss-character.txt)
+- Whether another device would agree. Two phones measured at the same evidence rate found different blinks, and that difference is unexplained, so numbers from this device are not comparable to numbers from another.
+  (docs/validation-dry-run.txt; docs/blink-sample-rate.txt)
+- A PERCLOS anyone else would recognise. The eyes-closed share here uses an instrument-adjusted threshold, not the literature's, and is not comparable to a PERCLOS figure from another system.
+  (MODEL_CARD.md)
+- Its own misses. A missed blink writes no row, so the blink log is censored and cannot count what it failed to see.
+  (docs/validation-round.txt)
+- Two calibration failures invisible at birth: a learning window that reads uniformly high (the future is not available at calibration time), and a ruler born short through a squint, visible only afterwards as over_resting below 1.0 — and a ruler born short stays short, by the freeze's own stated trade.
+  (docs/calibration-refusal.txt; docs/baseline-freeze.txt)
+- Who it fails for. The face model has not been tested across age, skin tone, eye shape, visual impairment or eyewear here, and it would be dishonest to imply equal performance.
+  (MODEL_CARD.md)
+- Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016..
+  (MODEL_CARD.md; docs/drozy-result.txt)
+
+7. YOUR DATA AND YOUR CONTROL
+
+Nothing you recorded left this device. The exports exist only where you saved them, and only you can send them anywhere.
+
+Nothing is stored on this device.
+- Your gaze calibration profile (so a calibration survives a reload and works from the first frame of your next visit).
+- The measurements that profile was solved from (so the profile can be re-solved without sitting through the nine dots again).
+The erase control on the page deletes the stored items above.
+
+8. PROVENANCE
+
+Protocol: docs/assessment-pilot-plan.md, 29 August 2026
+App commit: abc1234
+Generated on this device: 29 August 2026, 23:00

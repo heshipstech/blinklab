@@ -441,6 +441,8 @@ stays above it.
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Gate    | `The session has ended; the report is ready.` or `The report renders only after the session ends — stop the camera first. A participant who reads it mid-session has learned what the instrument counts.`                                       |
 | Show    | Button, `Show the report`. Disabled unless `reportAvailable` in `core/participantReport.ts` says the session has ended with records — pinned by test: never while `running`, `requesting` or `loadingClip`, and never with nothing recorded     |
+| Export  | Button, `Export report`. Same gate as Show. Downloads `blinklab-report-<stamp>.txt` — the SAME bytes the panel shows, plain text, filename refused by `.gitignore` and read by `tools/exportGuard.mjs` like every other download                |
+| Status  | Text under the buttons. Empty until an export, then `Exported blinklab-report-<stamp>.txt. Check your downloads.`                                                                                                                               |
 | Report  | A `<pre>` holding the whole plain-text report from `buildParticipantReport` in `core/participantReport.ts`: eight numbered sections, refusals first, the three absence words (`withheld — reason`, `unknown`, `not applicable`) pinned distinct |
 
 **The report is plain text on purpose.** One pure builder produces the

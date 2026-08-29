@@ -1,0 +1,90 @@
+BLINKLAB PARTICIPANT REPORT
+
+1. WHAT THIS IS
+
+Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.
+
+This report belongs to a research pilot session, run with your consent to test the instrument, not you. The alertness score is an unvalidated heuristic: it has never been shown to correspond to how sleepy anyone actually is.
+
+2. WAS THIS MEASUREMENT SOUND?
+
+Headline: WARNED.
+
+WARNED — evidenceRate: The evidence rate was 30.0 frames per second (the processing rate, because this browser does not report delivery): quick or shallow blinks can be missed below 60.
+WARNED — interruptions: The page was hidden or the machine slept 2 time(s) during this session; determinism is a claim about an uninterrupted measurement.
+WARNED — rulerFit: The ruler measured too long against this session's own resting eye, so blink durations run long.
+OK — calibration: Calibration accepted: 301 samples, spread ratio 1.129, ceiling unbound.
+OK — cameraOutcome: The session ran and ended without a camera failure.
+OK — pose: Head pose was within the measurement limits for 62 percent of frames; frames outside the limits were refused individually as they happened.
+OK — modelTrust: The face model's output passed its trust checks.
+OK — markedWindow: The marked window spans 13.5 seconds, undisturbed.
+
+3. WHAT WAS MEASURED
+
+Blinks detected: 14
+Blink rate: 12.0 per minute
+PERCLOS (instrument-adjusted threshold, not comparable to published PERCLOS): 0.04
+Long closures: 0
+
+Alertness score: 85 of 100.
+The working — 100 minus the named penalties:
+  Eyes-closed share: -15 points
+  Long closures: -0 points
+  Blink duration: unavailable — absence is not scored as alertness
+  Sluggish lids: -0 points
+The alertness score is an unvalidated heuristic: it has never been shown to correspond to how sleepy anyone actually is.
+
+4. CONDITIONS
+
+Camera: Fixture Cam
+Sampled rate (distinct frames this page read): 60.0 frames per second
+KSS before: 3 of 9
+KSS after: skipped
+Markers (stamped on the record clock, about one second of slack): 2
+
+5. WHAT WAS WITHHELD, REFUSED, OR TRUNCATED
+
+Every surface, and what it decided:
+  calibration: OK
+  evidenceRate: WARNED
+  interruptions: WARNED
+  rulerFit: WARNED
+  cameraOutcome: OK
+  pose: OK
+  modelTrust: OK
+  markedWindow: OK
+
+Truncations, declared here exactly as the file declares them:
+  iris width: computed over the first 20000 frames, later frames not sampled
+
+6. WHAT THIS INSTRUMENT CANNOT SEE
+
+- Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. The mechanism is unexplained.
+  (docs/eyeblink8-result.txt; docs/miss-character.txt)
+- Whether another device would agree. Two phones measured at the same evidence rate found different blinks, and that difference is unexplained, so numbers from this device are not comparable to numbers from another.
+  (docs/validation-dry-run.txt; docs/blink-sample-rate.txt)
+- A PERCLOS anyone else would recognise. The eyes-closed share here uses an instrument-adjusted threshold, not the literature's, and is not comparable to a PERCLOS figure from another system.
+  (MODEL_CARD.md)
+- Its own misses. A missed blink writes no row, so the blink log is censored and cannot count what it failed to see.
+  (docs/validation-round.txt)
+- Two calibration failures invisible at birth: a learning window that reads uniformly high (the future is not available at calibration time), and a ruler born short through a squint, visible only afterwards as over_resting below 1.0 — and a ruler born short stays short, by the freeze's own stated trade.
+  (docs/calibration-refusal.txt; docs/baseline-freeze.txt)
+- Who it fails for. The face model has not been tested across age, skin tone, eye shape, visual impairment or eyewear here, and it would be dishonest to imply equal performance.
+  (MODEL_CARD.md)
+- Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016..
+  (MODEL_CARD.md; docs/drozy-result.txt)
+
+7. YOUR DATA AND YOUR CONTROL
+
+Nothing you recorded left this device. The exports exist only where you saved them, and only you can send them anywhere.
+
+This browser will not let the page read its own storage, so what is stored here cannot be listed or erased from this page.
+- Your gaze calibration profile (so a calibration survives a reload and works from the first frame of your next visit).
+- The measurements that profile was solved from (so the profile can be re-solved without sitting through the nine dots again).
+The erase control on the page deletes the stored items above.
+
+8. PROVENANCE
+
+Protocol: docs/assessment-pilot-plan.md, 29 August 2026
+App commit: unknown
+Generated on this device: 29 August 2026, 23:00

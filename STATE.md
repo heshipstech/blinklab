@@ -1,3 +1,21 @@
+**THE REPORT LEAVES AS A FILE, 29 August 2026 — pilot increment 7
+of 11.** The Report box gained an Export report button: the SAME
+bytes the panel shows, written as blinklab-report-<stamp>.txt in
+plain text, because one pure builder feeding both renderings is
+what makes them impossible to disagree. Guards and filename landed
+in the same increment that created the download, in the watched
+order: the download call went in first, exportsAreIgnored went red
+on the unregistered name exactly as it was built to, and the
+.gitignore pattern turned it green — the third export could not
+repeat the blink log's near-miss. The GOOD, REFUSED and DEGRADED
+sessions now have their FULL renderings committed under
+test/fixtures/report/ as file snapshots, so any wording change
+anywhere in the eight sections shows up as a reviewable diff; the
+refused rendering leads with the pinned sentence and withholds
+every ruler-dependent line with its reason, exactly as the plan
+ordered. The suite is
+794 unit tests. Next on the ladder: increment 8, the pseudonym.
+
 **THE REPORT PANEL EXISTS, 29 August 2026 — pilot increment 6 of 11.** src/core/participantReport.ts builds the eight-section
 participant report as ONE plain-text rendering, pure, so the
 in-page panel and increment 7's exported file are the same bytes: a
@@ -1938,7 +1956,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 791 unit tests, 20 end to end tests all run in Chromium
+Test count: 794 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 246 Python tests of which
 2 skip
 

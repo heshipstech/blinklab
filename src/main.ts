@@ -2293,6 +2293,16 @@ const reportButton = document.createElement("button");
 reportButton.textContent = "Show the report";
 reportButton.setAttribute("data-testid", "show-report");
 reportButton.disabled = true;
+// The file half of the one rendering (increment 7): the same bytes
+// the panel shows, saved as plain text a reviewer can diff. The
+// filename is registered in .gitignore and read by exportGuard like
+// every other download, in the same increment that created it.
+const exportReportButton = document.createElement("button");
+exportReportButton.textContent = "Export report";
+exportReportButton.setAttribute("data-testid", "export-report");
+exportReportButton.disabled = true;
+const reportStatus = document.createElement("p");
+reportStatus.textContent = "";
 const reportPre = document.createElement("pre");
 reportPre.className = "participant-report";
 reportPre.setAttribute("data-testid", "participant-report");
@@ -2301,12 +2311,31 @@ reportPre.hidden = true;
 function refreshReportGate(): void {
   const available = reportAvailable(state.kind, featureRecords.length);
   reportButton.disabled = !available;
+  exportReportButton.disabled = !available;
   reportGateLabel.textContent = available
     ? "The session has ended; the report is ready."
     : "The report renders only after the session ends — stop the " +
       "camera first. A participant who reads it mid-session has " +
       "learned what the instrument counts.";
 }
+
+exportReportButton.addEventListener("click", () => {
+  // The same gate as showing it, re-checked at click time.
+  if (!reportAvailable(state.kind, featureRecords.length)) {
+    return;
+  }
+  const stamp = new Date(sessionStartedAtEpochMs ?? Date.now())
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("Z", "");
+  reportStatus.textContent = exportedMessage(
+    downloadTextFile(
+      `blinklab-report-${stamp}.txt`,
+      participantReportText(),
+      "text/plain",
+    ),
+  );
+});
 
 reportButton.addEventListener("click", () => {
   // Assembled at click time from the session that just ended, and
@@ -3788,7 +3817,14 @@ columnB.append(sessionBox, gazeBox, eyesBox, blinksBox);
 // After storage, deliberately: the report is read once the session
 // is over, and putting it past the erase control keeps every
 // mid-session control above it.
-const reportBox = box("Report", reportGateLabel, reportButton, reportPre);
+const reportBox = box(
+  "Report",
+  reportGateLabel,
+  reportButton,
+  exportReportButton,
+  reportStatus,
+  reportPre,
+);
 
 const grid = document.createElement("div");
 grid.className = "grid";
