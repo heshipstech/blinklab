@@ -123,9 +123,7 @@ def _calibration(metadata: dict[str, str]) -> dict[str, str]:
     # wrong sentence.
     _flag(metadata, "calibration_ceiling_bound")
     if refused:
-        return _finding(
-            "calibration", "refused", CALIBRATION_REFUSED_SENTENCE
-        )
+        return _finding("calibration", "refused", CALIBRATION_REFUSED_SENTENCE)
     samples = metadata.get("calibration_samples")
     spread = metadata.get("calibration_spread_ratio")
     if samples is None or spread is None:
@@ -196,8 +194,9 @@ def _interruption_count(metadata: dict[str, str]) -> int:
         )
     count = int(raw)
     listed = sum(
-        1 for key in metadata if key.startswith("interruption_")
-        and key.endswith("_seconds")
+        1
+        for key in metadata
+        if key.startswith("interruption_") and key.endswith("_seconds")
     )
     if listed and listed != count:
         raise VerdictError(
@@ -264,8 +263,7 @@ def _ruler_fit(session: Session) -> dict[str, str]:
         return _finding(
             "rulerFit",
             "unknown",
-            "The ruler-fit check had not settled by the end of this "
-            "session.",
+            "The ruler-fit check had not settled by the end of this session.",
         )
     if shown == "tooLong":
         return _finding(

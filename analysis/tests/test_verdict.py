@@ -239,7 +239,8 @@ class TestDerivationRules:
         assert flipped["status"] == "warned"
 
     def test_the_fallback_evidence_rate_names_its_source(self) -> None:
-        finding = surface(derive_verdict(fixture_session("degraded")),
-                          "evidenceRate")
+        finding = surface(
+            derive_verdict(fixture_session("degraded")), "evidenceRate"
+        )
         assert finding["status"] == "warned"
         assert "processing rate" in finding["sentence"]
