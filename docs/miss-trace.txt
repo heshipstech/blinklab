@@ -110,3 +110,20 @@ THE DISCRIMINATORS, decided before they run, one clip each
 
 Whatever the discriminators print is appended below, and this
 section is not edited.
+
+A FACT ARRIVED BEFORE D1 RAN, 29 August 2026, and it reframes one
+branch. The owner reports the machine may have gone to sleep before
+yesterday's run finished. A suspended and resumed browser mid-clip
+is a plausible cause of a single-clip anomaly and would exonerate
+the trace diff — and it is also the most convenient explanation on
+offer, so it is recorded here and TESTED rather than adopted. The
+committed discriminators stand, with this addition to their
+reading: if D1, run with the machine kept awake, prints 67 / 5 / 11,
+the indicated cause is the interruption, not free-running
+nondeterminism — the determinism claim was always about an
+uninterrupted measurement — and the neutrality prediction is then
+re-scored by a full corpus run with the machine kept awake. If D1
+prints 55 / 17 / 8, the sleep story is dead and the trace diff is
+implicated exactly as written above. All runs from here use the
+operating system's own keep-awake tool so this class of interruption
+cannot recur silently.
