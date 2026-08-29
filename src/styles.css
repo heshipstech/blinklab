@@ -315,6 +315,9 @@ body {
   #box-stored-on-this-device {
     order: 8;
   }
+  #box-report {
+    order: 9;
+  }
 }
 
 /* ==========================================================================
@@ -697,4 +700,13 @@ canvas {
   .box p:not(.headline):has(> .value) > .value {
     text-align: left;
   }
+}
+
+/* The participant report: plain text on purpose (a report a reviewer
+ * can diff), wrapped so a phone never scrolls sideways. */
+.participant-report {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+  line-height: 1.45;
 }

@@ -90,9 +90,18 @@ import {
 import {
   describeRulerFit,
   initialRulerFitState,
+  restingMedianMm,
   rulerFitMessage,
   rulerFitStep,
 } from "./core/rulerFit";
+import {
+  buildParticipantReport,
+  reportAvailable,
+  type ParticipantReportInputs,
+  type ReportLine,
+  type ReportValue,
+} from "./core/participantReport";
+import { assessSession } from "./core/sessionVerdict";
 import { scoreRecords } from "./core/score";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
@@ -388,6 +397,15 @@ bannerColumn.append(statusBanner);
 
 const startButton = document.createElement("button");
 startButton.textContent = "Start camera";
+
+// The way a session ENDS by intent rather than by failure or by
+// being superseded. The pilot protocol needs one: the participant
+// report renders only after the camera stops, and until this button
+// existed a live session could only end by closing the tab.
+const stopCameraButton = document.createElement("button");
+stopCameraButton.textContent = "Stop camera";
+stopCameraButton.setAttribute("data-testid", "stop-camera");
+stopCameraButton.hidden = true;
 
 // The way back from a failed model download. Visible only in the
 // modelFailed state, and named exactly as the status message names
@@ -775,6 +793,11 @@ function render(): void {
     state.kind === "requesting" ||
     state.kind === "loadingClip";
   retryModelButton.hidden = state.kind !== "modelFailed";
+  // The intentional way out of a live session. Camera only: a clip
+  // run has its own stop, and a session that never ran has nothing
+  // to end.
+  stopCameraButton.hidden = !running || frameSource !== "camera";
+  refreshReportGate();
 }
 
 function setState(next: CameraState): void {
@@ -861,6 +884,10 @@ function resetSession(): void {
   interruptionTimesMs = [];
   poseGateFrames = 0;
   poseValidFrames = 0;
+  // A new session's report does not exist yet: the old one vanishes
+  // with the records it described.
+  reportPre.hidden = true;
+  reportPre.textContent = "";
   refreshMarkButton();
   framesBlinkMeasurable = 0;
   currentFrameIndex = null;
@@ -2059,6 +2086,250 @@ function exportSession(): void {
     downloadTextFile(`blinklab-session-${stamp}.csv`, csv, "text/csv"),
   );
 }
+
+// The participant report (docs/assessment-pilot-plan.md, increment
+// 6): one plain-text rendering, built pure in core/participantReport
+// and shown in a <pre>, so the exported file (increment 7) can be
+// the same bytes. The inputs handed to the verdict here follow
+// increment 5's committed rule: the page hands the verdict only
+// facts the export carries, so the Python re-derivation computes
+// from the same numbers and the two can be compared on real files.
+function participantVerdictInputs() {
+  const rates =
+    frameSource === "camera"
+      ? deliveryRates(deliveryState, performance.now())
+      : null;
+  const first = sessionMarkers[0];
+  const second = sessionMarkers[1];
+  return {
+    calibration: baselineState,
+    cameraOutcome: state,
+    sampledFps: rates?.sampledFps ?? null,
+    // The committed fallback: the interpolating median of the
+    // per-record fps column, the same function the ruler fit uses
+    // and the same number the analysis mirror derives from the file.
+    processingFps: restingMedianMm(featureRecords.map((record) => record.fps)),
+    visibilityChanges: interruptionTimesMs.length,
+    markedWindow:
+      first !== undefined && second !== undefined
+        ? {
+            widthSeconds: (second.atMs - first.atMs) / 1000,
+            interruptionsInside:
+              second.visibilityChangesAt - first.visibilityChangesAt,
+          }
+        : null,
+    poseValidFraction:
+      poseGateFrames === 0 ? null : poseValidFrames / poseGateFrames,
+    rulerFitShown: rulerFitState.shown,
+    // Structural, the mirror's own rule: a record is written only
+    // through the trust gate, so records existing is the evidence.
+    modelTrusted: true,
+  };
+}
+
+function measuredValue(refused: boolean, text: string | null): ReportValue {
+  if (refused) {
+    return {
+      kind: "withheld",
+      reason:
+        "the calibration was refused, so every number that depends " +
+        "on the blink line is withheld rather than guessed",
+    };
+  }
+  return text === null ? { kind: "unknown" } : { kind: "measured", text };
+}
+
+function kssValue(asked: boolean, rating: KssRating | null): ReportValue {
+  // Skipped is an answer a person gave; unasked is a session that
+  // never reached the question. The two must not read the same.
+  if (!asked) {
+    return { kind: "unknown" };
+  }
+  return rating === null
+    ? { kind: "measured", text: "skipped" }
+    : { kind: "measured", text: `${String(rating)} of 9` };
+}
+
+function participantReportText(): string {
+  const refused = baselineState !== null && baselineState.kind === "refused";
+  const last = featureRecords[featureRecords.length - 1];
+  const rates =
+    frameSource === "camera"
+      ? deliveryRates(deliveryState, performance.now())
+      : null;
+  const processing = restingMedianMm(
+    featureRecords.map((record) => record.fps),
+  );
+  const measured: ReportLine[] = [
+    {
+      label: "Blinks detected",
+      value: measuredValue(refused, String(blinkEvents.length)),
+    },
+    {
+      label: "Blink rate",
+      value: measuredValue(
+        refused,
+        last?.blinkRatePerMin == null
+          ? null
+          : `${last.blinkRatePerMin.toFixed(1)} per minute`,
+      ),
+    },
+    {
+      label:
+        "PERCLOS (instrument-adjusted threshold, not comparable to " +
+        "published PERCLOS)",
+      value: measuredValue(
+        refused,
+        last?.perclos == null ? null : last.perclos.toFixed(2),
+      ),
+    },
+    {
+      label: "Long closures",
+      value: measuredValue(
+        refused,
+        last === undefined ? null : String(last.longClosureCount),
+      ),
+    },
+  ];
+  const conditions: ReportLine[] = [
+    {
+      label: "Camera",
+      value:
+        frameSource === "file"
+          ? { kind: "measured", text: "none, not a camera session" }
+          : deviceInfo?.cameraLabel == null
+            ? { kind: "unknown" }
+            : { kind: "measured", text: deviceInfo.cameraLabel },
+    },
+    {
+      label: "Camera delivered rate (the camera's, not the page's)",
+      value:
+        rates?.deliveredFps == null
+          ? { kind: "unknown" }
+          : {
+              kind: "measured",
+              text: `${rates.deliveredFps.toFixed(1)} frames per second`,
+            },
+    },
+    {
+      label: "Sampled rate (distinct frames this page read)",
+      value:
+        rates?.sampledFps == null
+          ? { kind: "unknown" }
+          : {
+              kind: "measured",
+              text: `${rates.sampledFps.toFixed(1)} frames per second`,
+            },
+    },
+    {
+      label: "Processing rate (the page's own pace)",
+      value:
+        processing === null
+          ? { kind: "unknown" }
+          : {
+              kind: "measured",
+              text: `${processing.toFixed(1)} frames per second`,
+            },
+    },
+    {
+      label: "Measurement frame",
+      value:
+        measurementFrame === null
+          ? { kind: "unknown" }
+          : {
+              kind: "measured",
+              text: `${String(measurementFrame.widthPx)}x${String(measurementFrame.heightPx)}`,
+            },
+    },
+    { label: "KSS before", value: kssValue(kssBeforeAsked, kssBefore) },
+    { label: "KSS after", value: kssValue(kssAfterAsked, kssAfter) },
+    {
+      label: "Interruptions",
+      value: { kind: "measured", text: String(interruptionTimesMs.length) },
+    },
+    {
+      label: "Markers (stamped on the record clock, about one second of slack)",
+      value: { kind: "measured", text: String(sessionMarkers.length) },
+    },
+  ];
+  const truncations: string[] = [];
+  if (featureRecords.length >= FEATURE_RECORD_CAP) {
+    truncations.push(
+      `feature records: the last ${String(FEATURE_RECORD_CAP)} kept, ` +
+        `oldest discarded`,
+    );
+  }
+  if (irisWidthSamples.length >= IRIS_SAMPLE_CAP) {
+    truncations.push(
+      `iris width: computed over the first ${String(IRIS_SAMPLE_CAP)} ` +
+        `frames, later frames not sampled`,
+    );
+  }
+  const breakdown = refused ? null : scoreRecords(featureRecords);
+  const inputs: ParticipantReportInputs = {
+    verdict: assessSession(participantVerdictInputs()),
+    measured,
+    score: breakdown,
+    scoreWithheldReason: refused
+      ? "the calibration was refused, so every ruler-dependent " +
+        "number is withheld rather than guessed"
+      : breakdown === null
+        ? "no minute of usable records existed by the end of the session"
+        : null,
+    conditions,
+    truncations,
+    storedProbe: probeStoredData(),
+    appCommit:
+      document
+        .querySelector('meta[name="build-commit"]')
+        ?.getAttribute("content") ?? null,
+    generatedAt: new Date().toLocaleString(),
+  };
+  return buildParticipantReport(inputs);
+}
+
+const reportGateLabel = document.createElement("p");
+const reportButton = document.createElement("button");
+reportButton.textContent = "Show the report";
+reportButton.setAttribute("data-testid", "show-report");
+reportButton.disabled = true;
+const reportPre = document.createElement("pre");
+reportPre.className = "participant-report";
+reportPre.setAttribute("data-testid", "participant-report");
+reportPre.hidden = true;
+
+function refreshReportGate(): void {
+  const available = reportAvailable(state.kind, featureRecords.length);
+  reportButton.disabled = !available;
+  reportGateLabel.textContent = available
+    ? "The session has ended; the report is ready."
+    : "The report renders only after the session ends — stop the " +
+      "camera first. A participant who reads it mid-session has " +
+      "learned what the instrument counts.";
+}
+
+reportButton.addEventListener("click", () => {
+  // Assembled at click time from the session that just ended, and
+  // gated again: a stale enabled button must not render mid-session.
+  if (!reportAvailable(state.kind, featureRecords.length)) {
+    return;
+  }
+  reportPre.textContent = participantReportText();
+  reportPre.hidden = false;
+});
+
+stopCameraButton.addEventListener("click", () => {
+  // The state is written first, the hardware release is best effort
+  // (the crash path's own lesson), and the records stay exportable.
+  sourceRunToken += 1;
+  setState({ kind: "idle" });
+  try {
+    stopDeliveryObserver();
+    stopCamera(video);
+  } catch (stopError: unknown) {
+    console.error("the camera could not be stopped:", stopError);
+  }
+});
 
 const exportButton = document.createElement("button");
 exportButton.textContent = "Export CSV";
@@ -3415,6 +3686,7 @@ signalsFooter.append(legend, instrumentLine, rateWarningLabel);
 const sourceBox = box(
   "Source",
   startButton,
+  stopCameraButton,
   retryModelButton,
   clipLabel,
   stepLabel,
@@ -3513,9 +3785,14 @@ const columnB = document.createElement("div");
 columnB.className = "col";
 columnB.append(sessionBox, gazeBox, eyesBox, blinksBox);
 
+// After storage, deliberately: the report is read once the session
+// is over, and putting it past the erase control keeps every
+// mid-session control above it.
+const reportBox = box("Report", reportGateLabel, reportButton, reportPre);
+
 const grid = document.createElement("div");
 grid.className = "grid";
-grid.append(columnA, columnB, storedDataBox);
+grid.append(columnA, columnB, storedDataBox, reportBox);
 
 contentBox.append(grid);
 

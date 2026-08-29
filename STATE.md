@@ -1,3 +1,35 @@
+**THE REPORT PANEL EXISTS, 29 August 2026 — pilot increment 6 of 11.** src/core/participantReport.ts builds the eight-section
+participant report as ONE plain-text rendering, pure, so the
+in-page panel and increment 7's exported file are the same bytes: a
+report a reviewer can diff beats a report that needs a browser. The
+sections are the plan's, in order — what this is (the demo notice
+verbatim), was this measurement sound (the verdict, refusals FIRST,
+a refused calibration framed as "a result, not a failure" and
+quoting the pinned sentence byte for byte), what was measured (the
+score beside its 100-minus-named-penalties working and the
+unvalidated-heuristic sentence, an unavailable signal named as
+absence never scored as alertness), conditions, what was withheld
+refused or truncated (all eight surfaces accounted), the generated
+cannot-see block, your data and your control ("nothing you recorded
+left this device", the storage probe where unreadable is never
+folded into absent), and provenance. The three absence words are
+pinned distinct — "withheld — reason", "unknown", "not applicable"
+— and none may render as a zero or an empty cell. The page gained
+its first intentional way to END a live session, a Stop camera
+button, because the report renders only after the camera stops
+(reportAvailable, pinned by test: never while running, requesting
+or loading, never with nothing recorded; a failed session with
+records still reports, refusals lead). The verdict inputs the page
+hands the report follow increment 5's committed rule — only facts
+the export carries, the processing fallback the same interpolating
+median the mirror computes — so the Python re-derivation compares
+on real files. The no-derived-rows guard narrowed exactly as its
+earlier form instructed: exportSession's body and the metadata
+builders stay verdict-free while the report imports what it needs.
+The suite is
+791 unit tests. Next on the ladder: increment 7, the exported
+report file.
+
 **PYTHON RE-DERIVES THE VERDICT, 29 August 2026 — pilot increment
 5 of 11.** analysis/blinklab/verdict.py derives the same
 SessionVerdict object the page assembles, from primary facts in the
@@ -1906,7 +1938,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 779 unit tests, 20 end to end tests all run in Chromium
+Test count: 791 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 246 Python tests of which
 2 skip
 

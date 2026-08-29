@@ -15,8 +15,17 @@ import { join } from "node:path";
 // today's number. A budget that fails on ordinary work gets raised
 // without being read, and then it is decoration.
 
-/** Bytes. About 10% above the 217 KB measured on 15 August 2026. */
-export const BUNDLE_BUDGET_BYTES = 240_000;
+/**
+ * Bytes. About 10% above the 243 KB measured on 29 August 2026, when
+ * the participant report crossed the previous line: the report
+ * builder, the session verdict and the generated cannot-see prose
+ * all ship in the bundle because the report must render on-device
+ * with no network. Re-measured and raised by the stated procedure —
+ * read the number, name what grew, keep the headroom — not waved
+ * through. The previous ceiling was 240 KB, 10% above the 217 KB of
+ * 15 August 2026.
+ */
+export const BUNDLE_BUDGET_BYTES = 268_000;
 
 /** Every built JavaScript chunk, with its size in bytes. */
 export function bundleChunks(distAssetsDir) {

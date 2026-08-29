@@ -107,13 +107,23 @@ describe("the shared verdict fixture", () => {
   });
 
   it("the export path derives no verdict", () => {
-    // DERIVED, NEVER EXPORTED: the page may not hand the exporter a
-    // verdict, so main.ts must not touch the verdict module at all
-    // today. Increment 6 renders the report panel and will import
-    // it; this assertion must then narrow to the export path —
-    // exportSession and the metadata builders — rather than vanish.
+    // DERIVED, NEVER EXPORTED: the report panel (increment 6) may
+    // assess the session, but the exporter may not — a summary that
+    // travelled beside its inputs would eventually disagree with
+    // them. So the guard narrowed from "main.ts never touches the
+    // verdict" to "exportSession's body never does", exactly as its
+    // earlier form instructed.
     const main = readRepoFile("src/main.ts", root);
-    expect(main).not.toContain("assessSession");
-    expect(main).not.toContain("sessionVerdict");
+    const start = main.indexOf("function exportSession");
+    const end = main.indexOf("// The participant report");
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const exportBody = main.slice(start, end);
+    expect(exportBody).not.toContain("assessSession");
+    expect(exportBody).not.toContain("buildParticipantReport");
+    // And the metadata builders stay fact-only: the pure module the
+    // exporter composes rows from must not import the verdict.
+    const metadata = readRepoFile("src/core/sessionMetadata.ts", root);
+    expect(metadata).not.toContain("sessionVerdict");
   });
 });

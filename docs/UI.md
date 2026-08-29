@@ -23,13 +23,14 @@ session starts.
 | Content column | 1280 px, centred, 16 px side padding | Always                          |
 | Overlays       | Full window, above everything        | Only when opened                |
 
-The content column contains the title, then eight boxes in four rows:
+The content column contains the title, then nine boxes in five rows:
 
 | Column      | Cards                           | Notes                        |
 | ----------- | ------------------------------- | ---------------------------- |
 | Left, 55fr  | Alertness, Source, Live signals | Source holds the 640px video |
 | Right, 45fr | Session, Gaze, Eyes, Blinks     | Each flows independently     |
-| Full width  | Stored on this device           | Last, below both columns     |
+| Full width  | Stored on this device           | Below both columns           |
+| Full width  | Report                          | Last, below storage          |
 
 The two columns are real elements, so each flows independently and Source can
 be tall without stretching Gaze beside it.
@@ -37,7 +38,7 @@ be tall without stretching Gaze beside it.
 **Below 1000px there is one column, and the order is not the desktop order.**
 The column wrappers become `display: contents`, every card becomes a direct
 grid item, and the stylesheet orders them by id: Alertness, Session, Source,
-Gaze, Eyes, Blinks, Live signals, Stored on this device. That is reading order
+Gaze, Eyes, Blinks, Live signals, Stored on this device, Report. That is reading order
 for a phone: the score, what starts a session, the camera, what it measured,
 the instrument's own health, then storage. Doing it with `order` rather than a
 second DOM tree means one list of cards, not two that can disagree.
@@ -124,15 +125,16 @@ rather than the page.
 
 **Always visible, in every state.** The only box present before starting.
 
-| Element                    | Type                            | Visible when                                                                                                                                                                                              | Disabled when |
-| -------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| Start camera               | Button                          | Not `running`, not `requesting` — or `running` after a clip run ended (issue #303: the finished-clip sentence invites a next source, and hiding this button made the camera unreachable without a reload) | Never         |
-| Or measure a recorded clip | File input                      | Always                                                                                                                                                                                                    | Never         |
-| Measure every frame        | Checkbox, **ticked** by default | Always                                                                                                                                                                                                    | Never         |
-| Stop measuring             | Button                          | Only during a stepped clip run                                                                                                                                                                            | Never         |
-| Camera picker              | Dropdown                        | Only if more than one camera exists                                                                                                                                                                       | Never         |
-| Status line                | Text                            | Always                                                                                                                                                                                                    | n/a           |
-| Model status               | Text                            | Always, but usually empty                                                                                                                                                                                 | n/a           |
+| Element                    | Type                            | Visible when                                                                                                                                                                                                                       | Disabled when |
+| -------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Start camera               | Button                          | Not `running`, not `requesting` — or `running` after a clip run ended (issue #303: the finished-clip sentence invites a next source, and hiding this button made the camera unreachable without a reload)                          | Never         |
+| Stop camera                | Button                          | Only while a live camera session is `running` (never for a clip). The intentional end of a session: the pilot's report renders only after the camera stops, and until this button a live session could only end by closing the tab | Never         |
+| Or measure a recorded clip | File input                      | Always                                                                                                                                                                                                                             | Never         |
+| Measure every frame        | Checkbox, **ticked** by default | Always                                                                                                                                                                                                                             | Never         |
+| Stop measuring             | Button                          | Only during a stepped clip run                                                                                                                                                                                                     | Never         |
+| Camera picker              | Dropdown                        | Only if more than one camera exists                                                                                                                                                                                                | Never         |
+| Status line                | Text                            | Always                                                                                                                                                                                                                             | n/a           |
+| Model status               | Text                            | Always, but usually empty                                                                                                                                                                                                          | n/a           |
 
 #### Status line, every possible string
 
@@ -427,6 +429,25 @@ clean device directly under a summary saying it could not tell.
 **Erasing takes the live profile with it.** The in-memory calibration profile
 is cleared too, so the heatmap button returns to `Gaze heatmap (calibrate
 first)` and the calibrate button back to `Calibrate gaze` in the same click.
+
+### 5.8 Box: Report
+
+The participant report (docs/assessment-pilot-plan.md, increment 6).
+Full width, after Stored on this device: it is read once a session is
+over, and it sits past the erase control so every mid-session control
+stays above it.
+
+| Element | Strings                                                                                                                                                                                                                                         |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gate    | `The session has ended; the report is ready.` or `The report renders only after the session ends — stop the camera first. A participant who reads it mid-session has learned what the instrument counts.`                                       |
+| Show    | Button, `Show the report`. Disabled unless `reportAvailable` in `core/participantReport.ts` says the session has ended with records — pinned by test: never while `running`, `requesting` or `loadingClip`, and never with nothing recorded     |
+| Report  | A `<pre>` holding the whole plain-text report from `buildParticipantReport` in `core/participantReport.ts`: eight numbered sections, refusals first, the three absence words (`withheld — reason`, `unknown`, `not applicable`) pinned distinct |
+
+**The report is plain text on purpose.** One pure builder produces the
+panel's text today and the exported file's bytes in increment 7, so the
+two renderings can never disagree; a report a reviewer can diff beats a
+report that needs a browser. A new session clears it with the records
+it described.
 
 ---
 
