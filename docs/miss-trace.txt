@@ -127,3 +127,29 @@ prints 55 / 17 / 8, the sleep story is dead and the trace diff is
 implicated exactly as written above. All runs from here use the
 operating system's own keep-awake tool so this class of interruption
 cannot recur silently.
+
+D1 ANSWERED: IT WAS THE INTERRUPTION, 29 August 2026. The same
+trace build, the same clip, the machine kept awake: 67 found, 5
+missed, 11 false — the published row exactly, coverage 9,077 of
+9,077. By the committed reading, the trace diff is provisionally
+exonerated, D2 is unnecessary, and the determinism claim stands as
+it was always meant: a claim about an uninterrupted measurement.
+Yesterday's anomaly is attributed to the machine sleeping mid-run,
+pending one piece of direct evidence: the damaged run's own export
+carries a visibility_changes row, and a nonzero value there is the
+suspension recorded by the instrument itself rather than inferred
+from a memory of a closed lid.
+
+WHAT THE ANOMALY TEACHES EITHER WAY, queued rather than buried: a
+clip measured through a suspend and resume produced a COMPLETE
+LOOKING file — every frame counted, coverage perfect — with twelve
+blinks quietly wrong inside it. That is the project's oldest enemy
+in a new coat: silent success. A future instrument increment should
+make a clip run that observes a visibility change during
+measurement say so on the export's face, or refuse outright, the
+same way every other guard in this repository turned a silent wrong
+answer into a loud refusal. Queued, not built here.
+
+WHAT REMAINS: the neutrality prediction is re-scored by a full
+corpus run with the machine kept awake. Yesterday's trace files
+stay quarantined; the awake run's traces are the autopsy's data.
