@@ -19,6 +19,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from blinklab.pilot import InstrumentDefect, pilot_verdict_lines
 from blinklab.round2 import (
     RefusedCalibration,
     Round2Rules,
@@ -438,9 +439,18 @@ def round2_rule_lines(rules: list[Round2Rules]) -> list[str]:
 
 
 def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
-    """The whole report, and the number of participants it refused."""
-    round2 = rules == "round2"
-    pairs = find_pairs(directory)
+    """The whole report, and the number of participants it refused.
+
+    Raises InstrumentDefect in pilot mode when any session's exported
+    report disagrees with the re-derived verdict: the cohort analysis
+    stops rather than averaging over a disagreement.
+    """
+    pilot = rules == "pilot"
+    round2 = rules == "round2" or pilot
+    pairs = find_pairs(directory, pilot_reports=pilot)
+    # The defect gate runs before anything is assembled: a defect must
+    # stop the whole analysis, not decorate the bottom of a table.
+    pilot_lines = pilot_verdict_lines(pairs) if pilot else []
     rows: list[ParticipantRow] = []
     accounts: list[tuple[str, RulerFitCrossCheck]] = []
     refusals: list[tuple[PairPaths, str]] = []
@@ -503,6 +513,8 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     lines += (
         round2_rule_lines(rule_outcomes) if round2 else verdict_summary(rows)
     )
+    if pilot_lines:
+        lines += ["", *pilot_lines]
     lines += page_account_lines(accounts)
     return lines, len(refusals)
 
@@ -518,13 +530,15 @@ def main() -> int:
     )
     parser.add_argument(
         "--rules",
-        choices=("round1", "round2"),
+        choices=("round1", "round2", "pilot"),
         default="round1",
         help=(
             "which plan's rules read the files. The default is round I "
             "and is FROZEN: the published tables must stay reproducible. "
             "round2 applies docs/validation-plan-round2.md and is never "
-            "inferred from the files."
+            "inferred from the files. pilot is round II plus the "
+            "assessment pilot's verdict table and the page-vs-analysis "
+            "defect gate (docs/assessment-pilot-plan.md)."
         ),
     )
     arguments = parser.parse_args()
@@ -535,6 +549,12 @@ def main() -> int:
         # while a sixth's file sits unread is not acceptable.
         print(f"REFUSED: {error}", file=sys.stderr)
         return 2
+    except InstrumentDefect as defect:
+        # The page and the analysis disagree about one session, so no
+        # cohort table prints at all — neither side can be trusted
+        # over the other until the defect is explained.
+        print(str(defect), file=sys.stderr)
+        return 3
     print("\n".join(lines))
     # A non-zero exit when anyone was refused, so a run that could not
     # read everybody cannot be mistaken for a clean one by a script.
