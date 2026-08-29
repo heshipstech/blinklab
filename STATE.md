@@ -1,3 +1,23 @@
+**D1 ANSWERED AND THE SUSPENSION GUARD IS BUILT, 29 August 2026.**
+The discriminator ran with the machine kept awake: 67 / 5 / 11, the
+published row exactly, on the same trace build — so the anomaly
+below was the INTERRUPTION (the owner reports the machine slept
+mid-run), the trace diff is provisionally exonerated, D2 was
+unnecessary, and the determinism claim stands as what it always
+was, a claim about an uninterrupted measurement. What the anomaly
+taught is now code rather than a queue entry:
+src/core/suspensionGuard.ts refuses a stepped clip run that
+observed ANY visibility change between its first seek and its
+summary, by name, outranking even a deliberate early stop — because
+a suspended run just proved it can produce a complete-looking file
+with twelve quietly wrong blinks inside, and stepped mode's whole
+guarantee is exactness. Tests watched failing first, the
+shrug-at-one-change mutation red. Watched mode is left as it is,
+already honest about partiality. Yesterday's trace files stay
+quarantined; the awake corpus run that re-scores neutrality and
+collects the autopsy's data remains available whenever wanted and
+blocks nothing. The suite is 751 unit tests.
+
 **THE TRACE'S NEUTRALITY PREDICTION IS BROKEN, 28 August 2026, and
 the data is quarantined.** The first trace-collecting corpus run did
 not reproduce the published table: recall 80.6 against 83.6, with
@@ -1319,7 +1339,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 28 August 2026. When this file changes, this stamp changes
+Stamped: 29 August 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -1753,7 +1773,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 747 unit tests, 20 end to end tests all run in Chromium
+Test count: 751 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 228 Python tests of which
 2 skip
 
