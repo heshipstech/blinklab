@@ -70,7 +70,7 @@ Withheld values, each with its reason:
   (docs/calibration-refusal.txt; docs/baseline-freeze.txt)
 - Who it fails for. The face model has not been tested across age, skin tone, eye shape, visual impairment or eyewear here, and it would be dishonest to imply equal performance.
   (MODEL_CARD.md)
-- Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016..
+- Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016.
   (MODEL_CARD.md; docs/drozy-result.txt)
 
 7. YOUR DATA AND YOUR CONTROL

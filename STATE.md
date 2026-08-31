@@ -1,3 +1,30 @@
+**THE DRY RUN FOUND AN INSTRUMENT DEFECT, AND THE GATE CAUGHT IT,
+31 August 2026 — pilot increment 11, first attempt.** The owner ran
+the full protocol once on the deployed page at commit 7041010:
+calibration accepted, pose valid throughout, zero interruptions,
+and the ten deliberate blinks between the marks caught ten for ten.
+The researcher tool, in pilot mode, refused the cohort on the first
+real session it ever read: INSTRUMENT DEFECT on evidenceRate,
+because one fact — the sampled rate — appeared as THREE numbers
+(30.0 in the CSV, 30.4 in the report's conditions, 29.8 in its
+verdict sentence). Root cause in docs/pilot-dry-run.txt: three
+consumers each called deliveryRates() at their own moment against a
+rolling five-second window that drains after Stop, violating
+increment 5's rule that the page hands the verdict only facts the
+export carries — implemented for the processing fallback, missed
+for sampled_fps. The fix, guard watched failing first: the
+session's delivery rates are measured ONCE and every consumer reads
+that capture; main.ts is held to exactly two live call sites (the
+running readout and the single capture) by test. Also fixed, from
+the report's own text: the cannot-see block's "WACV 2016.." double
+stop, in the generator, regenerated. The score printed 63 with the
+protocol's own five-second eyes-closed step as the penalty, which
+the write-up flags for the debrief script. Dry run one is kept,
+defect and all, never redone; the gate before any volunteer is dry
+run TWO printing clean on the fixed build. The suite is
+799 unit tests. The defect gate firing correctly on its first real
+file is the pilot working.
+
 **THE ADVERSARIAL PASS RAN, 29 August 2026 — pilot increment 10
 of 11, and one prediction was wrong in the worse direction.** Ten
 probes against the verdict mirror, the renderer and the pilot flag,
@@ -2033,7 +2060,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 798 unit tests, 20 end to end tests all run in Chromium
+Test count: 799 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 261 Python tests of which
 2 skip
 

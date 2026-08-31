@@ -126,4 +126,18 @@ describe("the shared verdict fixture", () => {
     const metadata = readRepoFile("src/core/sessionMetadata.ts", root);
     expect(metadata).not.toContain("sessionVerdict");
   });
+
+  it("one fact, one capture: the session's delivery rates", () => {
+    // The dry run's instrument defect (docs/pilot-dry-run.txt): the
+    // sampled rate appeared as three numbers because three consumers
+    // each called deliveryRates() at their own moment against a
+    // rolling window. The export, the report's verdict and the
+    // report's conditions must all read ONE capture, so main.ts may
+    // carry exactly two live call sites: the on-screen readout while
+    // running, and the single settled capture everything else reads.
+    const main = readRepoFile("src/main.ts", root);
+    const calls = main.match(/deliveryRates\(/g) ?? [];
+    expect(calls.length).toBe(2);
+    expect(main).toContain("function settledDeliveryRates");
+  });
 });
