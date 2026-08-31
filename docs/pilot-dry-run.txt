@@ -1,0 +1,78 @@
+THE OWNER'S DRY RUN — INCREMENT 11, FIRST ATTEMPT, 31 August 2026
+
+The full pilot protocol, run once end to end by the owner on their
+own machine against the deployed page at app commit 7041010, exactly
+as docs/assessment-pilot-plan.md prescribes: pseudonym saved, KSS
+before, thirty seconds still, mark, ten counted deliberate blinks,
+mark, about five seconds eyes closed, about a minute reading, export
+CSV, export blink log, stop camera, report shown and exported. The
+three raw files stay outside this repository, as every session file
+does; this document is what travels.
+
+WHAT THE SESSION SHOWED. Calibration accepted (3543 samples, spread
+1.210, ceiling unbound). Camera delivered 30.0 frames per second and
+the page read essentially all of them (read fraction 1.002, the
+stated unclamped artefact). Pose valid on 100 percent of frames,
+zero interruptions, KSS 3 before and after. The ten deliberate
+blinks between the two marks were caught ten for ten — the round II
+check, on this machine, on this night, found every one. The blink
+log carries 47 detections over the 127-second session. The score
+printed 63 of 100, with its working: -22 for the eyes-closed share
+and -15 for one long closure — both of which are the protocol's own
+step 6, five deliberate seconds of closed eyes, being counted
+honestly. A moderator debriefing from this report should expect
+that shape and say so; the number is the protocol looking at
+itself, not the participant's alertness.
+
+THE INSTRUMENT DEFECT, VERBATIM, AND ITS ROOT CAUSE. The researcher
+tool, run in pilot mode on the three files, refused the cohort:
+
+  INSTRUMENT DEFECT on P1: the page's exported report does not
+  carry the re-derived finding 'WARNED — evidenceRate'.
+
+The defect gate fired on the first real session it ever read, and
+it was right. One fact — this session's sampled evidence rate —
+appears as THREE numbers: 30.0 in the exported CSV, 30.4 in the
+report's conditions section, 29.8 in the report's verdict sentence.
+The mechanism: deliveryRates() measures over a rolling five-second
+window ending at the moment it is called, and it was called three
+times at three moments. The CSV captured mid-run with a full
+window. The report was generated seconds after Stop, when the
+window had begun draining, and the report's renderer called the
+function TWICE — once for the conditions lines, once for the
+verdict inputs — milliseconds apart, straddling a sample boundary.
+The Python mirror re-derived the verdict from the file's 30.0,
+found the page's 29.8 sentence missing, and stopped, as designed.
+
+The root cause is a violation of increment 5's committed rule: the
+page may hand the verdict only facts the export carries. The rule
+was implemented for the processing-rate fallback (the interpolating
+median of the per-record fps column) and missed for sampled_fps,
+which still read the live, draining window at render time. A page
+that computes one fact freshly at every consumer will eventually
+render it three ways; the file is the fact's home, and everything
+on the page must say what the file says.
+
+THE FIX, in this increment, guard watched failing first: the
+session's delivery rates are measured ONCE — at the first moment
+any consumer needs them — and every consumer (the CSV export, the
+report's verdict, the report's conditions) reads that one capture,
+which resets with the session. A guard now holds main.ts to exactly
+one live deliveryRates() call site, so a future consumer cannot
+quietly reintroduce a second moment.
+
+ALSO FOUND, cosmetic: the cannot-see block's DROZY sentence
+rendered "WACV 2016.." — the citation carries its own full stop and
+the generated claim appended another. Fixed in the generator and
+regenerated.
+
+WHAT THIS ATTEMPT IS, AND IS NOT. By the plan's own rule, a session
+that goes sideways is finished and kept, never quietly redone: this
+is dry run one, its files are kept by the owner, and its defect is
+recorded here. It is NOT the gate. The gate before any volunteer is
+a dry run whose pilot table prints clean — headline, eight
+surfaces, report agrees — and that requires a second run on the
+fixed build. The protocol steps themselves needed no change, the
+report read correctly to its one reader, and the one defect found
+was in the instrument, caught by the instrument's own gate, which
+is the pilot working.

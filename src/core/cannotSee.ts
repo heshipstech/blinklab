@@ -46,7 +46,7 @@ export const CANNOT_SEE_CLAIMS: readonly CannotSeeClaim[] = [
   },
   {
     claim:
-      "Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016..",
+      "Sleepiness. The alertness score is a heuristic that has never been shown to correspond to how sleepy anyone actually is; on the 20 sessions of the one labelled dataset this instrument can measure, nothing cleared the pre-registered bar. Cite: Massoz, Langohr, Francois and Verly, WACV 2016.",
     source: "MODEL_CARD.md; docs/drozy-result.txt",
   },
 ];

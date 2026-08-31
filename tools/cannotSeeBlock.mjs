@@ -157,7 +157,9 @@ export function buildCannotSeeClaims(root) {
         `been shown to correspond to how sleepy anyone actually is; on ` +
         `the ${String(drozy.analysed)} sessions of the one labelled dataset this ` +
         `instrument can measure, nothing cleared the pre-registered bar. ` +
-        `Cite: ${drozy.cite}.`,
+        // The citation carries its own full stop; appending another
+        // printed "WACV 2016.." on the dry run's report.
+        `Cite: ${drozy.cite.replace(/\.$/, "")}.`,
       source: "MODEL_CARD.md; docs/drozy-result.txt",
     },
   ];

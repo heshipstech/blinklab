@@ -136,6 +136,7 @@ import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
   deliveryRateMessage,
   deliveryRates,
+  type DeliveryRates,
   emptyDelivery,
   noteDelivered,
   noteRead,
@@ -470,6 +471,24 @@ let visibilityChanges = 0;
 // export's count row derives from this array's length so the two can
 // never disagree; the counter above stays for the suspension guard.
 let interruptionTimesMs: number[] = [];
+// The session's delivery rates, measured ONCE at the first moment any
+// consumer needs them and reused by every consumer after: the export,
+// the report's verdict and the report's conditions must carry the SAME
+// number for the same fact. The dry run's instrument defect
+// (docs/pilot-dry-run.txt) was this fact appearing as three numbers,
+// because three consumers each read the rolling five-second window at
+// their own moment — mid-run, seconds after stop, and milliseconds
+// after that. The window is the readout's business; the session fact
+// is captured here and resets with the session.
+let sessionDeliveryRates: DeliveryRates | null = null;
+
+function settledDeliveryRates(): DeliveryRates | null {
+  if (frameSource !== "camera") {
+    return null;
+  }
+  sessionDeliveryRates ??= deliveryRates(deliveryState, performance.now());
+  return sessionDeliveryRates;
+}
 // How many frames the pose gate judged, and how many it passed. The
 // per-frame refusals already happened on screen; these two counts let
 // the export state the session-level fraction as a primary fact.
@@ -887,6 +906,7 @@ function resetSession(): void {
   sessionMarkers = [];
   visibilityChanges = 0;
   interruptionTimesMs = [];
+  sessionDeliveryRates = null;
   poseGateFrames = 0;
   poseValidFrames = 0;
   // A new session's report does not exist yet: the old one vanishes
@@ -2103,11 +2123,7 @@ function exportSession(): void {
         : null,
       baselineState !== null && baselineState.kind === "refused",
     ),
-    ...deliveryMetadataRows(
-      frameSource === "camera"
-        ? deliveryRates(deliveryState, performance.now())
-        : null,
-    ),
+    ...deliveryMetadataRows(settledDeliveryRates()),
     ...sessionMetadataRows(
       featureRecords,
       irisWidthSamples,
@@ -2154,10 +2170,7 @@ function exportSession(): void {
 // facts the export carries, so the Python re-derivation computes
 // from the same numbers and the two can be compared on real files.
 function participantVerdictInputs() {
-  const rates =
-    frameSource === "camera"
-      ? deliveryRates(deliveryState, performance.now())
-      : null;
+  const rates = settledDeliveryRates();
   const first = sessionMarkers[0];
   const second = sessionMarkers[1];
   return {
@@ -2212,10 +2225,7 @@ function kssValue(asked: boolean, rating: KssRating | null): ReportValue {
 function participantReportText(): string {
   const refused = baselineState !== null && baselineState.kind === "refused";
   const last = featureRecords[featureRecords.length - 1];
-  const rates =
-    frameSource === "camera"
-      ? deliveryRates(deliveryState, performance.now())
-      : null;
+  const rates = settledDeliveryRates();
   const processing = restingMedianMm(
     featureRecords.map((record) => record.fps),
   );
