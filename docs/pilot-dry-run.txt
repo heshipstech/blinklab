@@ -76,3 +76,60 @@ fixed build. The protocol steps themselves needed no change, the
 report read correctly to its one reader, and the one defect found
 was in the instrument, caught by the instrument's own gate, which
 is the pilot working.
+
+DRY RUN TWO PRINTED CLEAN — 1 September 2026, the gate is met.
+
+Before the second run, the tool was pointed once more — by
+accident — at dry run one's kept files. It refused with the
+identical defect, verbatim. The defect lives in those bytes and
+always will; a kept session keeps refusing, which is exactly what
+kept-never-redone is for.
+
+The owner then ran the full protocol a second time, on the
+deployed page at app commit d8f0dcd — the build carrying the
+one-capture fix and the asExported round-trips. Calibration
+accepted (3546 samples, spread 1.113, ceiling unbound). Pose valid
+on 100 percent of frames, zero interruptions, KSS 1 before and
+after, the ruler fit this session's own resting eye, and the
+marked window spanned 12.0 seconds undisturbed. The ten deliberate
+blinks between the marks were caught ten for ten — the second run
+in a row.
+
+THE FACT THAT WAS THREE NUMBERS IS NOW ONE. The sampled evidence
+rate reads 29.8 in the exported CSV, 29.8 in the report's
+conditions section, and 29.8 in the report's verdict sentence —
+one capture, read three times. The headline is WARNED on that
+rate, and the warning is honest: 29.8 frames per second sits below
+the 60-per-second risk line, quick or shallow blinks can be
+missed, and that is this machine's true camera rate, not a defect.
+The other seven surfaces read ok.
+
+THE SCORE SAID 100 WHERE DRY RUN ONE SAID 63, FROM THE SAME
+PROTOCOL. Both runs performed the same five deliberate seconds of
+closed eyes; run one's fell inside the score's last-minute window
+and cost 37 points, run two's had scrolled out of that window by
+the time the session stopped. Two faithful runs of one protocol,
+63 and 100: the number reports where the eyes-closed step sat
+relative to the scoring window, not how sleepy the owner was. The
+debrief note from run one is not softened by the clean gate — it
+is doubled.
+
+THE PILOT TABLE, VERBATIM, exit 0:
+
+  P1  headline warned  1 warned, 7 ok  report agrees  pseudonym PseudoTest2
+
+"Report agrees" is the defect gate passing: the tool re-derived
+the verdict from the exported CSV alone, rebuilt all eight status
+sentences, and found every one verbatim in the exported report.
+The page's own ruler-fit account matched the tool's recomputation
+exactly on the one session that carries it.
+
+WHAT THIS CLOSES. The gate stated at the end of the first
+attempt — a dry run whose pilot table prints clean: headline,
+eight surfaces, report agrees — is met. Increment 11 is complete,
+and with it all eleven increments of docs/assessment-pilot-plan.md
+are shipped. The instrument is cleared for volunteers. What
+remains before anyone sits down is not engineering: the roster,
+the schedule, the consent wording, and whether the report is
+walked through live or read alone are the owner's decisions,
+recorded in the plan as theirs to make.

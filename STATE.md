@@ -1,3 +1,31 @@
+**DRY RUN TWO PRINTED CLEAN AND THE LADDER IS CLOSED, 1 September
+2026 — pilot increment 11, second attempt: the gate is met.** The
+owner ran the full protocol again on the deployed page at commit
+d8f0dcd, the build carrying the one-capture fix and the asExported
+round-trips. The fact that was three numbers is now one: the
+sampled rate reads 29.8 in the exported CSV, 29.8 in the report's
+conditions section and 29.8 in its verdict sentence — one capture,
+read three times. The pilot table printed clean, exit 0: headline
+warned, 1 warned 7 ok, report agrees — and the warned headline is
+honest, this machine's true 29.8 frames per second sitting below
+the 60 risk line, not a defect. The ten deliberate blinks were
+counted ten for ten, the second run in a row, and the page's
+ruler-fit account matched the tool's recomputation exactly. Before
+the run, the tool re-read dry run one's kept files by accident and
+refused with the identical defect — kept files keep refusing,
+which is what kept-never-redone is for. The score said 100 where
+run one said 63 from the same protocol: run one's eyes-closed step
+fell inside the score's last-minute window, run two's had scrolled
+out of it — the number reports the window, not the person, and the
+debrief note is doubled, not softened. Increment 11 is complete,
+all eleven increments of docs/assessment-pilot-plan.md are
+shipped, and the instrument is cleared for volunteers; the roster,
+the schedule, the consent wording and walked-live versus
+read-alone remain the owner's decisions. The suite is
+800 unit tests, 20 end to end tests, and
+261 Python tests of which 2 skip. Full account:
+docs/pilot-dry-run.txt.
+
 **THE DEFECT'S SIBLINGS ARE CLOSED BEFORE THEY FIRE, 31 August
 2026 — pilot increment 11, between attempts.** The dry run's defect
 class — the page computing a verdict input from a raw float while
