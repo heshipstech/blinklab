@@ -95,6 +95,7 @@ import {
   rulerFitStep,
 } from "./core/rulerFit";
 import {
+  asExported,
   buildParticipantReport,
   reportAvailable,
   type ParticipantReportInputs,
@@ -2185,13 +2186,20 @@ function participantVerdictInputs() {
     markedWindow:
       first !== undefined && second !== undefined
         ? {
-            widthSeconds: (second.atMs - first.atMs) / 1000,
+            // Through the file's own rounding (asExported): the
+            // export writes marker seconds to three decimals, and
+            // the mirror subtracts those, so the page must too.
+            widthSeconds:
+              asExported(second.atMs / 1000, 3) -
+              asExported(first.atMs / 1000, 3),
             interruptionsInside:
               second.visibilityChangesAt - first.visibilityChangesAt,
           }
         : null,
     poseValidFraction:
-      poseGateFrames === 0 ? null : poseValidFrames / poseGateFrames,
+      poseGateFrames === 0
+        ? null
+        : asExported(poseValidFrames / poseGateFrames, 3),
     rulerFitShown: rulerFitState.shown,
     // Structural, the mirror's own rule: a record is written only
     // through the trust gate, so records existing is the evidence.

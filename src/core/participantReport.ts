@@ -49,6 +49,18 @@ export type ParticipantReportInputs = {
   generatedAt: string;
 };
 
+/**
+ * A value round-tripped through the exact format the exporter writes,
+ * so the page's verdict and the file's re-derivation start from the
+ * same digits. The dry run's instrument-defect class
+ * (docs/pilot-dry-run.txt): a page computing an input from a raw
+ * float while the file carries the rounded form lets the two sides
+ * disagree at a rounding boundary — one fact, two digit streams.
+ */
+export function asExported(value: number, digits: number): number {
+  return Number(value.toFixed(digits));
+}
+
 /** The one rendering of an absent value, everywhere. */
 export function renderReportValue(value: ReportValue): string {
   switch (value.kind) {

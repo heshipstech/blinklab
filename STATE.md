@@ -1,3 +1,19 @@
+**THE DEFECT'S SIBLINGS ARE CLOSED BEFORE THEY FIRE, 31 August
+2026 — pilot increment 11, between attempts.** The dry run's defect
+class — the page computing a verdict input from a raw float while
+the file carries the rounded form — had two remaining instances
+waiting on rounding-boundary luck: the pose fraction (raw
+valid/gated against the file's three decimals) and the marked
+window's width (raw milliseconds subtracted against the file's
+rounded seconds). Both now round-trip through the exact format the
+exporter writes (asExported, tested at the 0.6249-to-0.625 boundary
+and against the mirror's own bit-identical subtraction), so the
+page and the re-derivation start from the same digits everywhere a
+number reaches a verdict sentence. Found by reading the fixed diff
+against the rule it enforces, not by burning dry run two on the
+boundary. The suite is
+800 unit tests. The gate remains: dry run two printing clean.
+
 **THE DRY RUN FOUND AN INSTRUMENT DEFECT, AND THE GATE CAUGHT IT,
 31 August 2026 — pilot increment 11, first attempt.** The owner ran
 the full protocol once on the deployed page at commit 7041010:
@@ -2060,7 +2076,7 @@ Known issues: #15 (actions majors), #90 (calibrated off screen
 boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
-Test count: 799 unit tests, 20 end to end tests all run in Chromium
+Test count: 800 unit tests, 20 end to end tests all run in Chromium
 in CI of which 2 rerun locally in WebKit, 261 Python tests of which
 2 skip
 

@@ -9,6 +9,7 @@ import {
   type VerdictInputs,
 } from "../../src/core/sessionVerdict";
 import {
+  asExported,
   buildParticipantReport,
   renderReportValue,
   reportAvailable,
@@ -260,6 +261,26 @@ describe("the participant report", () => {
     uncommitted.appCommit = null;
     expect(buildParticipantReport(uncommitted)).toContain(
       "App commit: unknown",
+    );
+  });
+
+  it("hands the verdict the file's own rounding, not the raw float", () => {
+    // The dry run's instrument-defect class (docs/pilot-dry-run.txt):
+    // the page computing an input from a raw float while the file
+    // carries the rounded form lets the two sides disagree at a
+    // rounding boundary. asExported round-trips a value through the
+    // exact format the exporter writes, so the page and the mirror
+    // start from the same digits.
+    expect(asExported(0.6249, 3)).toBe(0.625);
+    expect(asExported(705.6670001, 3)).toBe(705.667);
+    expect(asExported(1, 3)).toBe(1);
+    // The width computed from two round-tripped marker seconds is
+    // bit-identical to the mirror's own subtraction of the file's
+    // strings: the literals here parse to the same doubles Python's
+    // float("716.716") and float("705.667") produce, so both sides
+    // format the same difference — noise tail and all.
+    expect(asExported(716716.2 / 1000, 3) - asExported(705667 / 1000, 3)).toBe(
+      716.716 - 705.667,
     );
   });
 
