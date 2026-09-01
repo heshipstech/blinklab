@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
-> Revised 29 August 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 1 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
