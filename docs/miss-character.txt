@@ -101,3 +101,70 @@ them containing a frame a human marked fully closed. Whatever
 explanation is found must explain THOSE blinks, and an instrument
 increment that adds a per-frame aperture trace around a miss is the
 tool that investigation needs first.
+
+THE AUTOPSY, PREDICTED, 2 September 2026
+---------------------------------------
+
+Written before the classifier exists and before any trace is read,
+in the predict-then-verify discipline. docs/miss-trace.txt named the
+three stories a per-frame trace can separate; this increment builds
+the tool that assigns each miss to one, and commits here what the
+tool is expected to find when the awake run's traces finally feed
+it. The classifier refuses to name a mechanism the trace cannot
+show: with no trace it reports only what the committed miss table
+already knows (closed-frame or shallow); with a trace it decides.
+
+THE FOUR VERDICTS the tool assigns to a miss, from the trace rows
+whose frameIndex falls inside the annotation's own [startFrame,
+endFrame] closed span (no chosen margin — the annotation's own
+boundary):
+
+  not_measured   no trace row covers the closed span at all: the
+                 closure fell where the instrument produced no frame
+                 (the sampling story). A stepped run measures every
+                 frame, so this should be near-empty, and the trace
+                 proves it.
+  no_trusted_face  the span has frames but the model returned no
+                 trusted face on any of them (aperture null
+                 throughout): a trust failure, a kind of landmark
+                 story.
+  crossed_line   some measured frame in the span read below the
+                 effective blink line, yet no blink was logged: the
+                 aperture signal was there and the detector's own
+                 state machine (re-arm, refractory) swallowed it.
+  above_line     every measured frame stayed at or above the blink
+                 line: the signal never crossed. The unexplained
+                 core. For these the tool reports min_ratio, the
+                 smallest apertureMm / blinkLineMm over the span:
+                 near 1.0 means the aperture came close (a
+                 threshold-margin story); well above 1.0 means it
+                 barely moved (a landmark story, the model's lids
+                 not following the real ones). The tool draws no
+                 tuned line between those two — it reports the
+                 measured margin and lets the distribution speak.
+
+THE PREDICTION, over the published 67 misses (and the persistent 46
+within them), scored against the awake run's trace:
+
+  1. above_line DOMINATES: at least 40 of the 67, and at least 30 of
+     the 47 closed-frame misses, never crossed the blink line.
+  2. Among those above_line misses the min_ratio clusters WELL above
+     1.0 — median at least 1.5 — i.e. the aperture barely moved on
+     frames a human marked fully closed. The missed blinks are a
+     LANDMARK failure: the model's aperture does not follow the real
+     lids down.
+  3. not_measured is near zero (at most 2): a stepped run leaves
+     almost no coverage gap, so sampling is not the story.
+  4. crossed_line is a minority (at most 10): the state machine
+     accounts for a few, not the core.
+
+WHAT EACH OUTCOME REDIRECTS. If instead min_ratio hugs 1.0, the line
+is merely too strict (a threshold-margin fix, and cheap). If
+crossed_line dominates, the signal is fine and the re-arm/refractory
+logic is the bug. If not_measured is large, stepped coverage is not
+what the runner claims. Only the predicted landmark outcome points
+at the hard problem — the aperture signal itself on a real closure —
+and would gate the deferred recall change on a second, independent
+closure measure (the iris-occlusion signal) before any line moves.
+This prediction is not edited after the trace is read; the outcome
+becomes a new dated section below it.
