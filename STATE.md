@@ -1,3 +1,31 @@
+**THE AUTOPSY READS THE REAL TRACE, 2 September 2026 — the second
+producer-consumer seam, found when the owner ran it on eight real
+clips.** The awake corpus run finally happened, on a new machine, and
+the autopsy died on the first line of the first file with
+KeyError: 'frameIndex'. The real frame-trace export
+(src/core/frameTrace.ts) prepends six "# key: value" metadata rows —
+source, clip, measurement mode, coverage — before the frameIndex
+column header, so csv.DictReader took "# source: file" as the header
+and every frame join missed. The tool was called "proven end to end"
+twice, but only ever on synthetic traces I built with the bare header
+on line one — a fixture written to satisfy the reader could never
+catch where the reader disagreed with the real writer. The fix is one
+line and the project's own long-standing convention:
+clip_trace_from_rows now drops lines starting with "#" before
+parsing, exactly as analysis/blinklab/drozy.py has for months. A test
+that builds the real six-row "#" preamble was watched failing first
+with the owner's exact KeyError, then made to pass; removing the
+filter reddened it and was restored; an end-to-end run over a
+CRLF, "#"-preambled file classifies correctly. The corpus data itself
+was never in question — all eight clips measured, zero failed — only
+the reader's picture of the file. No src change, so the
+corpus-reproduction gate does not apply and no measured number moves.
+The suite is 800 unit tests, 20 end to end tests, and
+275 Python tests of which 2 skip. Next: the owner pulls this fix
+and re-runs the one autopsy line over the traces already on disk —
+no re-measuring — and the real verdict drops out against the
+committed prediction.
+
 **THE AUTOPSY IS WIRED TO THE RUN, 2 September 2026 — the seam
 between the tool and the corpus run that will feed it, closed before
 the run happens.** The miss autopsy shipped ahead of its data; this

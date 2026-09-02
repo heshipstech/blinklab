@@ -75,12 +75,20 @@ class MissVerdict:
 def clip_trace_from_rows(lines: list[str]) -> ClipTrace:
     """Parse one clip's trace CSV lines into a frameIndex map.
 
+    The real export (src/core/frameTrace.ts) prepends "# key: value"
+    metadata rows — source, clip, measurement mode, coverage, and a
+    cap warning when frames were lost — before the frameIndex header.
+    Those are skipped the way every CSV reader here does it
+    (analysis/blinklab/drozy.py); without that the first metadata line
+    is read as the header and every frame join fails.
+
     A duplicated frameIndex refuses: one clip cannot measure the same
     frame twice, so a duplicate means the trace is damaged and
     keeping one silently would hide that.
     """
+    body = [line for line in lines if not line.startswith("#")]
     trace: ClipTrace = {}
-    for row in csv.DictReader(lines):
+    for row in csv.DictReader(body):
         frame_index = int(row["frameIndex"])
         if frame_index in trace:
             raise ValueError(
