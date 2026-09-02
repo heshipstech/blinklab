@@ -88,3 +88,57 @@ WHAT EACH OTHER OUTCOME REDIRECTS
 
 This prediction is not edited after the trace is read; the outcome
 becomes a new dated section below it.
+
+
+THE IRIS RESULT, 2 September 2026
+================================
+
+The awake corpus run captured irisAspectRatio in the per-frame trace,
+and the neutrality check held: the same 67 misses, digit for digit.
+The iris ratio was read inside each of the 49 shallow-aperture misses'
+closed spans and against that clip's own open baseline in the 60
+frames before the span. Per-miss table:
+docs/evidence/2026-09-02-awake-autopsy/iris_on_misses_summary.csv.
+
+The prediction is CONFIRMED. The iris does not collapse:
+
+  in-span iris median over the 49 misses:      0.846
+  open baseline just before them (median):      0.877
+  drop, baseline to in-span (median):          +0.024
+  misses with an in-span median below 0.80:     1 of 49
+  misses with any in-span frame below 0.70:     0 of 49
+  above_line 0.845, never_armed 0.858 (same)
+
+The iris aspect ratio is essentially FLAT from the open eye into the
+closed span — a 0.024 drop, nowhere near the collapse toward ~0.5 that
+a tracked occlusion would give. On the very frames a human marked
+fully shut, the model holds a near-circular iris behind the lid, just
+as the pessimistic prediction feared. Both landmark-derived closure
+signals are blind here: the aperture hovered near its line (that is
+what put these misses in the shallow-aperture set) AND the iris held
+its open shape.
+
+WHAT THIS SETTLES. The ~49 shallow-aperture misses are a recall
+CEILING, not a tunable defect. The closure is invisible to this face
+model's landmarks, so neither moving the blink line (a threshold fix)
+nor fusing the iris signal (this experiment) can recover them: there
+is no signal to threshold or to fuse. Route A is closed. Lifting this
+part of the recall deficit needs a face model that registers these
+closures, or ground truth that is not marking closures too subtle for
+the model to see; it is not reachable from this repository's
+parameters.
+
+CAVEAT, kept honest. This shows the iris does not FALL on the misses;
+a stronger form would add a positive control — the iris on closures
+the detector DID catch — to confirm the signal has any dynamic range
+at all. The recorded fixture's two detected blinks (0.83, against a
+0.92 open) already suggest the range is small, and the flat
+open-to-closed drop here says the same, but the control is the honest
+next check before calling the iris signal useless in general rather
+than useless HERE.
+
+WHAT REMAINS TUNABLE. Of the 67 misses, ~49 are this ceiling. The
+only recall left that parameters can move is the ~5 re-arm/refractory
+state-machine drops (docs/miss-character.txt, a real but small
+route B) and, as a design decision rather than a bug, the 9
+long-closure misses the 500 ms max-blink-duration rejects.
