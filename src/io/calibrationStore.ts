@@ -1,5 +1,8 @@
 import type { CompletedTarget } from "../core/calibrationCapture";
-import type { CalibrationProfile } from "../core/calibrationProfile";
+import {
+  parseCalibrationProfile,
+  type CalibrationProfile,
+} from "../core/calibrationProfile";
 import {
   parseBlinkCalibration,
   serializeBlinkCalibration,
@@ -179,14 +182,11 @@ export function loadCalibrationProfile(): CalibrationProfile | null {
   if (raw === null) {
     return null;
   }
-  try {
-    return JSON.parse(raw) as CalibrationProfile;
-  } catch (error: unknown) {
-    // Same reasoning as loadCalibrationSamples above: null is the right
-    // return, silence was not.
-    console.warn("stored calibration profile was unreadable:", error);
-    return null;
-  }
+  // The validated boundary, not a bare cast: a stored value that parses
+  // but is the wrong shape used to become a mapping that returned NaN
+  // for every gaze point. parseCalibrationProfile returns null for it,
+  // and the page then simply shows as uncalibrated.
+  return parseCalibrationProfile(raw);
 }
 
 /**
