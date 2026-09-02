@@ -1,3 +1,39 @@
+**THE AUTOPSY IS IN, AND THE PREDICTION WAS WRONG, 2 September 2026 —
+the missed blinks are a detector-logic failure, not a landmark
+failure.** The awake corpus trace ran on the new machine and the
+classifier scored the 67 misses against the prediction committed in
+docs/miss-character.txt before any trace was read. Three of the four
+claims are refuted. above_line did NOT dominate (34, not >=40; only 16
+of the 47 closed-frame misses); its min_ratio median is 1.24, not the
+predicted >=1.5, so where the aperture stayed above the line it stayed
+CLOSE to it — the lids were not barely moving. crossed_line was
+predicted a minority (<=10) and came in at 29, the largest single
+mechanism, 28 of them on frames a human marked fully closed. Only the
+sampling null held: not_measured is 0, a stepped run leaves no gap.
+The one control the prediction did not ask for: the run reproduced the
+SAME 67 misses blink-for-blink as the 2026-08-21-rearm table, on a
+different CPU, OS and browser — the miss set is hardware-independent,
+the single-machine results were not a machine artefact. The verified
+finding: of the 47 misses where a human saw a fully closed frame, 28
+(60 percent) are crossed_line — the aperture DID dip below the
+effective blink line and no blink was logged, so the detector's own
+re-arm/refractory state machine swallowed a correct signal. That is
+the prediction file's own "if crossed_line dominates, the state
+machine is the bug" branch. The recall change is therefore no longer
+gated on the iris-occlusion second measure (that gate applied only to
+the refuted landmark outcome); it now has two detector-logic targets,
+state machine first (crossed_line, 29) and blink-line threshold second
+(the tight-margin half of above_line) — both code, not model. The
+verdict table is committed at
+docs/evidence/2026-09-02-awake-autopsy/eyeblink8_miss_autopsy.csv with
+its provenance, and the dated result is in docs/miss-character.txt
+below the untouched prediction. No src change and no test change, so
+the corpus-reproduction gate does not apply and no measured number
+moves; the suite is 800 unit tests, 20 end to end tests, and
+275 Python tests of which 2 skip. Next: reproduce one crossed_line
+miss against the real detector in the trace harness and show why a
+frame below the line logs no blink.
+
 **THE AUTOPSY READS THE REAL TRACE, 2 September 2026 — the second
 producer-consumer seam, found when the owner ran it on eight real
 clips.** The awake corpus run finally happened, on a new machine, and
