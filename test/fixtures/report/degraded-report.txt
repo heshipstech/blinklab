@@ -81,6 +81,7 @@ Nothing you recorded left this device. The exports exist only where you saved th
 This browser will not let the page read its own storage, so what is stored here cannot be listed or erased from this page.
 - Your gaze calibration profile (so a calibration survives a reload and works from the first frame of your next visit).
 - The measurements that profile was solved from (so the profile can be re-solved without sitting through the nine dots again).
+- Your personal blink line (so a guided blink calibration survives a reload and does not have to be repeated on your next visit).
 - Your chosen pseudonym (so your exported files can carry a name you picked, and only if you picked one).
 The erase control on the page deletes the stored items above.
 

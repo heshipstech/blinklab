@@ -1,5 +1,10 @@
 import type { CompletedTarget } from "../core/calibrationCapture";
 import type { CalibrationProfile } from "../core/calibrationProfile";
+import {
+  parseBlinkCalibration,
+  serializeBlinkCalibration,
+  type StoredBlinkCalibration,
+} from "../core/guidedCalibration";
 import type { StorageProbe } from "../core/storedData";
 
 // The calibration samples and the solved profile live in this
@@ -18,11 +23,20 @@ import type { StorageProbe } from "../core/storedData";
 const STORAGE_KEY = "blinklab-calibration-samples-v1";
 const PROFILE_KEY = "blinklab-calibration-profile-v1";
 const PSEUDONYM_KEY = "blinklab-participant-pseudonym-v1";
+const BLINK_CALIBRATION_KEY = "blinklab-blink-calibration-v1";
 
 // Everything this page stores, in one array, so the probe and the
 // erase below cannot fall out of step with the keys above. The
-// visitor-facing descriptions live in core/storedData.ts.
-const ALL_KEYS = [PROFILE_KEY, STORAGE_KEY, PSEUDONYM_KEY] as const;
+// visitor-facing descriptions live in core/storedData.ts. A key that
+// can be written but is missing here would be undeletable from the
+// erase control and undocumented in the enumeration, the exact E3
+// defect, so a new save function and a new entry here arrive together.
+const ALL_KEYS = [
+  PROFILE_KEY,
+  STORAGE_KEY,
+  PSEUDONYM_KEY,
+  BLINK_CALIBRATION_KEY,
+] as const;
 
 /**
  * The saved pseudonym, or null. A failed read reports null here —
@@ -173,4 +187,51 @@ export function loadCalibrationProfile(): CalibrationProfile | null {
     console.warn("stored calibration profile was unreadable:", error);
     return null;
   }
+}
+
+/**
+ * Save a guided blink calibration, or say the write did not survive.
+ *
+ * The same B3 guard as the profile store: a full quota throws on write,
+ * and this will be called from inside the frame loop, where an
+ * unguarded throw would end the whole measurement session rather than
+ * lose one calibration.
+ */
+export function saveBlinkCalibration(
+  calibration: StoredBlinkCalibration,
+): boolean {
+  try {
+    localStorage.setItem(
+      BLINK_CALIBRATION_KEY,
+      serializeBlinkCalibration(calibration),
+    );
+    return true;
+  } catch (error: unknown) {
+    console.warn("the blink calibration could not be stored:", error);
+    return false;
+  }
+}
+
+/**
+ * The saved blink calibration, or null for anything that is not one.
+ *
+ * Unlike loadCalibrationProfile above, which casts raw JSON and trusts
+ * it, this runs parseBlinkCalibration: a stored line that no longer
+ * sits between its own open and closed medians is a tampered or
+ * stale-format entry, and returning null keeps a stale line from
+ * quietly becoming the detector's threshold. A failed read is null too,
+ * the same as the loaders above.
+ */
+export function loadBlinkCalibration(): StoredBlinkCalibration | null {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(BLINK_CALIBRATION_KEY);
+  } catch (error: unknown) {
+    console.warn("the blink calibration could not be read:", error);
+    return null;
+  }
+  if (raw === null) {
+    return null;
+  }
+  return parseBlinkCalibration(raw);
 }

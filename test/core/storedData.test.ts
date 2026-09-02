@@ -40,6 +40,19 @@ describe("the list of what is stored", () => {
   it("has no duplicate keys, which would double-count a single item", () => {
     expect(new Set(KEYS).size).toBe(KEYS.length);
   });
+
+  it("documents the blink calibration key beside the gaze ones", () => {
+    // The guided blink calibration (guidedCalibration.ts) writes a
+    // personal blink line to this device. Every key the page can write
+    // must be listed here, so the erase control and this enumeration
+    // cannot fall out of step with the store's ALL_KEYS.
+    const item = STORED_ITEMS.find(
+      (entry) => entry.key === "blinklab-blink-calibration-v1",
+    );
+    expect(item).toBeDefined();
+    expect(item?.what.length).toBeGreaterThan(0);
+    expect(item?.why.length).toBeGreaterThan(0);
+  });
 });
 
 describe("storedSummary", () => {
