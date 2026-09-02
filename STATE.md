@@ -1,3 +1,33 @@
+**TRACK B PRE-REGISTERED, THE UTA-RLDD CLASSIFICATION PLAN, 2 September
+2026 — roadmap 7.5 and 7.6, written before any classifier is fit.** The
+formal roadmap has two open rows left, 7.5 (a baseline classifier with a
+stated train/test split) and 7.6 (leave-one-subject-out), held under
+amendment 8 for want of a dataset large enough to hold out subjects and
+unblocked for data by amendment 10 (Prof. Athitsos's UTA-RLDD
+permission). docs/uta-rldd-plan.md is the pre-registration, committed
+before the classifier exists and containing no results: the question
+(can the seven per-second features classify UTA-RLDD's three
+self-reported drowsiness states across strangers), the data and its
+safeguards (numbers only never a frame, the source video deleted after
+features, the 25fps floor decided before any label), the baseline
+(multinomial logistic regression, standardised inside the fold never
+across it, against a 1/3 majority floor), the evaluation
+(leave-one-subject-out with per-subject scores, balanced accuracy, a
+binary alert-vs-drowsy secondary named in advance, and a 1000×
+label-shuffle control that doubles as a subject-leakage detector), the
+decision rule, and — predict-then-verify — the committed expectation of
+a NULL, grounded in the DROZY correlation null, with a leave-one-out
+accuracy that SURVIVES the shuffle being the only honest route to a
+positive. Docs only, no src, no measurement: the classifier itself
+awaits the owner running the UTA-RLDD videos through the feature
+extractor, a corpus-scale job on the owner's machine, since the source
+video is not in the repository. ROADMAP 7.5/7.6 now point at the plan.
+Next: the owner's UTA-RLDD feature run unblocks the classifier; until
+then the roadmap is otherwise complete (Phase 9 is ideas, not
+commitments), and the guided line's per-user verification and the
+deferred detector calls (route B, the max-blink-duration cap) also wait
+on the owner.
+
 **THE SAMPLES LOADER'S RELOAD BOUNDARY, VALIDATED, 2 September 2026 —
 the sibling bare cast, closed the same way.** Increment 4 validated the
 gaze profile on load and named the sibling gap it left: the calibration
