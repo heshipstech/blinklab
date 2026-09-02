@@ -1,3 +1,34 @@
+**THE AUTOPSY IS WIRED TO THE RUN, 2 September 2026 — the seam
+between the tool and the corpus run that will feed it, closed before
+the run happens.** The miss autopsy shipped ahead of its data; this
+increment makes the owner's awake corpus run flow straight into it
+with no renaming, and lets it emit a committable per-miss verdict
+table. The defect it fixes was silent: tools/measure_corpus.mjs
+writes each clip's per-frame trace as <clip>.frames.csv, but
+autopsy() looked for <clip>.csv — the neighbouring seconds table, a
+different file. Nothing would have errored, because a clip whose
+trace is missing is correctly skipped, not guessed; the run would
+just have classified zero misses and printed "no misses classified",
+looking like it ran. Two tests now build the trace file on disk
+under the exact name the runner writes and point the tool at that
+directory, watched failing first (the tool skipped every clip and
+returned nothing) then made to pass. The second half is
+write_verdicts and a --out flag: the tool writes one row per miss —
+clip, blink_id, mechanism, min_ratio, measured_frames,
+fully_closed_frames — as committable evidence, and carries the
+null-never-zero rule into the CSV cell. min_ratio is a number only
+for above_line, where the margin is the question; for a crossing, a
+coverage gap or an untrusted span the cell is empty, never 0, because
+0 is a false ratio that would read as the aperture touching the line
+exactly. A test pins the empty cell; the None-to-"0" mutation
+reddened it and was restored, as did the crossing comparison
+mutated < to >. No src change, so the corpus-reproduction gate does
+not apply and no measured number moves. The suite is 800 unit tests,
+20 end to end tests, and 274 Python tests of which 2 skip. Next on
+the ladder is unchanged: the owner's awake corpus trace run, which
+now fires this autopsy on real data and drops a committed verdict
+table in one command.
+
 **THE MISS AUTOPSY HAS ITS TOOL, 2 September 2026 — the recall
 investigation's next increment, built ahead of its data.** The
 single largest open accuracy question is the 67 Eyeblink8 blinks the
