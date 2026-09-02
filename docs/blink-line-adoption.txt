@@ -1,0 +1,122 @@
+ADOPTING THE GUIDED BLINK LINE, AND A PREDICTION
+================================================
+
+Written 2 September 2026, before the change is made and before any
+new measurement is read, in the predict-then-verify discipline.
+
+WHAT THE CHANGE WOULD BE
+------------------------
+The detector's blink line is today HALF of each person's own learned
+open aperture (src/core/baseline.ts): the passive baseline learns the
+open eye over thirty seconds and ASSUMES the closed eye is near zero,
+so it places the line at half of open. The guided calibration built
+over increments 2a-2d measures a person's real open AND real closed
+aperture through two held phases and places their line at the true
+MIDPOINT of the two (src/core/guidedCalibration.ts). It is stored per
+device (blinklab-blink-calibration-v1) and, today, feeds nothing.
+
+The proposed change: when a stored guided line exists, the detector
+uses it in place of the passive half-of-open line; when none exists,
+nothing changes. The selection is the whole change — "prefer the
+person's own measured line, fall back to the baseline" — and it is
+meant to be a small, pure, testable decision.
+
+WHAT IS ALREADY KNOWN, AND WHY THE PREDICTION IS DULL
+-----------------------------------------------------
+The awake corpus autopsy (docs/miss-character.txt) and the iris result
+(docs/iris-occlusion.txt) already classified all 67 Eyeblink8 misses,
+and NONE of them is a threshold-placement failure:
+
+  ~49  a recall CEILING. On the frames a human marked shut, neither the
+       aperture nor the iris drops (in-span iris median 0.846 vs 0.877
+       open, 0/49 below 0.70). The closure is invisible to the model's
+       landmarks. No line, however placed, catches a closure the
+       aperture does not register: the aperture never dips below ANY
+       line on these misses.
+    9  long closures rejected by MAX_BLINK_DURATION_MS = 500. A duration
+       cap, not a threshold; a different line does not change it.
+    5  re-arm / refractory state-machine drops. A state-machine
+       parameter, not a threshold.
+    4  no trusted face at all. No measurement to threshold.
+
+A better-placed line moves recall only by catching a real aperture dip
+that the old line sat above. The autopsy found no such miss: the misses
+are ceiling, duration, state-machine and no-face. So a differently
+placed line has nothing in this corpus to catch.
+
+There is a second reason the guided line cannot rescue the ceiling
+misses even in principle. resolveGuidedCalibration REFUSES when the
+closed median is not at least 30% below the open one
+(GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION) - which is exactly the
+ceiling condition, a closure the instrument barely registers. So on the
+very population where the ceiling bites, a guided run produces no line
+to adopt: it refuses, and the detector falls back to the baseline. The
+guided line is designed to decline precisely where a threshold move
+would be a guess.
+
+And for a TYPICAL subject, whose closed eye really does read near zero,
+the guided midpoint (open + closed)/2 is approximately half of open -
+the passive line's own value. Guided and passive nearly coincide where
+closed is near zero; they diverge only for ATYPICAL eyelids, whose
+closed aperture sits well above zero.
+
+THE PREDICTION
+--------------
+Scored on a corpus run in which each clip carries a guided line derived
+from its own open and closed aperture (the honest offline analog of a
+person calibrating; the ceiling clips' own refusal is part of the test),
+compared against the committed baseline run:
+
+  Eyeblink8 recall and precision change by essentially nothing - within
+  the run-to-run noise of the benchmark, no category of the 67 misses
+  recovered, no new false positive introduced. The guided line has
+  nothing to catch that the passive line missed, and on the ceiling
+  clips it refuses and falls back.
+
+Equivalently, and this is the part that ships now: with NO stored
+calibration - which is every corpus run as the runner exists today,
+using a fresh browser with empty storage - the change is neutral BY
+CONSTRUCTION. loadBlinkCalibration returns null, the selection returns
+the baseline line, and the detector is byte-for-byte what it was. The
+committed Eyeblink8 numbers do not move because the path that reads the
+guided line is not reached in the corpus.
+
+WHERE THE VALUE ACTUALLY IS, AND WHAT THIS DOES NOT CLAIM
+---------------------------------------------------------
+The guided line is not a corpus-recall improvement and this change does
+not claim to be one. Its value is PERSONALISATION for atypical eyelids,
+where the passive half-of-open assumption is simply wrong. The one
+recorded case is the owner's own: naturally low eyelids that "sat below
+the blink line for five seconds while fully awake" (ROADMAP acceptance
+note 5, the reason the long-closure detector moved to a dedicated shut
+line). For such a person the passive line is mis-placed, and a line
+measured from their real open and closed aperture should place it right.
+
+That benefit is a HYPOTHESIS grounded in one observation, not a
+verified result. Eyeblink8 cannot test it: its subjects are
+pre-recorded and cannot perform a two-phase guided calibration, and it
+was not selected for atypical eyelids. So the change ships as an
+opt-in personalisation whose default (no calibration) is exactly
+today's behaviour, and it is described that way - "set your own blink
+line", not "improve accuracy". Whether it helps a real atypical user is
+the next thing to actually measure, and it needs a calibrated subject
+with labelled blinks, not this corpus.
+
+WHAT WOULD REFUTE THIS
+----------------------
+  If a corpus run with per-clip guided lines moved recall
+  significantly, the autopsy's "the misses are not threshold-placement"
+  conclusion was wrong, and the line - not the model ceiling - would be
+  back in question.
+
+  If such a run moved PRECISION significantly (new false positives from
+  a higher guided line arming on ordinary droops), the guided midpoint
+  is too generous and the selection or the separation floor needs
+  reconsidering before it is offered as a default anywhere.
+
+  If, with no stored calibration, any committed Eyeblink8 number
+  changed at all, the "neutral by construction" claim is false and the
+  selection is reaching the guided path when it must not.
+
+This prediction is not edited after the fact; the outcome becomes a new
+dated section below it.
