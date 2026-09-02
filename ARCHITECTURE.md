@@ -15,7 +15,7 @@ Everything that decides anything lives in `core` as a function from
 values to values. Everything that talks to the world lives in `io`.
 `main.ts` is the wiring between them.
 
-That is why 834 unit tests run in about three seconds with no browser. A
+That is why 838 unit tests run in about three seconds with no browser. A
 blink detector that takes numbers and returns numbers can be tested on a
 hand written series where you know the answer, and most of this project's
 real defects were found that way.
@@ -58,10 +58,15 @@ everyone, so measuring it in pixels converts everything else into
 millimetres. That is what makes a reading survive somebody leaning
 towards the camera. `src/core/aperture.ts`.
 
-**Thresholds are personal, not universal.** The blink line is half of
-each person's own learned open aperture, not a number from a paper.
-Eyes differ enough that a fixed threshold measures the person rather
-than the blink. `src/core/baseline.ts`.
+**Thresholds are personal, not universal.** By default the blink line is
+half of each person's own learned open aperture, not a number from a
+paper. Eyes differ enough that a fixed threshold measures the person
+rather than the blink. `src/core/baseline.ts`. A person can go further
+and run the guided calibration (`src/core/guidedCalibration.ts`), which
+measures their real open AND closed aperture and places the line at the
+true midpoint; when a guided line is stored it becomes the detector's
+line, overriding the half-of-open default. `effectiveBlinkLineMm` is the
+one-line rule that chooses between them.
 
 **Null means not measured. Zero means measured as zero.** This runs
 through the whole codebase. A blink whose shape could not be analysed

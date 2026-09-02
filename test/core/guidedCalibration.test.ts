@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   GUIDED_CALIBRATION_PHASE_MS,
   collectCalibrationSample,
+  effectiveBlinkLineMm,
   emptyGuidedCalibration,
   resolveGuidedCalibration,
   startCalibrationSession,
@@ -11,6 +12,7 @@ import {
   parseBlinkCalibration,
   type CalibrationSessionState,
   type GuidedCalibrationSamples,
+  type StoredBlinkCalibration,
 } from "../../src/core/guidedCalibration";
 
 // The guided blink-line calibration measures a person's OWN open and
@@ -256,5 +258,38 @@ describe("stored blink calibration, serialise and validated parse", () => {
         }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("effectiveBlinkLineMm, which line the detector reads", () => {
+  // The whole of increment 3: prefer the person's own measured line
+  // when they have one, otherwise fall back to the passive baseline
+  // line. Kept a pure decision so the precedence is pinned and main.ts
+  // stays thin. The corpus never has a stored calibration, so this
+  // returns the baseline line there and the benchmark is unchanged.
+  const stored: StoredBlinkCalibration = {
+    personalLineMm: 5,
+    openMedianMm: 8,
+    closedMedianMm: 2,
+  };
+
+  it("uses the guided line when a calibration is present", () => {
+    expect(effectiveBlinkLineMm(stored, 3.9)).toBe(5);
+  });
+
+  it("uses the guided line even when the baseline has none", () => {
+    // A calibrated person needs no passive baseline at all: the guided
+    // line is a complete ruler on its own.
+    expect(effectiveBlinkLineMm(stored, null)).toBe(5);
+  });
+
+  it("falls back to the baseline line when there is no calibration", () => {
+    // This is every corpus run: no stored calibration, so the detector
+    // reads exactly the baseline line it always did.
+    expect(effectiveBlinkLineMm(null, 3.9)).toBe(3.9);
+  });
+
+  it("returns null when neither a calibration nor a baseline line exists", () => {
+    expect(effectiveBlinkLineMm(null, null)).toBeNull();
   });
 });

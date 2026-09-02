@@ -208,9 +208,11 @@ import {
 import {
   GUIDED_CALIBRATION_PHASE_MS,
   calibrationSessionStep,
+  effectiveBlinkLineMm,
   startCalibrationSession,
   type CalibrationSessionState,
   type GuidedCalibrationRefusal,
+  type StoredBlinkCalibration,
 } from "./core/guidedCalibration";
 import {
   STORED_ITEMS,
@@ -1586,10 +1588,18 @@ calibrationOverlay.addEventListener("click", () => {
 // later, deliberate accuracy change with its own prediction and corpus
 // run. The whole feature is dormant unless this button is clicked, so a
 // corpus run, which never clicks it, measures exactly as it did before.
+// The person's stored guided line, held live so a calibration done
+// this session takes effect on the next frame and an erase clears it
+// without a reload. It is the detector's line when present (increment
+// 3): loaded here, set when a run resolves ready below, cleared in the
+// erase handler. Null in a corpus run's fresh browser, which is why the
+// benchmark is neutral by construction.
+let storedBlinkCalibration: StoredBlinkCalibration | null =
+  loadBlinkCalibration();
 const blinkCalibrateButton = document.createElement("button");
 blinkCalibrateButton.dataset.testid = "calibrate-blinks";
 blinkCalibrateButton.textContent =
-  loadBlinkCalibration() === null ? "Calibrate blinks" : "Recalibrate blinks";
+  storedBlinkCalibration === null ? "Calibrate blinks" : "Recalibrate blinks";
 blinkCalibrateButton.disabled = true;
 let blinkCalibrationRequested = false;
 let blinkCalibrationSession: CalibrationSessionState | null = null;
@@ -1789,7 +1799,10 @@ eraseButton.addEventListener("click", () => {
   calibrateButton.textContent = "Calibrate gaze";
   // The erase took the blink line too (it is in ALL_KEYS), so the
   // button must stop offering to recalibrate a line the storage no
-  // longer holds.
+  // longer holds, and the live copy the detector reads must be let go
+  // of the same way calibrationProfile is above — otherwise the
+  // detector would keep using a line the visitor just erased.
+  storedBlinkCalibration = null;
   blinkCalibrateButton.textContent = "Calibrate blinks";
   refreshHeatmapButton();
   refreshStoredBox();
@@ -2056,6 +2069,9 @@ const blinkLabel = document.createElement("p");
 let blinkState = initialBlinkState;
 
 const baselineLabel = document.createElement("p");
+// A stable handle for the end to end test that a stored guided line is
+// adopted as the detector's threshold; the text is free to change.
+baselineLabel.dataset.testid = "blink-threshold";
 let baselineState: BaselineState | null = null;
 // The round's fifth check, live: the frozen baseline against the
 // running median of the recorded apertures. Updated once per feature
@@ -3329,18 +3345,21 @@ function processFrame(
           blinkCalibrationSession = null;
           blinkCalibrationOverlay.hidden = true;
           if (result.kind === "ready") {
-            // Store the line for a later visit. It does NOT feed the
-            // blink reducer below, which still reads the passive
-            // baseline; adopting this line is a separate, deliberate
-            // accuracy change.
-            const stored = saveBlinkCalibration({
+            const line: StoredBlinkCalibration = {
               personalLineMm: result.personalLineMm,
               openMedianMm: result.openMedianMm,
               closedMedianMm: result.closedMedianMm,
-            });
-            blinkCalibrationStatus.textContent = stored
-              ? `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm, the midpoint of your ${result.openMedianMm.toFixed(1)} mm open and ${result.closedMedianMm.toFixed(1)} mm closed aperture. Saved for your next visit; it does not change detection yet.`
-              : `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm for now, but this browser refused the write, so it will not survive a reload.`;
+            };
+            // Active THIS session from the next frame, whether or not
+            // the write survives: the in-memory line is what the
+            // detector reads (effectiveBlinkLineMm below). The storage
+            // write is a separate promise about surviving a reload, and
+            // its failure is reported in the status rather than lost.
+            storedBlinkCalibration = line;
+            const persisted = saveBlinkCalibration(line);
+            blinkCalibrationStatus.textContent = persisted
+              ? `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm, the midpoint of your ${result.openMedianMm.toFixed(1)} mm open and ${result.closedMedianMm.toFixed(1)} mm closed aperture. Your detector uses it now and on your next visit.`
+              : `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm. Your detector uses it now, but this browser refused the write, so it will not survive a reload.`;
             blinkCalibrateButton.textContent = "Recalibrate blinks";
             // A calibration is the only thing that can put this key in
             // storage while the page is open, so the stored-data box is
@@ -3383,19 +3402,34 @@ function processFrame(
       );
       const personalMm = personalThresholdMm(baselineState);
       const secondsLeft = learningSecondsLeft(baselineState, nowMs);
-      // The refusal: no ruler exists, and every number that depends
-      // on the blink line is withheld rather than guessed. What
-      // stays live below never consults the ruler: the aperture
-      // trace, face presence, the rates, and gaze. The account is
+      // The refusal: no PASSIVE ruler exists, and every number that
+      // depends on the blink line is withheld rather than guessed. What
+      // stays live below never consults the ruler: the aperture trace,
+      // face presence, the rates, and gaze. The account is
       // docs/calibration-refusal.txt.
       const calibrationRefused = baselineState.kind === "refused";
+      // Increment 3: a stored guided line, if the person calibrated, is
+      // the detector's line and overrides the passive baseline. It is a
+      // complete ruler measured from their own open and closed
+      // aperture, so it also lifts the refusal — a calibrated person is
+      // never left without a line and does not wait on the thirty-second
+      // baseline. storedBlinkCalibration is null in a corpus run's fresh
+      // browser, so this whole path collapses to the passive baseline
+      // there and the benchmark is unchanged (docs/blink-line-adoption.txt).
+      const hasGuidedLine = storedBlinkCalibration !== null;
+      const blinkLineMm = effectiveBlinkLineMm(
+        storedBlinkCalibration,
+        personalMm,
+      );
       writeReadout(
         baselineLabel,
-        calibrationRefused
-          ? CALIBRATION_REFUSED_SENTENCE
-          : baselineState.kind === "ready" && personalMm !== null
-            ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
-            : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
+        storedBlinkCalibration !== null
+          ? `Personal blink threshold: ${storedBlinkCalibration.personalLineMm.toFixed(1)} mm (from your guided calibration)`
+          : calibrationRefused
+            ? CALIBRATION_REFUSED_SENTENCE
+            : baselineState.kind === "ready" && personalMm !== null
+              ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
+              : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
       );
 
       const blinkCountBefore = blinkState.blinkCount;
@@ -3408,12 +3442,15 @@ function processFrame(
       blinkState = blinkStep(
         blinkState,
         nowMs,
-        // A refused session feeds the blink reducer nothing: the
-        // generic fallback threshold below would otherwise keep
-        // counting blinks against a line the instrument just said it
-        // cannot vouch for.
-        blinkMeasurable && !calibrationRefused ? stabilityMm : null,
-        personalMm ?? BLINK_APERTURE_THRESHOLD_MM,
+        // A refused PASSIVE session feeds the blink reducer nothing: the
+        // generic fallback threshold would otherwise keep counting
+        // blinks against a line the instrument just said it cannot vouch
+        // for. A guided line lifts that — it IS a line the instrument
+        // vouches for — so a calibrated person keeps counting.
+        blinkMeasurable && (hasGuidedLine || !calibrationRefused)
+          ? stabilityMm
+          : null,
+        blinkLineMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       // The per-frame trace, clips only (docs/miss-trace.txt). The
       // line recorded is the one the reducer was just handed: the
@@ -3425,8 +3462,8 @@ function processFrame(
           mediaTimeSeconds: nowMs / 1000,
           apertureMm: stabilityMm,
           blinkLineMm:
-            blinkMeasurable && !calibrationRefused
-              ? (personalMm ?? BLINK_APERTURE_THRESHOLD_MM)
+            blinkMeasurable && (hasGuidedLine || !calibrationRefused)
+              ? (blinkLineMm ?? BLINK_APERTURE_THRESHOLD_MM)
               : null,
           irisAspectRatio: irisAspectRatioMean,
         });

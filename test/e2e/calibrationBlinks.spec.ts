@@ -31,12 +31,16 @@ test("the blink calibration opens, runs the phases, and refuses with no face", a
 
   await calibrate.click();
 
-  // The overlay opens on the open phase, naming what comes next so a
-  // person is not surprised by the closed phase they cannot read.
+  // The overlay opens and shows a phase instruction. Which phase is not
+  // pinned here: each phase lasts only three seconds, so asserting the
+  // OPEN phase specifically is a race under parallel load, and the
+  // open-then-closed ORDER is already covered by the session state
+  // machine's unit tests. Here it is enough that the overlay renders a
+  // real phase instruction, and then reaches the refusal below.
   const overlay = page.getByTestId("blink-calibration-overlay");
   await expect(overlay).toBeVisible();
-  await expect(page.getByTestId("blink-calibration-instruction")).toContainText(
-    "eyes OPEN",
+  await expect(page.getByTestId("blink-calibration-instruction")).toHaveText(
+    /eyes OPEN|CLOSE your eyes/,
   );
 
   // The two phases are three seconds each, driven by the wall clock. A
@@ -77,4 +81,40 @@ test("clicking to cancel a blink calibration stores nothing", async ({
   expect(
     await page.evaluate((k) => localStorage.getItem(k), BLINK_KEY),
   ).toBeNull();
+});
+
+test("a stored guided line is adopted as the detector's blink line", async ({
+  page,
+}) => {
+  // Increment 3, the returning calibrated visitor: a stored guided line
+  // present before the page loads. This is the one path the fake,
+  // faceless camera CAN prove — that the stored line is loaded and
+  // becomes the detector's line — because the baseline readout names
+  // which line is in use, and it does so every running frame regardless
+  // of a face. The blink-counting itself, needing a real closure, stays
+  // in manual check 62.
+  await page.addInitScript((k: string) => {
+    localStorage.setItem(
+      k,
+      JSON.stringify({ personalLineMm: 5, openMedianMm: 8, closedMedianMm: 2 }),
+    );
+  }, BLINK_KEY);
+  await page.goto("./");
+
+  // The button already offers a RE-calibration, from storage, before
+  // the camera even starts.
+  await expect(page.getByTestId("calibrate-blinks")).toHaveText(
+    "Recalibrate blinks",
+  );
+
+  await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
+
+  // The detector's own readout names the guided line as its threshold,
+  // not the half-of-baseline default: the stored line reached the
+  // detector, not just the button label.
+  await expect(page.getByTestId("blink-threshold")).toHaveText(
+    /from your guided calibration/,
+    { timeout: 30_000 },
+  );
 });
