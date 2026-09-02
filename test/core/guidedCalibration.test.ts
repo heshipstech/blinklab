@@ -7,6 +7,8 @@ import {
   resolveGuidedCalibration,
   startCalibrationSession,
   calibrationSessionStep,
+  serializeBlinkCalibration,
+  parseBlinkCalibration,
   type CalibrationSessionState,
   type GuidedCalibrationSamples,
 } from "../../src/core/guidedCalibration";
@@ -174,5 +176,85 @@ describe("the calibration session state machine", () => {
   it("is terminal once done", () => {
     const { state } = run(8, 2);
     expect(calibrationSessionStep(state, 999999, 5)).toBe(state);
+  });
+});
+
+describe("stored blink calibration, serialise and validated parse", () => {
+  const good = {
+    personalLineMm: 5,
+    openMedianMm: 8,
+    closedMedianMm: 2,
+  };
+
+  it("round-trips a ready calibration", () => {
+    const raw = serializeBlinkCalibration(good);
+    expect(parseBlinkCalibration(raw)).toEqual(good);
+  });
+
+  it("rejects non-JSON", () => {
+    expect(parseBlinkCalibration("not json {")).toBeNull();
+  });
+
+  it("rejects a missing field", () => {
+    expect(
+      parseBlinkCalibration(
+        JSON.stringify({ personalLineMm: 5, openMedianMm: 8 }),
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a non-finite number", () => {
+    expect(
+      parseBlinkCalibration(
+        JSON.stringify({
+          personalLineMm: null,
+          openMedianMm: 8,
+          closedMedianMm: 2,
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      parseBlinkCalibration(
+        '{"personalLineMm":5,"openMedianMm":8,"closedMedianMm":"x"}',
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a zero median, which a real calibration never produces", () => {
+    // resolveGuidedCalibration medians real apertures, all above zero,
+    // so a stored zero is a degenerate or tampered entry, not a
+    // calibration.
+    expect(
+      parseBlinkCalibration(
+        JSON.stringify({
+          personalLineMm: 4,
+          openMedianMm: 8,
+          closedMedianMm: 0,
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a line that does not sit between closed and open", () => {
+    // A line at or outside the open/closed bracket is not one these
+    // medians could have produced: a tampered or stale-format entry.
+    expect(
+      parseBlinkCalibration(
+        JSON.stringify({
+          personalLineMm: 9,
+          openMedianMm: 8,
+          closedMedianMm: 2,
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      parseBlinkCalibration(
+        JSON.stringify({
+          personalLineMm: 1,
+          openMedianMm: 8,
+          closedMedianMm: 2,
+        }),
+      ),
+    ).toBeNull();
   });
 });
