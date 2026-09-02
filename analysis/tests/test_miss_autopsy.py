@@ -14,6 +14,7 @@ frameIndex, mediaTimeSeconds, apertureMm, blinkLineMm — an empty
 aperture or line cell meaning null (no trusted face on that frame).
 """
 
+import csv
 import sys
 from pathlib import Path
 
@@ -23,9 +24,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 from miss_autopsy import (  # noqa: E402
     MissVerdict,
+    autopsy,
     classify_miss,
     clip_trace_from_rows,
     summarise,
+    write_verdicts,
 )
 
 
@@ -163,6 +166,87 @@ class TestItRefuses:
         clip = trace([(10, 8.0, 4.0)])
         with pytest.raises(ValueError, match="startFrame"):
             classify_miss(miss("A", "1", 13, 10, 3), clip)
+
+
+class TestAutopsyReadsTheRunLayout:
+    def test_autopsy_reads_clip_frames_csv(self, tmp_path: Path) -> None:
+        # The corpus runner (tools/measure_corpus.mjs) writes each
+        # clip's trace as <clip>.frames.csv. The autopsy must read that
+        # exact name so the run's output flows in with no renaming; a
+        # trace named <clip>.csv is the seconds table, a different file.
+        trace_dir = tmp_path / "traces"
+        trace_dir.mkdir()
+        (trace_dir / "clipX.frames.csv").write_text(
+            "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm\n"
+            "10,0.33,7.0,4.0\n"
+            "11,0.36,6.5,4.0\n"
+        )
+        misses = tmp_path / "misses.csv"
+        misses.write_text(
+            "clip,blink_id,startFrame,endFrame,frameLength,"
+            "fullyClosedFrames\n"
+            "clipX,1,10,11,2,2\n"
+        )
+        verdicts = autopsy(misses, trace_dir)
+        assert len(verdicts) == 1
+        assert verdicts[0].mechanism == "above_line"
+
+    def test_a_clip_without_a_trace_file_is_skipped(
+        self, tmp_path: Path
+    ) -> None:
+        # A miss whose clip has no trace file is not classified at all:
+        # the tool reports on the traces it was given, it does not
+        # guess a verdict for a clip the run never traced.
+        trace_dir = tmp_path / "traces"
+        trace_dir.mkdir()
+        (trace_dir / "clipX.frames.csv").write_text(
+            "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm\n"
+            "10,0.33,7.0,4.0\n"
+        )
+        misses = tmp_path / "misses.csv"
+        misses.write_text(
+            "clip,blink_id,startFrame,endFrame,frameLength,"
+            "fullyClosedFrames\n"
+            "clipX,1,10,10,1,1\n"
+            "clipMISSING,1,10,10,1,1\n"
+        )
+        verdicts = autopsy(misses, trace_dir)
+        assert [v.clip for v in verdicts] == ["clipX"]
+
+
+class TestWriteVerdicts:
+    def test_writes_one_row_per_miss(self, tmp_path: Path) -> None:
+        flat = trace([(10, 7.0, 4.0), (11, 6.5, 4.0)])
+        dip = trace([(20, 8.0, 4.0), (21, 3.0, 4.0)])
+        verdicts = [
+            classify_miss(miss("A", "1", 10, 11, 2), flat),
+            classify_miss(miss("A", "2", 20, 21, 2), dip),
+        ]
+        out = tmp_path / "verdicts.csv"
+        write_verdicts(verdicts, out)
+        rows = list(csv.DictReader(out.read_text().splitlines()))
+        assert [r["blink_id"] for r in rows] == ["1", "2"]
+
+    def test_min_ratio_cell_is_empty_for_a_non_above_line_verdict(
+        self, tmp_path: Path
+    ) -> None:
+        # The verdict table is committable evidence. min_ratio is a
+        # number only for above_line; for every other verdict the cell
+        # is empty, never 0 — a ratio over a crossing is not a number.
+        flat = trace([(10, 7.0, 4.0), (11, 6.5, 4.0)])
+        dip = trace([(20, 8.0, 4.0), (21, 3.0, 4.0)])
+        verdicts = [
+            classify_miss(miss("A", "1", 10, 11, 2), flat),
+            classify_miss(miss("A", "2", 20, 21, 2), dip),
+        ]
+        out = tmp_path / "verdicts.csv"
+        write_verdicts(verdicts, out)
+        rows = list(csv.DictReader(out.read_text().splitlines()))
+        by_id = {r["blink_id"]: r for r in rows}
+        assert by_id["1"]["mechanism"] == "above_line"
+        assert float(by_id["1"]["min_ratio"]) == 1.625
+        assert by_id["2"]["mechanism"] == "crossed_line"
+        assert by_id["2"]["min_ratio"] == ""
 
 
 class TestTheSummary:

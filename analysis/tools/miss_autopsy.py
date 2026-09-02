@@ -19,9 +19,12 @@ synthetic traces its tests build.
 Usage, from the analysis directory, once trace files exist:
 
     PYTHONPATH="$PWD" .venv/bin/python tools/miss_autopsy.py \\
-        <misses.csv> <trace_dir>
+        <misses.csv> <trace_dir> [--out verdicts.csv]
 
-where <trace_dir> holds one trace CSV per clip named <clip>.csv.
+where <trace_dir> is a corpus run's output directory, holding one
+trace per clip named <clip>.frames.csv (what tools/measure_corpus.mjs
+writes). --out, if given, writes the per-miss verdict table there as
+committable evidence.
 """
 
 from __future__ import annotations
@@ -167,20 +170,56 @@ def _read_trace(path: Path) -> ClipTrace:
 def autopsy(misses_path: Path, trace_dir: Path) -> list[MissVerdict]:
     """Classify every miss whose clip has a trace file in trace_dir.
 
-    A miss whose clip has no <clip>.csv trace is skipped, not guessed:
-    the tool reports on the traces it was given.
+    A clip's trace is the file tools/measure_corpus.mjs writes as
+    <clip>.frames.csv (the seconds table is the neighbouring
+    <clip>.csv, a different file). A miss whose clip has no such trace
+    is skipped, not guessed: the tool reports on the traces it was
+    given.
     """
     traces: dict[str, ClipTrace] = {}
     verdicts: list[MissVerdict] = []
     for miss_row in _read_misses(misses_path):
         clip = miss_row["clip"]
         if clip not in traces:
-            trace_path = trace_dir / f"{clip}.csv"
+            trace_path = trace_dir / f"{clip}.frames.csv"
             if not trace_path.exists():
                 continue
             traces[clip] = _read_trace(trace_path)
         verdicts.append(classify_miss(miss_row, traces[clip]))
     return verdicts
+
+
+def write_verdicts(verdicts: list[MissVerdict], path: Path) -> None:
+    """Write one row per miss verdict as committable evidence.
+
+    min_ratio is written only for above_line, where the margin is the
+    whole question; for every other verdict its cell is left empty,
+    never 0 — a ratio over a crossing, a coverage gap or an untrusted
+    span is not a number (the null-never-zero rule).
+    """
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(
+            [
+                "clip",
+                "blink_id",
+                "mechanism",
+                "min_ratio",
+                "measured_frames",
+                "fully_closed_frames",
+            ]
+        )
+        for v in verdicts:
+            writer.writerow(
+                [
+                    v.clip,
+                    v.blink_id,
+                    v.mechanism,
+                    "" if v.min_ratio is None else f"{v.min_ratio:.6g}",
+                    v.measured_frames,
+                    v.fully_closed_frames,
+                ]
+            )
 
 
 def _pct(share: float | None) -> str:
@@ -191,6 +230,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("misses", type=Path)
     parser.add_argument("trace_dir", type=Path)
+    parser.add_argument("--out", type=Path, default=None)
     arguments = parser.parse_args()
     verdicts = autopsy(arguments.misses, arguments.trace_dir)
     if not verdicts:
@@ -199,6 +239,9 @@ def main() -> int:
             "trace file in the trace directory"
         )
         return 0
+    if arguments.out is not None:
+        write_verdicts(verdicts, arguments.out)
+        print(f"wrote {len(verdicts)} verdicts to {arguments.out}")
     summary = summarise(verdicts)
     print(f"classified {len(verdicts)} misses")
     for mechanism in MECHANISMS:
