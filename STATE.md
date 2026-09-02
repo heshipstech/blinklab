@@ -28,6 +28,33 @@ commitments), and the guided line's per-user verification and the
 deferred detector calls (route B, the max-blink-duration cap) also wait
 on the owner.
 
+**THE UTA-RLDD PREP TOOL, 2 September 2026 — the flatten-and-trim step
+that turns the dataset into measurable clips, tested before a byte of it
+exists here.** Track B's classifier (roadmap 7.5/7.6) needs the owner to
+run the UTA-RLDD videos through the feature extractor, and the videos
+arrive as a fold/subject/label tree the corpus runner cannot read (it
+measures flat .mp4 files). analysis/tools/prepare_rldd.py is the bridge,
+built the same way prepare_eyeblink8.py is: it derives each video's
+SUBJECT (prefixed by its fold, because leave-one-subject-out must not put
+one person in two groups and subject numbers repeat across folds) and its
+drowsiness LABEL (the KSS code 0/5/10, or a keyword fallback) from the
+path, and writes a flat <subject>_<label>.mp4 whose name the runner turns
+into a <subject>_<label>.seconds.csv, so the label and the LOSO group
+survive into the analysis. It keeps only the first six minutes — the 30 s
+baseline, the settle, and the 60-360 s window the plan medians over —
+which also roughly halves the stepped-measurement time, and it REMUXES
+rather than re-encodes, so it is fast and lossless. A dry run (the
+default) prints the mapping and does nothing; --go transcodes; --fold N
+selects the pilot fold. Ten tests pin the path parsing — the KSS codes,
+the keyword fallback, the fold-prefixed subject id, the unlabelled skip,
+the fold filter — because a mis-parsed path would silently file a video
+under the wrong subject or label. ffmpeg comes from the pinned
+imageio-ffmpeg or a system install. No src change, no measurement here.
+Full analysis gate green (ruff, ruff format, 285 Python tests of which 2
+skip). Next: the owner runs the pilot fold through it and the corpus
+runner, hands back the feature CSVs, and the classifier itself gets built
+against docs/uta-rldd-plan.md.
+
 **THE SAMPLES LOADER'S RELOAD BOUNDARY, VALIDATED, 2 September 2026 —
 the sibling bare cast, closed the same way.** Increment 4 validated the
 gaze profile on load and named the sibling gap it left: the calibration
