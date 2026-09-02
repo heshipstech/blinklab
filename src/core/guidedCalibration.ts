@@ -112,6 +112,63 @@ export function resolveGuidedCalibration(
   };
 }
 
+// What a resolved calibration keeps: the line and the two medians it
+// came from, so a stored calibration can show its working, not just a
+// bare number.
+export type StoredBlinkCalibration = {
+  personalLineMm: number;
+  openMedianMm: number;
+  closedMedianMm: number;
+};
+
+export function serializeBlinkCalibration(
+  calibration: StoredBlinkCalibration,
+): string {
+  return JSON.stringify(calibration);
+}
+
+function finitePositive(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+/**
+ * Parse a stored calibration, or null for anything that is not one.
+ *
+ * Unlike the gaze profile store, which casts raw JSON and trusts it,
+ * this validates: non-JSON, a missing or non-finite field, or a line
+ * that does not sit strictly between the closed and open medians all
+ * return null. That last check is the point — a line outside the
+ * bracket its own medians define is a tampered or stale-format entry,
+ * and a stale line is exactly what must never quietly become the
+ * detector's threshold.
+ */
+export function parseBlinkCalibration(
+  raw: string,
+): StoredBlinkCalibration | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const { personalLineMm, openMedianMm, closedMedianMm } = record;
+  if (
+    !finitePositive(personalLineMm) ||
+    !finitePositive(openMedianMm) ||
+    !finitePositive(closedMedianMm)
+  ) {
+    return null;
+  }
+  if (!(closedMedianMm < personalLineMm && personalLineMm < openMedianMm)) {
+    return null;
+  }
+  return { personalLineMm, openMedianMm, closedMedianMm };
+}
+
 // The session sequences the two held phases against the clock, so the
 // DOM only has to render the phase and feed apertures. Open first,
 // then closed, each for GUIDED_CALIBRATION_PHASE_MS, then it resolves

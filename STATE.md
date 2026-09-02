@@ -1,3 +1,26 @@
+**GUIDED CALIBRATION, THE STORED FORM AND A VALIDATED PARSE, 2
+September 2026 — the calibration that survives a reload cannot be
+trusted blind.** Before the DOM can persist a guided line, it needs a
+stored form and a way to read it back safely. serializeBlinkCalibration
+writes the line and its two medians; parseBlinkCalibration reads them
+and, unlike the gaze profile store which casts raw JSON and trusts it,
+VALIDATES: non-JSON, a missing field, a non-finite or non-positive
+number, or a line that does not sit strictly between the closed and
+open medians each return null. The bracket check is the point — a
+stored line outside the bracket its own medians define is a tampered
+or stale-format entry, and a stale line is exactly what must never
+quietly become the detector's threshold in increment 3. Six tests
+watched failing first; the bracket check and the positivity boundary
+were each mutated and reddened their tests (the positivity gap was
+found by a surviving mutant and closed with a zero-median test), then
+restored. Pure core only, uncalled — the io store, the privacy
+enumeration and the DOM come together in the next increment where they
+are used, so no dead code lands early. Full gate green. The suite is
+824 unit tests, 20 end to end tests, and 275 Python tests of which 2
+skip. Next: increment 2c — the "Calibrate blinks" panel, the io store
+that calls these, the storedData privacy entry, and a Playwright
+walk-through, all in one increment because they are used together.
+
 **GUIDED CALIBRATION, THE SESSION MACHINE, 2 September 2026 — the two
 phases sequenced in core, still no DOM.** The previous increment built
 the reducer that resolves collected samples to a personal line; this
