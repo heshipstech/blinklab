@@ -168,3 +168,72 @@ and would gate the deferred recall change on a second, independent
 closure measure (the iris-occlusion signal) before any line moves.
 This prediction is not edited after the trace is read; the outcome
 becomes a new dated section below it.
+
+
+THE AUTOPSY, VERIFIED, 2 September 2026
+---------------------------------------
+
+The awake corpus trace run happened, on the project's new machine,
+and the classifier ran over its per-frame traces. First, the control
+the prediction did not ask for but the run supplies for free: the run
+reproduced the SAME 67 misses, blink-for-blink, as the committed
+2026-08-21-rearm table, on a different CPU, OS and browser build. The
+miss set is hardware-independent; the single-machine results it rests
+on were not an artefact of that machine. The verdict table is
+docs/evidence/2026-09-02-awake-autopsy/eyeblink8_miss_autopsy.csv.
+
+The mechanism split, over the 67:
+
+  not_measured       0    closed-frame share -
+  no_trusted_face    4    closed-frame share 75.0%
+  crossed_line      29    closed-frame share 96.6%
+  above_line        34    closed-frame share 47.1%
+  above_line min_ratio: closest 1.02, median 1.24, farthest 1.66
+
+The prediction, scored:
+
+  1. above_line DOMINATES (>= 40 of 67, >= 30 of the 47 closed-frame
+     misses). REFUTED. above_line is 34, a plurality not a
+     dominance, and only 16 of the 47 closed-frame misses are
+     above_line.
+  2. above_line min_ratio median >= 1.5, a landmark failure.
+     REFUTED. The median is 1.24 and the closest is 1.02: where the
+     aperture stayed above the line it stayed close to it, not well
+     clear of it. The lids were not barely moving.
+  3. not_measured <= 2. CONFIRMED, at 0. A stepped run leaves no
+     coverage gap; sampling is not the story, exactly as claimed.
+  4. crossed_line <= 10, a minority. REFUTED, badly, at 29 — the
+     largest single mechanism, and 28 of its 29 contain a frame a
+     human marked fully closed.
+
+Three of four wrong, and the central one — landmark failure — wrong
+in the direction its own redirect map named. Of the 47 misses where a
+human saw a fully closed frame, 28 (60 percent) are crossed_line: the
+instrument's aperture DID dip below the effective blink line and no
+blink was logged. The signal was present and correct; the detector's
+own re-arm/refractory state machine swallowed it. That is the
+prediction file's "if crossed_line dominates, the signal is fine and
+the re-arm/refractory logic is the bug" branch, and it is where the
+largest share of the recall deficit now points.
+
+The above_line group (34, but only 47 percent closed-frame, median
+min_ratio 1.24) is the prediction file's OTHER cheap branch: the line
+is somewhat too strict, and about half of these are shallow misses
+with no fully-closed frame at all — genuinely partial closures rather
+than a perception failure. no_trusted_face (4, three of them
+closed-frame) is the only landmark-shaped bucket, and it is tiny: the
+model lost the face on a handful of real closures.
+
+WHAT THIS REDIRECTS. The deferred recall change was gated, IF the
+landmark outcome held, on a second independent closure measure (the
+iris-occlusion signal) before any line moved. The landmark outcome did
+not hold, so that gate is off the critical path. The recall work now
+has two detector-logic targets, in order of size: first the
+re-arm/refractory state machine, which drops a signal that is already
+below the line (crossed_line, 29, and 28 of the 47 real closures);
+second the blink-line threshold, which is marginally too strict for
+part of the above_line group. Both are code, not model — cheaper and
+more tractable than the landmark failure this section predicted and
+did not find. The next increment is the state-machine one: reproduce a
+crossed_line miss against the real detector in the trace harness, and
+show why a frame below the line logs no blink.
