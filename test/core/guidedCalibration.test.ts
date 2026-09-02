@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  GUIDED_CALIBRATION_PHASE_MS,
   collectCalibrationSample,
   emptyGuidedCalibration,
   resolveGuidedCalibration,
+  startCalibrationSession,
+  calibrationSessionStep,
+  type CalibrationSessionState,
   type GuidedCalibrationSamples,
 } from "../../src/core/guidedCalibration";
 
@@ -95,5 +99,80 @@ describe("resolveGuidedCalibration, refusals", () => {
       samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH)),
     );
     expect(refused.kind).toBe("refused");
+  });
+});
+
+describe("the calibration session state machine", () => {
+  // Drive a session from nowMs 0 by feeding one aperture per 33 ms
+  // tick until it reaches "done", capturing the phase seen each tick.
+  function run(
+    openMm: number,
+    closedMm: number,
+  ): { state: CalibrationSessionState; phasesSeen: string[] } {
+    let state = startCalibrationSession(0);
+    const phasesSeen: string[] = [];
+    for (let tick = 1; tick <= 400 && state.kind !== "done"; tick++) {
+      const phase = state.kind === "collecting" ? state.phase : "done";
+      phasesSeen.push(phase);
+      const mm = phase === "closed" ? closedMm : openMm;
+      state = calibrationSessionStep(state, tick * 33, mm);
+    }
+    return { state, phasesSeen };
+  }
+
+  it("starts collecting the open phase", () => {
+    const state = startCalibrationSession(1000);
+    expect(state.kind).toBe("collecting");
+    if (state.kind === "collecting") {
+      expect(state.phase).toBe("open");
+    }
+  });
+
+  it("walks open then closed then done, in that order", () => {
+    const { state, phasesSeen } = run(8, 2);
+    expect(state.kind).toBe("done");
+    expect(phasesSeen).toContain("open");
+    expect(phasesSeen).toContain("closed");
+    // Open always precedes closed: the last open tick is before the
+    // first closed tick.
+    expect(phasesSeen.lastIndexOf("open")).toBeLessThan(
+      phasesSeen.indexOf("closed"),
+    );
+  });
+
+  it("resolves a clean run to a ready line at the midpoint", () => {
+    const { state } = run(8, 2);
+    expect(state.kind).toBe("done");
+    if (state.kind === "done" && state.result.kind === "ready") {
+      expect(state.result.personalLineMm).toBe(5);
+    } else {
+      throw new Error("expected a ready result");
+    }
+  });
+
+  it("resolves a run where the eye never closed to a refusal", () => {
+    const { state } = run(8, 8);
+    expect(state.kind).toBe("done");
+    if (state.kind === "done") {
+      expect(state.result.kind).toBe("refused");
+    }
+  });
+
+  it("holds the open phase until its duration elapses", () => {
+    let state = startCalibrationSession(0);
+    state = calibrationSessionStep(state, GUIDED_CALIBRATION_PHASE_MS - 1, 8);
+    expect(state.kind === "collecting" && state.phase).toBe("open");
+    state = calibrationSessionStep(state, GUIDED_CALIBRATION_PHASE_MS, 8);
+    expect(state.kind === "collecting" && state.phase).toBe("closed");
+  });
+
+  it("ignores a backwards clock, state unchanged", () => {
+    const state = startCalibrationSession(1000);
+    expect(calibrationSessionStep(state, 500, 8)).toBe(state);
+  });
+
+  it("is terminal once done", () => {
+    const { state } = run(8, 2);
+    expect(calibrationSessionStep(state, 999999, 5)).toBe(state);
   });
 });
