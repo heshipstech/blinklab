@@ -59,3 +59,16 @@ to arm — a margin story, the same shallow-aperture population as
 `above_line`), and only **5** armed and were dropped by the
 re-arm/refractory state machine. Columns: `clip, blink_id, spanStart,
 spanEnd, min_ratio, reached_arm_depth, class`.
+
+`iris_on_misses_summary.csv` is the second-run result: the iris aspect
+ratio (a closure witness independent of the eyelid aperture) inside
+each of the 49 shallow-aperture misses (34 `above_line` + 15
+`never_armed`) and against that clip's open baseline just before it.
+The iris does NOT collapse — in-span median **0.846** vs open baseline
+**0.877**, 0 of 49 below 0.70 — so those closures are invisible to the
+model's landmarks and the ~49 are a recall ceiling, not a tunable
+defect. The second run also reproduced the same 67 misses (neutrality
+check for the added iris trace column). Full write-up:
+`docs/iris-occlusion.txt`, section "THE IRIS RESULT". Columns: `clip,
+blink_id, class, open_baseline_iris_median, in_span_iris_median,
+in_span_iris_min`.

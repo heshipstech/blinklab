@@ -1,3 +1,34 @@
+**THE IRIS RESULT IS IN: THE ~49 MISSES ARE A MODEL CEILING, 2
+September 2026 — route A closes, the prediction confirmed.** The owner
+ran the awake corpus a second time, now capturing irisAspectRatio, and
+the neutrality check held (the same 67 misses, digit for digit, so the
+new trace column moved nothing). The iris ratio was read inside each of
+the 49 shallow-aperture misses' closed spans and against that clip's
+own open baseline in the 60 frames before. The pessimistic prediction
+committed in docs/iris-occlusion.txt is CONFIRMED: the iris does NOT
+collapse. In-span median 0.846 against an open baseline of 0.877 — a
+drop of 0.024, essentially flat; 0 of 49 misses dip below 0.70 on any
+frame; above_line and never_armed read the same. On the frames a human
+marked fully shut, the model holds a near-circular iris behind the lid,
+just as the aperture held near its line. Both landmark closure signals
+are blind here, so the ~49 misses are a recall CEILING, not a tunable
+defect: no threshold move and no signal fusion can recover a closure
+the face model does not register. Route A is closed. The honest caveat
+is recorded: a positive control (the iris on a closure the detector DID
+catch) is the next check before calling the iris useless in general
+rather than useless here. Of the 67 misses, ~49 are this ceiling; the
+only recall parameters can still move is the ~5 re-arm/refractory
+state-machine drops (route B, small) and, as a design decision, the 9
+long closures the 500 ms max-blink-duration rejects. Evidence:
+docs/evidence/2026-09-02-awake-autopsy/iris_on_misses_summary.csv;
+write-up in docs/iris-occlusion.txt below the untouched prediction. No
+src or test change, so the corpus-reproduction gate does not apply and
+no measured number moves; the suite is 804 unit tests, 20 end to end
+tests, and 275 Python tests of which 2 skip. Next is an owner
+decision: accept the recall ceiling and turn to route B (the ~5
+state-machine drops) or the max-duration design question, or set the
+recall thread down and build elsewhere.
+
 **THE IRIS SIGNAL IS IN THE TRACE, 2 September 2026 — the second
 closure witness now rides every clip frame, ready for the run.** The
 previous increment built irisAspectRatio as an uncalled pure function;
