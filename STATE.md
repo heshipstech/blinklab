@@ -1,3 +1,28 @@
+**THE IRIS SIGNAL IS IN THE TRACE, 2 September 2026 — the second
+closure witness now rides every clip frame, ready for the run.** The
+previous increment built irisAspectRatio as an uncalled pure function;
+this wires it into the per-frame trace as a fifth column
+(frameIndex, mediaTimeSeconds, apertureMm, blinkLineMm,
+irisAspectRatio). main.ts computes it per frame, averaged over both
+eyes exactly as the aperture is and against the same canvas
+dimensions, and hands it to appendFrameTraceRow beside the aperture;
+frameTrace.ts carries it through FRAME_TRACE_COLUMNS and the
+serialiser, null rendering as an empty cell like every other. The
+frameTrace test was watched failing first on the new column and made
+to pass; the cell-to-null mutation reddened it and was restored. The
+change is export-only — it feeds the trace and nothing the detector
+reads (stabilityMm, the blink line, every counted number are
+untouched), so it is measurement-neutral by construction; the owner's
+next corpus run confirms that neutrality the moment it reproduces the
+same 67 misses, in the same pass that captures the iris column. The
+miss autopsy reads the trace by column name, so the extra column does
+not disturb it. Full gate green: eslint, tsc, 814 vitest, build,
+prettier. The suite is 804 unit tests, 20 end to end tests, and
+275 Python tests of which 2 skip. Next, and the only step needing the
+owner's machine: one more awake corpus trace run, now capturing
+irisAspectRatio, to score the docs/iris-occlusion.txt prediction on
+the ~49 shallow-aperture misses.
+
 **THE SECOND CLOSURE WITNESS, ITS CORE AND ITS PREDICTION, 2 September
 2026 — the iris signal built ahead of its data.** The reproduction put
 the aperture measurement at the centre and named the question the

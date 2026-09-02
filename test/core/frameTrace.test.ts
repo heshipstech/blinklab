@@ -17,27 +17,29 @@ function row(
   frameIndex: number,
   apertureMm: number | null = 6.5,
   blinkLineMm: number | null = 4.1,
+  irisAspectRatio: number | null = 0.95,
 ): FrameTraceRow {
   return {
     frameIndex,
     mediaTimeSeconds: frameIndex / 30,
     apertureMm,
     blinkLineMm,
+    irisAspectRatio,
   };
 }
 
 describe("the per-frame trace", () => {
   it("serialises one row per frame, nulls as empty cells", () => {
     const csv = serialiseFrameTrace(
-      [row(0), row(1, null, null)],
+      [row(0), row(1, null, null, null)],
       ["# source: clip session-01.mp4"],
       2,
     );
     expect(csv).toBe(
       "# source: clip session-01.mp4\r\n" +
-        "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm\r\n" +
-        "0,0,6.5,4.1\r\n" +
-        "1,0.03333333333333333,,\r\n",
+        "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio\r\n" +
+        "0,0,6.5,4.1,0.95\r\n" +
+        "1,0.03333333333333333,,,\r\n",
     );
   });
 
