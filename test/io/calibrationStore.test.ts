@@ -73,14 +73,27 @@ describe("with working storage", () => {
   });
 
   it("an unparseable stored value reads as nothing, not as a crash", () => {
-    // Unparseable only: a value that parses but has the wrong shape
-    // still loads, because the cast is unvalidated. Pre-existing,
-    // noted in the B3 pull request rather than fixed in it.
+    // The samples loader still casts, so this covers the unparseable
+    // case for it. The profile loader now VALIDATES (the next test),
+    // so for it this is just the non-JSON half of the same guarantee.
     stubStorage({
       getItem: (() => "{not json") as Storage["getItem"],
     });
     expect(loadCalibrationProfile()).toBeNull();
     expect(loadCalibrationSamples()).toBeNull();
+  });
+
+  it("a stored profile of the wrong shape reads as nothing, not a broken profile", () => {
+    // The gap this closes: a value that PARSES but is not a profile
+    // used to sail through the bare cast and become a gaze mapping that
+    // returned NaN for every point. loadCalibrationProfile runs
+    // parseCalibrationProfile now, so a non-finite slope reads as no
+    // profile and the page shows itself as uncalibrated.
+    stubStorage({
+      getItem: (() =>
+        '{"horizontal":{"slope":"x","intercept":0},"vertical":{"slope":5,"intercept":0}}') as Storage["getItem"],
+    });
+    expect(loadCalibrationProfile()).toBeNull();
   });
 });
 

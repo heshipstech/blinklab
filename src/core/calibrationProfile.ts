@@ -112,3 +112,57 @@ export function calibratedQuadrant(point: ScreenPoint): ScreenQuadrant {
   const band = point.y <= 0.5 ? "top" : "bottom";
   return `${band} ${side}` as ScreenQuadrant;
 }
+
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function parseAxisMap(value: unknown): AxisMap | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!finiteNumber(record.slope) || !finiteNumber(record.intercept)) {
+    return null;
+  }
+  return { slope: record.slope, intercept: record.intercept };
+}
+
+/**
+ * Parse a stored gaze profile, or null for anything that is not one.
+ *
+ * The gaze store used to read its profile with `JSON.parse(raw) as
+ * CalibrationProfile` and trust whatever came back, so a value that
+ * parsed but had the wrong shape — a missing axis, a slope that was a
+ * string — became a mapping that returned NaN for every gaze point.
+ * This is the validated boundary that replaces the cast, the same
+ * stance parseBlinkCalibration takes on the blink line.
+ *
+ * Positivity is deliberately NOT required: a slope is negative for the
+ * image-to-screen mirror flip (solveCalibration learns it as one), and
+ * an intercept can be either sign, so the check is shape and finiteness
+ * only. A four-number profile whose numbers are all finite is one this
+ * solver could have produced; anything else is a stale-format or
+ * tampered entry and reads as no profile, which the page already shows
+ * honestly as uncalibrated.
+ */
+export function parseCalibrationProfile(
+  raw: string,
+): CalibrationProfile | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const horizontal = parseAxisMap(record.horizontal);
+  const vertical = parseAxisMap(record.vertical);
+  if (horizontal === null || vertical === null) {
+    return null;
+  }
+  return { horizontal, vertical };
+}

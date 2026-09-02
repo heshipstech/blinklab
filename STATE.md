@@ -1,3 +1,29 @@
+**THE GAZE PROFILE'S RELOAD BOUNDARY, VALIDATED, 2 September 2026 — the
+bare cast the blink line taught us to distrust, closed.** A documented
+gap, deferred since the B3 pull request: loadCalibrationProfile read a
+stored gaze profile with `JSON.parse(raw) as CalibrationProfile` and
+trusted whatever came back, so a value that parsed but was the wrong
+shape — a missing axis, a slope that was a string — became a gaze
+mapping that returned NaN for every point. parseCalibrationProfile
+replaces the cast with the same validated boundary parseBlinkCalibration
+uses: an object with a horizontal and a vertical axis, each with a
+finite-number slope and intercept, or null. Positivity is NOT required
+here, unlike the blink line — a slope is negative for the mirror flip
+and an intercept can be either sign — so the check is shape and
+finiteness only. Six tests watched failing first (accepts a well-formed
+profile including a negative slope; rejects non-JSON, a missing axis, a
+non-finite field, a non-object axis; and the io loader reads a
+wrong-shape profile as nothing); the finiteness guard was mutated away
+and reddened the two wrong-shape tests, then restored. Neutral for the
+Eyeblink8 blink benchmark: the gaze profile is not in the blink path,
+and the returning-visitor e2e proves a valid profile still loads. The
+sibling gap, loadCalibrationSamples' own bare cast, is left for its own
+increment. Full gate green. The suite is 834 unit tests, 22 end to end
+tests, and 275 Python tests of which 2 skip. Next: increment 3 — adopt
+the personal blink line into the detector — needs the owner (a
+deliberate accuracy change: a committed prediction and an awake corpus
+run).
+
 **GUIDED CALIBRATION, THE "CALIBRATE BLINKS" PANEL, 2 September 2026 —
 a person can now run the two-phase calibration against the live camera,
 and it still does not touch detection.** The button lives in the Blinks

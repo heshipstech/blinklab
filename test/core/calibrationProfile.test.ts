@@ -7,6 +7,7 @@ import {
 import {
   calibratedPoint,
   calibratedQuadrant,
+  parseCalibrationProfile,
   solveCalibration,
 } from "../../src/core/calibrationProfile";
 import type { IrisOffset } from "../../src/core/gazeOffset";
@@ -157,5 +158,54 @@ describe("calibratedQuadrant, classification after the cure", () => {
   it("counts exactly the centre as top left, the boundary convention", () => {
     expect(calibratedQuadrant({ x: 0.5, y: 0.5 })).toBe("top left");
     expect(calibratedQuadrant({ x: 0.51, y: 0.51 })).toBe("bottom right");
+  });
+});
+
+describe("parseCalibrationProfile, the reload boundary the store forgot", () => {
+  // A stored profile re-enters the program changed — a format bump, a
+  // half-written write, a person editing localStorage. The store used to
+  // cast it with `JSON.parse(raw) as CalibrationProfile` and trust
+  // whatever came back; this is the validated boundary that replaces the
+  // cast, the same stance parseBlinkCalibration takes. Positivity is NOT
+  // required: a slope is negative for the mirror flip and an intercept
+  // can be either sign, so the check is shape and finiteness only.
+  const good = {
+    horizontal: { slope: -4, intercept: 0.5 },
+    vertical: { slope: 5, intercept: 0 },
+  };
+
+  it("accepts a well-formed profile, negative slope and all", () => {
+    expect(parseCalibrationProfile(JSON.stringify(good))).toEqual(good);
+  });
+
+  it("rejects non-JSON", () => {
+    expect(parseCalibrationProfile("{not json")).toBeNull();
+  });
+
+  it("rejects a missing axis", () => {
+    expect(
+      parseCalibrationProfile(
+        JSON.stringify({ horizontal: { slope: 1, intercept: 0 } }),
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a non-finite field, the shape the bare cast let through", () => {
+    // The exact gap this closes: a value that PARSES but is the wrong
+    // shape. A non-number slope used to sail through the cast and become
+    // a gaze mapping that returns NaN for every point.
+    expect(
+      parseCalibrationProfile(
+        '{"horizontal":{"slope":1,"intercept":0},"vertical":{"slope":"x","intercept":0}}',
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects an axis that is not an object", () => {
+    expect(
+      parseCalibrationProfile(
+        JSON.stringify({ horizontal: 1, vertical: { slope: 5, intercept: 0 } }),
+      ),
+    ).toBeNull();
   });
 });
