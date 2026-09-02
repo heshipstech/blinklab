@@ -30,6 +30,16 @@ export type FrameTraceRow = {
    * guess where this one is a fact.
    */
   blinkLineMm: number | null;
+  /**
+   * The iris aspect ratio (aperture.ts's irisAspectRatio), a closure
+   * witness read from the iris rim and INDEPENDENT of apertureMm:
+   * near 1 on an open iris, falling as a lid hides the top rim — if
+   * the model tracks the occluded rim. Recorded so the miss autopsy
+   * can ask, on frames where the aperture did not dip, whether a
+   * second signal saw the closure. Null when no trusted iris was
+   * measured. Prediction: docs/iris-occlusion.txt.
+   */
+  irisAspectRatio: number | null;
 };
 
 /**
@@ -64,6 +74,7 @@ const FRAME_TRACE_COLUMNS = [
   "mediaTimeSeconds",
   "apertureMm",
   "blinkLineMm",
+  "irisAspectRatio",
 ];
 
 function cell(value: number | null): string {
@@ -105,6 +116,7 @@ export function serialiseFrameTrace(
         cell(row.mediaTimeSeconds),
         cell(row.apertureMm),
         cell(row.blinkLineMm),
+        cell(row.irisAspectRatio),
       ].join(","),
     );
   }

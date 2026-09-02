@@ -24,7 +24,12 @@ import {
   RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "./core/constants";
-import { apertureMm, aperturePx, irisWidthPx } from "./core/aperture";
+import {
+  apertureMm,
+  aperturePx,
+  irisAspectRatio,
+  irisWidthPx,
+} from "./core/aperture";
 import {
   CALIBRATION_REFUSED_SENTENCE,
   baselineStep,
@@ -2807,6 +2812,7 @@ function processFrame(
       let frameOnScreen: boolean | null = null;
       let stabilityPx: number | null = null;
       let stabilityMm: number | null = null;
+      let irisAspectRatioMean: number | null = null;
       let frameMeanOffset: IrisOffset | null = null;
       const face = result.faceLandmarks[0];
       // A wrong landmark count refuses the face the same way a lost
@@ -2921,6 +2927,28 @@ function processFrame(
             rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
           stabilityMm =
             rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+
+          // The iris aspect ratio for the trace, averaged over both
+          // eyes the way the aperture is. Same frame dimensions as
+          // apertureMm above, so the toPixels correction matches; the
+          // ratio itself is scale-free. Export-only: it feeds the
+          // per-frame trace and nothing the detector reads.
+          const rightIris = irisAspectRatio(
+            face,
+            RIGHT_IRIS_RING_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          const leftIris = irisAspectRatio(
+            face,
+            LEFT_IRIS_RING_INDICES,
+            canvas.width,
+            canvas.height,
+          );
+          irisAspectRatioMean =
+            rightIris === null || leftIris === null
+              ? null
+              : (rightIris + leftIris) / 2;
 
           const rightOffset = irisOffset(
             face,
@@ -3229,6 +3257,7 @@ function processFrame(
             blinkMeasurable && !calibrationRefused
               ? (personalMm ?? BLINK_APERTURE_THRESHOLD_MM)
               : null,
+          irisAspectRatio: irisAspectRatioMean,
         });
       }
       rateState ??= startRate(nowMs);
