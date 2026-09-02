@@ -1,3 +1,36 @@
+**THE SECOND CLOSURE WITNESS, ITS CORE AND ITS PREDICTION, 2 September
+2026 — the iris signal built ahead of its data.** The reproduction put
+the aperture measurement at the centre and named the question the
+aperture alone cannot answer on the ~49 shallow-aperture misses: is the
+blink line too high, or does the aperture landmark under-read a real
+closure? Telling those apart needs a closure measure that does not use
+the eyelid landmarks, and the iris gives one for free. aperture.ts
+already uses the iris HORIZONTAL diameter as its ruler because the
+lids never occlude it; the VERTICAL pair is the one they cover first.
+So irisAspectRatio = vertical chord / horizontal chord is a closure
+witness read from the iris rim alone: near 1 on an open (circular)
+iris, falling as the lid hides the top rim — IF the model tracks the
+occluded rim rather than hallucinating a full circle behind the lid.
+That is a new pure function in src/core/aperture.ts with four tests
+watched failing first on synthetic faces (open reads 1 at every
+distance, a collapsed top rim halves it, degenerate widths refuse);
+the ratio-inversion mutation reddened the occlusion test and was
+restored. It is not wired anywhere yet — an uncalled pure function, so
+no measured number can move and the corpus gate does not apply; the
+trace column is the next increment. The prediction is committed FIRST
+in docs/iris-occlusion.txt, and it leans pessimistic on the one piece
+of real data so far: the recorded fixture's open irises read a median
+0.92 (not 1.0), and its two detected blinks pulled the ratio no lower
+than 0.83 — so the prediction is that on the ~49 misses the ratio does
+NOT collapse (median stays above 0.80), meaning the closure is
+invisible to this face model, a recall ceiling no threshold move can
+lift. Either outcome is decision-relevant: a collapse points at signal
+fusion, a non-collapse retires route A and says the ceiling plainly.
+The suite is 804 unit tests, 20 end to end tests, and 275 Python tests
+of which 2 skip. Next: wire irisAspectRatio into the per-frame trace
+as a new column (export-only, neutral by construction), then the
+corpus run that captures it.
+
 **THE STATE MACHINE IS A MINORITY, 2 September 2026 — reproducing the
 crossed_line misses against the real detector demotes it and puts the
 aperture measurement back at the centre.** The previous entry read the

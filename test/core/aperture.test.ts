@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { apertureMm, aperturePx, irisWidthPx } from "../../src/core/aperture";
+import {
+  apertureMm,
+  aperturePx,
+  irisAspectRatio,
+  irisWidthPx,
+} from "../../src/core/aperture";
 import {
   RIGHT_EYE_EAR_INDICES,
+  RIGHT_IRIS_CENTER_INDEX,
   RIGHT_IRIS_RING_INDICES,
 } from "../../src/core/constants";
 import { frameLandmarks, loadSession01 } from "../fixtures/loadSession01";
@@ -70,6 +76,60 @@ describe("degenerate inputs", () => {
       apertureMm([], RIGHT_EYE_EAR_INDICES, RIGHT_IRIS_RING_INDICES, W, H),
     ).toBeNull();
     expect(irisWidthPx([], RIGHT_IRIS_RING_INDICES, W, H)).toBeNull();
+  });
+});
+
+describe("irisAspectRatio, the second closure witness", () => {
+  // The vertical iris chord (top to bottom) over the horizontal one
+  // (right to left, the aperture's own ruler). An open iris is a
+  // circle, so the ratio is 1; as a lid covers the top rim the
+  // vertical chord shrinks and the ratio falls. It reads the iris rim,
+  // not the lid, so it is independent of apertureMm. Prediction for
+  // what it does on the Eyeblink8 misses: docs/iris-occlusion.txt.
+
+  it("reads 1 on an open iris across distances, a ratio of two chords", () => {
+    // A ratio of two same-instant pixel chords: distance cancels, so
+    // the open-eye value is 1 at every distance, no ruler needed.
+    for (const distanceMm of [350, 500, 800]) {
+      const face = syntheticFace({ distanceMm });
+      expect(irisAspectRatio(face, RIGHT_IRIS_RING_INDICES, W, H)).toBeCloseTo(
+        1,
+        10,
+      );
+    }
+  });
+
+  it("falls when the lid occludes the top rim", () => {
+    const face = syntheticFace({ distanceMm: 500 });
+    expect(irisAspectRatio(face, RIGHT_IRIS_RING_INDICES, W, H)).toBeCloseTo(
+      1,
+      10,
+    );
+    // Collapse the top rim point onto the iris centre: the visible
+    // vertical extent halves, so the ratio must fall to about 0.5.
+    const centre = face[RIGHT_IRIS_CENTER_INDEX];
+    const topIndex = RIGHT_IRIS_RING_INDICES[1];
+    if (centre !== undefined && topIndex !== undefined) {
+      face[topIndex] = { ...centre };
+    }
+    expect(irisAspectRatio(face, RIGHT_IRIS_RING_INDICES, W, H)).toBeCloseTo(
+      0.5,
+      6,
+    );
+  });
+
+  it("returns null when the iris has no horizontal width", () => {
+    const face = syntheticFace({ distanceMm: 500 });
+    const right = face[RIGHT_IRIS_RING_INDICES[0] ?? 0];
+    const leftIndex = RIGHT_IRIS_RING_INDICES[2];
+    if (right !== undefined && leftIndex !== undefined) {
+      face[leftIndex] = { ...right };
+    }
+    expect(irisAspectRatio(face, RIGHT_IRIS_RING_INDICES, W, H)).toBeNull();
+  });
+
+  it("returns null when landmarks are missing entirely", () => {
+    expect(irisAspectRatio([], RIGHT_IRIS_RING_INDICES, W, H)).toBeNull();
   });
 });
 

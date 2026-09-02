@@ -62,6 +62,50 @@ export function aperturePx(
   );
 }
 
+// The iris aspect ratio: its vertical extent over its horizontal one.
+// The rim points are ordered right, top, left, bottom (constants.ts),
+// so the horizontal chord (right to left) is the same unoccluded ruler
+// irisWidthPx uses, and the vertical chord (top to bottom) is the pair
+// aperturePx's comment above warns is "occluded by the lids exactly
+// when it matters most, mid blink". An open iris is a circle, so the
+// ratio is 1; as a lid covers the top rim the vertical chord shrinks
+// and the ratio falls toward zero. Both chords go through toPixels
+// first, so a non-square frame does not distort the ratio.
+//
+// This reads the iris rim, never the lid chords, so it is a witness to
+// a closure entirely independent of apertureMm — the second measure
+// the miss autopsy needs to tell a line placed too high apart from an
+// aperture landmark that under-reads a real closure. Whether the model
+// tracks the occluded rim or hallucinates a full circle behind the lid
+// is the empirical question docs/iris-occlusion.txt commits a
+// prediction to before any trace is read.
+export function irisAspectRatio(
+  face: readonly Point2[],
+  ring: readonly number[],
+  frameWidthPx: number,
+  frameHeightPx: number,
+): number | null {
+  const right = face[ring[0] ?? -1];
+  const top = face[ring[1] ?? -1];
+  const left = face[ring[2] ?? -1];
+  const bottom = face[ring[3] ?? -1];
+  if (
+    right === undefined ||
+    top === undefined ||
+    left === undefined ||
+    bottom === undefined
+  ) {
+    return null;
+  }
+  const px = (p: Point2) => toPixels(p, frameWidthPx, frameHeightPx);
+  const horizontalPx = distance(px(right), px(left));
+  if (horizontalPx <= 0) {
+    return null;
+  }
+  const verticalPx = distance(px(top), px(bottom));
+  return verticalPx / horizontalPx;
+}
+
 export function apertureMm(
   face: readonly Point2[],
   map: EarIndexMap,
