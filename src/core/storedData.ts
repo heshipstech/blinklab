@@ -32,6 +32,16 @@ export const STORED_ITEMS: readonly StoredItem[] = [
     what: "The measurements that profile was solved from",
     why: "so the profile can be re-solved without sitting through the nine dots again",
   },
+  // The guided blink calibration (core/guidedCalibration.ts): a
+  // personal blink line measured from this person's own open and
+  // closed aperture, written only when a run resolves to a line. It is
+  // listed here the moment the store can write it, so the erase control
+  // and this enumeration never fall out of step with the key.
+  {
+    key: "blinklab-blink-calibration-v1",
+    what: "Your personal blink line",
+    why: "so a guided blink calibration survives a reload and does not have to be repeated on your next visit",
+  },
   // The pilot's voluntary identity (docs/assessment-pilot-plan.md,
   // increment 8): created only when a person types one and saves it,
   // never invented on load — the deviceId refusal's principle. It

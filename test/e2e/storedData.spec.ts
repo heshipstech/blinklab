@@ -13,13 +13,17 @@ import { answerOpeningQuestion } from "./support/kss";
 
 const PROFILE_KEY = "blinklab-calibration-profile-v1";
 const SAMPLES_KEY = "blinklab-calibration-samples-v1";
+const BLINK_KEY = "blinklab-blink-calibration-v1";
 
 test("erasing empties the storage and takes the live profile with it", async ({
   page,
 }) => {
-  // The returning visitor: both keys present before the page loads.
+  // The returning visitor: three keys present before the page loads.
+  // The blink calibration is here to prove the erase covers ALL_KEYS,
+  // the new key included: a key the store can write but the control
+  // cannot erase is the E3 defect this whole feature exists to prevent.
   await page.addInitScript(
-    ([profileKey, samplesKey]: string[]) => {
+    ([profileKey, samplesKey, blinkKey]: string[]) => {
       localStorage.setItem(
         profileKey ?? "",
         JSON.stringify({
@@ -28,13 +32,21 @@ test("erasing empties the storage and takes the live profile with it", async ({
         }),
       );
       localStorage.setItem(samplesKey ?? "", JSON.stringify([]));
+      localStorage.setItem(
+        blinkKey ?? "",
+        JSON.stringify({
+          personalLineMm: 5,
+          openMedianMm: 8,
+          closedMedianMm: 2,
+        }),
+      );
     },
-    [PROFILE_KEY, SAMPLES_KEY],
+    [PROFILE_KEY, SAMPLES_KEY, BLINK_KEY],
   );
   await page.goto("./");
 
   await expect(
-    page.getByText("Stored on this device now: 2 of 3."),
+    page.getByText("Stored on this device now: 3 of 4."),
   ).toBeVisible();
 
   // The session must be RUNNING before the heatmap assertion below
@@ -70,6 +82,11 @@ test("erasing empties the storage and takes the live profile with it", async ({
   expect(
     await page.evaluate((k) => localStorage.getItem(k), SAMPLES_KEY),
   ).toBeNull();
+  // The new key was erased too: the whole point of listing it in
+  // ALL_KEYS the moment the store could write it.
+  expect(
+    await page.evaluate((k) => localStorage.getItem(k), BLINK_KEY),
+  ).toBeNull();
 
   // And the running session let go of it too: the heatmap is out of
   // reach again and the button offers a first calibration, not a
@@ -100,4 +117,5 @@ test("a device with nothing stored says so, and offers nothing to erase", async 
   // wants before they calibrate rather than after.
   await expect(page.getByText(PROFILE_KEY, { exact: false })).toBeVisible();
   await expect(page.getByText(SAMPLES_KEY, { exact: false })).toBeVisible();
+  await expect(page.getByText(BLINK_KEY, { exact: false })).toBeVisible();
 });

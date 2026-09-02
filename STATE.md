@@ -1,3 +1,36 @@
+**GUIDED CALIBRATION, THE STORE AND THE PRIVACY ENTRY, 2 September
+2026 — persisted, listed and erasable before the panel that writes
+it.** The previous increment's stored form now has an io home.
+saveBlinkCalibration writes the line under blinklab-blink-calibration-v1
+behind the same B3 guard as the gaze store; loadBlinkCalibration reads
+it back through the VALIDATED parse, so a stored line outside its own
+medians' bracket returns null rather than quietly becoming the
+detector's threshold in a later increment — unlike loadCalibrationProfile,
+which casts raw JSON and trusts it. The key joins ALL_KEYS and gains a
+STORED_ITEM the moment the store can write it, so the erase control and
+the on-page enumeration cannot fall out of step with a key the page can
+write — the E3 defect this control exists to prevent, closed here in
+the safe order: erasable and named BEFORE anything writes it. Three io
+tests (round-trip, throwing-storage guard, parses-but-fails-validation
+returns null) and one core test watched failing first; the
+cast-instead-of-parse and no-op-save mutants were each reddened, then
+restored. The end to end test seeds the new key and reads it back null
+after an erase (3 of 4, then nothing), proving the coverage is real in
+a browser. The participant report's stored-data section gained one line,
+reviewed as a one-line-per-report diff. No frame-loop change: nothing
+measured moves, so the corpus gate does not apply — neutral by
+construction. This deliberately splits the previous "one increment"
+plan: the persistence layer proved unit-testable on its own, so it
+ships frame-loop-free here and the panel that calls saveBlinkCalibration
+follows next, keeping the change that touches the measurement loop apart
+from the one that does not. Full gate green. The suite is 828 unit
+tests, 20 end to end tests, and 275 Python tests of which 2 skip. Next:
+increment 2d — the "Calibrate blinks" DOM panel and its frame-loop
+wiring (calibrationSessionStep fed the live aperture; on done,
+saveBlinkCalibration), a Playwright walk-through of the wiring and the
+no-face refusal, and a rendered screenshot on the pull request; dormant
+unless the button is clicked, so still neutral.
+
 **GUIDED CALIBRATION, THE STORED FORM AND A VALIDATED PARSE, 2
 September 2026 — the calibration that survives a reload cannot be
 trusted blind.** Before the DOM can persist a guided line, it needs a
@@ -16,7 +49,7 @@ found by a surviving mutant and closed with a zero-median test), then
 restored. Pure core only, uncalled — the io store, the privacy
 enumeration and the DOM come together in the next increment where they
 are used, so no dead code lands early. Full gate green. The suite is
-824 unit tests, 20 end to end tests, and 275 Python tests of which 2
+828 unit tests, 20 end to end tests, and 275 Python tests of which 2
 skip. Next: increment 2c — the "Calibrate blinks" panel, the io store
 that calls these, the storedData privacy entry, and a Playwright
 walk-through, all in one increment because they are used together.
