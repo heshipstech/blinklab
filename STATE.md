@@ -1,3 +1,41 @@
+**THE MISS AUTOPSY HAS ITS TOOL, 2 September 2026 — the recall
+investigation's next increment, built ahead of its data.** The
+single largest open accuracy question is the 67 Eyeblink8 blinks the
+detector misses deterministically, 47 of them (70.1 percent)
+carrying a frame a human marked fully closed, mechanism unexplained.
+docs/miss-trace.txt named the three stories a per-frame trace can
+separate — the aperture dipped but not below the line, never dipped
+at all, or the dip fell between measured frames — and left the
+classifier as the queued next tool. analysis/tools/miss_autopsy.py
+is that tool: for each miss it reads the trace rows inside the
+annotation's own [startFrame, endFrame] span and assigns one of four
+verdicts — not_measured (a coverage gap), no_trusted_face (the model
+returned no face), crossed_line (the aperture went below the line
+yet no blink was logged, implicating the detector's state machine),
+or above_line (the signal never crossed) — reporting for the last
+the smallest aperture-over-line ratio so a reader sees how close
+each miss came. It refuses to draw a tuned landmark-versus-threshold
+boundary: it reports the measured margin and lets the distribution
+speak, the way the sample-rate work refused to pick a minimum window
+width. It refuses on a damaged trace (a duplicated frame index) or a
+backwards span. Nine tests watched failing first on synthetic traces
+where every verdict is hand-checkable; the crossing comparison
+mutated from < to > reddened four and was restored. The prediction
+is committed FIRST, in docs/miss-character.txt: above_line dominates
+(at least 40 of 67), its min_ratio clusters well above 1.0 (a
+landmark failure, the model's lids not following the real ones),
+sampling is near zero and the state machine a minority — and each
+alternative outcome names the different fix it would redirect to.
+The tool's real data is the awake corpus trace run
+docs/miss-trace.txt still owes; until then it runs only on its
+synthetic tests, and the moment the traces land the verdict drops
+out instead of the investigation starting from scratch. No src
+change, so the corpus-reproduction gate does not apply and no
+measured number moves. The suite is 800 unit tests, 20 end to end
+tests, and 270 Python tests of which 2 skip. Next on the ladder: the
+owner's awake corpus trace run, which fires this autopsy on real
+data.
+
 **DRY RUN TWO PRINTED CLEAN AND THE LADDER IS CLOSED, 1 September
 2026 — pilot increment 11, second attempt: the gate is met.** The
 owner ran the full protocol again on the deployed page at commit
@@ -1670,7 +1708,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 1 September 2026. When this file changes, this stamp changes
+Stamped: 2 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
@@ -2105,7 +2143,7 @@ boundary), #108 (log.md backfill), #115
 (depth-qualified closure episodes)
 
 Test count: 800 unit tests, 20 end to end tests all run in Chromium
-in CI of which 2 rerun locally in WebKit, 261 Python tests of which
+in CI of which 2 rerun locally in WebKit, 270 Python tests of which
 2 skip
 
 ## DROZY, which is also ready
