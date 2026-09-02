@@ -1,7 +1,8 @@
-**ADOPTING THE GUIDED BLINK LINE, THE PREDICTION, 2 September 2026 —
-committed before the change, and it is deliberately dull.** Before the
-detector is taught to read the stored guided line, the forecast is
-committed (docs/blink-line-adoption.txt), predict-then-verify. The
+**ADOPTING THE GUIDED BLINK LINE, THE PREDICTION AND THE CHANGE, 2
+September 2026 — the detector reads a person's own line, and the
+forecast that it does not move the benchmark is deliberately dull.**
+Before the detector is taught to read the stored guided line, the
+forecast is committed (docs/blink-line-adoption.txt), predict-then-verify. The
 prediction, grounded in the already-committed autopsy: adopting the
 guided line moves Eyeblink8 recall and precision by essentially
 nothing. The 67 misses were classified and NONE is a threshold-placement
@@ -15,11 +16,26 @@ loadBlinkCalibration returns null and the baseline path is byte-for-byte
 what it was. The guided line's real value is personalisation for
 atypical eyelids (the owner's own low lids, ROADMAP note 5), a
 HYPOTHESIS grounded in one case, not a corpus-measurable win, so the
-change will ship as an opt-in "set your own blink line", never as a
-claimed accuracy improvement. What would refute it is written into the
-doc. Next: increment 3b — the implementation itself, a pure line-
-selection (prefer the guided line, else the baseline) wired into the
-detector, neutral by construction, tests first.
+change ships as an opt-in "set your own blink line", never as a claimed
+accuracy improvement. What would refute it is written into the doc. THE
+IMPLEMENTATION, same increment (the prediction is its first commit): a
+pure effectiveBlinkLineMm(stored, baselineLine) — prefer the guided
+line, else the baseline, null when neither — wired into main.ts. A
+stored guided line becomes the detector's line, overrides the passive
+baseline, and lifts the refusal, so a calibrated person counts blinks
+from the first frame without the thirty-second learn; it is held live so
+a calibration this session takes effect at once and an erase lets it go,
+like the gaze profile. Four tests watched failing first; the "prefer the
+guided line" branch was mutated away and reddened its tests, then
+restored. Neutral by construction confirmed: with no stored calibration
+the selection returns the baseline line and every corpus path is
+byte-for-byte unchanged, so no corpus run is owed. The suite is
+838 unit tests, 23 end to end tests, and 275 Python tests of which 2
+skip; the new end to end test seeds a stored line and asserts the
+detector's readout adopts it. Next: a real per-user verification of the
+personalisation benefit (a
+calibrated subject with labelled blinks), which this corpus cannot
+provide.
 
 **THE GAZE PROFILE'S RELOAD BOUNDARY, VALIDATED, 2 September 2026 — the
 bare cast the blink line taught us to distrust, closed.** A documented

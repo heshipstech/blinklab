@@ -127,6 +127,27 @@ export function serializeBlinkCalibration(
   return JSON.stringify(calibration);
 }
 
+/**
+ * Which blink line the detector should read this frame.
+ *
+ * The whole of the adoption change, kept as one pure decision: a stored
+ * guided line — a person's own measured open-to-closed midpoint — wins
+ * when it exists, because it is a complete ruler that needs no passive
+ * baseline; otherwise the passive baseline line stands, and null when
+ * there is no line at all yet.
+ *
+ * The corpus runner starts each clip in a fresh browser with no stored
+ * calibration, so `stored` is null there and this returns the baseline
+ * line unchanged: the Eyeblink8 benchmark cannot reach the guided path
+ * and is neutral by construction (docs/blink-line-adoption.txt).
+ */
+export function effectiveBlinkLineMm(
+  stored: StoredBlinkCalibration | null,
+  baselineLineMm: number | null,
+): number | null {
+  return stored !== null ? stored.personalLineMm : baselineLineMm;
+}
+
 function finitePositive(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
