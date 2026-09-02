@@ -1,3 +1,24 @@
+**GUIDED CALIBRATION, THE SESSION MACHINE, 2 September 2026 — the two
+phases sequenced in core, still no DOM.** The previous increment built
+the reducer that resolves collected samples to a personal line; this
+adds the time-driven state machine that sequences the run so the DOM
+only has to render a phase and feed apertures. startCalibrationSession
+begins in the open phase; calibrationSessionStep collects the current
+phase's aperture, holds for GUIDED_CALIBRATION_PHASE_MS (three seconds,
+about ninety frames), then advances open to closed, then resolves once
+and freezes — a calibration measured and then used, never re-opened
+mid-run, and a backwards clock is ignored (baseline.ts's guard). Seven
+more tests watched failing first, driven tick by tick from time zero;
+the phase-transition condition and the backwards-clock guard were each
+mutated and reddened their tests, then restored. Still uncalled — no
+measured number moves and the corpus gate does not apply. Full gate
+green. The suite is 818 unit tests, 20 end to end tests, and 275
+Python tests of which 2 skip. Next: the "Calibrate blinks" DOM panel
+that drives this session against the live camera and stores its
+result beside the gaze profile, with a Playwright walk-through — the
+increment where the UX taste lives, so a look from the owner is worth
+having before it hardens.
+
 **GUIDED CALIBRATION, ITS PURE CORE, 2 September 2026 — the first rung
 of the big-feature ladder, measured before it is wired.** With recall
 tuning capped by the model ceiling, the work turns to the agreed

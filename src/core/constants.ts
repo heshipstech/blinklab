@@ -165,6 +165,11 @@ export const BASELINE_THRESHOLD_FRACTION = 0.5;
 // not there.
 export const GUIDED_CALIBRATION_MIN_SAMPLES = 30;
 export const GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION = 0.3;
+// Each held phase runs three seconds — about ninety frames at 30 fps,
+// comfortably over the 30-sample floor even with dropped frames, and
+// short enough that a person can hold their eyes open, then shut,
+// without strain. Chosen for the person, not fitted to data.
+export const GUIDED_CALIBRATION_PHASE_MS = 3000;
 
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window

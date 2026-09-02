@@ -1,8 +1,11 @@
 import {
   GUIDED_CALIBRATION_MIN_SAMPLES,
   GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION,
+  GUIDED_CALIBRATION_PHASE_MS,
 } from "./constants";
 import { percentile } from "./statistics";
+
+export { GUIDED_CALIBRATION_PHASE_MS };
 
 // Guided blink-line calibration: measure a person's OWN open and
 // closed aperture through two held phases, then place the personal
@@ -107,4 +110,57 @@ export function resolveGuidedCalibration(
     closedMedianMm,
     personalLineMm: (openMedianMm + closedMedianMm) / 2,
   };
+}
+
+// The session sequences the two held phases against the clock, so the
+// DOM only has to render the phase and feed apertures. Open first,
+// then closed, each for GUIDED_CALIBRATION_PHASE_MS, then it resolves
+// once and freezes — a calibration, like the baseline, is measured and
+// then used, never re-opened mid-run.
+export type CalibrationSessionState =
+  | {
+      kind: "collecting";
+      phase: CalibrationPhase;
+      startedAtMs: number;
+      samples: GuidedCalibrationSamples;
+    }
+  | { kind: "done"; result: GuidedCalibrationResult };
+
+export function startCalibrationSession(
+  nowMs: number,
+): CalibrationSessionState {
+  return {
+    kind: "collecting",
+    phase: "open",
+    startedAtMs: nowMs,
+    samples: emptyGuidedCalibration,
+  };
+}
+
+export function calibrationSessionStep(
+  state: CalibrationSessionState,
+  nowMs: number,
+  apertureMm: number | null,
+): CalibrationSessionState {
+  if (state.kind === "done") {
+    return state;
+  }
+  // A frame stamped before the phase began cannot lengthen it: a
+  // backwards clock is ignored, state unchanged (baseline.ts's guard,
+  // remediation C3).
+  if (nowMs < state.startedAtMs) {
+    return state;
+  }
+  const samples = collectCalibrationSample(
+    state.samples,
+    state.phase,
+    apertureMm,
+  );
+  if (nowMs - state.startedAtMs < GUIDED_CALIBRATION_PHASE_MS) {
+    return { ...state, samples };
+  }
+  if (state.phase === "open") {
+    return { kind: "collecting", phase: "closed", startedAtMs: nowMs, samples };
+  }
+  return { kind: "done", result: resolveGuidedCalibration(samples) };
 }
