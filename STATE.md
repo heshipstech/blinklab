@@ -1,3 +1,25 @@
+**THE CEILING IS IN THE MODEL CARD, 2 September 2026 — the recall
+finding lands where users read it.** The autopsy answered a question
+the public MODEL_CARD had carried as open for weeks: its "It misses
+blinks that are plainly there" section said the missed closures were
+"unexplained (issue #179)". They are now explained, so the card says
+so: of the 67 misses, about 49 are a recall ceiling (the aperture and
+an independent iris-occlusion measure are both flat on the closed
+frames — the face model does not register the closure, and no
+threshold or fusion can recover it), about 5 are the re-arm/refractory
+state machine dropping a real signal (the only parameter-recoverable
+misses), and 9 are long closures the 500 ms cap rejects on purpose.
+The measured headline numbers are untouched (recall 83.6 percent,
+precision 84.0 percent stand); this replaces an "unexplained" with the
+mechanism, the honest-evaluation payoff of the whole investigation
+landing in the card rather than only in working docs. MODEL_CARD's
+stamp rolls to 2 September 2026. No src or test change, so the corpus
+gate does not apply and no number moves; the suite is 804 unit tests,
+20 end to end tests, and 275 Python tests of which 2 skip. Next, an
+owner-facing pivot rather than more accuracy tuning (which the ceiling
+caps): the agreed big-feature ladder, guided calibration first, whose
+plan comes before its code.
+
 **THE IRIS RESULT IS IN: THE ~49 MISSES ARE A MODEL CEILING, 2
 September 2026 — route A closes, the prediction confirmed.** The owner
 ran the awake corpus a second time, now capturing irisAspectRatio, and

@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 26 August 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 2 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -129,9 +129,22 @@ in `docs/blink-sample-rate.txt` before the measurement was seen.
 Eyeblink8, 70.1% contained at least one frame a human marked as fully
 closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%
 until 20 August; each figure described the run it was measured on.)
-These are not faint or borderline events. Why the eyelid
-measurement does not dip far enough on them is unexplained. Issue
-[#179](https://github.com/heshipstech/blinklab/issues/179).
+These are not faint or borderline events. An awake per-frame trace and
+a mechanism autopsy now explain why the eyelid measurement does not dip
+far enough (`docs/miss-character.txt`, `docs/iris-occlusion.txt`, issue
+[#179](https://github.com/heshipstech/blinklab/issues/179)). On about
+49 of the 67 the aperture never dips decisively on the closed frames —
+and an independent iris-occlusion measure, read from a different part
+of the eye, stays open too (its ratio holds at 0.85, barely below its
+0.88 open baseline). Two unrelated landmark signals are both blind, so
+those closures are a recall CEILING: this face model does not register
+them, and no threshold move or signal fusion can recover a signal that
+is not there. About 5 of the misses are a real closure the aperture DID
+register that the re-arm/refractory state machine then dropped — the
+only misses a parameter can still recover — and 9 are long closures
+beyond the 500 ms blink cap, which the detector rejects on purpose as
+not-a-blink. The ceiling is the honest boundary of a
+landmark-and-heuristic detector on this corpus.
 
 **It sometimes reports one blink twice, and two rules now remove most
 of it.** A refractory period of 150 ms removed 39 such reports at no
