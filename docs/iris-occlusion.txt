@@ -1,0 +1,90 @@
+THE IRIS-OCCLUSION SIGNAL, AND A PREDICTION
+===========================================
+
+Written 2 September 2026, before any Eyeblink8 iris data is read, in
+the predict-then-verify discipline.
+
+WHY IT EXISTS
+-------------
+The awake corpus autopsy (docs/miss-character.txt) found that about 49
+of the 67 Eyeblink8 misses share one behaviour: on a frame a human
+marked fully closed, the measured eyelid aperture never dropped
+decisively — it hovered near the personal blink line, where a truly
+shut eye should read near zero. Two explanations fit that equally, and
+the aperture alone cannot separate them:
+
+  (a) the personal blink line is placed too high, so a real dip does
+      not clear it — a threshold fix; or
+  (b) the aperture landmark itself under-reads a real closure — the
+      lid lands but the measured opening does not follow it down, a
+      model/landmark limitation no threshold move can rescue.
+
+Telling (a) from (b) needs a SECOND closure measure that does not use
+the eyelid landmarks. The iris gives one for free. src/core/aperture.ts
+already uses the iris HORIZONTAL diameter (right rim to left rim) as
+its millimetre ruler, chosen because the horizontal pair is not
+occluded by the lids. The VERTICAL pair (top rim to bottom rim) is the
+one the lids cover first as the eye closes. So irisAspectRatio =
+vertical chord / horizontal chord is a closure witness read entirely
+from the iris rim, independent of the aperture:
+
+  open eye  -> iris is a circle           -> ratio near 1
+  closing   -> lid hides the top rim      -> vertical shrinks, ratio falls
+  shut      -> iris largely hidden        -> ratio small (IF the model tracks it)
+
+The "IF" is the whole question. MediaPipe's iris refinement fits a
+circle, and it may keep predicting a full circle behind a closed lid
+rather than tracking the visible rim down. If it does, the ratio does
+not fall and the signal is blind to the very closures it was meant to
+catch.
+
+WHAT THE ONE PIECE OF REAL DATA SO FAR SAYS
+-------------------------------------------
+The recorded fixture test/fixtures (session01, the owner's own mostly
+open-eyed calibration clip, 300 frames, two real blinks) reads, over
+both irises:
+
+  open-eye iris aspect ratio: median 0.92, p10 0.89, range 0.83 to 1.08
+
+Two things stand out. The open-eye baseline is 0.92, not 1.0 — the
+model already reports a slightly vertically-compressed iris on an open
+eye, so the signal starts with less room to fall than a perfect circle
+would give. And the fixture's two DETECTED blinks (the aperture
+crossed the threshold on them) pulled the ratio no lower than about
+0.83 — barely below the open baseline. That is a small sample from one
+well-lit clip, not the Eyeblink8 misses, but it leans toward (b)/the
+model hallucinating the circle.
+
+THE PREDICTION
+--------------
+Scored on a corpus run that captures irisAspectRatio in the per-frame
+trace, over the ~49 shallow-aperture misses (the above_line misses plus
+the never_armed crossed_line misses of
+docs/evidence/2026-09-02-awake-autopsy/crossed_line_gate_attribution.csv):
+
+  The iris ratio does NOT collapse. Its median over the closed spans of
+  those misses stays above 0.80 — within reach of the 0.92 open
+  baseline, nowhere near the ~0.5 a tracked full occlusion would give.
+  The model holds a near-circular iris behind the closing lid, so the
+  iris signal does not independently see these closures.
+
+If that holds, the ~49 misses are not a threshold bug and not
+rescuable by fusing a second landmark signal: the closure is invisible
+to this face model, a recall CEILING, and the honest next move is to
+say so plainly rather than to move a line. It also retires the second
+half of route A.
+
+WHAT EACH OTHER OUTCOME REDIRECTS
+---------------------------------
+  If the ratio DOES collapse on the misses (median below ~0.70 while
+  the aperture stayed near its line), then the aperture landmark
+  under-reads a real closure the iris still sees: the fix is to fuse or
+  cross-check the two signals, and it would be gated on its own
+  predict-then-verify before any counted number changes.
+
+  If the ratio collapses AND the aperture also dips on re-inspection,
+  the miss was a threshold-margin case after all (route (a)), and the
+  line, not the landmark, is what to reconsider.
+
+This prediction is not edited after the trace is read; the outcome
+becomes a new dated section below it.
