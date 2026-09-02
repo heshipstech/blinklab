@@ -4,8 +4,10 @@ import {
   CALIBRATION_TARGETS,
   captureStep,
   isCaptureDone,
+  parseCalibrationSamples,
   startCapture,
   type CalibrationCapture,
+  type CompletedTarget,
 } from "../../src/core/calibrationCapture";
 import {
   CALIBRATION_SAMPLES_PER_TARGET,
@@ -98,5 +100,84 @@ describe("captureStep, the sample collector", () => {
 
   it("is not done before the ninth completes", () => {
     expect(isCaptureDone(startCapture(0))).toBe(false);
+  });
+});
+
+describe("parseCalibrationSamples, the reload boundary the samples store forgot", () => {
+  // The sibling of parseCalibrationProfile: the samples store also cast
+  // its JSON, `JSON.parse(raw) as CompletedTarget[]`, so a value that
+  // parsed but was the wrong shape would be re-solved into a profile.
+  // This is the validated boundary that replaces the cast. Shape and
+  // finiteness only, on every target and every sample.
+  const good: CompletedTarget[] = [
+    {
+      target: { x: 0.1, y: 0.9 },
+      samples: [{ horizontal: 0.05, vertical: -0.02 }],
+    },
+    { target: { x: 0.5, y: 0.5 }, samples: [] },
+  ];
+
+  it("accepts a well-formed samples array", () => {
+    expect(parseCalibrationSamples(JSON.stringify(good))).toEqual(good);
+  });
+
+  it("accepts an empty array, which is what a fresh save round-trips", () => {
+    // saveCalibrationSamples([]) is a real path (the store's own test),
+    // so an empty array must read back as an empty array, not as null.
+    expect(parseCalibrationSamples("[]")).toEqual([]);
+  });
+
+  it("rejects non-JSON", () => {
+    expect(parseCalibrationSamples("{not json")).toBeNull();
+  });
+
+  it("rejects a value that is not an array", () => {
+    expect(
+      parseCalibrationSamples(JSON.stringify({ target: { x: 0, y: 0 } })),
+    ).toBeNull();
+  });
+
+  it("rejects an entry whose target is malformed", () => {
+    expect(
+      parseCalibrationSamples(
+        JSON.stringify([{ target: { x: 0.1 }, samples: [] }]),
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects an entry whose samples hold a non-finite offset", () => {
+    // The exact gap this closes: a value that parses but is the wrong
+    // shape used to be trusted and re-solved into a gaze mapping.
+    expect(
+      parseCalibrationSamples(
+        '[{"target":{"x":0.1,"y":0.9},"samples":[{"horizontal":"x","vertical":0}]}]',
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects an array entry that is not an object", () => {
+    expect(parseCalibrationSamples(JSON.stringify([5]))).toBeNull();
+  });
+
+  it("rejects an entry whose target is not an object", () => {
+    expect(
+      parseCalibrationSamples(JSON.stringify([{ target: 5, samples: [] }])),
+    ).toBeNull();
+  });
+
+  it("rejects an entry whose samples field is not an array", () => {
+    expect(
+      parseCalibrationSamples(
+        JSON.stringify([{ target: { x: 0, y: 0 }, samples: "nope" }]),
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects a sample that is not an object", () => {
+    expect(
+      parseCalibrationSamples(
+        JSON.stringify([{ target: { x: 0, y: 0 }, samples: [7] }]),
+      ),
+    ).toBeNull();
   });
 });

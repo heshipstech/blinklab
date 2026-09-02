@@ -1,3 +1,28 @@
+**THE SAMPLES LOADER'S RELOAD BOUNDARY, VALIDATED, 2 September 2026 —
+the sibling bare cast, closed the same way.** Increment 4 validated the
+gaze profile on load and named the sibling gap it left: the calibration
+SAMPLES loader also cast its JSON, `JSON.parse(raw) as CompletedTarget[]`,
+so a value that parsed but was the wrong shape would be re-solved into a
+gaze profile. parseCalibrationSamples closes it with the same validated
+boundary: a top-level array, each entry a target with finite x and y and
+a samples array of offsets with finite horizontal and vertical, or null;
+a single bad entry rejects the whole array rather than solving from a
+half-trusted one. An empty array stays valid, because a fresh save
+round-trips one. Seven tests watched failing first (accepts a
+well-formed array and an empty one; rejects non-JSON, a non-array, a
+malformed target, and a non-finite offset; and the io loader reads a
+wrong-shape array as nothing); the offset finiteness guard was mutated
+away and reddened the two wrong-shape tests, then restored. Neutral for
+the Eyeblink8 blink benchmark — the gaze samples are not in the blink
+path — and the erase e2e, which seeds valid samples, proves a valid
+array still loads. Both gaze reload boundaries now validate; only the
+guided blink line and the pseudonym remain, and both already did. The
+suite is 849 unit tests, 23 end to end tests, and 275 Python tests of
+which 2 skip. Next: a real per-user verification of the guided line's
+personalisation benefit needs the owner (a calibrated subject with
+labelled blinks); the deferred detector calls (route B, the
+max-blink-duration cap) do too.
+
 **ADOPTING THE GUIDED BLINK LINE, THE PREDICTION AND THE CHANGE, 2
 September 2026 — the detector reads a person's own line, and the
 forecast that it does not move the benchmark is deliberately dull.**

@@ -1,4 +1,7 @@
-import type { CompletedTarget } from "../core/calibrationCapture";
+import {
+  parseCalibrationSamples,
+  type CompletedTarget,
+} from "../core/calibrationCapture";
 import {
   parseCalibrationProfile,
   type CalibrationProfile,
@@ -149,16 +152,12 @@ export function loadCalibrationSamples(): CompletedTarget[] | null {
   if (raw === null) {
     return null;
   }
-  try {
-    return JSON.parse(raw) as CompletedTarget[];
-  } catch (error: unknown) {
-    // Returning null is right — a corrupt entry should behave as no
-    // entry. The silence was not: "stored but unreadable" and "nothing
-    // stored" were indistinguishable, while the localStorage catch a
-    // few lines above already warns for the same class of failure.
-    console.warn("stored calibration samples were unreadable:", error);
-    return null;
-  }
+  // The validated boundary, not a bare cast (increment 5): a stored
+  // value that parses but is the wrong shape used to be re-solved into a
+  // gaze profile. parseCalibrationSamples returns null for it — a
+  // corrupt entry behaves as no entry — and the page shows as
+  // uncalibrated, the same as loadCalibrationProfile.
+  return parseCalibrationSamples(raw);
 }
 
 export function saveCalibrationProfile(profile: CalibrationProfile): boolean {
