@@ -168,6 +168,33 @@ class TestItRefuses:
             classify_miss(miss("A", "1", 13, 10, 3), clip)
 
 
+class TestTheExportPreamble:
+    def test_metadata_comment_lines_before_the_header_are_skipped(
+        self,
+    ) -> None:
+        # The real frame-trace export (src/core/frameTrace.ts) writes
+        # "# key: value" metadata rows BEFORE the frameIndex header —
+        # source, clip, measurement mode, coverage. Every CSV reader in
+        # this project skips lines starting with "#" (analysis/blinklab/
+        # drozy.py); this one must too, or DictReader reads the first
+        # metadata line as the header and every frame join fails.
+        lines = [
+            "# source: file",
+            "# clip: 26122013_223310_cam",
+            "# measurement_mode: stepped",
+            "# frames_measured: 4",
+            "# clip_duration_s: 0.133",
+            "# measured_fps: 30.00",
+            "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm",
+            "10,0.33,7.0,4.0",
+            "11,0.36,6.5,4.0",
+        ]
+        clip = clip_trace_from_rows(lines)
+        v = classify_miss(miss("A", "1", 10, 11, 2), clip)
+        assert v.mechanism == "above_line"
+        assert v.measured_frames == 2
+
+
 class TestAutopsyReadsTheRunLayout:
     def test_autopsy_reads_clip_frames_csv(self, tmp_path: Path) -> None:
         # The corpus runner (tools/measure_corpus.mjs) writes each
