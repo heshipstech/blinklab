@@ -73,9 +73,9 @@ describe("with working storage", () => {
   });
 
   it("an unparseable stored value reads as nothing, not as a crash", () => {
-    // The samples loader still casts, so this covers the unparseable
-    // case for it. The profile loader now VALIDATES (the next test),
-    // so for it this is just the non-JSON half of the same guarantee.
+    // Both loaders now VALIDATE (the two tests below), so for both this
+    // is just the non-JSON half of the same guarantee: a value that
+    // does not even parse reads as nothing.
     stubStorage({
       getItem: (() => "{not json") as Storage["getItem"],
     });
@@ -94,6 +94,18 @@ describe("with working storage", () => {
         '{"horizontal":{"slope":"x","intercept":0},"vertical":{"slope":5,"intercept":0}}') as Storage["getItem"],
     });
     expect(loadCalibrationProfile()).toBeNull();
+  });
+
+  it("stored samples of the wrong shape read as nothing, not half a profile", () => {
+    // The sibling gap (increment 5): the samples loader cast too, so a
+    // parsed-but-malformed array would be re-solved. loadCalibrationSamples
+    // runs parseCalibrationSamples now, so a sample with a non-finite
+    // offset reads as no samples.
+    stubStorage({
+      getItem: (() =>
+        '[{"target":{"x":0.1,"y":0.9},"samples":[{"horizontal":"x","vertical":0}]}]') as Storage["getItem"],
+    });
+    expect(loadCalibrationSamples()).toBeNull();
   });
 });
 

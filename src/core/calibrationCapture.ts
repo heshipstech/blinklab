@@ -81,3 +81,77 @@ export function captureStep(
     completed: [...state.completed, { target, samples: currentSamples }],
   };
 }
+
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function parseTarget(value: unknown): CalibrationTarget | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!finiteNumber(record.x) || !finiteNumber(record.y)) {
+    return null;
+  }
+  return { x: record.x, y: record.y };
+}
+
+function parseOffset(value: unknown): IrisOffset | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!finiteNumber(record.horizontal) || !finiteNumber(record.vertical)) {
+    return null;
+  }
+  return { horizontal: record.horizontal, vertical: record.vertical };
+}
+
+/**
+ * Parse stored calibration samples, or null for anything that is not
+ * them.
+ *
+ * The sibling of parseCalibrationProfile: the samples store also cast
+ * its JSON, `JSON.parse(raw) as CompletedTarget[]`, and trusted
+ * whatever came back, so a value that parsed but was the wrong shape
+ * would be re-solved into a gaze profile. This is the validated
+ * boundary that replaces the cast. Every target and every sample is
+ * checked for shape and finiteness; a single bad entry rejects the
+ * whole array rather than solving from a half-trusted one. An empty
+ * array is valid — a fresh save round-trips one — but a non-array, or a
+ * malformed entry anywhere, reads as no samples, which the page already
+ * shows honestly as uncalibrated.
+ */
+export function parseCalibrationSamples(raw: string): CompletedTarget[] | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const completed: CompletedTarget[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) {
+      return null;
+    }
+    const record = entry as Record<string, unknown>;
+    const target = parseTarget(record.target);
+    if (target === null || !Array.isArray(record.samples)) {
+      return null;
+    }
+    const samples: IrisOffset[] = [];
+    for (const sample of record.samples) {
+      const offset = parseOffset(sample);
+      if (offset === null) {
+        return null;
+      }
+      samples.push(offset);
+    }
+    completed.push({ target, samples });
+  }
+  return completed;
+}
