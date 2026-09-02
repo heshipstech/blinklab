@@ -1,3 +1,31 @@
+**GUIDED CALIBRATION, ITS PURE CORE, 2 September 2026 — the first rung
+of the big-feature ladder, measured before it is wired.** With recall
+tuning capped by the model ceiling, the work turns to the agreed
+next development. The passive baseline learns only the OPEN eye and
+puts the blink line at half of it, assuming closed is near zero; a
+guided run holds two phases and measures the person's real closed
+aperture too, so it can place the line in the real gap. This increment
+is the pure core only: src/core/guidedCalibration.ts, a reducer that
+collects trusted apertures per phase (a null reading dropped, not
+stored) and resolves them to a personal line at the midpoint of the
+open and closed medians — or REFUSES, the baseline's own stance. Three
+refusals: too few open samples, too few closed, or a closed median not
+at least 30 percent below the open one, which means the instrument did
+not register this person's closure — the personal echo of the corpus
+ceiling (docs/iris-occlusion.txt), where a guessed line would be worse
+than none. Both constants are chosen before any guided data is read,
+not tuned against it. Seven tests watched failing first; the midpoint
+formula and the separation comparison were each mutated and reddened
+their tests, then restored. It is uncalled — no measured number can
+move, so the corpus gate does not apply; the UI panel is increment 2
+and adopting the line into the detector (a deliberate accuracy change,
+prediction and corpus run first) is increment 3. Full gate green:
+eslint, tsc, vitest, build, prettier. The suite is 811 unit tests,
+20 end to end tests, and 275 Python tests of which 2 skip. Next:
+increment 2, the "Calibrate blinks" panel that runs the two phases and
+stores the result beside the gaze profile, falling back to today's
+half-baseline when skipped so nothing regresses.
+
 **THE CEILING IS IN THE MODEL CARD, 2 September 2026 — the recall
 finding lands where users read it.** The autopsy answered a question
 the public MODEL_CARD had carried as open for weeks: its "It misses

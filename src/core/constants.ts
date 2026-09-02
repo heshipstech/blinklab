@@ -151,6 +151,21 @@ export const BASELINE_MIN_SAMPLES = 100;
 export const BASELINE_PERCENTILE = 90;
 export const BASELINE_THRESHOLD_FRACTION = 0.5;
 
+// Guided blink-line calibration (big-feature ladder). The passive
+// baseline above learns only OPEN and assumes closed is near zero,
+// placing the line at half of open. A guided run holds two phases and
+// measures the person's real closed aperture too, so it can put the
+// line in the real gap. Both values are DELIBERATELY chosen before any
+// guided-calibration data is read, not tuned against it: a minimum of
+// 30 trusted samples per phase (one second at 30 fps), and a required
+// separation of 30 percent — a closed median that is not at least that
+// far below the open one means the instrument did not register this
+// person's closure, the personal echo of docs/iris-occlusion.txt, and
+// the calibration refuses rather than draw a line from a gap that is
+// not there.
+export const GUIDED_CALIBRATION_MIN_SAMPLES = 30;
+export const GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION = 0.3;
+
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window
 // inflates: once half the baseline exceeds the resting aperture, the
