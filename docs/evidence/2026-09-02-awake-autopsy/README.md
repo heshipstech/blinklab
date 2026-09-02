@@ -48,6 +48,14 @@ Of the 47 misses that contain a frame a human marked fully closed:
 
 Recorded, with the pre-committed prediction it was scored against, in
 `docs/miss-character.txt` (section "THE AUTOPSY, VERIFIED"). In short:
-the predicted landmark failure is refuted; the largest mechanism is
-`crossed_line` — a real closure the aperture registered and the
-detector's re-arm/refractory state machine dropped.
+the predicted landmark failure is refuted; the raw-line `crossed_line`
+count is the largest bucket.
+
+`crossed_line_gate_attribution.csv` refines that against the real
+detector (section "THE STATE-MACHINE REPRODUCTION"): of the 20 short
+`crossed_line` misses, **15 never reached arm depth** (the aperture
+dipped below the line but not the 10% below it that fix #114 requires
+to arm — a margin story, the same shallow-aperture population as
+`above_line`), and only **5** armed and were dropped by the
+re-arm/refractory state machine. Columns: `clip, blink_id, spanStart,
+spanEnd, min_ratio, reached_arm_depth, class`.

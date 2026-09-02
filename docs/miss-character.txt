@@ -237,3 +237,63 @@ more tractable than the landmark failure this section predicted and
 did not find. The next increment is the state-machine one: reproduce a
 crossed_line miss against the real detector in the trace harness, and
 show why a frame below the line logs no blink.
+
+
+THE STATE-MACHINE REPRODUCTION, 2 September 2026
+------------------------------------------------
+
+The VERIFIED section named crossed_line the largest mechanism and the
+re-arm/refractory state machine the bug. Reproducing it against the
+real detector refines that, and partly walks it back. The 20 short
+crossed_line misses (frameLength <= 15, so under MAX_BLINK_DURATION;
+the other 9 are the long-closure story) had their raw per-frame
+aperture-and-line slices replayed through src/core/blink.ts's
+blinkStep. Attribution in
+docs/evidence/2026-09-02-awake-autopsy/crossed_line_gate_attribution.csv.
+
+The detector does not arm a blink candidate when the aperture merely
+crosses the line. Since fix #114 it arms only when the aperture
+reaches the ARM line, a hysteresis gap below the threshold:
+apertureMm <= line * (1 - APERTURE_HYSTERESIS_FRACTION), i.e.
+<= 0.9 * line. The autopsy's crossed_line verdict fires at the raw
+line (1.0 * line). Between them sits a band, [0.9, 1.0) * line, that
+is "below the line" to the autopsy but "too shallow to be a blink" to
+the detector. That band is where the misses live:
+
+  never_armed (min_ratio 0.91 to 0.996):   15 of 20
+  armed_then_dropped (min_ratio 0.26 to 0.45):  5 of 20
+
+The never_armed 15 are init-independent and robust: whether the
+aperture reaches 0.9 * line is a property of the aperture alone, not
+of any state a 2-second slice cannot see. They are the fix #114 depth
+gate doing exactly what test/core/blink.test.ts already pins ("refuses
+a real but too-shallow closure, the documented cost"). The 5
+armed_then_dropped are the genuine state-machine drops — deep
+closures that armed and were still not counted — and are the
+re-arm/refractory bug; a 2-second slice cannot always say which of the
+two, and for one (b30) the sim even miscounts because the causing
+blink predates the window, so they are recorded as a class, not
+individually adjudicated.
+
+WHAT THIS CORRECTS. The state machine is not the largest lever; it is
+about 5 misses. Fold the 15 never_armed back in with the 34 above_line
+(which never went below the line at all) and about 49 of the 67 misses
+share one behaviour: on a frame a human marked fully closed, the
+measured aperture never dropped decisively — it hovered within roughly
+a tenth to a quarter of the line, where a truly shut eye should read
+an aperture near zero. The VERIFIED section read the raw-line
+crossed_line count as a state-machine signal; against the detector's
+own arm line, most of it is the same shallow-aperture population as
+above_line, split by an accident of where the autopsy drew its line.
+
+WHAT THIS REDIRECTS. The shallow-aperture population is either the
+personal line placed too high or the aperture landmark under-reading a
+real closure, and those two are separable only by a second,
+independent closure measure. The VERIFIED section put the
+iris-occlusion signal off the critical path because it read the result
+as state-machine; the reproduction puts it back ON, as the instrument
+that adjudicates the 49. The next build is that signal, ahead of its
+data, with its own committed prediction: does an independent closure
+measure register a closure on the frames where the aperture did not?
+The 5-miss state-machine drop stays a real but minor side-fix, not the
+lead.

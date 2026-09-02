@@ -1,3 +1,39 @@
+**THE STATE MACHINE IS A MINORITY, 2 September 2026 — reproducing the
+crossed_line misses against the real detector demotes it and puts the
+aperture measurement back at the centre.** The previous entry read the
+raw-line crossed_line count as the state machine being the largest
+recall lever. Replaying the 20 short crossed_line misses' per-frame
+slices through src/core/blink.ts's blinkStep corrects that. The
+detector does not arm on a bare line crossing; since fix #114 it arms
+only at the ARM line, a 10 percent hysteresis gap BELOW the threshold
+(aperture <= 0.9 * line). The autopsy's crossed_line fires at the raw
+line (1.0 * line), so the band [0.9, 1.0) * line is "below the line"
+to the autopsy but "too shallow to be a blink" to the detector — and
+that is where the misses sit: 15 of the 20 never reached arm depth
+(min_ratio 0.91 to 0.996), only 5 armed and were dropped by the
+re-arm/refractory logic. The 15 are robust (reaching 0.9 * line is a
+property of the aperture alone, not of any state a 2-second slice
+cannot see), and they are the fix #114 depth gate already pinned in
+test/core/blink.test.ts. Fold those 15 in with the 34 above_line
+(never below the line at all) and about 49 of the 67 misses are one
+behaviour: on a frame a human marked fully shut, the measured aperture
+never dropped decisively, hovering near the line where a shut eye
+should read near zero. So the state machine is about 5 misses, not the
+lever; the lever is the aperture measurement, and whether it is the
+line placed too high or the landmark under-reading a real closure is
+separable only by a second independent closure measure. That puts the
+iris-occlusion signal — which the previous entry took off the critical
+path — back ON it, as the next build (ahead of its data, own committed
+prediction). Evidence:
+docs/evidence/2026-09-02-awake-autopsy/crossed_line_gate_attribution.csv;
+write-up in docs/miss-character.txt, section "THE STATE-MACHINE
+REPRODUCTION", refining the section above it rather than overwriting
+it. No src or test change, so the corpus-reproduction gate does not
+apply and no measured number moves; the suite is 800 unit tests, 20
+end to end tests, and 275 Python tests of which 2 skip. Next: build
+the iris-occlusion second closure signal, then a corpus run that
+captures it to adjudicate the 49.
+
 **THE AUTOPSY IS IN, AND THE PREDICTION WAS WRONG, 2 September 2026 —
 the missed blinks are a detector-logic failure, not a landmark
 failure.** The awake corpus trace ran on the new machine and the
