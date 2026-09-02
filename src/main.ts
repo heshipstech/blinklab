@@ -195,14 +195,23 @@ import { frameTransform } from "./core/transform";
 import { displaySize } from "./core/videoLayout";
 import {
   eraseStoredData,
+  loadBlinkCalibration,
   loadPseudonym,
   removePseudonym,
   savePseudonym,
   loadCalibrationProfile,
   probeStoredData,
+  saveBlinkCalibration,
   saveCalibrationProfile,
   saveCalibrationSamples,
 } from "./io/calibrationStore";
+import {
+  GUIDED_CALIBRATION_PHASE_MS,
+  calibrationSessionStep,
+  startCalibrationSession,
+  type CalibrationSessionState,
+  type GuidedCalibrationRefusal,
+} from "./core/guidedCalibration";
 import {
   STORED_ITEMS,
   eraseButtonLabel,
@@ -784,6 +793,10 @@ function render(): void {
   // and the frame loop sets those while running. Here they are only
   // forced off, never on, or this would overrule them.
   calibrateButton.disabled = !running;
+  // The blink calibration also needs a live aperture stream to read, so
+  // it is available exactly while a source runs, the same as the gaze
+  // one.
+  blinkCalibrateButton.disabled = !running;
   // Entering the running state recomputes the heatmap button from
   // the stored profile. The force-off below is only half a rule:
   // without this half, a returning visitor with a saved calibration
@@ -1563,6 +1576,96 @@ calibrationOverlay.addEventListener("click", () => {
   calibrationOverlay.hidden = true;
 });
 
+// The guided blink calibration (core/guidedCalibration.ts), live. A
+// person holds their eyes open for one timed phase and gently closed
+// for a second, and the session places their personal blink line in
+// the real gap between the two, where the passive baseline can only
+// assume closed is near zero and put the line at half of open. It
+// STORES the line for a later visit; it does not yet feed the detector,
+// which still reads the passive baseline below. Adopting the line is a
+// later, deliberate accuracy change with its own prediction and corpus
+// run. The whole feature is dormant unless this button is clicked, so a
+// corpus run, which never clicks it, measures exactly as it did before.
+const blinkCalibrateButton = document.createElement("button");
+blinkCalibrateButton.dataset.testid = "calibrate-blinks";
+blinkCalibrateButton.textContent =
+  loadBlinkCalibration() === null ? "Calibrate blinks" : "Recalibrate blinks";
+blinkCalibrateButton.disabled = true;
+let blinkCalibrationRequested = false;
+let blinkCalibrationSession: CalibrationSessionState | null = null;
+blinkCalibrateButton.addEventListener("click", () => {
+  blinkCalibrationRequested = true;
+});
+
+const blinkCalibrationStatus = document.createElement("p");
+blinkCalibrationStatus.dataset.testid = "blink-calibration-status";
+blinkCalibrationStatus.hidden = true;
+
+const blinkCalibrationOverlay = document.createElement("div");
+blinkCalibrationOverlay.dataset.testid = "blink-calibration-overlay";
+blinkCalibrationOverlay.hidden = true;
+// No inline `display` here on purpose: an inline display would beat the
+// [hidden] rule, so a "hidden" overlay would keep covering the page and
+// swallowing clicks. The gaze overlay learned this; the centering lives
+// on the inner element instead.
+Object.assign(blinkCalibrationOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  background: "rgba(0, 0, 0, 0.88)",
+  zIndex: "10",
+  cursor: "pointer",
+});
+const blinkCalibrationInner = document.createElement("div");
+Object.assign(blinkCalibrationInner.style, {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "16px",
+  color: "#ffffff",
+  textAlign: "center",
+  padding: "24px",
+  maxWidth: "36ch",
+});
+const blinkCalibrationInstruction = document.createElement("p");
+blinkCalibrationInstruction.dataset.testid = "blink-calibration-instruction";
+Object.assign(blinkCalibrationInstruction.style, {
+  fontSize: "1.6rem",
+  fontWeight: "600",
+});
+const blinkCalibrationProgress = document.createElement("p");
+Object.assign(blinkCalibrationProgress.style, { fontSize: "1rem" });
+blinkCalibrationInner.append(
+  blinkCalibrationInstruction,
+  blinkCalibrationProgress,
+);
+blinkCalibrationOverlay.append(blinkCalibrationInner);
+// Click anywhere to cancel, the same escape hatch as the gaze overlay.
+// A cancelled run stores nothing.
+blinkCalibrationOverlay.addEventListener("click", () => {
+  blinkCalibrationSession = null;
+  blinkCalibrationRequested = false;
+  blinkCalibrationOverlay.hidden = true;
+});
+
+// The visitor-facing sentence for each refusal. The reasons are named
+// in core; the words a person reads live here, the same split as the
+// gaze button labels. A switch, so a reason added to core cannot be
+// forgotten here without a type error.
+function blinkRefusalMessage(reason: GuidedCalibrationRefusal): string {
+  switch (reason) {
+    case "not-enough-open":
+      return "Blink calibration needs a steady, measured view of your open eyes and did not get enough of one. Face the camera in good light and try again.";
+    case "not-enough-closed":
+      return "Blink calibration needs a steady, measured view of your closed eyes and did not get enough of one. Try again, closing your eyes when the screen asks.";
+    case "closure-not-registered":
+      return "Your closed eyes did not read far enough below your open ones for a line to be placed. This is the same limit the corpus showed, and rather than guess a line, the calibration refuses.";
+  }
+}
+
 // The 5.9 gaze heatmap: a full viewport overlay showing a drawn test
 // card, dwell accumulating as translucent heat. It is the calibrated
 // profile's first live consumer, raw offsets have no screen meaning,
@@ -1684,6 +1787,10 @@ eraseButton.addEventListener("click", () => {
   // way: two rules writing one property with no meeting point.
   calibrationProfile = null;
   calibrateButton.textContent = "Calibrate gaze";
+  // The erase took the blink line too (it is in ALL_KEYS), so the
+  // button must stop offering to recalibrate a line the storage no
+  // longer holds.
+  blinkCalibrateButton.textContent = "Calibrate blinks";
   refreshHeatmapButton();
   refreshStoredBox();
 });
@@ -3199,6 +3306,70 @@ function processFrame(
         }
       }
 
+      // The guided blink calibration, driven from the same per-frame
+      // aperture the detector reads. It advances on the wall clock, so a
+      // lost face pauses no timer: a phase that never gathered enough
+      // trusted readings resolves to a refusal rather than a guessed
+      // line. Nothing here touches the blink reducer below, so a corpus
+      // run, which never starts a session, is byte-for-byte unaffected.
+      if (blinkCalibrationRequested) {
+        blinkCalibrationSession = startCalibrationSession(nowMs);
+        blinkCalibrationRequested = false;
+        blinkCalibrationOverlay.hidden = false;
+        blinkCalibrationStatus.hidden = true;
+      }
+      if (blinkCalibrationSession !== null) {
+        blinkCalibrationSession = calibrationSessionStep(
+          blinkCalibrationSession,
+          nowMs,
+          stabilityMm,
+        );
+        if (blinkCalibrationSession.kind === "done") {
+          const result = blinkCalibrationSession.result;
+          blinkCalibrationSession = null;
+          blinkCalibrationOverlay.hidden = true;
+          if (result.kind === "ready") {
+            // Store the line for a later visit. It does NOT feed the
+            // blink reducer below, which still reads the passive
+            // baseline; adopting this line is a separate, deliberate
+            // accuracy change.
+            const stored = saveBlinkCalibration({
+              personalLineMm: result.personalLineMm,
+              openMedianMm: result.openMedianMm,
+              closedMedianMm: result.closedMedianMm,
+            });
+            blinkCalibrationStatus.textContent = stored
+              ? `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm, the midpoint of your ${result.openMedianMm.toFixed(1)} mm open and ${result.closedMedianMm.toFixed(1)} mm closed aperture. Saved for your next visit; it does not change detection yet.`
+              : `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm for now, but this browser refused the write, so it will not survive a reload.`;
+            blinkCalibrateButton.textContent = "Recalibrate blinks";
+            // A calibration is the only thing that can put this key in
+            // storage while the page is open, so the stored-data box is
+            // re-probed here the same way the gaze flow does it.
+            refreshStoredBox();
+          } else {
+            blinkCalibrationStatus.textContent = blinkRefusalMessage(
+              result.reason,
+            );
+          }
+          blinkCalibrationStatus.hidden = false;
+        } else {
+          const phase = blinkCalibrationSession.phase;
+          blinkCalibrationInstruction.textContent =
+            phase === "open"
+              ? "Keep your eyes OPEN and look at the screen."
+              : "Now gently CLOSE your eyes and hold them shut.";
+          const heldMs = nowMs - blinkCalibrationSession.startedAtMs;
+          const secondsLeft = Math.max(
+            0,
+            Math.ceil((GUIDED_CALIBRATION_PHASE_MS - heldMs) / 1000),
+          );
+          blinkCalibrationProgress.textContent =
+            phase === "open"
+              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere to cancel.`
+              : `Step 2 of 2 · ${String(secondsLeft)} s left.`;
+        }
+      }
+
       earSamples = withinWindow(
         [...earSamples, { timestampMs: nowMs, value: meanEar }],
         nowMs,
@@ -3847,6 +4018,8 @@ const blinksBox = box(
   "Blinks",
   blinkLabel,
   baselineLabel,
+  blinkCalibrateButton,
+  blinkCalibrationStatus,
   rulerFitLabel,
   blinkShapeLabel,
   blinkLogList,
@@ -4090,6 +4263,7 @@ app.append(
   contentBox,
   pageFooter,
   calibrationOverlay,
+  blinkCalibrationOverlay,
   heatmapOverlay,
   kssPanel,
 );

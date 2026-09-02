@@ -1,3 +1,38 @@
+**GUIDED CALIBRATION, THE "CALIBRATE BLINKS" PANEL, 2 September 2026 —
+a person can now run the two-phase calibration against the live camera,
+and it still does not touch detection.** The button lives in the Blinks
+box, enabled exactly while a source runs, the same rule as the gaze
+one. A click starts a session; a full-screen overlay names the phase
+and counts down — "Keep your eyes OPEN" for three seconds, then "Now
+gently CLOSE your eyes and hold" for three — and the frame loop feeds
+each frame's mean aperture into calibrationSessionStep. On a ready
+result it calls saveBlinkCalibration and reports the line in
+millimetres; on a refusal it shows the plain-English reason; a click on
+the overlay cancels and stores nothing. The overlay carries NO inline
+`display`, because an inline display beats the [hidden] rule and a
+"hidden" overlay would keep swallowing clicks — the end to end test
+caught exactly that on the first run, before it was fixed. Two
+Playwright tests drive the real build with the fake, faceless camera:
+the button turns on with the session, the overlay opens on the open
+phase, the two phases run on the wall clock, and a run that never saw a
+face resolves to the "not enough open" refusal that stores nothing;
+cancel leaves no trace. The ready path needs a real face and is manual
+check 62. NEUTRAL BY CONSTRUCTION: the whole block is dormant unless the
+button is clicked, which a corpus run never does, and it neither moves
+nor reads-into the blink reducer or the frame trace, so Eyeblink8
+reproduces digit for digit — no corpus run required. Detection is
+unchanged: the reducer still reads the passive baseline; adopting this
+line is the next, deliberate accuracy change, with its own prediction
+and corpus run. One known UX limit, recorded not hidden: a person
+cannot read the screen while their eyes are shut, so the closed-phase
+instruction is pre-announced during the open phase and paced by the
+countdown; an audible cue is the honest follow-up. Full gate green,
+including the full e2e suite. The suite is 828 unit tests, 22 end to end
+tests, and 275 Python tests of which 2 skip. Next: increment 3 — adopt
+the stored personal line into the detector's threshold, a deliberate
+accuracy change gated on a committed prediction and an awake corpus run
+(needs the owner).
+
 **GUIDED CALIBRATION, THE STORE AND THE PRIVACY ENTRY, 2 September
 2026 — persisted, listed and erasable before the panel that writes
 it.** The previous increment's stored form now has an io home.
