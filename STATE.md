@@ -1,3 +1,35 @@
+**UTA-RLDD FULLY CLASSIFIED — A GENUINE DETECTION THAT REVERSES THE
+PREDICTED NULL, 3 September 2026.** The maintainer measured all five folds;
+analyse_rldd.py classified the 148 usable videos from 54 subjects (numbers
+only, never a frame; 30 of 178 videos fell to the 25 fps floor, six subjects
+entirely). Three-class leave-one-subject-out balanced accuracy is 0.498
+(floor 1/3) and the alert-vs-drowsy secondary 0.732 (floor 1/2); BOTH clear
+the pre-registered decision rule — above the 97.5th percentile of the
+1000-shuffle null (p 0.001) and above the floor by more than twice the
+null's spread — so both read "detecting drowsiness". docs/uta-rldd-plan.md
+committed the expectation of a NULL; that prediction was WRONG, and the plan
+named the exact route by which it could be: the larger sample surfaced a
+weak signal that DROZY (13 subjects) and the fold-1 pilot (12) were too
+small to see. Because a surprising positive is where leakage hides, it was
+verified four ways before recording: leave-one-subject-out integrity checked
+on the real matrix (no subject in both splits, every video held out once);
+the shuffled null centred at chance (0.310), which is the proof identity
+leakage was blocked; seed stability; and the model's weights, which load
+hardest — in the physiologically correct direction — on long closures,
+PERCLOS and blink duration, the drowsiness literature's canonical markers,
+arguing the signal is drowsiness and not an arbitrary recording confound.
+docs/uta-rldd-result.txt records it in full and SUPERSEDES the pilot in
+writing (the reversal on the same page, as the plan requires), keeping every
+caveat: a coarse self-reported label, one video per state so confounds
+cannot be PROVEN separate, self-recorded conditions, and modest accuracy
+(0.50 three-class, the low-vigilant middle barely above chance). Roadmap 7.5
+and 7.6 are DONE — a reproducible baseline classifier with a fixed seed, and
+leave-one-subject-out with per-subject scores and the shuffle control. No src
+change, no corpus gate; the analysis reads numbers only. Next: the
+honest-evaluation track's open rows are closed; follow-ups (the README
+results block, a within-subject robustness pass, the deferred detector work)
+are the maintainer's to prioritise.
+
 **UTA-RLDD FOLD 1 CLASSIFIED — THE PILOT RESULT IS A NULL, 3 September
 2026 — the prediction committed before the data held.** The owner measured
 fold 1 through the built app; analyse_rldd.py classified the numbers (never
