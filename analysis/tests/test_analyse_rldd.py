@@ -11,10 +11,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-from blinklab.rldd import RldError, VideoFeatures, load_corpus
-from tools.analyse_rldd import exclusion_reason, format_report, run_analysis
+from blinklab.rldd import RldError, ShuffleControl, VideoFeatures, load_corpus
+from tools.analyse_rldd import (
+    _verdict_narrative,
+    exclusion_reason,
+    format_report,
+    run_analysis,
+)
 
 COLUMNS = [
     "timestampMs",
@@ -106,6 +112,34 @@ def _video(measured_fps: float, reached_window_end: bool) -> VideoFeatures:
         perclos=0.1,
         long_closures=0.0,
     )
+
+
+class TestVerdictNarrative:
+    def _control(self, observed: float) -> ShuffleControl:
+        # Null 0.10-0.50 (97.5th ~0.49, std ~0.115), so observed picks the
+        # verdict: 0.62 clears both bars, 0.55 clears only the percentile,
+        # 0.40 clears neither.
+        return ShuffleControl(
+            observed=observed, null=np.linspace(0.10, 0.50, 200), floor=1 / 3
+        )
+
+    def test_detected_says_survived_not_collapsed(self) -> None:
+        text = _verdict_narrative(self._control(0.62))
+        assert "SURVIVED" in text
+        assert "collapses" not in text
+
+    def test_suggestive_does_not_claim_collapse(self) -> None:
+        # The bug: the suggestive case must NOT print the collapse narrative,
+        # which would contradict its own "suggestive and unconfirmed" verdict.
+        text = _verdict_narrative(self._control(0.55))
+        assert "SUGGESTIVE AND UNCONFIRMED" in text
+        assert "collapses" not in text
+        assert "SURVIVED" not in text
+
+    def test_null_says_collapsed(self) -> None:
+        text = _verdict_narrative(self._control(0.40))
+        assert "collapses" in text
+        assert "SURVIVED" not in text
 
 
 class TestRunAnalysis:

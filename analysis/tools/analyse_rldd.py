@@ -12,7 +12,7 @@ first. That is the exact move it exists to prevent.
 
 Usage, from the analysis directory, once the owner's feature CSVs exist:
 
-    uv run python tools/analyse_rldd.py <measured-dir>
+    uv run python -m tools.analyse_rldd <measured-dir>
 
 <measured-dir> holds the `<subject>_<label>.seconds.csv` files the corpus
 runner produced. This reads NUMBERS ONLY; it never sees a frame.
@@ -135,6 +135,31 @@ def _control_block(control: ShuffleControl, title: str) -> list[str]:
     ]
 
 
+def _verdict_narrative(control: ShuffleControl) -> str:
+    """The closing paragraph for each of the plan's three outcomes. It must
+    branch on all three: a bare `detected`/else split would print the
+    collapse-to-the-null narrative for a SUGGESTIVE result, which did not
+    collapse to the null, contradicting the verdict line printed above it."""
+    if control.detected:
+        return (
+            "  A held-out accuracy above chance that SURVIVED the label "
+            "shuffle.\n  Per the plan this is the surprising, genuine "
+            "finding, reported as such."
+        )
+    if control.suggestive:
+        return (
+            "  One of the plan's two bars cleared and the other did not, "
+            "so per\n  the plan this is SUGGESTIVE AND UNCONFIRMED, in "
+            "those words: not\n  a finding, and not a clean null, and NOT "
+            "detecting drowsiness."
+        )
+    return (
+        "  Per the plan, this is the result, published as readily as a "
+        "positive\n  one would have been. An accuracy that collapses to its "
+        "shuffled null\n  was reading the subject, not drowsiness."
+    )
+
+
 def format_report(result: AnalysisResult) -> str:
     """The plan's report as text: what was excluded and why, the class
     balance, the three-class leave-one-subject-out with its confusion
@@ -202,18 +227,7 @@ def format_report(result: AnalysisResult) -> str:
     lines.append(f"    three-class         {result.three_control.verdict}")
     lines.append(f"    alert vs drowsy     {result.binary_control.verdict}")
     lines.append("")
-    if result.three_control.detected:
-        lines.append(
-            "  A held-out accuracy above chance that SURVIVED the label "
-            "shuffle.\n  Per the plan this is the surprising, genuine "
-            "finding, reported as such."
-        )
-    else:
-        lines.append(
-            "  Per the plan, this is the result, published as readily as a "
-            "positive\n  one would have been. An accuracy that collapses to "
-            "its shuffled null\n  was reading the subject, not drowsiness."
-        )
+    lines.append(_verdict_narrative(result.three_control))
     lines.append("")
     lines.append(
         "Cite: Ghoddoosian, Galib and Athitsos, "
