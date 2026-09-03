@@ -84,8 +84,10 @@ def _corpus_dir(directory: Path, n_subjects: int) -> None:
 
 class TestExclusionReason:
     def test_names_the_frame_rate_floor(self) -> None:
-        video = _video(measured_fps=15.0, reached_window_end=True)
-        assert exclusion_reason(video) == "below 25 fps (measured 15.0)"
+        # Two decimals: 24.98 is genuinely below the floor, and must not
+        # round to "25.0" in the reason, which would read as a contradiction.
+        video = _video(measured_fps=24.98, reached_window_end=True)
+        assert exclusion_reason(video) == "below 25 fps (measured 24.98)"
 
     def test_names_the_short_window(self) -> None:
         video = _video(measured_fps=30.0, reached_window_end=False)

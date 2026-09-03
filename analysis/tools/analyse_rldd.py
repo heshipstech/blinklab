@@ -50,8 +50,11 @@ def exclusion_reason(video: VideoFeatures) -> str | None:
     the frame-rate floor and a recording that covers the five-minute
     window."""
     if video.measured_fps < MIN_USABLE_FPS:
+        # Two decimals, not one: a video at 24.98 fps is genuinely below
+        # the floor, and rounding it to "25.0" in the reason reads like a
+        # contradiction in the published result.
         return (
-            f"below {MIN_USABLE_FPS} fps (measured {video.measured_fps:.1f})"
+            f"below {MIN_USABLE_FPS} fps (measured {video.measured_fps:.2f})"
         )
     if not video.reached_window_end:
         return "under five measured minutes after the settle"
