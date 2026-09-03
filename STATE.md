@@ -1,3 +1,31 @@
+**UTA-RLDD FOLD 1 CLASSIFIED — THE PILOT RESULT IS A NULL, 3 September
+2026 — the prediction committed before the data held.** The owner measured
+fold 1 through the built app; analyse_rldd.py classified the numbers (never
+a frame). Of 36 videos the pre-registered gates set aside 4 (three below
+the 25 fps floor, one a second short of the five-minute window), leaving 32
+across 12 subjects, classes 11/11/10. Three-class leave-one-subject-out
+balanced accuracy is 0.248, BELOW the 1/3 majority floor, and sits in the
+middle of its shuffled null (permutation p 0.61). The alert-vs-drowsy
+secondary is the instructive one: 0.614 is above the 1/2 floor and, alone,
+looks like a weak signal, but the label-shuffle null reaches 0.714 and beats
+it on 17% of shuffles (p 0.17) — the control catching an apparent margin
+that was small-sample noise, not drowsiness. Both verdicts: null, does not
+beat chance. docs/uta-rldd-plan.md committed the expectation of a null in
+writing before any classifier was fit, and on fold 1 that prediction held;
+this companions the DROZY correlation null — two datasets, two methods, one
+answer. docs/uta-rldd-result.txt records it, published as readily as a
+positive would have been. The honest caveat is on the page: fold 1 is 12
+subjects, about DROZY's scale, so this is a null at DROZY's scale, not yet
+the 60-subject test the plan's power argument rests on; folds 2 to 5 are the
+maintainer's decision, and a weak signal in the full dataset is the one
+route this pilot has NOT closed. No src change, no corpus gate — the
+analysis reads numbers only, and the measurement ran on the maintainer's
+machine. Roadmap 7.5/7.6: the pilot delivered a reproducible
+leave-one-subject-out with per-subject scores and a null; the full-dataset
+run stays open pending that decision. Next: the maintainer chooses to run
+folds 2 to 5 for the full evaluation or to accept the pilot null, and the
+choice is recorded on the result page.
+
 **PRE-FLIGHT HARDENING BEFORE THE REAL RUN, 3 September 2026 — an
 adversarial review and a speculative run caught two bugs the tests could
 not.** With the owner's fold-1 feature CSVs in hand and about to be
