@@ -1,3 +1,31 @@
+**THE PREP TOOL'S SUBJECT ID, HARDENED AGAINST THE SPLIT-DOWNLOAD
+FOLDERS, 3 September 2026 — a collision caught by a synthetic test before
+the owner transcoded a byte.** The UTA-RLDD prep tool (merged the day
+before) identified a subject by the bare NUMBER of its parent folder,
+prefixed by the fold. UTA-RLDD arrives as a multi-gigabyte download that
+unpacks into split `_part` folders — Fold1_part1, Fold1_part2 — and the
+subject numbers restart inside each, so two different people both filed
+under folder "3" would map to one id: one clip would overwrite the other,
+and two subjects would merge into a single leave-one-subject-out group —
+the exact leakage the plan's shuffle control exists to catch, introduced
+silently at the source. A synthetic test found it before the owner ran the
+transcode. The fix makes the subject id the WHOLE folder path from the
+dataset root down to the video's parent, so Fold1_part1/3 and Fold1_part2/3
+are now distinct and each physical subject folder is exactly one group; a
+downstream loader still recovers the label by stripping the known suffix,
+so underscores in the id are safe. Two guards back it: the tool REFUSES
+before transcoding if any two sources still collide on one output name (a
+mirror that named a folder both Fold1_part1 and Fold1part1, say), and it
+WARNS, listing them, for any subject missing one of the three labels — a
+split subject or a lost video, not a lighter workload. Five tests were
+added (the file's ten became fifteen): the path-based id, the `_part`
+folders staying distinct, the collision refusal, and the incomplete-subject
+report. No src change, no corpus gate. The suite is 849 unit tests, 23 end
+to end tests, and 290 Python tests of which 2 skip, all green. Next: the
+owner runs the pilot fold's dry run, pastes the mapping back for a check
+(36 videos, 12 subjects, three labels each), then --go and the corpus
+runner, and the classifier gets built against docs/uta-rldd-plan.md.
+
 **TRACK B PRE-REGISTERED, THE UTA-RLDD CLASSIFICATION PLAN, 2 September
 2026 — roadmap 7.5 and 7.6, written before any classifier is fit.** The
 formal roadmap has two open rows left, 7.5 (a baseline classifier with a
@@ -2237,7 +2265,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 2 September 2026. When this file changes, this stamp changes
+Stamped: 3 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
