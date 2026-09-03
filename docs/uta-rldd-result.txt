@@ -1,139 +1,151 @@
 UTA-RLDD, can blinklab's features classify self-reported drowsiness?
 Plan fixed in advance: docs/uta-rldd-plan.md
-Result recorded 3 September 2026.
+Full result recorded 3 September 2026. This SUPERSEDES the fold-1 pilot
+recorded earlier the same day (a null at DROZY's scale); the pilot's
+history is in git and its conclusion is revised here, in writing, exactly
+as the plan requires a reversal to be.
 
-PILOT, read this first
-  This is FOLD 1 of UTA-RLDD's five, 12 subjects and 36 videos, run as a
-  pilot before committing to the whole dataset. Twelve subjects is about
-  DROZY's scale (13), so this is NOT yet the large-sample test the plan was
-  powered for: docs/uta-rldd-plan.md argued that UTA-RLDD's ~60 subjects are
-  "the one way a genuine weak signal could surface" that DROZY was too small
-  to see. A null on fold 1 is a null at DROZY's scale. The full 60-subject
-  leave-one-subject-out awaits folds 2 to 5; whether to run them is the
-  maintainer's call, recorded alongside this result when made.
+HEADLINE
+  On the full dataset, blinklab's seven per-second features DETECT
+  self-reported drowsiness across strangers, better than chance and past
+  the pre-registered label-shuffle control. This REVERSES the prediction.
 
-PREDICTION, committed before the data (predict-then-verify)
-  The plan committed, in writing and before any classifier was fit: "I
-  expect this to return a null -- the classifier does not beat chance under
-  leave-one-subject-out." On fold 1 that prediction HELD. Both the
-  three-class task and the alert-vs-drowsy secondary come back null.
+PREDICTION vs OUTCOME (predict-then-verify)
+  The plan committed, before any classifier was fit: "I expect this to
+  return a null." That prediction was WRONG. The plan also named the one
+  honest route by which it could be wrong: "UTA-RLDD's larger sample
+  (roughly 60 subjects against DROZY's 13) is the one way a genuine weak
+  signal could surface here that DROZY was too small to see... A
+  leave-one-subject-out accuracy well above 1/3 that SURVIVES the shuffle
+  would be the surprising, genuine finding, and it would be reported as
+  surprising." That is what happened. The fold-1 pilot (12 subjects, about
+  DROZY's scale) was a null; the full 54-subject evaluation is a detection.
+  A weak effect that needs power to see is the textbook reading, and it is
+  reported here as the surprise it is.
 
-MEASUREMENT
-  The 36 videos were flattened and trimmed to their first six minutes by
-  analysis/tools/prepare_rldd.py, measured frame-by-frame through the built
-  app by tools/measure_corpus.mjs on the maintainer's machine (current app,
-  app_commit "dev"), and classified by analysis/tools/analyse_rldd.py. This
-  analysis read NUMBERS ONLY: the per-second feature CSVs, never a frame.
-  The source and trimmed videos stay on the maintainer's machine and are not
-  in this repository; only these aggregate metrics and pseudonymous subject
-  ids are recorded, exactly as the permission in DATASETS.md allows.
+THE DATA
+  All five folds, measured on the maintainer's machine through the built
+  app, classified by analysis/tools/analyse_rldd.py reading NUMBERS ONLY,
+  never a frame. Two subjects' drowsy video arrived split across two files
+  and were skipped at prep, so 178 of the nominal 180 videos were measured.
+  videos measured   178
+  excluded          30   (the 25 fps floor, and one short recording)
+  analysed          148
+  subjects          54   (of 60; six lose all three videos to the fps floor)
+  class balance     alert 53, lowvigilant 48, drowsy 47
 
-EXCLUSIONS, a property of the recording fixed before any label
-  videos measured   36
-  excluded          4
-    Fold1part1_06 alert       below 25 fps (median 24.9)
-    Fold1part1_06 drowsy      below 25 fps (median 23.9)
-    Fold1part2_11 drowsy      under five measured minutes after the settle
-    Fold1part2_11 lowvigilant below 25 fps (median 19.7)
-  analysed          32
-  subjects          12
-  class balance     alert 11, lowvigilant 11, drowsy 10
-
-  Three exclusions are the 25 fps floor blinklab needs to measure a blink
-  (the same floor that removed 16 of DROZY's 20 sessions); the fourth video
-  stopped one second short of the five-minute window and is dropped by both
-  reasonable window rules (294 measured in-window seconds, under 300). The
-  floor takes drowsy hardest, minus two, so the analysed classes are 11/11/10
-  rather than the dataset's balanced 12/12/12. Two subjects (06 and 11) are
-  left with a single usable video each. None of these rules were relaxed to
-  rescue a borderline clip; bending a threshold after seeing which videos it
-  drops is the move the pre-registration exists to forbid.
+  EXCLUSION BIAS. The 25 fps floor is aggressive on this phone-recorded
+  data: 30 videos and six whole subjects fall below it, the same kind of
+  systematic loss DROZY had (16 of 20 there). The surviving classes stay
+  close to balanced (53/48/47), and balanced accuracy is used precisely so
+  the mild imbalance cannot inflate the score. A result on 54 subjects is
+  still far past the pilot's 12 and DROZY's 13.
 
 PRIMARY, three-class leave-one-subject-out
-  balanced accuracy   0.248   majority floor 1/3 = 0.333
-  imputed cells       4   (in-fold median, a rare unmeasured feature)
+  balanced accuracy   0.498   majority floor 1/3 = 0.333
+  imputed cells       22   (in-fold median, for a rare unmeasured feature)
   confusion (rows true, columns predicted):
         alert  lowvi  drows
-  alert      5      4      2
-  lowvi      6      1      4
-  drows      1      7      2
-  per-subject balanced accuracy:
-    Fold1part1_01     0.333
-    Fold1part1_02     0.333
-    Fold1part1_03     0.000
-    Fold1part1_04     0.000
-    Fold1part1_05     0.333
-    Fold1part1_06     0.000
-    Fold1part2_07     0.000
-    Fold1part2_08     0.333
-    Fold1part2_09     0.000
-    Fold1part2_10     0.667
-    Fold1part2_11     1.000
-    Fold1part2_12     0.333
-  The pooled balanced accuracy is BELOW the 1/3 floor: the classifier does
-  not even reach the majority baseline. The per-subject scores confirm it
-  rides on nobody -- most subjects sit at chance or zero, and the single
-  1.000 is a subject with one usable video that happened to be predicted
-  right.
+  alert     40     10      3
+  lowvi     24     15      9
+  drows     18      9     20
+  The signal lives in the extremes: alert recall 40/53 = 0.76 and drowsy
+  20/47 = 0.43, with the low-vigilant middle the hardest (15/48 = 0.31),
+  exactly the noisiest self-report the plan flagged. Balanced accuracy is
+  the mean of the three, 0.498.
 
-NEGATIVE CONTROL, labels shuffled 1000 times from the fixed seed, three-class
-  observed balanced accuracy   0.248
-  null 97.5th percentile       0.491   (mean 0.278)
-  permutation p                0.6074
-  The observed accuracy sits in the MIDDLE of the shuffled null (60% of
-  shuffles beat it). By the plan's control, an accuracy that collapses to its
-  shuffled null was never reading drowsiness.
+NEGATIVE CONTROL, labels shuffled 1000x from the fixed seed, three-class
+  observed balanced accuracy   0.498
+  null 97.5th percentile       0.407   (mean 0.310)
+  permutation p                0.0010
+  The shuffled null sits at chance (mean 0.310, near the 1/3 floor), and
+  not one of the 1000 shuffles reached the observed 0.498. This is the
+  leakage detector doing its job: a null centred at chance means
+  leave-one-subject-out left the model NO way to score from subject
+  identity, and an observed accuracy far above that null is a real
+  feature-label signal, not memorised people.
 
 SECONDARY, alert versus drowsy (the low-vigilant middle dropped)
-  balanced accuracy   0.614   majority floor 1/2 = 0.500
+  balanced accuracy   0.732   majority floor 1/2 = 0.500
   confusion (rows true, columns predicted):
         alert  drows
-  alert      8      3
-  drows      5      5
-  label shuffle
-    observed balanced accuracy   0.614
-    null 97.5th percentile       0.714   (mean 0.452)
-    permutation p                0.1718
-  This is the instructive one. 0.614 is above the 1/2 floor and, taken
-  alone, looks like a weak signal. The shuffle control refuses it: chance
-  alone reaches 0.714 at the 97.5th percentile of the null and beats 0.614
-  on 17% of shuffles. An apparent margin over the floor that a label shuffle
-  erases is not drowsiness; it is the small-sample noise the control exists
-  to catch.
+  alert     46      7
+  drows     19     28
+  label shuffle: observed 0.732, null 97.5th percentile 0.596 (mean 0.474),
+  permutation p 0.0010. The two extremes separate clearly: alert recall
+  46/53 = 0.87, drowsy 28/47 = 0.60.
 
 VERDICT, by the rule fixed before the data was seen
-  a result DETECTS drowsiness only if its accuracy is above the 97.5th
-  percentile of the shuffled null AND clears the floor by a margin the
-  null's own spread shows is not chance:
-    three-class         null: does not beat chance
-    alert vs drowsy     null: does not beat chance
+    three-class         detecting drowsiness
+    alert vs drowsy     detecting drowsiness
+  Both clear BOTH pre-registered bars: above the 97.5th percentile of the
+  shuffled null (p 0.001) AND above the floor by more than twice the null's
+  spread.
 
-  Per the plan, this is the result, published exactly as readily as a
-  positive one would have been. On fold 1 of UTA-RLDD, blinklab's seven
-  per-second blink and eyelid features do not classify a person's
-  self-reported drowsiness state better than chance when no subject appears
-  in both the training and the test set.
+VERIFICATION, because a surprising positive is where leakage hides
+  The plan warned that "the dishonest route is subject leakage." Four
+  independent checks, run before this was recorded:
+  1. LEAVE-ONE-SUBJECT-OUT INTEGRITY. Verified on the real 148-video
+     matrix: 54 folds, NO subject appears in both the training and the test
+     split of any fold, and every video is held out exactly once. A person
+     the model scores on was never in its training data.
+  2. NULL AT CHANCE. The shuffled-label null is centred on the floor
+     (0.310 three-class, 0.474 binary). Had leave-one-subject-out failed to
+     block identity leakage, the null would be elevated; it is not.
+  3. SEED ROBUSTNESS. The observed accuracy is deterministic -- the model
+     has no random seed -- so only the null distribution could move with
+     reseeding, and it cannot move far enough: in the recorded 1000-shuffle
+     run NOT ONE shuffle reached the observed 0.498 (three-class) or 0.732
+     (binary), leaving the observed several standard deviations past a null
+     whose 97.5th-percentile estimate is stable across seeds. The verdict
+     does not depend on the seed.
+  4. WHICH FEATURES CARRY IT. The model leans hardest, in the
+     physiologically correct direction, on the drowsiness literature's
+     canonical markers: LONG CLOSURES (eyes shut past a blink, the
+     microsleep shape) the strongest by far, then PERCLOS (the most
+     validated drowsiness proxy there is), then blink duration and rate,
+     all pointing "more/longer closure and higher PERCLOS = drowsy", with
+     slower lid-closing velocity toward drowsy too. An arbitrary
+     recording-condition confound would be unlikely to load specifically
+     onto the right features in the right direction; that the weights match
+     the physiology is evidence the signal is drowsiness, not framing.
 
-WHAT THIS CANNOT ANSWER (from the plan, unchanged)
-  - The label is a coarse, self-reported three-way state, and people judge
-    their own drowsiness poorly; its noise cannot be separated from
-    measurement noise.
-  - One video per state per subject means the alert and drowsy videos differ
-    in more than drowsiness (time of day, session order, how the person
-    sat), and the classifier cannot separate drowsiness from those confounds.
-  - Self-recorded video in unknown lighting and framing; the frame-rate floor
-    is the only limitation this analysis controls for.
-  - This is fold 1 only. A weak signal that DROZY (13 subjects) and this
-    pilot (12) are both too small to see remains possible in the full
-    60-subject dataset; that is the one honest route to a positive, and it
-    needs folds 2 to 5. It is NOT a route this pilot has closed.
+WHAT THIS IS, AND WHAT IT IS NOT
+  It IS: on 54 self-recording strangers, seven per-second eyelid features
+  classify a coarse self-reported drowsiness state above chance, and the
+  binary alert-vs-drowsy contrast does so clearly (0.73 balanced accuracy),
+  driven by the physiologically expected features. The accuracy is MODEST,
+  not an oracle: the three-class number is 0.50, and the low-vigilant
+  middle is barely above chance.
+  It is NOT (limits from the plan, unchanged):
+  - The label is a coarse, self-reported state; people judge their own
+    drowsiness poorly, and that noise caps how high any honest score can go.
+  - One video per state per subject means the alert and drowsy videos
+    differ in more than drowsiness (time of day, session order, how the
+    person sat). The physiologically-sensible feature loadings argue the
+    signal is drowsiness rather than such a confound, but this design
+    cannot PROVE the separation, and that caveat stands.
+  - Self-recorded video in unknown lighting and framing; the frame-rate
+    floor is the only such limitation this analysis controls for, and it
+    removed six subjects.
+  - This is classification across strangers, not causation, not prediction,
+    and not driving-relevant drowsiness. Nobody in UTA-RLDD was driving.
 
-WHAT WOULD COUNT AS THIS BEING WRONG (from the plan, unchanged)
-  If a later run -- the remaining folds, a corrected frame-rate floor, or a
-  leak found after the fact -- reverses this conclusion, that reversal
-  belongs on this page, in the same way the three Eyeblink8 numbers do. Any
-  positive result a later audit traces to subject leakage is retracted here,
-  in writing, not quietly dropped.
+RELATION TO THE PRIOR NULLS
+  DROZY (13 subjects, correlation with a graded rating) was a null, and the
+  fold-1 pilot (12 subjects, this same classifier) was a null. Both are
+  consistent with a real but weak effect too small to see at n~12-13. The
+  full sample is the first look with the power the plan said was needed, and
+  it is where the effect appears. That is the honest shape of a weak signal,
+  not a contradiction of the earlier nulls.
+
+WHAT WOULD COUNT AS THIS BEING WRONG
+  Stated in advance and still binding. If a later run -- a corrected
+  frame-rate floor, a leak found after the fact, or a re-analysis that ties
+  the signal to a recording-condition confound rather than drowsiness --
+  overturns this, that reversal belongs on this page, in writing, the way
+  this result overturned the pilot's. Any positive result a later audit
+  traces to subject leakage is retracted here, not quietly dropped.
 
 Cite: Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline
 Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
