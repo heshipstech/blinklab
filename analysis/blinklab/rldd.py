@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import csv
 import statistics
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -303,9 +304,14 @@ def _prep(train: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """The in-fold median (for imputing) and (mean, std) columns, from the
     TRAINING rows only. Fitting these on all the data first is the small,
     invisible leak the plan exists to forbid."""
-    median = np.nanmedian(train, axis=0)
-    # A feature unmeasured across the whole training fold has no median;
-    # zero is the neutral fill, and it is standardised away below.
+    # A feature unmeasured across the WHOLE training fold has no median,
+    # and numpy warns about the all-NaN column; the warning is expected
+    # here, because the next line handles exactly that case.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        median = np.nanmedian(train, axis=0)
+    # Zero is the neutral fill for such a column, and it is standardised
+    # away below.
     median = np.where(np.isnan(median), 0.0, median)
     filled = np.where(np.isnan(train), median, train)
     mean = filled.mean(axis=0)
@@ -474,15 +480,46 @@ class ShuffleControl:
         return float(np.percentile(self.null, 97.5))
 
     @property
-    def detected(self) -> bool:
-        """The plan's decision rule: above the 97.5th percentile of the
-        null (p < 0.025) AND clear of the majority floor by a margin the
-        null's own spread shows is not chance."""
+    def null_std(self) -> float:
+        return float(np.std(self.null))
+
+    @property
+    def above_null(self) -> bool:
+        """The plan's first bar: the observed accuracy is past the 97.5th
+        percentile of the shuffled null, a one-sided permutation p below
+        0.025."""
         return (
-            self.observed > self.null_percentile_975
-            and self.observed > self.floor
-            and self.p_value < 0.025
+            self.observed > self.null_percentile_975 and self.p_value < 0.025
         )
+
+    @property
+    def clears_floor_by_margin(self) -> bool:
+        """The plan's second bar: the observed accuracy is above the
+        majority floor by more than twice the null's own spread, so the
+        margin is one the shuffled distribution shows is not chance."""
+        return self.observed - self.floor > 2 * self.null_std
+
+    @property
+    def detected(self) -> bool:
+        """The plan's decision rule: a finding needs BOTH bars."""
+        return self.above_null and self.clears_floor_by_margin
+
+    @property
+    def suggestive(self) -> bool:
+        """One bar cleared and the other failed — reported in those words,
+        never as a finding."""
+        return (
+            self.above_null or self.clears_floor_by_margin
+        ) and not self.detected
+
+    @property
+    def verdict(self) -> str:
+        """The plan's three outcomes, in its own words."""
+        if self.detected:
+            return "detecting drowsiness"
+        if self.suggestive:
+            return "suggestive and unconfirmed"
+        return "null: does not beat chance"
 
 
 def shuffle_control(

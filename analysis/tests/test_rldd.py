@@ -17,6 +17,7 @@ import pytest
 from blinklab.rldd import (
     LABELS,
     RldError,
+    ShuffleControl,
     VideoFeatures,
     balanced_accuracy,
     label_of,
@@ -337,3 +338,36 @@ class TestBinarySecondary:
         # Two classes, so two videos per subject reach the pool.
         assert result.confusion.sum() == 16
         assert result.balanced_accuracy > 0.8
+
+
+class TestDecisionRule:
+    def _control(self, observed: float) -> ShuffleControl:
+        # A null spread from 0.10 to 0.50 (mean 0.30, std ~0.115, 97.5th
+        # percentile ~0.49), so the floor's margin and the percentile bar
+        # can be made to agree or disagree by choice of the observed value.
+        null = np.linspace(0.10, 0.50, 200)
+        return ShuffleControl(observed=observed, null=null, floor=1 / 3)
+
+    def test_both_bars_is_a_finding(self) -> None:
+        control = self._control(0.62)
+        assert control.above_null and control.clears_floor_by_margin
+        assert control.detected is True
+        assert control.verdict == "detecting drowsiness"
+
+    def test_one_bar_is_suggestive(self) -> None:
+        # Above the null's 97.5th percentile, but the margin over the floor
+        # is inside twice the null's spread — one bar, not both.
+        control = self._control(0.55)
+        assert control.above_null is True
+        assert control.clears_floor_by_margin is False
+        assert control.detected is False
+        assert control.suggestive is True
+        assert control.verdict == "suggestive and unconfirmed"
+
+    def test_neither_bar_is_null(self) -> None:
+        control = self._control(0.40)
+        assert control.above_null is False
+        assert control.clears_floor_by_margin is False
+        assert control.detected is False
+        assert control.suggestive is False
+        assert control.verdict.startswith("null")

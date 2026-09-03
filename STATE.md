@@ -1,3 +1,29 @@
+**THE UTA-RLDD ANALYSIS RUNNER AND THE FULL DECISION RULE, 3 September
+2026 — one command from CSVs to a verdict, still with no data to feed
+it.** The classifier code landed an increment ago; this adds the runner
+that turns it into a report and completes the plan's decision rule.
+analysis/tools/analyse_rldd.py loads a folder of feature CSVs, sets aside
+any video that fails the 25 fps floor or the five-minute window (each named
+with its reason, never dropped silently), runs the three-class
+leave-one-subject-out and the alert-vs-drowsy secondary with their
+label-shuffle controls, and prints the confusion matrices, per-subject
+scores, the null percentile and permutation p, and the verdict — the
+required CVPR 2019 citation carried in the output. The decision rule now
+has BOTH of the plan's bars, not the one the first cut had: a finding needs
+its accuracy above the 97.5th percentile of the shuffled null AND above the
+1/3 floor by more than twice the null's own spread; clearing one and
+failing the other is reported as "suggestive and unconfirmed", in those
+words, and clearing neither as the null the plan expects. Ten more tests,
+still on SYNTHETIC data only: a strongly separable corpus must come back
+"detecting drowsiness", an excluded video must be named with its reason, a
+corpus with nothing measurable must refuse, and the three-way verdict is
+pinned against hand-built shuffle distributions. No src change, no corpus
+gate. The suite is 849 unit tests, 23 end to end tests, and
+320 Python tests of which 2 skip, all green. Next: the owner's fold-1 CSVs
+arrive, the loader is checked against them, and analyse_rldd.py is RUN —
+the result recorded under predict-then-verify, the classifier's first real
+label.
+
 **THE UTA-RLDD CLASSIFIER, BUILT TO THE PRE-REGISTRATION, 3 September
 2026 — roadmap 7.5/7.6's code, written before the data it will judge
 exists here.** docs/uta-rldd-plan.md fixed the whole analysis in advance;
