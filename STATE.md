@@ -1,3 +1,36 @@
+**THE UTA-RLDD CLASSIFIER, BUILT TO THE PRE-REGISTRATION, 3 September
+2026 — roadmap 7.5/7.6's code, written before the data it will judge
+exists here.** docs/uta-rldd-plan.md fixed the whole analysis in advance;
+analysis/blinklab/rldd.py now implements exactly it, and nothing chosen
+after a result, because there is no result yet — the owner's UTA-RLDD
+feature run is still under way. It reads the per-second feature CSVs
+(numbers only, never a frame), reduces each video to the seven
+pre-registered features as a median over seconds 60-360, and runs the
+leave-one-subject-out evaluation the plan named: a small numpy multinomial
+logistic regression (no sklearn or scipy in this analysis venv),
+standardised and median-imputed INSIDE each fold so nothing leaks across
+it, scored by balanced accuracy against the 1/3 majority floor, with the
+binary alert-vs-drowsy secondary and the 1000x label-shuffle control that
+doubles as the subject-leakage detector. Two places the plan's "median
+over the window" needed a call it did not spell out were made now, before
+any data, and recorded in the module: the amplitude-over-velocity ratio is
+formed per second then medianed (it has no per-second column of its own),
+and long closures — a cumulative counter — is taken as the window delta,
+the closures during the window, not a meaningless median of a running
+total. The L2 penalty is deliberately light, so a heavy prior cannot
+manufacture the null the plan expects. Twenty tests pin it on SYNTHETIC
+data only — a separable signal must be found and must survive the shuffle,
+pure noise must not, and the loader's window, exclusions and two special
+features are each checked against a hand-written CSV — because no frame or
+feature of UTA-RLDD may enter this repository. No src change, no corpus
+gate. The suite is 849 unit tests, 23 end to end tests, and
+310 Python tests of which 2 skip, all green. Next: the owner hands back
+the fold-1
+feature CSVs, the loader is verified against them (36 videos, 12 subjects,
+none excluded), and the analysis is RUN and its result recorded under the
+predict-then-verify discipline the plan set — the classifier's first
+contact with a real label.
+
 **THE PREP TOOL'S SUBJECT ID, HARDENED AGAINST THE SPLIT-DOWNLOAD
 FOLDERS, 3 September 2026 — a collision caught by a synthetic test before
 the owner transcoded a byte.** The UTA-RLDD prep tool (merged the day
