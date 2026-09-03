@@ -1,3 +1,30 @@
+**PRE-FLIGHT HARDENING BEFORE THE REAL RUN, 3 September 2026 — an
+adversarial review and a speculative run caught two bugs the tests could
+not.** With the owner's fold-1 feature CSVs in hand and about to be
+classified for a published result, the classifier and runner were put
+through an adversarial review (five independent lenses, each finding
+checked by a skeptic) before the run. It caught a real reporting
+contradiction: format_report's closing paragraph branched only on
+`detected`, so a SUGGESTIVE three-class result (one of the two decision
+bars cleared, not both) would print the "collapsed to the shuffled null"
+narrative and flatly contradict its own "suggestive and unconfirmed"
+verdict line above it. Fixed by branching the narrative on all three
+outcomes (_verdict_narrative), pinned by three tests. A SPECULATIVE run on
+the real data then exposed a second bug the whole test suite had hidden:
+analyse_rldd.py could not be invoked as its own docstring said, because run
+as a plain script the blinklab package is not on the path — pytest imports
+the module directly and never exercises the command line, so 320 green
+tests said nothing about whether the tool RUNS. Fixed the usage to
+`python -m tools.analyse_rldd`. The loader and model review lenses hit
+repeated server overload and were reviewed inline instead: no correctness
+bug, and the four real-data exclusions (three below the 25 fps floor, one
+short of the five-minute window) are the pre-registered gates working,
+robust across both reasonable window rules. No src change, no corpus gate.
+The suite is 849 unit tests, 23 end to end tests, and
+323 Python tests of which 2 skip, all green. Next: the analysis runs on
+the 32 usable videos, and the result is recorded against the plan's
+committed null expectation.
+
 **THE UTA-RLDD ANALYSIS RUNNER AND THE FULL DECISION RULE, 3 September
 2026 — one command from CSVs to a verdict, still with no data to feed
 it.** The classifier code landed an increment ago; this adds the runner
