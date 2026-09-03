@@ -96,9 +96,13 @@ VERIFICATION, because a surprising positive is where leakage hides
      has no random seed -- so only the null distribution could move with
      reseeding, and it cannot move far enough: in the recorded 1000-shuffle
      run NOT ONE shuffle reached the observed 0.498 (three-class) or 0.732
-     (binary), leaving the observed several standard deviations past a null
-     whose 97.5th-percentile estimate is stable across seeds. The verdict
-     does not depend on the seed.
+     (binary). Two independent reseeds -- 250 shuffles each, seeds 42 and
+     2024 -- return the observed unchanged (0.498, 0.732) and a null that
+     barely moves: three-class 97.5th percentile 0.397 and 0.393 against
+     the recorded run's 0.407, binary 0.575 and 0.609 against 0.596, both
+     dimensions clearing the two-bar rule under both seeds. That leaves the
+     observed several standard deviations past a null whose 97.5th-percentile
+     estimate does not depend on the seed, and neither does the verdict.
   4. WHICH FEATURES CARRY IT. The model leans hardest, in the
      physiologically correct direction, on the drowsiness literature's
      canonical markers: LONG CLOSURES (eyes shut past a blink, the
