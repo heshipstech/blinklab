@@ -7,8 +7,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tools.prepare_rldd import (
+    PrepareError,
     fold_of,
+    incomplete_subjects,
     label_of,
     plan_clip,
     plan_corpus,
@@ -46,21 +50,33 @@ class TestFoldAndSubject:
         assert fold_of(root / "fold_04" / "7" / "0.mp4", root) == 4
         assert fold_of(root / "no-fold-here" / "0.mp4", root) is None
 
-    def test_subject_id_carries_the_fold_for_uniqueness(self) -> None:
-        # Subject "7" in fold 1 and fold 2 are different people, and
-        # leave-one-subject-out must never put one person in two groups.
-        assert subject_of(Path("Fold1/7/0.mp4"), 1) == "f1s7"
-        assert subject_of(Path("Fold2/7/0.mp4"), 2) == "f2s7"
-        assert subject_of(Path("loose/7/0.mp4"), None) == "s7"
+    def test_subject_id_is_the_whole_folder_path(self, tmp_path: Path) -> None:
+        # The full path from root to the video's parent, so each physical
+        # subject folder is exactly one leave-one-subject-out group.
+        root = tmp_path
+        assert subject_of(root / "Fold1" / "7" / "0.mp4", root) == "Fold1_7"
+        assert subject_of(root / "Fold2" / "7" / "0.mp4", root) == "Fold2_7"
+
+    def test_split_download_folders_do_not_collide(
+        self, tmp_path: Path
+    ) -> None:
+        # Fold1_part1/3 and Fold1_part2/3 are different people; the bug was
+        # that a bare folder number ("3") merged them into one group.
+        root = tmp_path
+        first = subject_of(root / "Fold1_part1" / "3" / "0.mp4", root)
+        second = subject_of(root / "Fold1_part2" / "3" / "0.mp4", root)
+        assert first == "Fold1part1_3"
+        assert second == "Fold1part2_3"
+        assert first != second
 
 
 class TestPlanClip:
     def test_names_the_output_from_subject_and_label(self) -> None:
         plan = plan_clip(Path("root/Fold1/7/10.mp4"), Path("root"))
         assert plan is not None
-        assert plan.subject == "f1s7"
+        assert plan.subject == "Fold1_7"
         assert plan.label == "drowsy"
-        assert plan.output_name == "f1s7_drowsy.mp4"
+        assert plan.output_name == "Fold1_7_drowsy.mp4"
 
     def test_returns_none_when_the_label_cannot_be_read(self) -> None:
         assert plan_clip(Path("root/Fold1/7/notes.mp4"), Path("root")) is None
@@ -100,3 +116,43 @@ class TestPlanCorpus:
         assert [p.output_name for p in first] == [
             p.output_name for p in second
         ]
+
+
+class TestCollisionSafety:
+    def test_refuses_when_two_videos_share_an_output_name(
+        self, tmp_path: Path
+    ) -> None:
+        # Two folders that sanitise to the same token would overwrite one
+        # clip and merge two subjects; the tool refuses before transcoding.
+        _make(tmp_path, "Fold1_part1/3/0.mp4")
+        _make(tmp_path, "Fold1part1/3/0.mp4")
+        with pytest.raises(PrepareError):
+            plan_corpus(tmp_path, None)
+
+    def test_split_download_folders_plan_as_two_subjects(
+        self, tmp_path: Path
+    ) -> None:
+        # The real _part case: same number, different folder, different
+        # person. These must not collide and must not merge into one group.
+        for part in ("part1", "part2"):
+            for code in ("0", "5", "10"):
+                _make(tmp_path, f"Fold1_{part}/3/{code}.mp4")
+        plans, _ = plan_corpus(tmp_path, None)
+        assert len(plans) == 6
+        assert {p.subject for p in plans} == {"Fold1part1_3", "Fold1part2_3"}
+
+
+class TestIncompleteSubjects:
+    def test_reports_a_subject_missing_a_label(self, tmp_path: Path) -> None:
+        _make(tmp_path, "Fold1/5/0.mp4")  # alert
+        _make(tmp_path, "Fold1/5/5.mp4")  # low vigilant, no drowsy
+        plans, _ = plan_corpus(tmp_path, None)
+        assert incomplete_subjects(plans) == {"Fold1_5": ["drowsy"]}
+
+    def test_empty_when_every_subject_has_all_three(
+        self, tmp_path: Path
+    ) -> None:
+        for code in ("0", "5", "10"):
+            _make(tmp_path, f"Fold1/5/{code}.mp4")
+        plans, _ = plan_corpus(tmp_path, None)
+        assert incomplete_subjects(plans) == {}

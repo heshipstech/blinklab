@@ -14,9 +14,13 @@ What it does, per source video:
 - Derives the SUBJECT and the drowsiness LABEL from the file's path.
   UTA-RLDD is organised fold / subject / label, with the label as a
   KSS-derived code in the file name: 0 alert, 5 low vigilant, 10 drowsy.
-  The subject id is prefixed with the fold, because leave-one-subject-out
-  needs each subject to be exactly one group and subject numbers can
-  repeat across folds (docs/uta-rldd-plan.md).
+  The subject id is the WHOLE folder path from the dataset root down to
+  the video's parent, so each physical subject folder is exactly one
+  leave-one-subject-out group. This matters because subject numbers repeat
+  across folds AND across the split-download `_part` folders a large
+  download unpacks into (Fold1_part1/3 and Fold1_part2/3 are different
+  people); a bare folder number would silently merge them or overwrite one
+  clip with the other (docs/uta-rldd-plan.md).
 - Writes a flat `<subject>_<label>.mp4` whose name the corpus runner
   turns into `<subject>_<label>.seconds.csv`, so the label and the LOSO
   group survive into the analysis.
@@ -58,6 +62,9 @@ WINDOW_SECONDS = 360
 
 _FOLD = re.compile(r"fold[\s_-]*0*(\d+)", re.IGNORECASE)
 _LABEL_CODES = {"0": "alert", "5": "lowvigilant", "10": "drowsy"}
+# The three labels every complete subject should have. A subject missing
+# one is a split or a lost video, not a lighter workload, so it is flagged.
+_EXPECTED_LABELS = frozenset(_LABEL_CODES.values())
 
 
 class PrepareError(ValueError):
@@ -120,14 +127,26 @@ def fold_of(source: Path, root: Path) -> int | None:
     return None
 
 
-def subject_of(source: Path, fold: int | None) -> str:
-    """A subject id unique across the whole dataset.
+def subject_of(source: Path, root: Path) -> str:
+    """A subject id unique to the folder that holds this video.
 
-    The immediate parent folder names the subject within a fold; the
-    fold is prefixed because subject numbers can repeat across folds and
-    leave-one-subject-out must not put one person in two groups."""
-    parent = _sanitise(source.parent.name) or "unknown"
-    return f"f{fold}s{parent}" if fold is not None else f"s{parent}"
+    The id is the whole path from the dataset root down to the video's
+    parent, each part sanitised and joined with '_'. UTA-RLDD reuses small
+    subject numbers across folds and across the split-download `_part`
+    folders, so the folder NUMBER alone is not unique: Fold1_part1/3 and
+    Fold1_part2/3 are different people. Carrying the full path makes each
+    physical subject folder exactly one leave-one-subject-out group and
+    stops two folders that share a number from overwriting one clip with
+    the other. A downstream loader recovers the label by stripping the
+    known suffix, so underscores inside the subject are safe."""
+    try:
+        relative = source.relative_to(root)
+    except ValueError:
+        relative = source
+    parts = [
+        clean for part in relative.parent.parts if (clean := _sanitise(part))
+    ]
+    return "_".join(parts) if parts else "unknown"
 
 
 def plan_clip(source: Path, root: Path) -> ClipPlan | None:
@@ -139,17 +158,63 @@ def plan_clip(source: Path, root: Path) -> ClipPlan | None:
     fold = fold_of(source, root)
     return ClipPlan(
         source=source,
-        subject=subject_of(source, fold),
+        subject=subject_of(source, root),
         label=label,
         fold=fold,
     )
+
+
+def _refuse_on_collision(plans: list[ClipPlan]) -> None:
+    """Refuse loudly if two source videos would write the same output file.
+
+    Distinct subject folders now carry distinct paths, so a collision here
+    means two paths sanitise to one name (a mirror that named a folder both
+    `Fold1_part1` and `Fold1part1`, say). Writing both would overwrite one
+    clip and merge two people into one leave-one-subject-out group, so this
+    stops before a single frame is transcoded rather than corrupt silently."""
+    seen: dict[str, Path] = {}
+    collisions: list[tuple[str, Path, Path]] = []
+    for plan in plans:
+        name = plan.output_name
+        if name in seen:
+            collisions.append((name, seen[name], plan.source))
+        else:
+            seen[name] = plan.source
+    if collisions:
+        lines = "\n".join(
+            f"  {name}: {first}  AND  {second}"
+            for name, first, second in collisions
+        )
+        raise PrepareError(
+            "Two source videos map to the same output name. Writing both "
+            "would overwrite one clip and merge two subjects into one "
+            "leave-one-subject-out group:\n" + lines
+        )
+
+
+def incomplete_subjects(plans: list[ClipPlan]) -> dict[str, list[str]]:
+    """Subjects missing one or more of the three labels, and which ones.
+
+    Every complete UTA-RLDD subject has alert, low-vigilant and drowsy. A
+    gap means a split subject (two `_part` folders holding one person's
+    videos) or a lost download, not a lighter workload, so the caller warns
+    before transcoding rather than train on a quietly thinner subject."""
+    present: dict[str, set[str]] = {}
+    for plan in plans:
+        present.setdefault(plan.subject, set()).add(plan.label)
+    return {
+        subject: sorted(_EXPECTED_LABELS - labels)
+        for subject, labels in sorted(present.items())
+        if labels != _EXPECTED_LABELS
+    }
 
 
 def plan_corpus(
     root: Path, only_fold: int | None
 ) -> tuple[list[ClipPlan], list[Path]]:
     """Every video under root as a ClipPlan, plus the ones skipped for an
-    unreadable label. Sorted so a run is reproducible."""
+    unreadable label. Sorted so a run is reproducible. Raises PrepareError
+    if two videos would collide on one output name."""
     plans: list[ClipPlan] = []
     skipped: list[Path] = []
     for source in sorted(root.rglob("*")):
@@ -162,6 +227,7 @@ def plan_corpus(
         if only_fold is not None and plan.fold != only_fold:
             continue
         plans.append(plan)
+    _refuse_on_collision(plans)
     return plans, skipped
 
 
@@ -247,7 +313,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No such folder: {args.root}", file=sys.stderr)
         return 1
 
-    plans, skipped = plan_corpus(args.root, args.fold)
+    try:
+        plans, skipped = plan_corpus(args.root, args.fold)
+    except PrepareError as error:
+        print(f"Refusing to proceed: {error}", file=sys.stderr)
+        return 1
     if not plans:
         print(
             f"No videos with a readable label under {args.root}"
@@ -258,11 +328,24 @@ def main(argv: list[str] | None = None) -> int:
 
     print(_summarise(plans))
     for plan in plans:
-        print(f"  {plan.output_name:<28} <- {plan.source}")
+        print(f"  {plan.output_name:<32} <- {plan.source}")
     if skipped:
         print(f"\nSkipped {len(skipped)} file(s) with no readable label:")
         for source in skipped:
             print(f"  {source}")
+
+    incomplete = incomplete_subjects(plans)
+    if incomplete:
+        print(
+            f"\nWARNING: {len(incomplete)} subject(s) are missing one or "
+            "more of the three labels."
+        )
+        print(
+            "Each should have alert, lowvigilant and drowsy. A gap means a "
+            "split subject or a lost video — check before you --go:"
+        )
+        for subject, missing in incomplete.items():
+            print(f"  {subject} missing: {', '.join(missing)}")
 
     if not args.go:
         print("\nDry run. Re-run with --go to transcode.")
