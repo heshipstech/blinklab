@@ -6,6 +6,7 @@ import {
   LIGHT_SETTLE_MS,
   LIGHT_TOTAL_MS,
   lightPhaseAt,
+  lightPhaseBackground,
   lightScheduleTransitions,
 } from "../../src/core/lightSchedule";
 import { lightStimulusMetadataRows } from "../../src/core/sessionMetadata";
@@ -95,6 +96,25 @@ describe("lightScheduleTransitions", () => {
       }
       expect(lightPhaseAt(boundary.atMs)).toBe(boundary.phase);
     }
+  });
+});
+
+describe("lightPhaseBackground", () => {
+  it("paints bright near-white and dark near-black", () => {
+    expect(lightPhaseBackground("bright")).toBe("#ffffff");
+    expect(lightPhaseBackground("dark")).toBe("#000000");
+  });
+
+  it("shows the settle as dark, so the eye is already dark-adapted", () => {
+    // The settle's colour must match dark, not sit between the two, or
+    // the pupil enters the first measured dark phase mid-constriction.
+    expect(lightPhaseBackground("settle")).toBe(lightPhaseBackground("dark"));
+  });
+
+  it("shows done as a neutral grey that is neither stimulus", () => {
+    const done = lightPhaseBackground("done");
+    expect(done).not.toBe(lightPhaseBackground("dark"));
+    expect(done).not.toBe(lightPhaseBackground("bright"));
   });
 });
 

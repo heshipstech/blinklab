@@ -49,6 +49,29 @@ export function lightPhaseAt(elapsedMs: number): LightPhase {
   return slot % 2 === 0 ? "dark" : "bright";
 }
 
+/**
+ * The screen colour each phase paints. The stimulus IS this colour, so
+ * the mapping is a measurement decision, not styling, and lives here
+ * where a test pins it rather than in the DOM code.
+ *
+ * Settle rides with dark (near-black) so the eye is already dark-adapted
+ * entering the first measured dark phase; bright is near-white, the
+ * light that should constrict the pupil; done is a neutral grey that is
+ * neither stimulus, shown only after the run so its light never lands in
+ * a measured phase.
+ */
+export function lightPhaseBackground(phase: LightPhase): string {
+  switch (phase) {
+    case "bright":
+      return "#ffffff";
+    case "settle":
+    case "dark":
+      return "#000000";
+    case "done":
+      return "#3a3a3a";
+  }
+}
+
 /** One point where the phase changes, `atMs` after the stimulus start. */
 export type LightBoundary = { atMs: number; phase: LightPhase };
 
