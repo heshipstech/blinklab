@@ -32,7 +32,7 @@ def session_row(
     baseline: str = "",
 ) -> str:
     cells = [str(timestamp), "true", fps, aperture, baseline] + [""] * 6
-    cells += ["0", "", "", "", "", ""]
+    cells += ["0", "", "", "", "", "", ""]
     assert len(cells) == len(COLUMNS)
     return ",".join(cells)
 

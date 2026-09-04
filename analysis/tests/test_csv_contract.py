@@ -38,6 +38,7 @@ EXPECTED_COLUMNS = [
     "fixating",
     "onScreen",
     "baselineOverResting",
+    "pupilDiameterMm",
 ]
 
 

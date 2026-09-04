@@ -36,7 +36,13 @@ COLUMNS: list[str] = [
     "fixating",
     "onScreen",
     "baselineOverResting",
+    "pupilDiameterMm",
 ]
+
+# The header before pupilDiameterMm was appended (4 September 2026):
+# every column but the last. Files exported between 23 August and then
+# carry it, and load with the pupil column filled with NaN.
+PRE_PUPIL_COLUMNS: list[str] = COLUMNS[:-1]
 
 # What the exporter wrote before 23 August 2026, when the browser
 # started writing its own account of the validation round's fifth
@@ -45,9 +51,20 @@ COLUMNS: list[str] = [
 # folders carry this header, and the published tables must stay
 # reproducible from them, so the loader accepts exactly this header
 # too — not "any subset", this one known generation — and fills the
-# newer column with NaN, which is the truth: those sessions did not
-# measure it.
-LEGACY_COLUMNS: list[str] = COLUMNS[:-1]
+# newer columns with NaN, which is the truth: those sessions did not
+# measure them.
+LEGACY_COLUMNS: list[str] = COLUMNS[:-2]
+
+# The header generations this loader accepts, newest first. Each is an
+# exact known list, never a pattern; a file matching none is refused
+# whole. Columns are append-only (src/core/csv.ts keeps every older
+# header an exact prefix of the current one), so an older generation's
+# missing trailing columns arrive as NaN.
+ACCEPTED_GENERATIONS: list[list[str]] = [
+    COLUMNS,
+    PRE_PUPIL_COLUMNS,
+    LEGACY_COLUMNS,
+]
 
 BOOLEAN_COLUMNS = {"faceDetected", "fixating", "onScreen"}
 
@@ -112,14 +129,14 @@ def _read_metadata(path: Path) -> dict[str, str]:
 def _check_columns(found: list[str]) -> list[str]:
     """The header's own generation of the contract, or a refusal.
 
-    Two headers are real: the current one and the one the exporter
-    wrote before 23 August 2026. Anything else is still refused
-    whole — a generation is an exact list, never a pattern.
+    Three headers are real: the current one and the two the exporter
+    wrote before pupilDiameterMm (4 September 2026) and before
+    baselineOverResting (23 August 2026). Anything else is still
+    refused whole — a generation is an exact list, never a pattern.
     """
-    if found == COLUMNS:
-        return COLUMNS
-    if found == LEGACY_COLUMNS:
-        return LEGACY_COLUMNS
+    for generation in ACCEPTED_GENERATIONS:
+        if found == generation:
+            return generation
     missing = [name for name in COLUMNS if name not in found]
     unknown = [name for name in found if name not in COLUMNS]
     if missing:

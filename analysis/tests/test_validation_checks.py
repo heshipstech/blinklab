@@ -51,9 +51,10 @@ def a_row(
     aperture: str = "7.0",
 ) -> str:
     # timestampMs, faceDetected, fps, apertureMm, baselineMm, then the
-    # rest empty except longClosureCount.
+    # rest empty except longClosureCount. The trailing empties cover
+    # baselineOverResting and pupilDiameterMm, neither measured here.
     cells = [str(timestamp), face, fps, aperture, baseline] + [""] * 6
-    cells += [closures, "", "", "", "true", ""]
+    cells += [closures, "", "", "", "true", "", ""]
     return ",".join(cells)
 
 
