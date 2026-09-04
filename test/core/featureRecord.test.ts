@@ -25,6 +25,7 @@ const FULL: FeatureRecord = {
   fixationMedianMs: 383,
   fixating: true,
   onScreen: true,
+  pupilDiameterMm: 4.1,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -46,6 +47,7 @@ const ALL_NULL: FeatureRecord = {
   fixationMedianMs: null,
   fixating: null,
   onScreen: null,
+  pupilDiameterMm: null,
 };
 
 const NUMBER_KEYS = [
@@ -62,6 +64,7 @@ const NUMBER_KEYS = [
   "longClosureCount",
   "fixationCount",
   "fixationMedianMs",
+  "pupilDiameterMm",
 ] as const;
 
 describe("assembleFeatureRecord", () => {
@@ -135,6 +138,7 @@ describe("isFeatureRecord, the schema", () => {
     );
     expect(isFeatureRecord({ ...FULL, perclos: -0.1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, perclos: 1.1 })).toBe(false);
+    expect(isFeatureRecord({ ...FULL, pupilDiameterMm: -1 })).toBe(false);
   });
 
   it("rejects every possible missing key, not just one", () => {

@@ -38,6 +38,7 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     fixationMedianMs: 300,
     fixating: true,
     onScreen: true,
+    pupilDiameterMm: null,
     ...over,
   }));
 }

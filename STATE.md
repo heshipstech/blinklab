@@ -1,3 +1,27 @@
+**PUPIL DIAMETER WIRED INTO THE LIVE PIPELINE, 4 September 2026 (row 9.3b)
+— the instrument the light-response experiment needs.** The estimator now
+runs each recorded second and reaches a pupilDiameterMm column in the export
+and an "Eyes" readout. The pixels come from an OFFSCREEN, full-resolution,
+unmirrored copy of the clean video (src/io/videoCanvas.ts readVideoPixels),
+never the visible canvas, which is downscaled to 640px and can carry the
+landmark overlays; this keeps the measurement in the same unmirrored
+video-pixel space irisWidthPx already uses. A new PURE core helper,
+irisSampleRegion, boxes the iris with a margin and translates its centre
+into the crop, so all the geometry stays testable; the io is a thin
+getImageData. pupilDiameterMm joined FeatureRecord (nonNegativeOrNull in the
+validator) and CSV_COLUMNS as a trailing append (older headers stay an exact
+prefix), the compile-time EveryFieldHasAColumn assertion forcing the column;
+it is null-never-zero and reads only on the ~1 Hz record gate because
+getImageData is not free. Ten more tests (irisSampleRegion + the schema
+ripple across four fixtures + the validator's new field); coverage floor
+held (functions 100%). The pupil number's REAL behaviour on a live eye is
+9.4's job — a headless clip has no resolvable pupil, so an e2e could only
+re-assert the header the unit tests already pin. No measurement the detector
+or the demo score reads changes. The suite is 875 unit tests, 23 end to end
+tests, and 341 Python tests of which 2 skip, all green. Next: 9.4 — the
+maintainer runs the pre-registered light-response session on their camera and
+the result is recorded against the committed prediction.
+
 **PUPIL LIGHT-RESPONSE, THE PLAN BEFORE THE EXPERIMENT, 4 September 2026
 (row 9.4 plan) — pre-registered before the instrument that runs it exists.**
 docs/pupil-light-plan.md commits the light-reflex experiment before 9.3b is

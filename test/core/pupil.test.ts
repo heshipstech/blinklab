@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { IRIS_DIAMETER_MM } from "../../src/core/constants";
 import type { Point2 } from "../../src/core/geometry";
 import {
+  irisSampleRegion,
   luminanceField,
   pupilDiameterMm,
   type LuminanceField,
@@ -236,5 +237,64 @@ describe("luminanceField", () => {
     expect(
       luminanceField(rgba, 4, 4, { x: 2, y: 2, width: 4, height: 4 }),
     ).toBeNull();
+  });
+});
+
+describe("irisSampleRegion", () => {
+  it("boxes the iris with a margin and translates the centre", () => {
+    // Centre (50,50), radius 20, margin 1.4 -> half 28: box spans 22..78.
+    const region = irisSampleRegion({ x: 50, y: 50 }, 20, 200, 200);
+    expect(region).not.toBeNull();
+    const { box, centre } = region as {
+      box: PixelBox;
+      centre: { x: number; y: number };
+    };
+    expect(box).toEqual({ x: 22, y: 22, width: 56, height: 56 });
+    expect(centre).toEqual({ x: 28, y: 28 });
+  });
+
+  it("clamps the box to the frame near an edge", () => {
+    // Centre near the left edge: the box starts at 0 and the centre keeps
+    // its full offset from that edge.
+    const region = irisSampleRegion({ x: 5, y: 50 }, 20, 200, 200);
+    expect(region).not.toBeNull();
+    const { box, centre } = region as {
+      box: PixelBox;
+      centre: { x: number; y: number };
+    };
+    expect(box.x).toBe(0);
+    expect(box.width).toBe(33); // ceil(5 + 28) - 0
+    expect(centre.x).toBe(5);
+  });
+
+  it("feeds the estimator: a boxed dark disc recovers its diameter", () => {
+    // A dark disc at (60,60) radius 15 in a 200-wide frame, iris radius 45.
+    const irisCentre = { x: 60, y: 60 };
+    const rgba: number[] = [];
+    for (let y = 0; y < 200; y++) {
+      for (let x = 0; x < 200; x++) {
+        const dark = Math.hypot(x - irisCentre.x, y - irisCentre.y) <= 15;
+        const v = dark ? 26 : 153; // ~0.1 and ~0.6
+        rgba.push(v, v, v, 255);
+      }
+    }
+    const region = irisSampleRegion(irisCentre, 45, 200, 200);
+    expect(region).not.toBeNull();
+    const { box, centre } = region as {
+      box: PixelBox;
+      centre: { x: number; y: number };
+    };
+    const field = luminanceField(rgba, 200, 200, box);
+    expect(field).not.toBeNull();
+    const mm = pupilDiameterMm(field as LuminanceField, centre, 45);
+    expect(mm).not.toBeNull();
+    expect(mm as number).toBeCloseTo((15 / 45) * IRIS_DIAMETER_MM, 0);
+  });
+
+  it("refuses a non-positive radius, a degenerate frame, and an off-frame centre", () => {
+    expect(irisSampleRegion({ x: 50, y: 50 }, 0, 200, 200)).toBeNull();
+    expect(irisSampleRegion({ x: 50, y: 50 }, 20, 0, 200)).toBeNull();
+    expect(irisSampleRegion({ x: 250, y: 50 }, 20, 200, 200)).toBeNull();
+    expect(irisSampleRegion({ x: 50, y: -1 }, 20, 200, 200)).toBeNull();
   });
 });

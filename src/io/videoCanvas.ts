@@ -1,4 +1,5 @@
 import type { Point2 } from "../core/geometry";
+import type { PixelBox } from "../core/pupil";
 import type { DrawTransform } from "../core/transform";
 
 export function drawVideoFrame(
@@ -97,4 +98,41 @@ export function drawFittedCircle(
   context.beginPath();
   context.arc(center.x, center.y, radius, 0, 2 * Math.PI);
   context.stroke();
+}
+
+// Read the raw pixels of a region of the video from a CLEAN, full-resolution
+// copy. The visible canvas is mirrored, downscaled to fit the page, and may
+// carry the landmark overlays drawn on top of the frame; none of that is what
+// the pupil estimator should see. So this draws the untouched video to its
+// own (offscreen) context at the camera's source resolution, unmirrored, and
+// reads back just the requested box. Returns null when the video has no frame
+// yet, or the box does not fit inside the frame.
+export function readVideoPixels(
+  context: CanvasRenderingContext2D,
+  video: HTMLVideoElement,
+  box: PixelBox,
+): ImageData | null {
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  if (width === 0 || height === 0) {
+    return null;
+  }
+  if (
+    box.x < 0 ||
+    box.y < 0 ||
+    box.width <= 0 ||
+    box.height <= 0 ||
+    box.x + box.width > width ||
+    box.y + box.height > height
+  ) {
+    return null;
+  }
+  const canvas = context.canvas;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.drawImage(video, 0, 0, width, height);
+  return context.getImageData(box.x, box.y, box.width, box.height);
 }

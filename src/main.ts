@@ -30,6 +30,12 @@ import {
   irisAspectRatio,
   irisWidthPx,
 } from "./core/aperture";
+import { toPixels, type Point2 } from "./core/geometry";
+import {
+  irisSampleRegion,
+  luminanceField,
+  pupilDiameterMm,
+} from "./core/pupil";
 import {
   CALIBRATION_REFUSED_SENTENCE,
   baselineStep,
@@ -254,6 +260,7 @@ import {
   drawFittedCircle,
   drawPolyline,
   drawVideoFrame,
+  readVideoPixels,
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
@@ -468,6 +475,67 @@ video.muted = true;
 
 const canvas = document.createElement("canvas");
 let canvasContext: CanvasRenderingContext2D | null = null;
+
+// A private, full-resolution canvas for the pupil estimator: it reads a
+// clean crop of the video here, never from the visible canvas, which is
+// mirrored, downscaled and may carry the landmark overlays.
+const pupilCanvas = document.createElement("canvas");
+const pupilContext = pupilCanvas.getContext("2d");
+
+// The pupil diameter for one frame, or null when the estimator cannot
+// resolve it (which on a webcam is often). It measures in the unmirrored
+// video-pixel space irisWidthPx already uses: the iris width is the ruler,
+// its centre landmark the origin, and the estimator refuses whenever the
+// crop, the contrast or the shape does not support a trustworthy number.
+function measurePupilMm(face: readonly Point2[]): number | null {
+  if (pupilContext === null) {
+    return null;
+  }
+  const frameWidth = video.videoWidth;
+  const frameHeight = video.videoHeight;
+  if (frameWidth === 0 || frameHeight === 0) {
+    return null;
+  }
+  const irisPx = irisWidthPx(
+    face,
+    RIGHT_IRIS_RING_INDICES,
+    frameWidth,
+    frameHeight,
+  );
+  const centreLandmark = face[RIGHT_IRIS_CENTER_INDEX];
+  if (irisPx === null || centreLandmark === undefined) {
+    return null;
+  }
+  const radiusPx = irisPx / 2;
+  const region = irisSampleRegion(
+    toPixels(centreLandmark, frameWidth, frameHeight),
+    radiusPx,
+    frameWidth,
+    frameHeight,
+  );
+  if (region === null) {
+    return null;
+  }
+  const pixels = readVideoPixels(pupilContext, video, region.box);
+  if (pixels === null) {
+    return null;
+  }
+  const field = luminanceField(
+    pixels.data,
+    region.box.width,
+    region.box.height,
+    {
+      x: 0,
+      y: 0,
+      width: region.box.width,
+      height: region.box.height,
+    },
+  );
+  if (field === null) {
+    return null;
+  }
+  return pupilDiameterMm(field, region.centre, radiusPx);
+}
 
 // Where frames come from, and therefore which clock times them.
 let frameSource: FrameSource = "camera";
@@ -1516,6 +1584,7 @@ framesMeasuredProbe.hidden = true;
 framesMeasuredProbe.setAttribute("data-testid", "frames-measured");
 const earLabel = document.createElement("p");
 const apertureLabel = document.createElement("p");
+const pupilLabel = document.createElement("p");
 
 // The lean in, lean out experiment, live: both apertures' coefficient
 // of variation over the last 10 seconds, side by side.
@@ -3107,6 +3176,7 @@ function processFrame(
           // pose stays visible so you can see your way back.
           writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
           writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
+          writeReadout(pupilLabel, "Pupil diameter: no valid measurement");
           writeReadout(gazeLabel, "Iris offset: no valid measurement");
           writeReadout(quadrantLabel, "Looking toward: no valid measurement");
         }
@@ -3160,6 +3230,7 @@ function processFrame(
         // No face: the numbers must vanish, not go stale.
         writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
         writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
+        writeReadout(pupilLabel, "Pupil diameter: no valid measurement");
         writeReadout(headPoseLabel, "Head pose: no valid measurement");
         writeReadout(gazeLabel, "Iris offset: no valid measurement");
         writeReadout(quadrantLabel, "Looking toward: no valid measurement");
@@ -3676,6 +3747,18 @@ function processFrame(
           "rate-warning",
           rulerFitState.shown === "tooLong",
         );
+        // Pupil is read only when a row is written (about 1 Hz), because
+        // getImageData is not free; null whenever the face is untrusted or
+        // the estimator refuses, and the readout says so rather than going
+        // stale.
+        const framePupilDiameterMm =
+          face !== undefined && faceTrusted ? measurePupilMm(face) : null;
+        writeReadout(
+          pupilLabel,
+          framePupilDiameterMm === null
+            ? "Pupil diameter: no valid measurement"
+            : `Pupil diameter: ${framePupilDiameterMm.toFixed(1)} mm`,
+        );
         featureRecords = pushBounded(
           featureRecords,
           assembleFeatureRecord({
@@ -3701,6 +3784,7 @@ function processFrame(
             fixationMedianMs: frameFixationStats?.medianMs ?? null,
             fixating: frameFixating,
             onScreen: frameOnScreen,
+            pupilDiameterMm: framePupilDiameterMm,
           }),
           FEATURE_RECORD_CAP,
         );
@@ -4069,6 +4153,7 @@ const eyesBox = box(
   stabilityLabel,
   perclosLabel,
   longClosureLabel,
+  pupilLabel,
 );
 
 // Head pose and the pose gate live with gaze rather than with the
@@ -4197,6 +4282,7 @@ for (const [element, initial] of [
   [panelSummaryLabel, "Nothing is costing points."],
   [earLabel, "Eye aspect ratio: no valid measurement"],
   [apertureLabel, "Eyelid aperture: no valid measurement"],
+  [pupilLabel, "Pupil diameter: no valid measurement"],
   [stabilityLabel, "Aperture stability: measuring..."],
   [perclosLabel, "PERCLOS (eyes closed share, last 60 s): measuring..."],
   [longClosureLabel, "Long closures: waiting for the baseline"],

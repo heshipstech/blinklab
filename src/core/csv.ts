@@ -30,6 +30,10 @@ export const CSV_COLUMNS = [
   // column existed stay loadable, and a trailing append is what
   // keeps that relationship checkable in one line.
   "baselineOverResting",
+  // Appended 4 September 2026, same trailing-append discipline as
+  // baselineOverResting: older headers stay an exact prefix, so files
+  // exported before the pupil column existed remain loadable.
+  "pupilDiameterMm",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

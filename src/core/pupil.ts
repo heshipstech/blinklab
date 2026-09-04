@@ -256,3 +256,43 @@ export function luminanceField(
   }
   return { samples, width, height };
 }
+
+// The rectangle of the frame to sample for the pupil, and the iris centre
+// translated into that rectangle's own coordinates. A margin past the iris
+// radius gives the estimator room to find the bright rim; the box is clamped
+// to the frame, so an iris near an edge yields a smaller box (and the
+// estimator refuses if its rays then run off it). Pure: the io layer uses
+// the box to crop pixels, then passes the field and this centre straight to
+// pupilDiameterMm. Returns null when there is no iris to box -- a
+// non-positive radius, a degenerate frame, or a centre off the frame.
+export function irisSampleRegion(
+  irisCentrePx: Point2,
+  irisRadiusPx: number,
+  frameWidth: number,
+  frameHeight: number,
+  marginFactor = 1.4,
+): { box: PixelBox; centre: Point2 } | null {
+  if (irisRadiusPx <= 0 || frameWidth <= 0 || frameHeight <= 0) {
+    return null;
+  }
+  if (
+    irisCentrePx.x < 0 ||
+    irisCentrePx.y < 0 ||
+    irisCentrePx.x > frameWidth ||
+    irisCentrePx.y > frameHeight
+  ) {
+    return null;
+  }
+  const half = irisRadiusPx * marginFactor;
+  // Clamped to the frame. With the centre in the frame and a positive
+  // radius, the box always has at least one pixel, so no empty-box guard
+  // is reachable here.
+  const left = Math.max(0, Math.floor(irisCentrePx.x - half));
+  const top = Math.max(0, Math.floor(irisCentrePx.y - half));
+  const right = Math.min(frameWidth, Math.ceil(irisCentrePx.x + half));
+  const bottom = Math.min(frameHeight, Math.ceil(irisCentrePx.y + half));
+  return {
+    box: { x: left, y: top, width: right - left, height: bottom - top },
+    centre: { x: irisCentrePx.x - left, y: irisCentrePx.y - top },
+  };
+}
