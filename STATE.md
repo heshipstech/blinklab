@@ -1,3 +1,27 @@
+**ALERTNESS SCORE, THE VERDICT — THE HONEST HEURISTIC HOLDS ITS OWN, 4
+September 2026 (row 9.1 DONE).** compare_alertness.py ran on the measured
+UTA-RLDD CSVs, numbers only. On the 95 alert/drowsy videos both scores can
+rank (52 subjects), the demo heuristic (src/core/score.ts) separates
+self-reported drowsiness at AUC 0.701, far outside its shuffled null (97.5th
+0.588, p 0.001) — Bar 1 CLEARED. The learned leave-one-subject-out model
+scores numerically higher, AUC 0.784, but its +0.083 edge sits INSIDE the
+shuffled-difference null (97.5th +0.141, p 0.099) — Bar 2 NOT cleared. By the
+rule fixed before the data, the verdict is "the demo heuristic already tracks
+drowsiness above chance, and the learned model does not beat it beyond the
+shuffle": KEEP the heuristic, and src/core/score.ts is NOT changed. Half the
+committed prediction held (Bar 1) and half did not (I predicted the model
+would beat it, modestly; it did not beat the noise), recorded as plainly as
+the UTA-RLDD reversal was. The newsworthy half: the 0-100 demo score the
+README calls "never shown to correspond to anyone's actual sleepiness" is, in
+fact, above chance at separating the label across strangers — with the scope
+limit intact that cross-subject classification is NOT the live per-person
+meter the app runs. Recorded in docs/alertness-score-result.txt. No src
+change, no corpus gate. The suite is 853 unit tests, 23 end to end tests, and
+341 Python tests of which 2 skip, all green. Next: an optional README note
+that the alertness score is above chance across strangers (a public-framing
+call for the maintainer), and the deferred Phase 9 ideas remain the
+maintainer's to prioritise.
+
 **ALERTNESS SCORE, THE COMPARISON CODE, 4 September 2026 — the head-to-head
 built to the pre-registration, still with no verdict recorded.** The plan
 (docs/alertness-score-plan.md) fixed everything an increment ago;

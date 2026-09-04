@@ -1,0 +1,120 @@
+Alertness score: does a learned weighting beat the demo heuristic?
+Plan fixed in advance: docs/alertness-score-plan.md
+Result recorded 4 September 2026, by analysis/tools/compare_alertness.py on
+the same numbers-only UTA-RLDD feature CSVs the classification run used. This
+is roadmap row 9.1. Every number below is deterministic from the fixed seed.
+
+HEADLINE
+  The demo alertness score is NOT meaningless -- it separates self-reported
+  alert from drowsy across strangers well above chance (AUC 0.70, p 0.001).
+  A learned model trained on exactly this label scores numerically higher
+  (AUC 0.78) but its edge does NOT survive the label-shuffle control. By the
+  rule fixed before the data, there is no evidence-based case to replace the
+  explainable hand-tuned heuristic with the learned model. The heuristic
+  stays; src/core/score.ts is NOT changed.
+
+PREDICTION vs OUTCOME (predict-then-verify)
+  The plan committed two predictions before the comparison was run:
+  - "Bar 1 to hold" -- the heuristic is clearly above chance. CORRECT. The
+    heuristic's AUC is 0.701 and no shuffle came near it (p 0.001).
+  - "Bar 2 to hold modestly" -- the learned model beats it by a small,
+    shuffle-surviving margin. WRONG. The model is numerically higher
+    (+0.083 AUC) but that edge is inside the shuffled null (97.5th
+    percentile +0.141, p 0.099), so it is not distinguishable from chance.
+  Half the prediction held and half did not, and the half that failed is
+  recorded here as plainly as the UTA-RLDD reversal was. The discipline is
+  the point: I expected the learned model to win, wrote that down, and it did
+  not win beyond the noise. A numerically higher number that does not clear
+  its own control is not an improvement.
+
+THE DATA
+  All five folds, measured on the maintainer's machine through the built app,
+  read as NUMBERS ONLY, never a frame. The head-to-head is the alert-vs-drowsy
+  subset (a 0-100 alertness score is a one-dimensional alert-drowsy quantity),
+  on the videos BOTH scores can rank.
+  videos compared   95   (alert/drowsy only)
+  subjects          52
+  class balance     alert 50, drowsy 45
+
+  WHY 95 AND NOT 100. The UTA-RLDD classification used 100 alert/drowsy
+  videos (alert 53, drowsy 47) from its usable set. Five of them have no
+  heuristic score: no second in the 60-360 s window had both a detected face
+  and a PERCLOS value, so score.ts would return null there and there is
+  nothing to median. The learned model can still impute those, but a fair
+  head-to-head runs on the videos both scores can rank, so the five are set
+  aside and two subjects fall out with them. This is reported, not hidden.
+
+PRIMARY, alert-vs-drowsy AUC (1.0 perfect, 0.5 chance)
+  demo heuristic AUC    0.701
+  learned model AUC     0.784
+  model - heuristic     +0.083
+  AUC -- the Mann-Whitney concordance, threshold-free -- because a 0-100 dial
+  should be judged on whether it ORDERS drowsy above alert, not at a cutoff
+  chosen after the fact.
+
+BAR 1, is the heuristic above chance?
+  observed AUC          0.701   null 97.5th 0.588   (shuffled mean 0.502)
+  permutation p         0.0010
+  above chance          YES
+  The heuristic's scores are fixed, so under label shuffling its AUC collapses
+  to chance (mean 0.502); the observed 0.701 sits far outside that null. The
+  hand-tuned demo score, which the README states "has never been shown to
+  correspond to anyone's actual sleepiness", does in fact separate a coarse
+  self-reported drowsiness state across strangers -- that sentence was a gap
+  in evidence, and this is the evidence, with the scope limit below intact.
+
+BAR 2, does the learned model beat the heuristic?
+  observed difference   +0.083   null 97.5th +0.141   (shuffled mean -0.052)
+  permutation p         0.0989
+  beats heuristic       NO
+  Refit leave-one-subject-out on 1000 shuffled labelings, the model's edge
+  over the heuristic centres slightly BELOW zero (mean -0.052): a model that
+  chases shuffled labels generalises worse than a fixed sensible weighting,
+  which is the honest shape of no real edge. The observed +0.083 is beaten by
+  roughly one shuffle in ten and does not clear the 97.5th percentile. The
+  learned model has not been shown to beat the heuristic here.
+
+SECONDARY, ordinal Spearman (alert < low-vigilant < drowsy)
+  demo heuristic        +0.386
+  learned model         +0.427
+  Both order the three states in the right direction across all 148 usable
+  three-class videos, the model marginally higher -- consistent with the
+  primary: a small numerical edge, not a demonstrated one.
+
+VERDICT, by the rule fixed before the data was seen
+  Bar 1 cleared, Bar 2 not: "the demo heuristic already tracks drowsiness
+  above chance, and the learned model does not beat it beyond the shuffle."
+  Per the plan, this KEEPS the heuristic -- it was doing its job -- and does
+  NOT adopt a learned score. src/core/score.ts is unchanged. Row 9.1 is done.
+
+WHAT THIS IS, AND WHAT IT IS NOT
+  It IS: evidence that blinklab's explainable 100-minus-penalties alertness
+  heuristic separates self-reported alert from drowsy across 52 strangers
+  above chance (AUC 0.70), and that a model trained on the label does not
+  reliably out-separate it. The honest, and slightly surprising, reading is
+  that the hand-tuned score is already about as good as a fitted one here.
+  It is NOT:
+  - A live per-person meter. This compares which fixed weighting better
+    separates a coarse self-reported label ACROSS STRANGERS. It says nothing
+    about whether the 0-100 dial tracks one person's alertness over time,
+    which is how the app uses it. That gap is not closed here.
+  - Proof the heuristic's weights are optimal. "The learned model did not
+    beat it" on this dataset, at this size, is not "nothing could".
+  - A change to the app. The heuristic was never fit to any label; that it
+    holds its own against one that was is the result, and the score ships
+    unchanged.
+  - Free of UTA-RLDD's limits: a coarse self-reported label, one video per
+    state so confounds cannot be proven separate, self-recorded conditions,
+    and nobody driving.
+
+WHAT WOULD COUNT AS THIS BEING WRONG
+  Stated in advance and still binding. If a later run -- more data, a
+  corrected window, a leak found after the fact -- shows the learned model
+  beating the heuristic by a shuffle-surviving margin, that reverses the "keep
+  the heuristic" verdict and belongs on this page in writing, the way the
+  UTA-RLDD reversal was recorded on its own. Equally, if the heuristic's
+  above-chance result is later traced to a recording-condition confound rather
+  than drowsiness, that retraction belongs here too.
+
+Cite: Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline
+Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
