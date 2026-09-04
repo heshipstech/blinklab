@@ -49,6 +49,10 @@ export type FeatureRecord = {
   fixationMedianMs: number | null;
   fixating: boolean | null;
   onScreen: boolean | null;
+  // Pupil diameter in millimetres through the iris ruler (9.2/9.3), or
+  // null the moment the estimator cannot resolve a pupil this frame,
+  // which on a webcam is often: null-never-zero, like every field here.
+  pupilDiameterMm: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -112,6 +116,7 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     nonNegativeOrNull(record.fixationCount) &&
     nonNegativeOrNull(record.fixationMedianMs) &&
     booleanOrNull(record.fixating) &&
-    booleanOrNull(record.onScreen)
+    booleanOrNull(record.onScreen) &&
+    nonNegativeOrNull(record.pupilDiameterMm)
   );
 }

@@ -26,6 +26,7 @@ const FULL: FeatureRecord = {
   fixationMedianMs: 383,
   fixating: true,
   onScreen: true,
+  pupilDiameterMm: 4.1,
 };
 
 const EMPTY_ROW: FeatureRecord = {
@@ -46,6 +47,7 @@ const EMPTY_ROW: FeatureRecord = {
   fixationMedianMs: null,
   fixating: null,
   onScreen: null,
+  pupilDiameterMm: null,
 };
 
 describe("csvCell, the edge cases a naive join gets wrong", () => {
@@ -131,16 +133,16 @@ describe("serializeRecords", () => {
     const csv = serializeRecords([FULL]);
     const row = csv?.split("\r\n")[1] ?? "";
     expect(row).toBe(
-      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16",
+      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16,4.1",
     );
   });
 
   it("writes an all-null row as empty fields, keeping the commas", () => {
-    // Sixteen columns means fifteen commas even when almost nothing
-    // was measured: a short row would shift every later column.
+    // Every column keeps its comma even when almost nothing was
+    // measured: a short row would shift every later column.
     const csv = serializeRecords([EMPTY_ROW]);
     const row = csv?.split("\r\n")[1] ?? "";
-    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,");
+    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,,");
     expect(row.split(",")).toHaveLength(CSV_COLUMNS.length);
   });
 
