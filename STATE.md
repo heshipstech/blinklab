@@ -1,3 +1,25 @@
+**LIGHT-RESPONSE STIMULUS, THE PURE SCHEDULE, 4 September 2026 (row 9.4a) —
+the timing half of the experiment's stimulus, before any screen.** A new
+PURE core module, src/core/lightSchedule.ts, fixes the stimulus the
+pre-registered light-response experiment (docs/pupil-light-plan.md, 9.4)
+needs: a 20-second settle the analysis discards, then six cycles of 20s dark
+then 20s bright, 260s total. lightPhaseAt(elapsedMs) says which phase the
+screen should show at any moment from the stimulus start (settle before the
+first cycle, alternating dark/bright through the twelve slots, done at the
+end); lightScheduleTransitions() lists every boundary. sessionMetadata gains
+lightStimulusMetadataRows(startMs), which writes the schedule and the
+stimulus's moment-zero (in the timestampMs clock, so the analysis recovers a
+row's phase as lightPhaseAt(row.timestampMs - startMs)) or nothing at all
+when there was no stimulus. Nothing paints and nothing is wired yet — the
+fullscreen screen and the export wiring are 9.4b — so this is the testable
+half landing first, the same fence as 9.3a before 9.3b. Ten tests pin every
+phase boundary, the transition list, the agreement between the two, and the
+metadata rows exactly; the Python loader already reads arbitrary `# key:
+value` metadata, so no analysis change. Coverage floor held. The suite is
+885 unit tests, 23 end to end tests, and 342 Python tests of which 2 skip,
+all green. Next: 9.4b wires the fullscreen stimulus screen and logs the
+schedule into the export.
+
 **PUPIL DIAMETER WIRED INTO THE LIVE PIPELINE, 4 September 2026 (row 9.3b)
 — the instrument the light-response experiment needs.** The estimator now
 runs each recorded second and reaches a pupilDiameterMm column in the export

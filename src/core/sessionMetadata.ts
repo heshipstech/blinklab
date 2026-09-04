@@ -1,6 +1,7 @@
 import type { CalibrationWindow } from "./calibrationWindow";
 import type { DeliveryRates } from "./deliveryRate";
 import type { FeatureRecord } from "./featureRecord";
+import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
 import { percentile } from "./statistics";
 
 // What the conditions of a measurement were, written into the export
@@ -362,4 +363,35 @@ export function provenanceMetadataRows(appCommit: string | null): string[] {
  */
 export function pseudonymMetadataRows(pseudonym: string | null): string[] {
   return pseudonym === null ? [] : [line("participant_pseudonym", pseudonym)];
+}
+
+/**
+ * The light-response stimulus that ran during this session, when one
+ * did (docs/pupil-light-plan.md, roadmap 9.4). Only a session recorded
+ * behind the stimulus screen has a schedule to describe, so a null start
+ * writes no rows at all, the same reasoning as the pseudonym above.
+ *
+ * `startMs` is the stimulus's own moment zero in the SAME clock as the
+ * `timestampMs` column, so the analysis recovers each row's phase as
+ * `lightPhaseAt(row.timestampMs - startMs)`. The schedule parameters are
+ * read from lightSchedule.ts rather than retyped, so the file and the
+ * screen can never describe different runs.
+ */
+export function lightStimulusMetadataRows(startMs: number | null): string[] {
+  if (startMs === null) {
+    return [];
+  }
+  const seconds = (ms: number): number => ms / 1000;
+  return [
+    line(
+      "light_stimulus",
+      `${LIGHT_CYCLES} cycles of ${seconds(LIGHT_PHASE_MS)}s dark then ` +
+        `${seconds(LIGHT_PHASE_MS)}s bright after a ${seconds(LIGHT_SETTLE_MS)}s ` +
+        `settle (docs/pupil-light-plan.md)`,
+    ),
+    line("light_settle_ms", LIGHT_SETTLE_MS),
+    line("light_phase_ms", LIGHT_PHASE_MS),
+    line("light_cycles", LIGHT_CYCLES),
+    line("light_stimulus_start_ms", startMs),
+  ];
 }
