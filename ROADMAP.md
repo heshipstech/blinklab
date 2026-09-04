@@ -136,7 +136,7 @@ Accepted on 2026-07-28, before any code:
 
 Taken up from the ideas below and tracked as a row, because it now has both the data and the baseline it needs (amendment 13):
 
-- [ ] 9.1 Does a learned weighting beat the demo alertness heuristic? Pre-registered in `docs/alertness-score-plan.md`. An analysis-only head-to-head on the UTA-RLDD usable set: threshold-free alert-vs-drowsy AUC of the learned leave-one-subject-out model's out-of-fold drowsy probability against the faithfully-ported `score.ts` heuristic, with two shuffle controls (heuristic above chance; model beats heuristic) and a two-bar decision rule. No `src/` change; adopting a learned score is a separate increment gated on the result.
+- [x] 9.1 Does a learned weighting beat the demo alertness heuristic? DONE 4 September 2026. Pre-registered in `docs/alertness-score-plan.md`; an analysis-only head-to-head on the UTA-RLDD usable set (threshold-free alert-vs-drowsy AUC, `analysis/blinklab/alertness.py` + `tools/compare_alertness.py`, two shuffle controls, a two-bar rule). Result in `docs/alertness-score-result.txt`: on 95 alert/drowsy videos from 52 subjects the demo heuristic separates drowsiness at AUC 0.70 (p 0.001, Bar 1 CLEARED — the score the README calls unchecked is above chance across strangers), while the learned model's higher 0.78 does not beat it beyond the shuffle (+0.083, p 0.099, Bar 2 NOT cleared). Verdict: KEEP the heuristic; `src/core/score.ts` is unchanged. The committed prediction was half wrong (Bar 1 right, Bar 2 predicted to hold and did not), recorded as such. Adopting a learned score would have been a separate increment gated on Bar 2, which was not met.
 
 Ideas, not commitments:
 
