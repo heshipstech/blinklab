@@ -1,3 +1,29 @@
+**ALERTNESS SCORE, THE COMPARISON CODE, 4 September 2026 — the head-to-head
+built to the pre-registration, still with no verdict recorded.** The plan
+(docs/alertness-score-plan.md) fixed everything an increment ago;
+analysis/blinklab/alertness.py now implements exactly it. It reads the same
+numbers-only UTA-RLDD CSVs the classification did, reduces each video to its
+learned-model feature vector AND its demo-heuristic score — the latter a
+faithful per-second port of src/core/score.ts's 100-minus-penalties ramps,
+pinned by test to score.ts's own documented outputs (PERCLOS 0.10 → 20, two
+in-window closures → the 30 cap, a 350 ms blink → 8, rounding HALF UP like
+JavaScript's Math.round where Python's round() would differ). It scores both
+by threshold-free alert-vs-drowsy AUC, the Mann-Whitney concordance computed
+by hand (no scipy or sklearn here), reads the learned model out as its
+out-of-fold drowsy probability under the same leave-one-subject-out folds as
+rldd, and runs the plan's two label-shuffle controls (is the heuristic above
+chance; does the model beat it) with the two-bar decision rule and an ordinal
+Spearman secondary. analysis/tools/compare_alertness.py is the runner
+(python -m tools.compare_alertness <dir>), refusing a corpus without both
+extremes. Eighteen new tests, SYNTHETIC data only: the ramps and AUC pinned
+to hand-checkable values, and the head-to-head pinned on a corpus where a
+feature the heuristic ignores separates the labels (the model must win) and
+one where PERCLOS does (the heuristic wins and the model cannot beat it). No
+src change, no corpus gate. The suite is 853 unit tests, 23 end to end
+tests, and 341 Python tests of which 2 skip, all green. Next: the runner is
+RUN on the measured UTA-RLDD CSVs and the verdict recorded against the plan's
+committed prediction.
+
 **ALERTNESS SCORE, THE PLAN BEFORE THE COMPARISON, 4 September 2026 — Phase
 9's "a learned model must beat the kept heuristic", pre-registered.**
 docs/alertness-score-plan.md is committed before the comparison code exists
