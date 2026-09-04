@@ -63,9 +63,33 @@ WHAT THIS MEANS
 
 WHAT WOULD CHANGE THIS, AND IS INVITED
   The plan says a later run that clears the gate belongs on this page. A
-  bigger iris in pixels (sitting closer, within the camera's focus), no
-  eyeglasses, and a darker room could let the estimator resolve enough
-  seconds to reach a real detected/null verdict. Such a run is recorded here
-  as an appended section, beside this one; runs are reported as they happen,
-  not chosen after the fact. Tuning the physical setup is legitimate; the
-  analysis method is fixed and is not touched to chase a verdict.
+  bigger iris in pixels (sitting closer, within the camera's focus) and no
+  eyeglasses could let the estimator resolve enough seconds to reach a real
+  detected/null verdict. Such a run is recorded here as an appended section,
+  beside this one; runs are reported as they happen, not chosen after the
+  fact. Tuning the physical SETUP is legitimate; the analysis method is
+  fixed and is not touched to chase a verdict.
+
+RUNNING A BETTER RE-RUN, IN PRACTICE
+  The estimator (src/core/pupil.ts) refuses a frame when the pupil is not
+  clearly darker than a LIT iris ring around it -- so the iris has to be
+  visible in BOTH phases, and the gate needs >= 20 usable seconds in the
+  dark phase too. A pitch-black room is therefore counter-productive: it
+  leaves nothing to light the iris while the screen is dark, which is
+  exactly why the one usable second of the first run fell in a bright phase.
+  A setup aimed at clearing the gate:
+    - Sit CLOSER, about 20-30 cm (not 10 -- too close risks the fixed-focus
+      lens blurring and the face model losing the face), so the iris spans
+      more pixels.
+    - Remove eyeglasses; lens reflections of the bright screen block the
+      estimator's rays.
+    - Dim, NOT black: keep a small, steady light on the face from beside or
+      behind the camera (not aimed at the screen), so the iris stays imaged
+      during the dark phase while the screen still dominates the light
+      CHANGE the pupil reacts to.
+    - Before the full 260 s run, watch the live "Pupil diameter" readout: it
+      must hold a value during a dark moment (the opening 20 s settle is
+      dark) AND a bright one. If it only reads while the screen is bright,
+      the run will be inconclusive again -- adjust first.
+  Even done well, a ~43 px webcam iris may simply be too coarse, which is
+  itself the finding this experiment exists to establish.
