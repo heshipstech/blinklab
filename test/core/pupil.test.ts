@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { IRIS_DIAMETER_MM } from "../../src/core/constants";
 import type { Point2 } from "../../src/core/geometry";
-import { pupilDiameterMm, type LuminanceField } from "../../src/core/pupil";
+import {
+  luminanceField,
+  pupilDiameterMm,
+  type LuminanceField,
+  type PixelBox,
+} from "../../src/core/pupil";
 
 // A square luminance field from a per-pixel function, values in [0, 1].
 function fieldFrom(
@@ -134,5 +139,102 @@ describe("pupilDiameterMm", () => {
     // so every rim sample is off it and there is no bright reference.
     const field = fieldFrom(11, () => 0.3);
     expect(pupilDiameterMm(field, { x: 5, y: 5 }, 100)).toBeNull();
+  });
+});
+
+// A square RGBA frame from a per-pixel luminance function in [0, 1],
+// written to all three channels with an opaque alpha.
+function rgbaFrom(
+  size: number,
+  luminance: (x: number, y: number) => number,
+): number[] {
+  const rgba: number[] = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const value = Math.round(luminance(x, y) * 255);
+      rgba.push(value, value, value, 255);
+    }
+  }
+  return rgba;
+}
+
+const WHOLE = (size: number): PixelBox => ({
+  x: 0,
+  y: 0,
+  width: size,
+  height: size,
+});
+
+describe("luminanceField", () => {
+  it("converts RGBA to Rec. 601 luminance in [0, 1]", () => {
+    // One white and one red pixel, side by side.
+    const rgba = [255, 255, 255, 255, 255, 0, 0, 255];
+    const field = luminanceField(rgba, 2, 1, {
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 1,
+    });
+    expect(field).not.toBeNull();
+    const samples = (field as LuminanceField).samples;
+    expect(samples[0]).toBeCloseTo(1, 5);
+    expect(samples[1]).toBeCloseTo(0.299, 3);
+  });
+
+  it("crops to the requested box", () => {
+    // A 3x3 frame that is white only at (2, 2); cropping the bottom-right
+    // 2x2 keeps that corner.
+    const rgba = rgbaFrom(3, (x, y) => (x === 2 && y === 2 ? 1 : 0));
+    const field = luminanceField(rgba, 3, 3, {
+      x: 1,
+      y: 1,
+      width: 2,
+      height: 2,
+    });
+    expect(field).not.toBeNull();
+    const f = field as LuminanceField;
+    expect(f.width).toBe(2);
+    expect(f.height).toBe(2);
+    expect(f.samples[3]).toBeCloseTo(1, 5); // the (2,2) corner, last cell
+    expect(f.samples[0]).toBeCloseTo(0, 5);
+  });
+
+  it("feeds the pupil estimator end to end from raw pixels", () => {
+    // A dark pupil disc drawn in RGBA, cropped whole, recovers its
+    // diameter through the same iris ruler as the grid-level test.
+    const centre = { x: 50, y: 50 };
+    const rgba = rgbaFrom(101, (x, y) =>
+      Math.hypot(x - centre.x, y - centre.y) <= 15 ? 0.1 : 0.6,
+    );
+    const field = luminanceField(rgba, 101, 101, WHOLE(101));
+    expect(field).not.toBeNull();
+    const mm = pupilDiameterMm(field as LuminanceField, centre, 45);
+    expect(mm).not.toBeNull();
+    expect(mm as number).toBeCloseTo((15 / 45) * IRIS_DIAMETER_MM, 0);
+  });
+
+  it("fills undefined pixels with zero rather than failing", () => {
+    // A sparse array of the right length: every pixel a hole. The field
+    // is all zero, not a refusal, so a missing byte reads as black.
+    const sparse: number[] = [];
+    sparse.length = 2 * 2 * 4;
+    const field = luminanceField(sparse, 2, 2, WHOLE(2));
+    expect(field).not.toBeNull();
+    expect((field as LuminanceField).samples).toEqual([0, 0, 0, 0]);
+  });
+
+  it("refuses a pixel array that does not match the frame size", () => {
+    expect(luminanceField([0, 0, 0, 255], 4, 4, WHOLE(4))).toBeNull();
+  });
+
+  it("refuses an empty frame, an empty box, and a box off the frame", () => {
+    const rgba = rgbaFrom(4, () => 0.5);
+    expect(luminanceField([], 0, 0, WHOLE(4))).toBeNull();
+    expect(
+      luminanceField(rgba, 4, 4, { x: 0, y: 0, width: 0, height: 4 }),
+    ).toBeNull();
+    expect(
+      luminanceField(rgba, 4, 4, { x: 2, y: 2, width: 4, height: 4 }),
+    ).toBeNull();
   });
 });

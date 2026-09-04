@@ -191,3 +191,68 @@ export function pupilDiameterMm(
 
   return ratio * IRIS_DIAMETER_MM;
 }
+
+// An integer pixel rectangle within a frame.
+export type PixelBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+// Rec. 601 luma weights: how much each channel contributes to perceived
+// brightness. The pupil is dark in luminance, not in any one channel.
+const LUMA_RED = 0.299;
+const LUMA_GREEN = 0.587;
+const LUMA_BLUE = 0.114;
+const CHANNELS = 4;
+const MAX_CHANNEL = 255;
+
+// Crop a rectangular region of an RGBA frame into a luminance field:
+// grayscale by Rec. 601 luma, normalised to [0, 1]. This is the pure
+// half of reading the eye off the canvas -- the io layer calls
+// getImageData and hands the raw bytes here; core never touches a
+// canvas. Returns null when the frame size does not match the pixel
+// array, or the box is empty or falls outside the frame, so a bad crop
+// is a refusal rather than a field full of edge pixels.
+export function luminanceField(
+  rgba: ArrayLike<number>,
+  frameWidth: number,
+  frameHeight: number,
+  box: PixelBox,
+): LuminanceField | null {
+  if (frameWidth <= 0 || frameHeight <= 0) {
+    return null;
+  }
+  if (rgba.length !== frameWidth * frameHeight * CHANNELS) {
+    return null;
+  }
+  const x0 = Math.round(box.x);
+  const y0 = Math.round(box.y);
+  const width = Math.round(box.width);
+  const height = Math.round(box.height);
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+  if (
+    x0 < 0 ||
+    y0 < 0 ||
+    x0 + width > frameWidth ||
+    y0 + height > frameHeight
+  ) {
+    return null;
+  }
+  const samples: number[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = ((y0 + y) * frameWidth + (x0 + x)) * CHANNELS;
+      const red = rgba[index] ?? 0;
+      const green = rgba[index + 1] ?? 0;
+      const blue = rgba[index + 2] ?? 0;
+      samples.push(
+        (LUMA_RED * red + LUMA_GREEN * green + LUMA_BLUE * blue) / MAX_CHANNEL,
+      );
+    }
+  }
+  return { samples, width, height };
+}

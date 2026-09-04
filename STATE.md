@@ -1,3 +1,25 @@
+**PUPIL DIAMETER, THE PIXELS-TO-FIELD HALF, 4 September 2026 (row 9.3a) —
+the pure bridge from the canvas to the estimator.** src/core/pupil.ts gains
+luminanceField(rgba, frameWidth, frameHeight, box): it crops a rectangle of an
+RGBA frame and grayscales it (Rec. 601 luma) into a LuminanceField in [0,1],
+refusing a box off the frame or a pixel array that does not match the frame
+size. This is the PURE half of reading the eye off the canvas — the io layer
+will call getImageData and hand the raw bytes here, so core still never
+touches a canvas. Six tests, synthetic only: the conversion, the crop, the
+malformed refusals, and an END-TO-END check that a dark disc drawn in RGBA
+flows pixels -> luminanceField -> pupilDiameterMm to a recovered diameter,
+proving the whole pure pipeline before any io exists. Row 9.3 was SPLIT
+(amendment 14's ladder) into this camera-free 9.3a and a 9.3b that does the
+io wiring, the export column, and the readout — deliberately, so the testable
+half lands first and 9.3b's user-facing, camera-validated change stands alone.
+No io yet, nothing wired into the feature record or score, so no existing
+measurement changes. The suite is 871 unit tests, 23 end to end tests, and
+341 Python tests of which 2 skip, all green. Next: 9.3b samples the
+iris-region pixels from the canvas, adds a pupilDiameterMm export column
+(blank, not zero, on refusal) and a readout — a user-facing step whose real
+behaviour only a live eye confirms, which is where 9.4 (the pre-registered
+light-response experiment) needs the maintainer's camera.
+
 **PUPIL DIAMETER, THE PURE ESTIMATOR, 4 September 2026 (row 9.2) — a new
 measurement that refuses more readily than it reports.** src/core/pupil.ts
 takes a luminance field of the eye region plus the iris centre and radius and
