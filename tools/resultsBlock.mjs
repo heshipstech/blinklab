@@ -49,6 +49,64 @@ export function parseDrozyResult(text) {
 }
 
 /**
+ * The UTA-RLDD result's summary facts, parsed from
+ * docs/uta-rldd-result.txt. Same contract as parseDrozyResult: throws
+ * on a file it cannot read, and grabs the detection verdict so that if
+ * the result ever stops being a detection the build goes red here
+ * instead of the README quietly still claiming one -- the mirror of
+ * the DROZY null-verdict guard next door.
+ */
+export function parseUtaResult(text) {
+  const grab = (pattern, what) => {
+    const match = text.match(pattern);
+    if (match === null) {
+      throw new Error(`uta-rldd result file: could not find ${what}`);
+    }
+    return match;
+  };
+  const subjects = grab(
+    /^\s*subjects\s+(\d+)\s+\(of \d+;/m,
+    "the usable-subjects line",
+  );
+  const analysed = grab(/^\s*analysed\s+(\d+)\s*$/m, "the analysed line");
+  // Two "balanced accuracy ... majority floor" lines live in the file;
+  // the 1/3 floor names the three-class one and 1/2 the binary, so each
+  // is anchored on its own floor rather than on match order.
+  const threeClass = grab(
+    /balanced accuracy\s+([\d.]+)\s+majority floor 1\/3 = ([\d.]+)/,
+    "the three-class accuracy and floor",
+  );
+  const binary = grab(
+    /balanced accuracy\s+([\d.]+)\s+majority floor 1\/2 = ([\d.]+)/,
+    "the alert-vs-drowsy accuracy and floor",
+  );
+  // The three-class negative control's p, on its own line; the binary p
+  // shares a line with prose and is deliberately not the one caught.
+  const p = grab(/^\s*permutation p\s+([\d.]+)\s*$/m, "the permutation p line");
+  // If the result ever stops being a detection, these verdict lines
+  // change and the build goes red here instead of the README quietly
+  // still calling it a detection.
+  grab(/three-class\s+detecting drowsiness/, "the three-class verdict");
+  grab(/alert vs drowsy\s+detecting drowsiness/, "the alert-vs-drowsy verdict");
+  // UTA-RLDD's safeguards require the CVPR Workshops 2019 citation
+  // wherever results appear; it spans two lines in the file.
+  const cite = grab(
+    /^Cite:\s*([\s\S]+?CVPR Workshops 2019\.)/m,
+    "the citation line",
+  );
+  return {
+    subjects: Number(subjects[1]),
+    analysed: Number(analysed[1]),
+    threeClass: threeClass[1],
+    threeFloor: threeClass[2],
+    binary: binary[1],
+    binaryFloor: binary[2],
+    p: String(Number(p[1])),
+    cite: (cite[1] ?? "").replace(/\s+/g, " ").trim(),
+  };
+}
+
+/**
  * The three pre-registered criteria verdicts, parsed from the round's
  * published table in docs/validation-round.txt. Each criterion's
  * paragraph is searched for its verdict token, worst first, so
@@ -156,6 +214,7 @@ export function parseSecondMachine(text) {
 export function buildResultsBlock(root) {
   const run = parseResultFile(readRepoFile("docs/eyeblink8-result.txt", root));
   const drozy = parseDrozyResult(readRepoFile("docs/drozy-result.txt", root));
+  const uta = parseUtaResult(readRepoFile("docs/uta-rldd-result.txt", root));
   const second = parseSecondMachine(
     readRepoFile("docs/eyeblink8-result.txt", root),
   );
@@ -172,9 +231,9 @@ export function buildResultsBlock(root) {
     "## Results at a glance",
     "",
     `- **Does it find the blinks a human found?** On Eyeblink8, recall ${run.recallPercent}% (${String(run.found)} of ${String(run.annotated)} found), precision ${run.precisionPercent}% (${String(run.invented)} invented), F1 ${run.f1Percent}%, measured from \`${run.reproDir}\`. **That table is a property of the machine it was measured on.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall ${second.recallPercent}% (${String(second.found)} of ${String(second.annotated)}), precision ${second.precisionPercent}% (${String(second.invented)} invented), F1 ${second.f1Percent}%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced this table IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, browser binary and fifteen commits of instrument change. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So the number above is a measured property of the instrument and the prepared files on two machines — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).`,
-    `- **Does any of it track reported sleepiness?** No. A null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the ${String(drozy.analysed)} of ${String(drozy.measured)} DROZY sessions this instrument can measure. Full record: [docs/drozy-result.txt](docs/drozy-result.txt). Cite: ${drozy.cite}`,
+    `- **Does any of it track reported sleepiness?** On the small DROZY set, no — a null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the ${String(drozy.analysed)} of ${String(drozy.measured)} DROZY sessions this instrument can measure. On the larger UTA-RLDD set, yes. Across ${String(uta.subjects)} self-recording strangers (${String(uta.analysed)} videos, and the model was never trained on anyone it was scored against), the pre-registered classifier separates a coarse self-reported drowsiness state better than chance: three-class balanced accuracy ${uta.threeClass} where guessing scores ${uta.threeFloor}, and alert-vs-drowsy ${uta.binary} where guessing scores ${uta.binaryFloor}, both past a 1000-shuffle label-scramble control at p ${uta.p}. The plan predicted a null in writing and was WRONG in the one way it had named — a weak effect that DROZY (13 people) and a 12-subject pilot were too small to see, and ${String(uta.subjects)} were not. It is MODEST and not driving-relevant: the label is self-reported and noisy, each person recorded one video per state so the clips differ in more than drowsiness, nobody was driving, and this stays a demo, not a safety or medical device. Full records: [docs/uta-rldd-result.txt](docs/uta-rldd-result.txt), [docs/drozy-result.txt](docs/drozy-result.txt). Cite: ${drozy.cite} ${uta.cite}`,
     `- **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion ${round.detector}, the baseline's criterion ${round.baseline}, the frame-rate gate's criterion ${round.gate}. Full record: [docs/validation-round.txt](docs/validation-round.txt).`,
-    "- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; and the alertness score has never been shown to correspond to anyone's actual sleepiness.",
+    "- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that has never been shown to correspond to anyone's actual sleepiness.",
     "",
     END_MARKER,
   ];

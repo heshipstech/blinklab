@@ -1,3 +1,29 @@
+**THE UTA-RLDD DETECTION REACHES THE PUBLIC README, 4 September 2026 — the
+"Results at a glance" block stops answering a flat "No" to a question the
+full dataset reverses.** The README's generated results block (roadmap 7.9)
+is rebuilt from a new parser, parseUtaResult, reading
+docs/uta-rldd-result.txt. The sleepiness bullet now carries the honest
+shape instead of DROZY's "No": the small DROZY set was a null, and on the
+larger UTA-RLDD set the pre-registered classifier detects a coarse
+self-reported drowsiness state across 54 strangers — three-class balanced
+accuracy 0.498 against a 0.333 floor, alert-vs-drowsy 0.732 against 0.500,
+both past the 1000-shuffle control at p 0.001 — with every caveat kept
+(self-reported and noisy label, one video per state, nobody driving, still
+a demo not a medical device) and both required citations carried. The block
+stays generated-from-source, so the drift test still fails on any hand-edit;
+and a new verdict guard mirrors the DROZY null guard — if the result file
+ever stops reading "detecting drowsiness" the build goes red here rather
+than the page quietly still claiming a detection, exactly as the null guard
+reddens if DROZY stops being a null. Four new tests pin the parse and its
+two refusals. The framing was the maintainer's call and was approved before
+it shipped, because a public positive-detection claim on a not-a-medical-
+device project is a judgement the tool should not make alone. No src change,
+no corpus gate. The suite is 853 unit tests, 23 end to end tests, and 323
+Python tests of which 2 skip, all green. Next: the honest-evaluation track
+is closed and now visible on the front page; a broader Status-section
+refresh and the deferred detector work remain the maintainer's to
+prioritise.
+
 **UTA-RLDD FULLY CLASSIFIED — A GENUINE DETECTION THAT REVERSES THE
 PREDICTED NULL, 3 September 2026.** The maintainer measured all five folds;
 analyse_rldd.py classified the 148 usable videos from 54 subjects (numbers
@@ -2411,7 +2437,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 3 September 2026. When this file changes, this stamp changes
+Stamped: 4 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
