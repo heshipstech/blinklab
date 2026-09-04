@@ -1,3 +1,28 @@
+**PUPIL DIAMETER, THE PURE ESTIMATOR, 4 September 2026 (row 9.2) — a new
+measurement that refuses more readily than it reports.** src/core/pupil.ts
+takes a luminance field of the eye region plus the iris centre and radius and
+returns a pupil diameter in millimetres through the SAME 11.7 mm iris ruler
+the aperture uses (pupil radius as a fraction of iris radius, times 11.7), so
+no new calibration is needed. It casts 16 rays from the iris centre, finds
+where luminance climbs halfway from the dark centre to the bright rim, and
+takes the median crossing as the pupil radius. The honest part is the four
+gates it refuses through, because a confident number over an eye the webcam
+cannot actually resolve is the guess this project exists to avoid: too little
+centre-to-rim contrast (a flat, bright eye), more than a quarter of the rays
+never reaching the rim (a blink, a lash, a shadow), the rays disagreeing on
+the radius past an inter-quartile bound (no clean circle), or a size outside
+the physiological 0.08-0.85 of the iris. Pure core, no io and no camera yet:
+12 synthetic tests recover known disc diameters and drive each refusal (flat,
+low-contrast, occluded wedge, eccentric ellipse, iris-filling, speck,
+malformed field, off-field centre, off-field rim). This is a Phase 9 idea
+taken up as row 9.2 (amendment 14); it is capability-building, not a claim,
+so no pre-registration — the light-response EXPERIMENT (9.4) gets its plan
+first. Nothing is wired into the feature record or the score, so no existing
+measurement changes. The suite is 865 unit tests, 23 end to end tests, and
+341 Python tests of which 2 skip, all green. Next: 9.3 samples the
+iris-region pixels from the canvas and feeds this estimator, surfacing the
+reading and its null state in the readout and the export.
+
 **ALERTNESS SCORE, THE VERDICT — THE HONEST HEURISTIC HOLDS ITS OWN, 4
 September 2026 (row 9.1 DONE).** compare_alertness.py ran on the measured
 UTA-RLDD CSVs, numbers only. On the 95 alert/drowsy videos both scores can
