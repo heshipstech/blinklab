@@ -1,3 +1,24 @@
+**PUPIL LIGHT-RESPONSE, THE PLAN BEFORE THE EXPERIMENT, 4 September 2026
+(row 9.4 plan) — pre-registered before the instrument that runs it exists.**
+docs/pupil-light-plan.md commits the light-reflex experiment before 9.3b is
+wired and before any camera runs: a screen-brightness stimulus (six 20 s
+dark/bright cycles), the prediction that the pupil CONSTRICTS to the bright
+screen committed in writing, and a permutation control (shuffle the
+per-second phase labels 1000x, the observed dark-minus-bright median must
+clear the 97.5th percentile, one-sided because the reflex direction is
+fixed). The design tests the INSTRUMENT using physiology as ground truth:
+the light reflex is one of the largest, most reliable eye signals, so if the
+webcam estimate resolves real pupils at all it should catch this, and if it
+cannot, webcam pupillometry via this path is not viable — a genuine
+negative. The likely non-detection is "inconclusive" (the estimator refusing
+most frames on a small, low-contrast, lash-occluded webcam iris), which the
+usable-data gate names separately from a clean null. Numbers only, never a
+frame; it needs the maintainer's camera to run, after 9.3b surfaces the
+pupilDiameterMm column. No src change, no corpus gate; docs only. The suite
+is unchanged, 871 unit tests and 341 Python tests of which 2 skip. Next:
+9.3b wires the estimator into the live pipeline so the experiment has an
+instrument.
+
 **PUPIL DIAMETER, THE PIXELS-TO-FIELD HALF, 4 September 2026 (row 9.3a) —
 the pure bridge from the canvas to the estimator.** src/core/pupil.ts gains
 luminanceField(rgba, frameWidth, frameHeight, box): it crops a rectangle of an
