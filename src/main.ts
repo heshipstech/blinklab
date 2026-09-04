@@ -134,6 +134,7 @@ import {
   calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
+  lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
@@ -141,6 +142,11 @@ import {
   type MeasurementFrame,
   type SessionMarker,
 } from "./core/sessionMetadata";
+import {
+  lightPhaseAt,
+  lightPhaseBackground,
+  type LightPhase,
+} from "./core/lightSchedule";
 import { demoNoticeText } from "./core/notice";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
@@ -993,6 +999,10 @@ function resetSession(): void {
   irisWidthSamples = [];
   measurementFrame = null;
   sessionMarkers = [];
+  // A new session has run no stimulus, and any overlay from the last
+  // one must come down so it cannot cover the fresh session.
+  lightStimulusStartMs = null;
+  endLightStimulus();
   visibilityChanges = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
@@ -1003,6 +1013,7 @@ function resetSession(): void {
   reportPre.hidden = true;
   reportPre.textContent = "";
   refreshMarkButton();
+  refreshLightResponseButton();
   framesBlinkMeasurable = 0;
   currentFrameIndex = null;
   closureStartFrame = null;
@@ -2343,6 +2354,10 @@ function exportSession(): void {
     // Only when one exists: declined identity is absence, never a
     // row saying unknown (docs/assessment-pilot-plan.md).
     ...pseudonymMetadataRows(loadPseudonym()),
+    // Only when a light-response stimulus ran: it carries the schedule
+    // and the start, in the timestampMs clock, so the analysis can sort
+    // each row into dark or bright (docs/pupil-light-plan.md, 9.4).
+    ...lightStimulusMetadataRows(lightStimulusStartMs),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -3798,8 +3813,10 @@ function processFrame(
         exportFramesButton.disabled = frameTraceRows.length === 0;
         // The marker rides the same gate as the exports: there is
         // nothing to mark until at least one record exists to mark
-        // against.
+        // against. The light-response stimulus rides it too — there is
+        // nothing to measure the reflex against until records exist.
         refreshMarkButton();
+        refreshLightResponseButton();
         writeReadout(
           featureLabel,
           featureRecords.length >= FEATURE_RECORD_CAP
@@ -4006,6 +4023,140 @@ function box(heading: string, ...children: Element[]): HTMLDivElement {
 const exportStatus = document.createElement("p");
 exportStatus.dataset.testid = "export-status";
 
+// --- The light-response stimulus (roadmap 9.4b) ---
+// The fullscreen screen the pre-registered experiment
+// (docs/pupil-light-plan.md) needs: it paints the 9.4a schedule so the
+// pupil's light reflex, if the estimate can resolve it, shows up as
+// smaller pupils in the bright phases. The camera keeps recording
+// underneath; this overlay only covers the page and drives the colour.
+// Every timing and colour decision is pure (core/lightSchedule.ts); the
+// code here is the thin io that paints and reads the clock.
+const lightResponseButton = document.createElement("button");
+lightResponseButton.textContent = "Light response";
+lightResponseButton.dataset.testid = "light-response";
+lightResponseButton.disabled = true;
+
+const lightOverlay = document.createElement("div");
+lightOverlay.dataset.testid = "light-overlay";
+lightOverlay.hidden = true;
+Object.assign(lightOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  // Above the other overlays (z-index 10): the stimulus has to be the
+  // whole screen's light, with nothing showing through it. No `display`
+  // is set here, so the `hidden` attribute alone controls it — an inline
+  // display would override the browser's [hidden] rule and leave the
+  // overlay covering the page while it claimed to be hidden.
+  zIndex: "20",
+  background: "#000000",
+});
+const lightMessage = document.createElement("p");
+lightMessage.dataset.testid = "light-message";
+// Centred with absolute positioning rather than a flex parent, so the
+// overlay needs no `display` of its own (see above).
+Object.assign(lightMessage.style, {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  width: "80%",
+  transform: "translate(-50%, -50%)",
+  textAlign: "center",
+  font: "16px system-ui, sans-serif",
+});
+lightOverlay.append(lightMessage);
+
+// performance.now(), which shares its time origin with the rAF clock the
+// per-second records are stamped in, so the export's start and the rows'
+// timestampMs are directly subtractable. Null until a stimulus runs, and
+// it STAYS set after the run (or an early Esc), so the export records
+// that a stimulus happened and when.
+let lightStimulusStartMs: number | null = null;
+let lightRafHandle: number | null = null;
+
+function paintLightPhase(phase: LightPhase): void {
+  lightOverlay.style.background = lightPhaseBackground(phase);
+  lightOverlay.dataset.phase = phase;
+  // Text is light, so it shows only where it cannot corrupt a measured
+  // phase: the discarded settle and the finished screen. Dark and bright
+  // stay a clean flat colour.
+  if (phase === "settle" || phase === "done") {
+    lightMessage.hidden = false;
+    lightMessage.style.color = "#888888";
+    lightMessage.textContent =
+      phase === "settle"
+        ? "Keep still and look at the screen. The test begins in a moment."
+        : "Finished. Press Esc, then export your session.";
+  } else {
+    lightMessage.hidden = true;
+  }
+}
+
+function endLightStimulus(): void {
+  if (lightRafHandle !== null) {
+    cancelAnimationFrame(lightRafHandle);
+    lightRafHandle = null;
+  }
+  lightOverlay.hidden = true;
+  if (document.fullscreenElement !== null) {
+    void document.exitFullscreen().catch(() => {
+      // Leaving fullscreen is best effort; a refusal here changes
+      // nothing the person can act on.
+    });
+  }
+}
+
+function startLightStimulus(): void {
+  // Nothing to measure against until the recording is running, and the
+  // stimulus is for a live eye, not a clip.
+  if (sessionStartedAtEpochMs === null || frameSource !== "camera") {
+    return;
+  }
+  lightStimulusStartMs = performance.now();
+  lightOverlay.hidden = false;
+  // Fullscreen makes the screen the dominant light; best effort, because
+  // the overlay already covers the viewport and the stimulus still runs
+  // windowed where fullscreen is refused (a permission, a headless run).
+  void lightOverlay.requestFullscreen().catch(() => {
+    // Windowed is fine; the overlay covers the page either way.
+  });
+  const step = (): void => {
+    if (lightStimulusStartMs === null) {
+      return;
+    }
+    const phase = lightPhaseAt(performance.now() - lightStimulusStartMs);
+    paintLightPhase(phase);
+    if (phase === "done") {
+      // The run is over. Leave the finished screen up so the person
+      // reads it and presses Esc; stopping the loop keeps it steady.
+      lightRafHandle = null;
+      return;
+    }
+    lightRafHandle = requestAnimationFrame(step);
+  };
+  step();
+}
+
+function refreshLightResponseButton(): void {
+  lightResponseButton.disabled =
+    sessionStartedAtEpochMs === null || frameSource !== "camera";
+}
+
+lightResponseButton.addEventListener("click", startLightStimulus);
+// Esc ends the stimulus. Browsers also exit fullscreen on Esc, so the
+// keydown and the fullscreen exit converge on the same end.
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !lightOverlay.hidden) {
+    endLightStimulus();
+  }
+});
+// If the person leaves fullscreen any other way, end the stimulus too,
+// rather than leaving a covering overlay behind.
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement === null && !lightOverlay.hidden) {
+    endLightStimulus();
+  }
+});
+
 const markButton = document.createElement("button");
 markButton.textContent = "Mark this moment";
 markButton.setAttribute("data-testid", "mark-moment");
@@ -4062,8 +4213,10 @@ document.addEventListener("visibilitychange", () => {
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
-  // Mark first: it is used DURING a session while the exports end
-  // one, so the order is the order a person needs them in.
+  // The light-response stimulus and the marker both run DURING a
+  // session, before the exports end it, so they come first in the
+  // order a person reaches for them.
+  lightResponseButton,
   markButton,
   exportButton,
   exportBlinksButton,
@@ -4388,6 +4541,7 @@ app.append(
   calibrationOverlay,
   blinkCalibrationOverlay,
   heatmapOverlay,
+  lightOverlay,
   kssPanel,
 );
 render();

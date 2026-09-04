@@ -1,3 +1,30 @@
+**LIGHT-RESPONSE STIMULUS WIRED, 4 September 2026 (row 9.4b) — the screen
+the experiment needs, so the maintainer presses one button instead of
+toggling monitor brightness by hand.** A "Light response" button (enabled
+once a live camera session is recording) raises a fullscreen overlay that
+paints the 9.4a schedule — near-black through the settle and dark phases,
+near-white through the bright ones — driven by lightPhaseAt off
+performance.now(), which shares the rAF clock the per-second records are
+stamped in. The camera keeps recording underneath (the overlay only covers
+the page), and at export lightStimulusMetadataRows writes the schedule and
+the stimulus start into the file, so the analysis recovers each row's phase
+by subtraction. A pure lightPhaseBackground(phase) in core makes the
+colour-per-phase a tested decision, not styling (settle rides with dark so
+the eye is dark-adapted entering the first measured dark; done is a neutral
+grey shown only after the run). Esc, or leaving fullscreen any way, ends it;
+the start stays logged. The overlay sets no inline `display`, so the
+`hidden` attribute alone controls it — an early bug where an inline
+display:flex overrode [hidden] and left the overlay intercepting every click
+is fixed and the e2e would have caught it. Four tests: three unit
+(lightPhaseBackground) and one Playwright (the stimulus starts, paints the
+settle phase, and the schedule plus start reach the exported metadata); the
+260s run itself is not waited out because the phase logic is unit-pinned.
+The pupil number's real behaviour is still 9.4, which now needs only the
+maintainer's camera. The suite is 888 unit tests, 24 end to end tests, and
+342 Python tests of which 2 skip, all green. Next: 9.4 — the maintainer runs
+the light-response session and the result is recorded against the committed
+prediction.
+
 **LIGHT-RESPONSE STIMULUS, THE PURE SCHEDULE, 4 September 2026 (row 9.4a) —
 the timing half of the experiment's stimulus, before any screen.** A new
 PURE core module, src/core/lightSchedule.ts, fixes the stimulus the
