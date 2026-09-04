@@ -1,3 +1,29 @@
+**ALERTNESS SCORE, THE PLAN BEFORE THE COMPARISON, 4 September 2026 — Phase
+9's "a learned model must beat the kept heuristic", pre-registered.**
+docs/alertness-score-plan.md is committed before the comparison code exists
+and before it is run, the same predict-then-verify discipline as the
+UTA-RLDD and DROZY plans. The question: for reducing the seven per-second
+features to one alertness number, does a learned weighting separate
+self-reported drowsiness better than the demo heuristic (src/core/score.ts,
+the 100-minus-penalties dial the README now admits was never checked), and
+is that heuristic even above chance? The metric is threshold-free AUC on
+alert-vs-drowsy over the exact usable set the UTA-RLDD run fixed; the
+heuristic is reimplemented faithfully in Python and pinned to score.ts's own
+ramp fixtures; the learned model is the same leave-one-subject-out logistic
+regression read out as out-of-fold drowsy probability. Two shuffle controls
+(heuristic above chance; model beats heuristic) and a two-bar decision rule,
+all fixed in advance. The committed prediction: Bar 1 holds (the heuristic
+is clearly above chance — it already uses PERCLOS and long closures, the
+features that carried the UTA-RLDD signal), and Bar 2 holds modestly (the
+learned model beats it, with the open question being whether the edge
+survives the shuffle). Honest scope on the page: cross-subject
+classification is NOT a live per-person meter, and adopting a learned score
+into src/core is a SEPARATE later increment gated on Bar 2. No src change, no
+corpus gate. The suite is unchanged, 853 unit tests and 323 Python tests of
+which 2 skip, all green. Next: the comparison code
+(analysis/blinklab/alertness.py plus a runner), tested on synthetic data
+only, then the run on the measured UTA-RLDD CSVs and the recorded result.
+
 **THE UTA-RLDD DETECTION REACHES THE PUBLIC README, 4 September 2026 — the
 "Results at a glance" block stops answering a flat "No" to a question the
 full dataset reverses.** The README's generated results block (roadmap 7.9)

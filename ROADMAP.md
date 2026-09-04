@@ -25,6 +25,8 @@ Accepted on 2026-07-28, before any code:
 
 12. Accepted 2026-08-18: issue #178 is reopened off the declined list and reconciled without changing any behaviour, and the reason it may be reopened is one that did not exist on 15 August. It was declined because settling it needed a corpus run or an argument; the blink-trace harness built on 17 August for the sampling-rate question runs one closure past the real detector with every variable held still, so both sides of the contradiction can be reproduced in the same framework in milliseconds. The finding is that `MAX_BLINK_DURATION_MS` does two non-overlapping jobs and which one it is doing depends on `baseline_over_resting`. The constant is NOT moved: that is step 4 of the issue's own suggested order and it is the owner's decision. Written up in `docs/max-blink-duration.txt`. The same increment adds the gradual-descent case closed issue #126 asked for and issue #115 filed, asserted as what today's code does.
 
+13. Accepted 2026-09-04: the Phase 9 line "a small learned model to replace one heuristic, with the heuristic kept as the baseline it must beat" is taken up as row 9.1, against the demo alertness score (`src/core/score.ts`). It can be taken up now because the UTA-RLDD run (7.5/7.6) produced both a labelled dataset the score can be tested against and a validated learned model to be the contender, and the README now states in the open that the demo score "has never been shown to correspond to anyone's actual sleepiness" — a claim row 9.1 tests rather than leaves standing. Pre-registered in `docs/alertness-score-plan.md` before the comparison code exists, predict-then-verify. The work is analysis-only; any change to `src/core/score.ts` is a later increment gated on the plan's Bar 2.
+
 ## Phase 0. Foundations (no eye code at all)
 
 - [x] 0.1 The four working documents, plus LICENSE, .gitignore, README skeleton. Done when the repo has docs and nothing else.
@@ -131,6 +133,12 @@ Accepted on 2026-07-28, before any code:
 - [~] 8.8 DECLINED 15 August. The floor is already met: keyboard operable, focus visible, all text clears WCAG contrast. What remained was polish. **AMENDED 22 August 2026, additively rather than reopened: one clause of that decline was false when it was written.** Five colour pairs failed AA on the committed stylesheet, and the worst of them was `.rate-warning` at 2.80:1 — the processing-rate limitation shipped the very next day, which made "limitations belong in the open" untrue on the page while this row sat closed. The palette is corrected and `tools/contrastGuard.mjs` now computes every pair, on both grounds, and checks that the page uses the legible tokens rather than merely declaring them. The decline itself STANDS: what remained after this really is polish. What did not stand was checking a claim like that by eye.
 
 ## Phase 9 and beyond (ideas, not commitments)
+
+Taken up from the ideas below and tracked as a row, because it now has both the data and the baseline it needs (amendment 13):
+
+- [ ] 9.1 Does a learned weighting beat the demo alertness heuristic? Pre-registered in `docs/alertness-score-plan.md`. An analysis-only head-to-head on the UTA-RLDD usable set: threshold-free alert-vs-drowsy AUC of the learned leave-one-subject-out model's out-of-fold drowsy probability against the faithfully-ported `score.ts` heuristic, with two shuffle controls (heuristic above chance; model beats heuristic) and a two-bar decision rule. No `src/` change; adopting a learned score is a separate increment gated on the result.
+
+Ideas, not commitments:
 
 - Pupil diameter estimation and a light response experiment using screen brightness.
 - Ambient light compensation using scene brightness.
