@@ -13,6 +13,7 @@ import pytest
 from blinklab.loader import (
     COLUMNS,
     LEGACY_COLUMNS,
+    PRE_PUPIL_COLUMNS,
     SessionError,
     load_session,
 )
@@ -20,6 +21,7 @@ from blinklab.loader import (
 FIXTURE = Path(__file__).parent / "fixtures" / "session-fixture.csv"
 HEADER = ",".join(COLUMNS)
 LEGACY_HEADER = ",".join(LEGACY_COLUMNS)
+PRE_PUPIL_HEADER = ",".join(PRE_PUPIL_COLUMNS)
 
 
 def write(tmp_path: Path, text: str) -> Path:
@@ -31,7 +33,7 @@ def write(tmp_path: Path, text: str) -> Path:
 def a_row(timestamp: int = 1000) -> str:
     """One valid row: a face, an aperture, and nothing else measured."""
     cells = [str(timestamp), "true", "60", "7.0"] + [""] * 7
-    cells += ["0", "", "", "", "", ""]
+    cells += ["0", "", "", "", "", "", ""]
     return ",".join(cells)
 
 
@@ -78,7 +80,7 @@ class TestThePreviousGenerationOfTheHeader:
     """
 
     def test_a_legacy_header_loads(self, tmp_path: Path) -> None:
-        legacy_row = a_row().rsplit(",", 1)[0]
+        legacy_row = a_row().rsplit(",", 2)[0]
         text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
         session = load_session(write(tmp_path, text))
         assert list(session.frame.columns) == COLUMNS
@@ -86,7 +88,7 @@ class TestThePreviousGenerationOfTheHeader:
     def test_the_unmeasured_column_arrives_as_nan_not_zero(
         self, tmp_path: Path
     ) -> None:
-        legacy_row = a_row().rsplit(",", 1)[0]
+        legacy_row = a_row().rsplit(",", 2)[0]
         text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
         session = load_session(write(tmp_path, text))
         assert session.frame["baselineOverResting"].isna().all()
@@ -94,11 +96,23 @@ class TestThePreviousGenerationOfTheHeader:
     def test_a_legacy_row_count_is_judged_by_its_own_header(
         self, tmp_path: Path
     ) -> None:
-        # A 17-field row under a 16-column header is a broken file,
+        # An 18-field row under a 16-column header is a broken file,
         # not a file from the future.
         text = f"{LEGACY_HEADER}\r\n{a_row()}\r\n"
-        with pytest.raises(SessionError, match="row 2 has 17 fields"):
+        with pytest.raises(SessionError, match="row 2 has 18 fields"):
             load_session(write(tmp_path, text))
+
+    def test_a_pre_pupil_header_loads_with_the_pupil_column_nan(
+        self, tmp_path: Path
+    ) -> None:
+        # The generation after baselineOverResting but before the pupil
+        # column (4 September 2026): it loads, and pupilDiameterMm arrives
+        # as NaN because that column was not written.
+        pre_pupil_row = a_row().rsplit(",", 1)[0]
+        text = f"{PRE_PUPIL_HEADER}\r\n{pre_pupil_row}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert list(session.frame.columns) == COLUMNS
+        assert session.frame["pupilDiameterMm"].isna().all()
 
 
 class TestWhatItRefuses:

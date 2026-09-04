@@ -24,7 +24,7 @@ def a_row(
     over_resting: str = "",
 ) -> str:
     cells = [str(timestamp), "true", "60", aperture, baseline] + [""] * 6
-    cells += ["0", "", "", "", "true", over_resting]
+    cells += ["0", "", "", "", "true", over_resting, ""]
     return ",".join(cells)
 
 
@@ -116,7 +116,10 @@ class TestTheComparison:
         # False that would read as a finding against a session that
         # predates the feature.
         legacy = [
-            row.rsplit(",", 1)[0]
+            # Drop pupilDiameterMm and baselineOverResting, the two
+            # columns appended after the legacy generation, to land back
+            # on the 16-column LEGACY_COLUMNS header.
+            row.rsplit(",", 2)[0]
             for row in [a_row(1000, "6.0"), a_row(2000, "6.0", "7.44")]
         ]
         frame = load_session(
@@ -185,7 +188,10 @@ class TestTheReportSection:
         from tools.validation_report import report
 
         legacy = [
-            row.rsplit(",", 1)[0]
+            # Drop pupilDiameterMm and baselineOverResting, the two
+            # columns appended after the legacy generation, to land back
+            # on the 16-column LEGACY_COLUMNS header.
+            row.rsplit(",", 2)[0]
             for row in [a_row(1000, "6.0"), a_row(2000, "6.0", "7.44")]
         ]
         write_session(tmp_path, legacy, header=",".join(LEGACY_COLUMNS))

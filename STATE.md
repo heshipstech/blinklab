@@ -14,13 +14,18 @@ prefix), the compile-time EveryFieldHasAColumn assertion forcing the column;
 it is null-never-zero and reads only on the ~1 Hz record gate because
 getImageData is not free. Ten more tests (irisSampleRegion + the schema
 ripple across four fixtures + the validator's new field); coverage floor
-held (functions 100%). The pupil number's REAL behaviour on a live eye is
-9.4's job — a headless clip has no resolvable pupil, so an e2e could only
-re-assert the header the unit tests already pin. No measurement the detector
-or the demo score reads changes. The suite is 875 unit tests, 23 end to end
-tests, and 341 Python tests of which 2 skip, all green. Next: 9.4 — the
-maintainer runs the pre-registered light-response session on their camera and
-the result is recorded against the committed prediction.
+held (functions 100%). On the Python side the loader now accepts three
+header generations, newest first (current, pre-pupil, and the pre-
+baselineOverResting legacy), filling any older generation's missing
+trailing columns with NaN, and the cross-language contract test carries
+pupilDiameterMm too; one more Python test pins the pre-pupil header. The
+pupil number's REAL behaviour on a live eye is 9.4's job — a headless clip
+has no resolvable pupil, so an e2e could only re-assert the header the unit
+tests already pin. No measurement the detector or the demo score reads
+changes. The suite is 875 unit tests, 23 end to end tests, and 342 Python tests
+of which 2 skip, all green. Next: 9.4 — the maintainer runs the
+pre-registered light-response session on their camera and the result is
+recorded against the committed prediction.
 
 **PUPIL LIGHT-RESPONSE, THE PLAN BEFORE THE EXPERIMENT, 4 September 2026
 (row 9.4 plan) — pre-registered before the instrument that runs it exists.**
