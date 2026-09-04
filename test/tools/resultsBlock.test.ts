@@ -6,6 +6,7 @@ import {
   committedResultsBlock,
   parseDrozyResult,
   parseRoundVerdicts,
+  parseUtaResult,
   spliceResultsBlock,
   parseSecondMachine,
 } from "../../tools/resultsBlock.mjs";
@@ -57,6 +58,55 @@ describe("the generated results block (roadmap 7.9)", () => {
       "Something cleared both bars.",
     );
     expect(() => parseDrozyResult(text)).toThrowError(/null-verdict/);
+  });
+
+  it("the block answers the sleepiness question with the UTA-RLDD detection", () => {
+    // A regeneration that dropped the powered positive would leave the
+    // page answering a flat "No" to a question the full dataset
+    // reverses, so the detection numbers are presence-checked here as
+    // well as pinned byte for byte by the block test above.
+    const block = committedResultsBlock(readme);
+    expect(block).toContain("UTA-RLDD");
+    expect(block).toContain("0.498");
+    expect(block).toContain("0.732");
+  });
+
+  it("the uta facts parsed today are the recorded ones", () => {
+    // Pinned so a silent change to the result file that made the parse
+    // latch onto the wrong number shows as a change here, not only as a
+    // diff in the generated block.
+    const uta = parseUtaResult(readRepoFile("docs/uta-rldd-result.txt", root));
+    expect(uta).toEqual({
+      subjects: 54,
+      analysed: 148,
+      threeClass: "0.498",
+      threeFloor: "0.333",
+      binary: "0.732",
+      binaryFloor: "0.500",
+      p: "0.001",
+      cite: 'Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.',
+    });
+  });
+
+  it("a uta file without its citation refuses to build", () => {
+    // UTA-RLDD's safeguards require the citation wherever results
+    // appear, so the generator must refuse a source that lost it.
+    const text = readRepoFile("docs/uta-rldd-result.txt", root).replace(
+      /Cite:[\s\S]*/,
+      "",
+    );
+    expect(() => parseUtaResult(text)).toThrowError(/citation/);
+  });
+
+  it("a uta file whose detection verdict vanished refuses to build", () => {
+    // The mirror of the DROZY null guard: if the result stops being a
+    // detection, the build goes red here instead of the README quietly
+    // still claiming one.
+    const text = readRepoFile("docs/uta-rldd-result.txt", root).replaceAll(
+      "detecting drowsiness",
+      "collapsing to the null",
+    );
+    expect(() => parseUtaResult(text)).toThrowError(/verdict/);
   });
 
   it("a round write-up missing a criterion refuses to build", () => {

@@ -17,6 +17,21 @@ export type DrozySummary = {
 /** Parse the DROZY summary. Throws on a file it cannot read. */
 export function parseDrozyResult(text: string): DrozySummary;
 
+/** The UTA-RLDD summary facts, parsed from docs/uta-rldd-result.txt. */
+export type UtaSummary = {
+  subjects: number;
+  analysed: number;
+  threeClass: string;
+  threeFloor: string;
+  binary: string;
+  binaryFloor: string;
+  p: string;
+  cite: string;
+};
+
+/** Parse the UTA-RLDD summary. Throws on a file it cannot read. */
+export function parseUtaResult(text: string): UtaSummary;
+
 /** The round's three criteria verdicts. */
 export type RoundVerdicts = {
   detector: string;
