@@ -1,0 +1,71 @@
+Pupil light-response: does the webcam estimate detect the light reflex?
+Plan fixed in advance: docs/pupil-light-plan.md (roadmap 9.4)
+First run recorded 4 September 2026, by analysis/tools/pupil_light.py on one
+session the maintainer recorded behind the in-app "Light response" stimulus
+screen (app_commit 57c60e2). Numbers only, never a frame; the raw recording
+is the maintainer's and is not committed. Every number below is
+deterministic from the file and the fixed permutation seed.
+
+HEADLINE
+  INCONCLUSIVE. The estimator could not resolve the pupil on this webcam:
+  of 239 in-window seconds it returned a value for ONE (0.4%), far below the
+  half the plan requires, and zero of them in the dark phase. The usable-
+  data gate is not cleared, so the dark-vs-bright comparison and its shuffle
+  control never run. This is a fact about the INSTRUMENT in this room, not a
+  measurement of a reflex, and the plan says to report it as plainly as a
+  detection.
+
+PREDICTION vs OUTCOME (predict-then-verify)
+  The plan committed, before any camera ran: "I expect a detection -- the
+  pupil constricts to the bright screen and the difference survives the
+  shuffle." It committed one honest counterweight in the same breath: "the
+  most likely way this comes back NOT a detection is the inconclusive branch
+  -- the estimator refusing most frames because a webcam iris interior is
+  small, low-contrast, and often lash-occluded."
+  The counterweight is exactly what happened. The primary expectation (a
+  detection) did NOT hold; the named most-likely alternative (inconclusive)
+  did. Recorded here as plainly as a detection would have been.
+
+THE DATA
+  One session, one camera (a MacBook Pro built-in 1080p webcam), the screen
+  the dominant light. The face pipeline worked: face detected on 100% of
+  seconds, head pose valid on 100%, median iris width 43 px. What failed is
+  specifically the pupil-from-iris segmentation.
+    in-window seconds (dark + bright):   239
+    usable seconds (a real pupil value): 1  (0.4%)   -- gate needs >= 50%
+    usable dark / usable bright:         0 / 1        -- gate needs >= 20 each
+  Across the whole 335-second recording, only 4 seconds carried any pupil
+  value at all, and those four spanned 2.0 to 5.3 mm -- inconsistent enough
+  to be noise rather than a signal. The near-total refusal is the estimator
+  behaving as designed: it declines a frame whose contrast, pupil shape, or
+  physiological plausibility it cannot trust, and on this iris it could
+  trust almost none.
+
+METHOD (fixed in the plan, run by the committed tool)
+  Each recorded second's phase is recovered from the stimulus start the app
+  logged (light_stimulus_start_ms), by the same schedule the screen ran
+  (src/core/lightSchedule.ts; a test pins the two to the same constants).
+  The settle is discarded. A second counts as usable only where the
+  estimator returned a value. The usable-data gate (>= 50% of in-window
+  seconds usable, and >= 20 in each phase) is checked FIRST; only if it
+  clears are the medians compared and the 1000-shuffle one-sided permutation
+  control run. Here the gate did not clear.
+
+WHAT THIS MEANS
+  On this hardware and setup, webcam pupillometry through this path is not
+  viable: the instrument cannot see the pupil often enough to say anything
+  about the light reflex. That the FACE tracking is flawless while the pupil
+  segmentation refuses almost every frame localises the limit precisely --
+  it is the small, low-contrast webcam iris interior, not the landmarks or
+  the clock. A likely aggravating factor on this specific session is
+  eyeglasses: lens reflections, especially of the bright stimulus screen,
+  fall where the estimator looks.
+
+WHAT WOULD CHANGE THIS, AND IS INVITED
+  The plan says a later run that clears the gate belongs on this page. A
+  bigger iris in pixels (sitting closer, within the camera's focus), no
+  eyeglasses, and a darker room could let the estimator resolve enough
+  seconds to reach a real detected/null verdict. Such a run is recorded here
+  as an appended section, beside this one; runs are reported as they happen,
+  not chosen after the fact. Tuning the physical setup is legitimate; the
+  analysis method is fixed and is not touched to chase a verdict.

@@ -1,3 +1,29 @@
+**LIGHT-RESPONSE EXPERIMENT, FIRST RUN: INCONCLUSIVE, 4 September 2026 (row
+9.4) — the pre-registered result, and the analyzer that produced it.** The
+maintainer ran the pre-registered light-response session
+(docs/pupil-light-plan.md) on a MacBook Pro webcam behind the 9.4b stimulus
+screen. New pure analysis: analysis/blinklab/light_response.py recovers each
+second's phase from the logged stimulus start (light_phase_at, mirroring
+src/core/lightSchedule.ts — a test pins the two to the same constants),
+applies the usable-data gate (>=50% usable, >=20 per phase) BEFORE any
+comparison, and only then runs the medians and the 1000-shuffle one-sided
+permutation control; analysis/tools/pupil_light.py drives it from a session
+CSV. On the first run the estimator resolved the pupil in 1 of 239 in-window
+seconds (0.4%, 0 dark / 1 bright), so the gate did not clear and the verdict
+is INCONCLUSIVE — recorded in docs/pupil-light-result.txt. The plan's
+committed prediction was a detection, with the honest counterweight that the
+most likely non-detection is exactly this inconclusive branch; the
+counterweight held. Face and pose tracking were flawless (100% each), which
+localises the limit to the small (43 px) webcam iris interior, not the
+landmarks; eyeglass reflections of the bright screen are a likely
+aggravator. The plan invites a closer/no-glasses/darker re-run, appended to
+the result page; the analysis method is fixed and untouched. 17 tests
+(phase boundaries, the two gate thresholds, detected/null/wrong-direction,
+the start reader's refusals, the cross-language schedule contract); no src
+change, no corpus gate. The suite is 888 unit tests, 24 end to end tests,
+and 359 Python tests of which 2 skip, all green. Next: an optional
+better-setup re-run from the maintainer; otherwise Phase 9 is complete.
+
 **LIGHT-RESPONSE STIMULUS WIRED, 4 September 2026 (row 9.4b) — the screen
 the experiment needs, so the maintainer presses one button instead of
 toggling monitor brightness by hand.** A "Light response" button (enabled
