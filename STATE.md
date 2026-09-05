@@ -1,3 +1,33 @@
+**PHASE 9 CLOSED AND TRACKER RECONCILIATION, 5 September 2026 — the docs
+brought level with the code, honestly.** After a full audit of every tracker
+(ROADMAP, REMEDIATION, NEEDS-REVIEW, the August audit reports, the plan/result
+ledger, this file, MODEL_CARD, DATASETS), the committed engineering ladder
+reads as complete through Phase 9 with one open owner decision (remediation
+E5, the branch-protection review count). This entry records the two decisions
+the file did not yet carry: (1) the maintainer declared the 9.4 light-response
+verdict FINAL for this hardware — a second setup was tried and the live pupil
+readout only flickered, so no re-run was recorded (commits 604a657 and 5a8b7b3
+added the re-run guidance and the live corroboration to
+docs/pupil-light-result.txt but no STATE entry until now); and (2) ROADMAP row
+9.2 (the pure pupil estimator) was ticked — its box had been left unchecked by
+oversight when the estimator shipped ahead of 9.3a. Ticking it means the code
+exists and passes its synthetic Check; it does NOT mean pupillometry works —
+the real-world 9.4 run resolved the pupil in under 1% of webcam seconds, so on
+this hardware the estimator is effectively non-functional. So "Phase 9
+complete" means the plan ran to its honest end, INCLUDING a null flagship
+result, not that the pupil instrument is validated. Living reference docs
+(MODEL_CARD sub-25fps message, DATASETS 7.4-7.7-delivered) were brought
+current and resolved items struck from the living trackers; dated audit
+records were left as the dated records they are. Note on this file: STATE.md
+is, and has long been, an append-only per-increment LOG, not the "ten-line
+snapshot" the earliest LEARNING essay described — that rule was retired in
+practice hundreds of increments ago and is retired here in writing. No code
+changed; docs only. Next: hand the maintainer the short list that actually
+gates further work (E5; the disclosed MediaPipe telemetry POST; the alertness
+README framing; the volunteer Round II and assessment pilot; the DROZY
+re-measure) and the clean baseline for a possible refactor or a new
+device-oriented project.
+
 **LIGHT-RESPONSE EXPERIMENT, FIRST RUN: INCONCLUSIVE, 4 September 2026 (row
 9.4) — the pre-registered result, and the analyzer that produced it.** The
 maintainer ran the pre-registered light-response session
@@ -2685,7 +2715,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 4 September 2026. When this file changes, this stamp changes
+Stamped: 5 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026

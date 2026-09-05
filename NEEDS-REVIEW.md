@@ -58,6 +58,11 @@ Saying otherwise when this was written. **Three of the four were corrected on
   it still reads "its copyleft would need thought before publishing derived
   files". Verified 2026-08-15. **This is the whole of what remains here.**
 
+  > Resolved 5 September 2026: this is no longer open. `DATASETS.md` now reads
+  > "ANSWERED 2026-08-15. Permission was granted," and the copyleft rule was
+  > retired (REMEDIATION stage E4). The paragraphs below are kept as the record
+  > of how the ruling was reached, not as pending work.
+
 The corpus licence, checked against the primary source rather than the repo's
 summary: blinkingmatters.com/research states all its data is under **GPL3**.
 This repository is **public** and **MIT**.

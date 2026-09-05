@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 2 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 5 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -91,10 +91,18 @@ now told so while it can still be re-run.
 
 **Below 25 PROCESSED frames per second it stops detecting blinks entirely; for a live camera that number is the page's processing rate, not the camera's own, so a slow camera behind a fast display would not be caught. Measured on twelve real sessions in August 2026, six of the author's and six volunteers', that case did not occur once: every camera declared 30 and the gate never wrongly opened, which is why a true camera rate is deliberately still not wired into the gate. The larger problem was the silence above the floor, addressed 20 August 2026 (remediation D1, stage two): see the next paragraph.** At 15
 fps a 100 ms blink spans one and a half frames, so refusing is correct.
-The failure is currently near-silent: one line of small text, while
-everything else on the page carries on looking healthy. This removed 16
-of 36 sessions from a dataset before anyone noticed. Issue
-[#192](https://github.com/heshipstech/blinklab/issues/192).
+That failure was near-silent when Issue
+[#192](https://github.com/heshipstech/blinklab/issues/192) was written — one
+line of small text while everything else on the page carried on looking
+healthy — and it removed 16 of 36 sessions from a dataset before anyone
+noticed. The silence has since been closed on both paths the refusal can
+occur on: the browser CLIP path now refuses out loud (`clipRefusedMessage`
+in `src/core/fpsGate.ts`, wired at `src/main.ts`, "NO BLINKS WERE MEASURED
+IN THIS CLIP"), and the Python DROZY batch that lost the 16 of 36 now applies
+an explicit `MIN_USABLE_FPS = 25` filter (`analysis/blinklab/drozy.py`).
+Only the live per-frame gate message (`fpsGateMessage`) is still a single
+line — for a sub-25 fps LIVE camera, the one case the twelve real sessions
+above never produced.
 
 **Above the floor it still loses blinks, and how many depends on the
 machine rather than the camera.** The processing rate is set by how fast

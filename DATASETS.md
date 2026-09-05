@@ -61,6 +61,14 @@ labels too sparse to train on.
 That triggers the amendment clause: 7.4 through 7.7 are replanned before any of
 them starts.
 
+> Update, 5 September 2026: the replan below succeeded. Under the written
+> permission recorded later in this file, rows 7.4 through 7.7 were
+> subsequently DELIVERED (3 September 2026) on the UTA-RLDD dataset (54
+> subjects, 148 videos), producing a real alert-vs-drowsy detection result
+> (`docs/uta-rldd-result.txt`, `analysis/blinklab/rldd.py`). The paragraphs
+> below describe the plan as it stood at the 8 August search; they are kept as
+> the dated record of that decision, not as current pending work.
+
 The replan is not a cancellation, because the search also found a defensible
 path. It has two parts, and they are separate decisions.
 
