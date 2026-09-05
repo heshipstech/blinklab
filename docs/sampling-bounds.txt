@@ -1,0 +1,58 @@
+SAMPLING-ERROR BOUNDS FOR PERCLOS, AND A PREDICTION
+===================================================
+
+Written 5 September 2026 (roadmap 10.10a), before the sweep runs, in
+the predict-then-verify discipline.
+
+WHY IT EXISTS
+-------------
+The page prints PERCLOS with no statement of how wrong the number can
+be purely from sampling: a camera at f frames per second reads the eye
+at regular instants, and every closure's edges land between two reads.
+Blink RATE already has its sampling story committed — the catch
+probability tables in docs/blink-sample-rate.txt, swept through the
+real detector — so this row does not re-derive rate. It bounds the one
+headline number that had no bound, and the on-page "at least ±" lines
+(row 10.10b) will quote both: this bound for PERCLOS, the committed
+catch tables for rate.
+
+THE METHOD, FIXED NOW
+---------------------
+A seeded, deterministic sweep (a hand-rolled linear congruential
+generator in src/core/samplingBounds.ts — no Math.random, so the
+committed table reproduces bit for bit). The generator shape, stated
+because the bound inherits it: a 60 second window (the PERCLOS window
+the app uses) holding N non-overlapping closures, N drawn 2 to 10,
+each duration drawn uniformly between 0.5 and 6 seconds and the set
+scaled to hit the target closed fraction P exactly, placed uniformly.
+Target fractions P in {0.05, 0.15, 0.30}. Sampling at f in {15, 25,
+30, 60} frames per second with a uniform random phase. Per (P, f)
+cell: 2000 draws, and the bound is the 95th percentile of the
+absolute error between the sampled fraction and the true P. This is
+the SAMPLING TERM ONLY: it says nothing about the shut line's
+instrument-adjusted placement (amendment 6) or the landmark noise
+floor (docs/aperture-noise-floor.txt), and the 10.10b labels must say
+so.
+
+THE PREDICTION
+--------------
+Committed before the sweep runs. Regular sampling of an interval
+union is boundary-limited, not binomial: each closure contributes at
+most about one sample period of quantization per edge, so the error
+should scale with closure COUNT over window length, and inversely
+with f — not with sqrt of the sample count, and not much with P
+except through N.
+
+  (i)   at 30 fps, every cell's p95 absolute error is at or below
+        0.010 of PERCLOS (one percentage point);
+  (ii)  at 15 fps, at or below 0.020;
+  (iii) halving the frame rate at most doubles a cell's bound
+        (within 25 percent slack);
+  (iv)  at fixed f, the P=0.30 bound is under twice the P=0.05
+        bound — the fraction itself is not the driver.
+
+If the bounds come out this small, the honest page line is not a wide
+error bar but a sentence: the sampling term is negligible next to the
+instrument's other stated conditions. That is a finding, not a
+disappointment. Whatever the numbers say, they are recorded below and
+scored against this section, not edited.
