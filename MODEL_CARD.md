@@ -239,6 +239,36 @@ The published figure has been wrong twice, both times through a defect
 in this repository rather than in the data. Both wrong answers remain
 printed in the README beside the current one.
 
+## Measurement uncertainty
+
+The published numbers carry conditions, and the conditions are part of
+the numbers.
+
+Precision is a property of the video preparation as much as of the
+detector. The precision above (65 invented blinks) is measured from the
+committed remux preparation, digit for digit on two machines. The same
+recordings re-encoded measured precision 12.4 points lower, and one
+clip's false alarms collapse from 19 to 3 under re-encoding at every
+quality tried, lossless included. The figure does not transfer to
+arbitrarily transcoded copies of the same files;
+`docs/eyeblink8-result.txt` records the discovery and
+`docs/eyeblink8-preparation.txt` the tool that makes the preparation
+reproducible.
+
+Blink duration is device-conditioned, and the mechanism is open. On the
+same scripted protocol both iPhones read about 96 ms and both Macs 149
+to 166 ms (`docs/validation-dry-run.txt`), a gap no explanation has yet
+survived. Until roadmap row 10.9 settles it, durations are comparable
+within a device and not across devices.
+
+Every corpus number here is also true of a commit, not of the
+repository in general: since 5 September 2026 the result file names the
+commit it was measured at, and `tools/detectorRatchet.mjs` turns the
+build red if a detector source changes without a re-measure or a dated
+caveat. A test holds this section to the committed results the same
+way, so a re-measure that moves a number moves this paragraph or fails
+the build.
+
 ## Intended use
 
 Learning, demonstration, and research into whether eye signals can be

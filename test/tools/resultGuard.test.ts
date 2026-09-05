@@ -12,6 +12,7 @@ import {
   repoRoot,
   statedPythonTestCount,
   statedUnitTestCount,
+  uncertaintySection,
 } from "../../tools/resultGuard.mjs";
 
 // The August 2026 audit found every headline number right and the prose
@@ -49,6 +50,55 @@ describe("parseResultFile", () => {
     expect(() => parseResultFile("not a result file")).toThrow(
       /could not find/,
     );
+  });
+});
+
+describe("the model card's measurement-uncertainty section", () => {
+  // Roadmap 10.1b. The published precision is a property of the video
+  // preparation as much as of the detector, and blink duration is
+  // device-conditioned with the mechanism open. Those conditions ARE
+  // part of the numbers, so the card must state them in terms this
+  // guard can hold to the committed results — a card that drifts from
+  // the result file is a red build, not a future audit finding.
+
+  it("extracts the section and stops at the next heading", () => {
+    const text =
+      "## Measurement uncertainty\n\nconditioned.\n\n## Intended use\n\nnope";
+    expect(uncertaintySection(text)).toContain("conditioned");
+    expect(uncertaintySection(text)).not.toContain("nope");
+  });
+
+  it("returns null when the card has no such section", () => {
+    expect(uncertaintySection("## Privacy\n\nwords")).toBeNull();
+  });
+
+  it("exists in the committed card", () => {
+    expect(
+      uncertaintySection(modelCard),
+      "MODEL_CARD.md has lost its Measurement uncertainty section",
+    ).not.toBeNull();
+  });
+
+  it("carries the result file's own false-alarm count, not a stale one", () => {
+    // The preparation-conditioning sentence quotes the invented count.
+    // A corpus re-measure that moves it must move the card too.
+    const section = uncertaintySection(modelCard) ?? "";
+    const stated = section.match(/(\d+) invented/);
+    expect(stated, "the section quotes no invented count").not.toBeNull();
+    expect(Number((stated as RegExpMatchArray)[1])).toBe(run.invented);
+  });
+
+  it("names both measured conditions with their committed numbers", () => {
+    const section = uncertaintySection(modelCard) ?? "";
+    // The preparation finding: a 12.4-point precision gap between the
+    // committed remux and re-encoded derivatives of the same files.
+    expect(section).toContain("preparation");
+    expect(section).toContain("12.4");
+    // The device finding: iPhones ~96 ms, Macs 149 to 166 ms, on the
+    // same scripted protocol (docs/validation-dry-run.txt).
+    expect(section).toContain("96 ms");
+    expect(section).toContain("149");
+    expect(section).toContain("166");
   });
 });
 

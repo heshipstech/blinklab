@@ -248,3 +248,21 @@ export function isShallowRepo(root) {
 export function runningInCi() {
   return process.env.CI !== undefined;
 }
+
+/**
+ * MODEL_CARD's measurement-uncertainty section, or null when absent.
+ *
+ * Roadmap 10.1b. The published precision is a property of the video
+ * preparation as much as of the detector, and blink duration is
+ * device-conditioned with its mechanism open. Those conditions are part
+ * of the numbers, so the card states them and the test holds the
+ * section to the committed results: the invented count quoted there
+ * must be the result file's own, and the two measured conditions must
+ * keep their committed figures.
+ */
+export function uncertaintySection(cardText) {
+  const match = cardText.match(
+    /## Measurement uncertainty\n([\s\S]*?)(?=\n## |$)/,
+  );
+  return match === null ? null : match[1];
+}
