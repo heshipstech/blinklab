@@ -290,9 +290,13 @@ From section 7 of the report. None of this was in the audit's scope.
       `main`. Verified live rather than in the source. Was: every claim
       in the audit, including the telemetry, was measured against a
       locally built bundle, and nothing recorded which commit is live.
-- [x] **E3.** DONE 15 August: a "Stored on this device" box lists both
-      keys from `core/storedData.ts`, with what each holds and why, and
-      erases them on request behind a two-click confirm. The erase
+- [x] **E3.** DONE 15 August: a "Stored on this device" box lists the
+      stored keys from `core/storedData.ts`, with what each holds and why, and
+      erases them on request behind a two-click confirm. (Two keys existed on
+      15 August; the guarantee now covers all FOUR keys the app stores —
+      calibration-profile, calibration-samples, blink-calibration and
+      participant-pseudonym — because the control filters to `KNOWN_KEYS`,
+      verified still covered 5 September 2026.) The erase
       clears the in-memory profile too, so the heatmap returns to
       "calibrate first" in the same click, proven by an end to end test
       that goes red when that line is removed. The confirmation is
