@@ -1,3 +1,37 @@
+**THE NEW ERA'S LADDER: PHASES 10-14, 5 September 2026 (ROADMAP amendment 16) — the owner decided the browser prototype continues, and the next ~62
+rows are committed.** The owner's direction: keep the prototype as the
+project's working instrument (it is the thing that can be shown, and the
+record it builds is part of the point), raise existing measurements toward
+the most this hardware class can deliver, add new drowsiness and attention
+measurements, and grow the demo surface. The ladder was assembled by
+proposing candidates from seven lenses and putting every candidate through
+two independent adversarial reviews — one against webcam physics and what
+the code actually contains, one against this repository's evidence
+standards — with two refutations killing a candidate; of the proposals, 60
+survived and were ordered into five phases with instruments before claims.
+The scrutiny corrected the goals and the corrections are recorded in
+amendment 16: Eyeblink8 is demoted to a regression harness (the ~49-of-67
+miss ceiling is model-level, so headroom there is ~5 blinks, and future
+accuracy claims graduate on the never-read GPL3 sibling corpora);
+"microsleep" is capped at "microsleep-RANGE closure" because the real thing
+is EEG-defined and unvalidatable with any permitted data; "cognitive state"
+is reframed as demonstrated task effects (read-vs-rest blink suppression)
+plus an in-browser vigilance task, because the pupil channel is measured
+dead at this optics; capability is per-SETUP, not per-device-class (the dry
+run's phone out-resolved the DSLR rig); UTA-RLDD's labels get exactly ONE
+more batched read (12.18) and never per-feature dips; WebGPU does not exist
+in the vendored API and core-chain WASM work is theater, so the real
+performance levers are 60 fps negotiation and inference-once-per-photograph.
+Phase 10 pays debts on data already on disk (ratchets, autopsies, bounds),
+11 is the generalization era (sibling corpora, round II, an n-of-1
+protocol), 12 is new signals then the one labelled read, 13 is the capture
+chain measured honestly, 14 is the demo front. Docs only, no src change.
+The suite is unchanged: 906 unit tests, 26 end to end tests, and 359 Python
+tests of which 2 skip, all green. Next: the top five starter rows named in
+the synthesis — 10.5 (iris positive control), 10.1+10.2 (the ratchets),
+10.3 (the DROZY ruling, an owner decision), 11.1+11.2 (the sibling corpus
+gate), 12.2 (blendshape enablement).
+
 **MODEL TELEMETRY BLOCKED, 5 September 2026 (ADR-0004's open question,
 answered) — the report the vendored model sends to Google no longer leaves
 the browser.** ADR-0004 recorded that the MediaPipe bundle POSTs usage
