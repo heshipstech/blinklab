@@ -1,0 +1,129 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  SAMPLING_BOUND_DRAWS,
+  SAMPLING_BOUND_FPS,
+  SAMPLING_BOUND_FRACTIONS,
+  SAMPLING_BOUND_SEED,
+  SAMPLING_WINDOW_S,
+  generateClosures,
+  lcg,
+  sampledClosedFraction,
+  samplingBoundsTable,
+  trueClosedFraction,
+} from "../../src/core/samplingBounds";
+import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
+
+// Roadmap 10.10a. PERCLOS is a fraction read off regularly spaced
+// samples, and nothing said how wrong that fraction can be purely
+// from the sampling. The sweep here is seeded and deterministic, so
+// the committed table in docs/sampling-bounds.txt reproduces bit for
+// bit, and the last test holds the doc to a recomputation on every
+// run. The prediction was committed before any cell was computed —
+// commit order is the proof.
+
+describe("the seeded generator", () => {
+  it("is deterministic and stays inside [0, 1)", () => {
+    const a = lcg(42);
+    const b = lcg(42);
+    for (let i = 0; i < 100; i += 1) {
+      const value = a();
+      expect(value).toBe(b());
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+    }
+  });
+
+  it("different seeds diverge", () => {
+    expect(lcg(1)()).not.toBe(lcg(2)());
+  });
+});
+
+describe("the closure generator", () => {
+  it("hits the target fraction exactly, without overlaps, in order", () => {
+    const closures = generateClosures(lcg(7), SAMPLING_WINDOW_S, 0.15);
+    expect(trueClosedFraction(closures, SAMPLING_WINDOW_S)).toBeCloseTo(
+      0.15,
+      9,
+    );
+    expect(closures.length).toBeGreaterThanOrEqual(2);
+    expect(closures.length).toBeLessThanOrEqual(10);
+    for (let i = 0; i < closures.length; i += 1) {
+      const closure = closures[i];
+      expect(closure).toBeDefined();
+      expect((closure as { startS: number }).startS).toBeGreaterThanOrEqual(0);
+      if (i > 0) {
+        expect((closure as { startS: number }).startS).toBeGreaterThanOrEqual(
+          (closures[i - 1] as { endS: number }).endS,
+        );
+      }
+    }
+    const last = closures[closures.length - 1];
+    expect((last as { endS: number }).endS).toBeLessThanOrEqual(
+      SAMPLING_WINDOW_S,
+    );
+  });
+});
+
+describe("the sampler", () => {
+  it("counts exactly the samples that land inside closures", () => {
+    // Window 10 s, one closure [2, 4), 1 fps, phase 0: samples at
+    // 0..9, inside at t=2 and t=3, so 2 of 10.
+    const fraction = sampledClosedFraction([{ startS: 2, endS: 4 }], 10, 1, 0);
+    expect(fraction).toBeCloseTo(0.2, 12);
+  });
+
+  it("moves with the phase, which is the whole phenomenon", () => {
+    // The same closure sampled at phase 0.5 lands 2 samples (2.5,
+    // 3.5); at phase 0.99 it still lands 2 (2.99, 3.99); a closure
+    // shorter than a period can land 0 or 1 depending on phase.
+    const shortClosure = [{ startS: 2.1, endS: 2.9 }];
+    expect(sampledClosedFraction(shortClosure, 10, 1, 0)).toBe(0);
+    expect(sampledClosedFraction(shortClosure, 10, 1, 0.5)).toBeCloseTo(
+      0.1,
+      12,
+    );
+  });
+});
+
+describe("the committed table, recomputed", () => {
+  // The full sweep is 24 million sample checks: fast bare, roughly ten
+  // times slower under coverage instrumentation, which is what CI's
+  // coverage step runs. One shared computation and an explicit
+  // timeout, or the gate that exists to catch drift times out instead.
+  let sharedTable: ReturnType<typeof samplingBoundsTable> | null = null;
+  const theTable = () => {
+    sharedTable ??= samplingBoundsTable();
+    return sharedTable;
+  };
+
+  it("docs/sampling-bounds.txt states what the sweep computes", () => {
+    const doc = readRepoFile("docs/sampling-bounds.txt", repoRoot());
+    expect(doc).toContain("THE BOUNDS, MEASURED");
+    // The committed sweep parameters and the code's constants are one.
+    expect(SAMPLING_WINDOW_S).toBe(60);
+    expect(SAMPLING_BOUND_DRAWS).toBe(2000);
+    expect(SAMPLING_BOUND_FPS).toEqual([15, 25, 30, 60]);
+    expect(SAMPLING_BOUND_FRACTIONS).toEqual([0.05, 0.15, 0.3]);
+    expect(doc).toContain(String(SAMPLING_BOUND_SEED));
+
+    const table = theTable();
+    expect(table).toHaveLength(12);
+    for (const cell of table) {
+      const line = `${String(cell.fps)} fps  P=${cell.fraction.toFixed(2)}  p95 ${cell.p95Error.toFixed(4)}`;
+      expect(doc, line).toContain(line);
+    }
+  }, 60_000);
+
+  it("more frames never makes the bound worse within a fraction", () => {
+    const table = theTable();
+    for (const fraction of SAMPLING_BOUND_FRACTIONS) {
+      const cells = table.filter((cell) => cell.fraction === fraction);
+      for (let i = 1; i < cells.length; i += 1) {
+        expect((cells[i] as { p95Error: number }).p95Error).toBeLessThanOrEqual(
+          (cells[i - 1] as { p95Error: number }).p95Error,
+        );
+      }
+    }
+  }, 60_000);
+});

@@ -56,3 +56,51 @@ error bar but a sentence: the sampling term is negligible next to the
 instrument's other stated conditions. That is a finding, not a
 disappointment. Whatever the numbers say, they are recorded below and
 scored against this section, not edited.
+
+
+THE BOUNDS, MEASURED, 5 September 2026
+======================================
+
+Seed 20260905, 2000 draws per cell, computed by
+src/core/samplingBounds.ts and recomputed by
+test/core/samplingBounds.test.ts on every run:
+
+  15 fps  P=0.05  p95 0.0022
+  15 fps  P=0.15  p95 0.0022
+  15 fps  P=0.30  p95 0.0022
+  25 fps  P=0.05  p95 0.0013
+  25 fps  P=0.15  p95 0.0013
+  25 fps  P=0.30  p95 0.0013
+  30 fps  P=0.05  p95 0.0011
+  30 fps  P=0.15  p95 0.0011
+  30 fps  P=0.30  p95 0.0011
+  60 fps  P=0.05  p95 0.0006
+  60 fps  P=0.15  p95 0.0006
+  60 fps  P=0.30  p95 0.0006
+
+THE MECHANISM, VISIBLE IN THE TABLE. Every cell's p95 is exactly two
+samples' worth of the window: 2/900 at 15 fps, 2/1500 at 25, 2/1800
+at 30, 2/3600 at 60. The error is boundary quantization — each
+closure edge can miscount at most about one sample — and the closure
+count distribution is the same at every P, which is why the columns
+are identical down the fractions. The bound in SAMPLES is the
+constant; the bound in fraction is that constant over the sample
+count.
+
+THE PREDICTION, SCORED. All four hold, (i) and (ii) by an order of
+magnitude: 0.0011 against the 0.010 bound at 30 fps, 0.0022 against
+0.020 at 15. (iii): halving the rate doubles the bound to the digit.
+(iv): the P=0.30 bound is not merely under twice the P=0.05 bound, it
+is identical — the fraction is not the driver at all, the edge count
+is.
+
+WHAT IT MEANS. The sampling term of PERCLOS is a rounding error: a
+tenth of a percentage point at 30 fps, two tenths at 15. Nobody needs
+an error bar for it; they need the sentence row 10.10b will print —
+that the number's real conditions are the instrument-adjusted shut
+line (amendment 6) and the landmark floor
+(docs/aperture-noise-floor.txt), not the camera's frame rate. For
+blink RATE the story is the opposite and already committed: the catch
+tables in docs/blink-sample-rate.txt show shallow quick blinks LOST
+outright at 25-30 fps, so the rate's honest label is "a floor, not a
+count" — and 10.10b quotes each number's own document.
