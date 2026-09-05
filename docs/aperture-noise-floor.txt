@@ -1,0 +1,55 @@
+THE APERTURE NOISE FLOOR, AND A PREDICTION
+==========================================
+
+Written 5 September 2026 (roadmap 10.7a), before any statistic below
+is computed, in the predict-then-verify discipline.
+
+WHY IT EXISTS
+-------------
+Every millimetre the page prints rides apertureMm, and no committed
+number says how much that measurement wobbles when nothing happens.
+The shallow-blink work talks in 0.4 mm bands, the long-closure line
+sits at 40 percent of a baseline, the validation round chased 0.1 mm
+disagreements — all against a noise floor nobody has measured. This
+row measures it from data already in the repository: the recorded
+fixture test/fixtures/session-01.json, 300 frames of the owner's own
+face through a real webcam, the same frames the aperture tests already
+read at 1280x720 (the fixture's established test convention).
+
+THE METHOD, FIXED NOW
+---------------------
+The real pipeline, both eyes: core's apertureMm with the committed eye
+and iris index sets, at 1280x720. A frame is EXCLUDED when either
+eye's aperture reads below 75 percent of that eye's own session
+median — the fixture holds two real blinks, and a noise floor polluted
+by blink slopes would not be a floor. The excluded count is reported.
+No pose gate is applied in this row: the fixture is a straight-face
+calibration clip, and the gate joins in row b, where the cross-eye
+refusal threshold is DERIVED rather than chosen. Statistics: over
+kept frames, the median and 95th percentile of the absolute
+frame-to-frame aperture change per eye (a delta counts only when both
+of its endpoint frames are kept — a delta bridging an excluded blink
+would smuggle the blink back in), and the median and 95th percentile
+of the absolute left-minus-right disagreement per frame.
+
+THE PREDICTION
+--------------
+Committed before the tool runs:
+
+  (i)   per-eye median |frame-to-frame change| at or below 0.15 mm,
+  (ii)  per-eye 95th percentile at or below 0.50 mm,
+  (iii) cross-eye median |left - right| between 0.2 and 1.5 mm,
+  (iv)  the exclusion rule keeps at least 270 of the 300 frames.
+
+Grounds: the two real blinks span a few frames each; a still face's
+landmark jitter has always looked small next to the 0.4 mm band the
+sampling work discusses; and the eyes of one face genuinely differ,
+so the cross-eye number should be well above the temporal one.
+
+WHAT THE NUMBER IS AND IS NOT. This floor is ONE face, ONE camera,
+ONE lighting, at the fixture's frame rate. It is the repository's
+first committed wobble number, not a property of the instrument in
+general; the per-device evaluation matrix (row 11.6) is where a
+device-conditioned version would come from. Whatever the numbers say,
+they are recorded below and the prediction is scored against them,
+not edited.
