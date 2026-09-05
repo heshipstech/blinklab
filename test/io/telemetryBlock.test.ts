@@ -35,10 +35,14 @@ function makeTarget() {
     }
   }
 
-  const realSendBeacon = vi.fn(
-    (_url: string | URL, _data?: BodyInit | null) => true,
-  );
-  const navigator = { sendBeacon: realSendBeacon };
+  const realSendBeacon = vi.fn(() => true);
+  // Typed on the field, not with named mock parameters: the real
+  // sendBeacon takes (url, data?), so the installer and the call sites
+  // need that signature, but naming unused params on the mock trips
+  // no-unused-vars. A zero-arg implementation is assignable to it.
+  const navigator: {
+    sendBeacon: (url: string | URL, data?: BodyInit | null) => boolean;
+  } = { sendBeacon: realSendBeacon };
 
   const target = {
     fetch: realFetch as unknown as typeof fetch,
