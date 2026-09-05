@@ -1,3 +1,27 @@
+**THE MEASUREMENT RATCHET, 5 September 2026 (row 10.1a) — the published
+corpus numbers are now bound to the commit that measured them, and the
+ratchet caught a real staleness in its first hour.** docs/eyeblink8-result.txt
+gains a "Built from commit 65e8e7c" anchor (the 2 September awake run, the
+most recent to reproduce F1 83.8 digit for digit), and
+tools/detectorRatchet.mjs asks git whether any of 16 named detector-source
+modules gained a commit past that anchor. Touched and undeclared is a red
+build naming the commits; a caveat still reading "not yet re-measured"
+beside a fresh anchor is a red build from the other side, so the ratchet
+retires its own caveats. A disk-existence test pins the watched list, so a
+rename cannot silently drop a file out of the watch. The bootstrap
+immediately proved the mechanism: the guided blink-line commits (fab006c,
+bf5bfca, dce2b87, 1a6c88f — the last touching blink.ts itself) postdate the
+anchor, so the published numbers were measured before the detector learned
+to read a personal guided line. Argued corpus-neutral (the guided line
+engages only when a stored calibration exists, and a clip run starts with
+none), but argued is not measured: the honest DETECTOR CHANGED caveat now
+stands in the result file until the next corpus run — 10.8's regression run
+— moves the anchor. 12 tests, watched failing first. No src change, no
+corpus gate. The suite is 918 unit tests, 26 end to end tests, and 376
+Python tests of which 2 skip, all green. Next: 10.1b (the MODEL_CARD
+measurement-uncertainty paragraph wired into resultGuard), then 10.2 (the
+vendored-model provenance hashes).
+
 **IRIS POSITIVE CONTROL, THE INSTRUMENT AND THE PREDICTION, 5 September
 2026 (row 10.5, the era's first increment) — the caveat the iris result
 left standing gets its committed decision rule before any data.** The iris
