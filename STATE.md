@@ -1,3 +1,25 @@
+**THE CONDITIONS LINES ON THE PAGE, 5 September 2026 (row 10.10b) — the
+two sampling stories stand beside the numbers they scope, and Phase 10's
+unblocked work is done.** Two static sentences, built in core
+(samplingBounds.ts) so tests can hold them to their documents, placed by
+main.ts: the Blinks box now says the count is a floor, not a count (quick
+shallow blinks fall between frames at 25-30 fps,
+docs/blink-sample-rate.txt), and the Eyes box says PERCLOS's sampling term
+is at most ±0.002 even at 15 fps while naming the shut line and the
+landmark floor as the number's real conditions (docs/sampling-bounds.txt,
+docs/aperture-noise-floor.txt). The ±0.002 constant is pinned to the
+committed table's own maximum, parsed from the doc, so the sentence and
+the table cannot move apart; a one-test Playwright spec proves both
+sentences actually render, because a created node nobody appended is the
+9.4b lesson. With this, every Phase 10 row that could move without the
+maintainer has moved: 10.1a, 10.1b, 10.2, 10.4, 10.7a, 10.10a, 10.10b
+done; 10.5's run, 10.3's ruling, 10.6, 10.8's regression run and 10.9 wait
+on the maintainer's data or decisions; 10.7b/c wait on the pose-gate pass
+and any future ruler proposal. The suite is 952 unit tests, 27 end to end
+tests, and 376 Python tests of which 2 skip, all green. Next: the
+maintainer's decisions, or Phase 12's instrument rows if the maintainer
+prefers building over deciding.
+
 **THE PERCLOS SAMPLING BOUND, 5 September 2026 (row 10.10a) — the last
 unmeasured error term on the page turns out to be a rounding error, with
 its mechanism visible in the table.** Prediction first, its own commit;
