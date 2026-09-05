@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import type { FeatureRecord } from "../../src/core/featureRecord";
+import {
+  FEATURE_RECORD_CAP,
+  type FeatureRecord,
+} from "../../src/core/featureRecord";
 import {
   IRIS_SAMPLE_CAP,
   PROTOCOL_ID,
   deviceMetadataRows,
   faceDetectedFraction,
+  featureRecordOverrunRows,
   medianIrisWidthPx,
   observedDurationSeconds,
   provenanceMetadataRows,
@@ -340,5 +344,31 @@ describe("the pseudonym row", () => {
     expect(pseudonymMetadataRows("maple 7")).toEqual([
       "# participant_pseudonym: maple 7",
     ]);
+  });
+});
+
+describe("the buffer-overrun warning rows (roadmap 10.4)", () => {
+  it("writes nothing at all for a session inside the buffer", () => {
+    // Absence, never "0": an under-cap session is complete, and a row
+    // saying zero were dropped would teach readers to ignore the key.
+    expect(featureRecordOverrunRows(0)).toEqual([]);
+  });
+
+  it("counts exactly what overran, in loader-parseable rows", () => {
+    const rows = featureRecordOverrunRows(213);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toBe("# feature_records_dropped: 213");
+    expect((rows[1] ?? "").startsWith("# feature_records_note: ")).toBe(true);
+    expect(rows[1]).toContain("213");
+    expect(rows[1]).toContain("NOT in this file");
+  });
+
+  it("names the cap it overran, from the one shared constant", () => {
+    // The note must cite the same 3600 the buffer actually enforces,
+    // or a future cap change would leave the file explaining itself
+    // with a number that was never true of it.
+    expect(featureRecordOverrunRows(1)[1]).toContain(
+      String(FEATURE_RECORD_CAP),
+    );
   });
 });

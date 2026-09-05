@@ -1,6 +1,6 @@
 import type { CalibrationWindow } from "./calibrationWindow";
 import type { DeliveryRates } from "./deliveryRate";
-import type { FeatureRecord } from "./featureRecord";
+import { FEATURE_RECORD_CAP, type FeatureRecord } from "./featureRecord";
 import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
 import { percentile } from "./statistics";
 
@@ -393,5 +393,31 @@ export function lightStimulusMetadataRows(startMs: number | null): string[] {
     line("light_phase_ms", LIGHT_PHASE_MS),
     line("light_cycles", LIGHT_CYCLES),
     line("light_stimulus_start_ms", startMs),
+  ];
+}
+
+/**
+ * The buffer-overrun warning, roadmap 10.4. The per-second buffer
+ * keeps FEATURE_RECORD_CAP rows — about an hour — and drops the
+ * oldest silently past that, so a two-hour session exports a file
+ * that looks complete while its first hour is gone. The blink log
+ * already refuses to look complete when it is not (its WARNING line);
+ * this is the same honesty for the per-second export: a counted row a
+ * loader can read, and a sentence a person can. Absence when nothing
+ * was dropped, never a zero — an under-cap session is complete, and a
+ * zero row would teach readers to ignore the key.
+ */
+export function featureRecordOverrunRows(droppedCount: number): string[] {
+  if (droppedCount <= 0) {
+    return [];
+  }
+  return [
+    line("feature_records_dropped", droppedCount),
+    line(
+      "feature_records_note",
+      `the oldest ${String(droppedCount)} per-second rows overran the ` +
+        `${String(FEATURE_RECORD_CAP)}-row buffer and are NOT in this ` +
+        `file; durations and trends describe only what remains`,
+    ),
   ];
 }
