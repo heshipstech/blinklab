@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. This is a learning project. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.**
 
-> Revised 4 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 5 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically on every merge to main. You need a webcam and a browser that allows camera access.
 
@@ -45,7 +45,7 @@ when the committed README drifts from it. -->
 - **Does it find the blinks a human found?** On Eyeblink8, recall 83.6% (341 of 408 found), precision 84.0% (65 invented), F1 83.8%, measured from `eyeblink8-measured-rearm`. **That table is a property of the machine it was measured on.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall 85.0% (347 of 408), precision 96.4% (13 invented), F1 90.4%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced this table IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, browser binary and fifteen commits of instrument change. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So the number above is a measured property of the instrument and the prepared files on two machines — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 - **Does any of it track reported sleepiness?** On the small DROZY set, no — a null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the 20 of 36 DROZY sessions this instrument can measure. On the larger UTA-RLDD set, yes. Across 54 self-recording strangers (148 videos, and the model was never trained on anyone it was scored against), the pre-registered classifier separates a coarse self-reported drowsiness state better than chance: three-class balanced accuracy 0.498 where guessing scores 0.333, and alert-vs-drowsy 0.732 where guessing scores 0.500, both past a 1000-shuffle label-scramble control at p 0.001. The plan predicted a null in writing and was WRONG in the one way it had named — a weak effect that DROZY (13 people) and a 12-subject pilot were too small to see, and 54 were not. It is MODEST and not driving-relevant: the label is self-reported and noisy, each person recorded one video per state so the clips differ in more than drowsiness, nobody was driving, and this stays a demo, not a safety or medical device. Full records: [docs/uta-rldd-result.txt](docs/uta-rldd-result.txt), [docs/drozy-result.txt](docs/drozy-result.txt). Cite: Massoz, Langohr, Francois and Verly, WACV 2016. Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
 - **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion not met, the baseline's criterion FAILED, the frame-rate gate's criterion not met. Full record: [docs/validation-round.txt](docs/validation-round.txt).
-- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that has never been shown to correspond to anyone's actual sleepiness.
+- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the full set; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that, in a pre-registered test (roadmap 9.1), separated self-reported alert from drowsy across strangers above chance (AUC 0.70), but has not been validated as a per-person measure of anyone's actual sleepiness.
 
 <!-- results:end -->
 
@@ -524,10 +524,15 @@ evidence than a null result on the whole of it. They cannot be recovered:
 DROZY carries no blink annotation, and lowering the frame rate floor to
 include them would be choosing a threshold to get a result.
 
-**What this means for the alertness score on this page.** It remains a
-documented heuristic that has never been shown to correspond to anyone's
-actual sleepiness. That was true before this measurement and it is still
-true after it.
+**What this means for the alertness score on this page.** This DROZY null
+did not show the score tracking sleepiness — but a later pre-registered test
+did find a signal: roadmap 9.1 measured the score against UTA-RLDD and it
+separated self-reported alert from drowsy across strangers above chance (AUC
+0.70, p 0.001). So the honest statement is narrower than "never shown to
+correspond to anyone's sleepiness": the score is above chance at telling
+self-reported alert from drowsy across people, but it has not been validated
+as a per-person measure of anyone's actual sleepiness, and this DROZY sample
+(missing its sleepiest sessions) could not add to that.
 
 Full output in [docs/drozy-result.txt](docs/drozy-result.txt), reproducible
 with `analysis/tools/analyse_drozy.py`.
