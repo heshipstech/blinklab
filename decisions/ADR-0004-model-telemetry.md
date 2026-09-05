@@ -65,3 +65,52 @@ that it cannot be blocked.
   model itself. It does not buy silence.
 - Open: whether the reporting can be blocked, and at what cost. Until
   that is answered this ADR is the honest statement of the position.
+
+## The answer, 5 September 2026: it can be blocked, cheaply
+
+The Decision reserved this space for the result of the blocking
+increment, "even if the answer is that it cannot be blocked". The answer
+is that it can.
+
+Option 1 from the list above — a MediaPipe option — does not exist: the
+bundle exposes no flag to silence the log. Option 2, a build-time patch
+of the vendored bundle, was rejected as a maintenance trap: it would have
+to be reapplied on every dependency bump and would silently rot the first
+time the endpoint string moved. The Content Security Policy candidate
+(option 3) works against the network but collides with the same-origin
+WASM load and, being declarative, cannot hand the caller a synthetic
+success, so a fire-and-forget POST could stall.
+
+What shipped is a fourth path the original list did not name: intercept
+the browser's own send primitives before the model is ever created. A
+pure matcher, `src/core/telemetryPolicy.ts`, decides that any
+`googleapis.com` host is telemetry the app has no legitimate reason to
+reach — the model and its WASM runtime are vendored and served from this
+origin, so nothing here calls that domain on purpose. An installer,
+`src/io/telemetryBlock.ts`, wraps `fetch`, `XMLHttpRequest` and
+`navigator.sendBeacon` so a blocked URL is dropped inside the page and
+the caller is handed a synthetic 204 or a `true`, and `main.ts` installs
+it at the very top, before `loadLandmarker` runs.
+
+The block is net-shaped rather than surgical on purpose: which of the
+three transports MediaPipe reaches for is its implementation detail and
+could change under us, so all three are covered. The proof is two
+Playwright assertions: a deterministic one that calls all three
+transports at the exact endpoint from inside the page and sees nothing
+reach the network, and a live one that drives a real camera session past
+the sixty-second report point. The live test was checked for teeth —
+with the guard disabled it captured the real
+`odml.pa.googleapis.com/v1/log` POST and went red — so its green is
+evidence the guard works, not evidence the library stayed quiet.
+
+- Good: the disclosure a few paragraphs up is now paired with a
+  mechanism. The library still _attempts_ the report; it no longer
+  _completes_ it, and an end-to-end test says so on every pull request.
+- Bad: this is interception, not removal. A future MediaPipe that
+  reported over a transport we do not wrap, or to a host we do not match,
+  would slip through. The live test is the tripwire for that: if the
+  report ever leaves again, it goes red.
+- Not done: the claims corrected in the Decision stay corrected as
+  written. Blocking the call does not license a fresh "sends nothing"
+  sentence anywhere; the retired phrases are still retired, and the
+  disclosure still names the dependency's attempt.

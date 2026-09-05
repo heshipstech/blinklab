@@ -261,6 +261,7 @@ import {
   steppingWarning,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
+import { installTelemetryBlock } from "./io/telemetryBlock";
 import {
   drawDots,
   drawFittedCircle,
@@ -269,6 +270,14 @@ import {
   readVideoPixels,
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
+
+// ADR-0004: the vendored MediaPipe bundle POSTs usage statistics to
+// Google about a minute after the face model is created. This puts the
+// guard up before anything else runs, so no request can leave the page
+// while the model is loaded and driven below. Your video and your
+// measurements never left the browser; now the model's own report does
+// not either.
+installTelemetryBlock();
 
 // SVG needs its own namespace or the elements render as unknown tags.
 const SVG_NS = "http://www.w3.org/2000/svg";
