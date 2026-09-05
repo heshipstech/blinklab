@@ -137,6 +137,7 @@ import {
   lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
+  featureRecordOverrunRows,
   sessionMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
@@ -958,6 +959,7 @@ function resetSession(): void {
   frozenShutBaselineMm = null;
   alertState = initialAlertState;
   featureRecords = [];
+  featureRecordsDropped = 0;
   lastRecordAtMs = null;
   exportButton.disabled = true;
   exportBlinksButton.disabled = true;
@@ -2350,6 +2352,10 @@ function exportSession(): void {
       measurementFrame,
       { gated: poseGateFrames, valid: poseValidFrames },
     ),
+    // Only when the hour-long buffer overran: the file says how many
+    // of its oldest seconds are missing rather than looking complete
+    // (roadmap 10.4, the blink log's WARNING precedent).
+    ...featureRecordOverrunRows(featureRecordsDropped),
     ...kssMetadataRows(kssBefore, kssAfter),
     // Appended last: new keys after every row a reader already
     // parses. The commit comes from the meta tag the build stamps
@@ -2551,10 +2557,10 @@ function participantReportText(): string {
     },
   ];
   const truncations: string[] = [];
-  if (featureRecords.length >= FEATURE_RECORD_CAP) {
+  if (featureRecordsDropped > 0) {
     truncations.push(
-      `feature records: the last ${String(FEATURE_RECORD_CAP)} kept, ` +
-        `oldest discarded`,
+      `feature records: the oldest ${String(featureRecordsDropped)} ` +
+        `discarded, the last ${String(FEATURE_RECORD_CAP)} kept`,
     );
   }
   if (irisWidthSamples.length >= IRIS_SAMPLE_CAP) {
@@ -2771,6 +2777,11 @@ const panelSummaryLabel = document.createElement("p");
 const panelList = document.createElement("ul");
 panelList.setAttribute("aria-label", "Score contributions");
 let featureRecords: FeatureRecord[] = [];
+// How many per-second rows the cap has discarded this session. The
+// buffer drops the oldest silently, so this count is the only witness
+// that a long session's export is missing its beginning; it reaches
+// the file via featureRecordOverrunRows (roadmap 10.4).
+let featureRecordsDropped = 0;
 let lastRecordAtMs: number | null = null;
 // The frame clock is milliseconds since page load, which is right
 // for durations and useless for dating a session, so the wall clock
@@ -3783,6 +3794,9 @@ function processFrame(
             ? "Pupil diameter: no valid measurement"
             : `Pupil diameter: ${framePupilDiameterMm.toFixed(1)} mm`,
         );
+        if (featureRecords.length >= FEATURE_RECORD_CAP) {
+          featureRecordsDropped += 1;
+        }
         featureRecords = pushBounded(
           featureRecords,
           assembleFeatureRecord({

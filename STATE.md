@@ -1,3 +1,24 @@
+**LONG-SESSION EXPORT HONESTY, 5 September 2026 (row 10.4) — the export
+says how many of its oldest seconds are missing instead of looking
+complete.** The per-second buffer keeps 3600 rows and drops the oldest
+silently, so a two-hour session exported a file whose first hour was gone
+without a trace; only the live page mentioned a truncation, and pages
+close. main.ts now counts every drop at the drop site
+(featureRecordsDropped, reset with the session), and a nonzero count
+writes two loader-parseable rows into the export via
+featureRecordOverrunRows in core/sessionMetadata.ts:
+`feature_records_dropped: N` plus a plain-sentence note naming the cap and
+what is absent — the blink log's WARNING precedent applied to the second
+export. Absent when nothing dropped, never a zero row (a key that is
+usually zero trains readers to ignore it). The participant report's
+truncation line carries the same count. 3 tests, watched failing first;
+LEARNING gains the count-what-you-drop note. Src change, no measurement
+changed, no corpus gate (no detector source touched — the ratchet list
+stays quiet). The suite is 935 unit tests, 26 end to end tests, and 376
+Python tests of which 2 skip, all green. Next: 10.10 (sampling-error
+bounds), the last Phase 10 row that needs nothing from the owner besides
+10.6-10.9's data questions.
+
 **MODEL PROVENANCE ON THE CARD, 5 September 2026 (row 10.2) — the
 instrument's third leg is pinned before the change that would move it.**
 MODEL_CARD gains a "Model provenance" section: the face model's sha256
