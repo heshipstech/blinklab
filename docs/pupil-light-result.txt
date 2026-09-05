@@ -61,6 +61,18 @@ WHAT THIS MEANS
   eyeglasses: lens reflections, especially of the bright stimulus screen,
   fall where the estimator looks.
 
+CORROBORATED BY A LIVE CHECK
+  After the run, the maintainer watched the live per-frame pupil readout
+  under deliberately favourable conditions -- close, no eyeglasses, bright
+  even light, holding still. The estimator resolved the pupil only
+  intermittently: a value would appear for a second or less, then the
+  readout returned to "no valid measurement," never holding. This confirms
+  the inconclusive verdict is a property of the INSTRUMENT on this eye and
+  camera, not an artefact of one recording's conditions -- even at its best,
+  the webcam iris interior is too coarse to sustain a trustworthy pupil
+  segmentation. So the verdict is taken as final for this hardware, and no
+  further run was recorded.
+
 WHAT WOULD CHANGE THIS, AND IS INVITED
   The plan says a later run that clears the gate belongs on this page. A
   bigger iris in pixels (sitting closer, within the camera's focus) and no
