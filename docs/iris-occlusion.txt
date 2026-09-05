@@ -142,3 +142,64 @@ only recall left that parameters can move is the ~5 re-arm/refractory
 state-machine drops (docs/miss-character.txt, a real but small
 route B) and, as a design decision rather than a bug, the 9
 long-closure misses the 500 ms max-blink-duration rejects.
+
+
+THE POSITIVE CONTROL, PRE-REGISTERED, 5 September 2026 (roadmap 10.5)
+=====================================================================
+
+Written before any caught-blink iris data is read, to close the caveat
+the section above left standing: the iris result shows the ratio does
+not FALL on the misses, but not whether it falls on anything. The
+control reads the same signal on the blinks the detector DID catch —
+the 341 matched found blinks of the awake corpus run — against each
+clip's own open baseline just before each span.
+
+THE EXTRACTION CONTRACT. Same shape as the miss extraction: per-frame
+rows with columns clip, blink_id, spanStart, spanEnd, frameIndex,
+irisAspectRatio, insideSpan (apertureMm and blinkLineMm may ride along
+and are not read). Spans are the detector's own found-blink frame
+spans; the baseline is up to 60 frames before spanStart with
+insideSpan 0. The extraction is produced on the machine that holds the
+measured folder, from the tools/measure_corpus.mjs per-frame traces —
+the raw traces stay uncommitted as before; only the per-blink table of
+numbers lands under docs/evidence/. The committed tool,
+analysis/tools/iris_positive_control.py, computes the per-blink table
+(open_baseline_iris_median, in_span_iris_median, in_span_iris_min per
+blink) and prints the caught-blink numbers beside the committed miss
+numbers.
+
+THE PREDICTION. The iris does not show usable dynamic range on the
+caught blinks either:
+
+  (i)  the median across caught blinks of the per-blink in-span
+       MINIMUM stays at or above 0.75, and
+  (ii) fewer than 25% of caught blinks show any in-span frame
+       below 0.70.
+
+Grounds: the recorded fixture's two detected blinks bottomed at ~0.83
+against a 0.92 open baseline; the model held a near-circular iris
+behind lids a human marked fully shut; MediaPipe's iris refinement
+fits a circle, and that mechanism has no reason to spare deeper
+closures at ~30 fps, where the fully shut moment spans a frame or two.
+
+THE DECISION RULE, fixed now. Over analyzable caught blinks (at least
+20 required, else the tool refuses; a blink with no finite in-span
+ratio or fewer than 10 finite baseline frames is dropped and counted,
+and more than 20% dropped is a refusal):
+
+  range_absent   fewer than 25% of blinks dip below 0.70
+  range_present  75% or more of blinks dip below 0.70
+  partial        anything between, reported as measured, both
+                 readings stated, no simple sentence claimed
+
+WHAT EACH OUTCOME MEANS. range_absent: the iris signal is useless as a
+closure witness at these optics IN GENERAL, and the caveat closes in
+its stronger form — not merely useless on the misses. range_present:
+the signal has range, so the 49 misses' flatness is specific to
+closures the model cannot see — the ceiling conclusion sharpens rather
+than weakens, and fusing the iris for BORDERLINE cases becomes a
+candidate again, gated on its own predict-then-verify. partial: the
+per-blink table is the result.
+
+This prediction is not edited after the extraction is read; the
+outcome becomes a new dated section below.
