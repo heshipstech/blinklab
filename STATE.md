@@ -1,3 +1,32 @@
+**MODEL TELEMETRY BLOCKED, 5 September 2026 (ADR-0004's open question,
+answered) — the report the vendored model sends to Google no longer leaves
+the browser.** ADR-0004 recorded that the MediaPipe bundle POSTs usage
+statistics to `odml.pa.googleapis.com/v1/log` about sixty seconds after the
+face model is created, needing no detections, and left blocking it as a
+timeboxed open question. The block ships now, in front of the browser's own
+send primitives rather than by forking the dependency: a pure
+`isBlockedTelemetryUrl` in `src/core/telemetryPolicy.ts` decides, on a
+dot-boundary host match, that any `googleapis.com` host is telemetry the app
+never has a reason to reach (the model and WASM are vendored same-origin);
+`src/io/telemetryBlock.ts` wraps `fetch`, `XMLHttpRequest` and
+`navigator.sendBeacon` to drop those URLs and hand back a synthetic success,
+and `main.ts` installs it before the model loads. The core matcher and the io
+installer are unit-tested (18 tests, host near-misses and all three
+transports); a Playwright spec proves it twice — deterministically, by
+calling all three transports at the exact endpoint from inside the page and
+seeing nothing reach the network, and live, by driving a real session past
+the sixty-second mark. The live test was verified to have teeth: with the
+guard disabled it captured the real `odml.pa.googleapis.com/v1/log` POST and
+failed, confirming both that MediaPipe fires it here and that the guard is
+what stops it. ADR-0004 now records the answer (its option 1, revisited); the
+claim guard's retired phrases are untouched — this is a block, not a fresh
+"sends nothing" claim, and the disclosure paragraph still names the
+dependency's attempt. The suite is 906 unit tests, 26 end to end tests, and
+359 Python tests of which 2 skip, all green. Next: the maintainer's short
+list is now one item shorter (the telemetry POST is handled); E5, the
+alertness README framing (done, #393), and the owner-gated validation runs
+remain, pending the possible device-oriented pivot.
+
 **PHASE 9 CLOSED AND TRACKER RECONCILIATION, 5 September 2026 — the docs
 brought level with the code, honestly.** After a full audit of every tracker
 (ROADMAP, REMEDIATION, NEEDS-REVIEW, the August audit reports, the plan/result
