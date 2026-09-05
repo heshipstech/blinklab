@@ -169,6 +169,10 @@ import {
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
+  blinkCountConditionsSentence,
+  perclosConditionsSentence,
+} from "./core/samplingBounds";
+import {
   BLINK_TABLE_HEADERS,
   appendEvent,
   blinkTableRow,
@@ -2173,6 +2177,15 @@ let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
+// The 10.10b conditions lines: static, set once, each quoting its own
+// committed document. The sentences live in core so a test can hold
+// them to the documents' numbers; these nodes are only where they
+// stand on the page — the blink one beside the count it bounds, the
+// PERCLOS one beside the share it scopes.
+const blinkConditionsNote = document.createElement("p");
+blinkConditionsNote.textContent = blinkCountConditionsSentence();
+const perclosConditionsNote = document.createElement("p");
+perclosConditionsNote.textContent = perclosConditionsSentence();
 const perclosLabel = document.createElement("p");
 let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
@@ -4314,6 +4327,7 @@ const sessionBox = box(
 const blinksBox = box(
   "Blinks",
   blinkLabel,
+  blinkConditionsNote,
   baselineLabel,
   blinkCalibrateButton,
   blinkCalibrationStatus,
@@ -4328,6 +4342,7 @@ const eyesBox = box(
   earLabel,
   stabilityLabel,
   perclosLabel,
+  perclosConditionsNote,
   longClosureLabel,
   pupilLabel,
 );

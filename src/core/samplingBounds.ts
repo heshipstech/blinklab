@@ -126,6 +126,42 @@ export function sampledClosedFraction(
   return samples === 0 ? 0 : closed / samples;
 }
 
+/**
+ * The committed table's worst cell (15 fps), pinned by test against
+ * docs/sampling-bounds.txt so the sentence below and the table cannot
+ * move apart.
+ */
+export const WORST_PERCLOS_SAMPLING_BOUND = 0.0022;
+
+/**
+ * The on-page conditions line for PERCLOS, roadmap 10.10b. The sweep
+ * found the sampling term negligible, and saying only that would read
+ * as "this number is exact" — so the sentence names what actually
+ * conditions the number, each with its committed document.
+ */
+export function perclosConditionsSentence(): string {
+  return (
+    "Conditions: the sampling term is at most ±0.002 of the share even " +
+    "at 15 frames per second (docs/sampling-bounds.txt). What bounds " +
+    "this number is the instrument-adjusted shut line and the landmark " +
+    "noise floor (docs/aperture-noise-floor.txt), not the frame rate."
+  );
+}
+
+/**
+ * The on-page conditions line for blink counts, the other half of
+ * 10.10b. Rate's sampling story is the opposite of PERCLOS's and was
+ * committed first: quick shallow blinks are lost outright between
+ * frames at ordinary webcam rates, so the count is a floor.
+ */
+export function blinkCountConditionsSentence(): string {
+  return (
+    "Conditions: the count is a floor, not a count — at 25 to 30 " +
+    "frames per second a quick shallow blink can fall between frames " +
+    "and be lost outright (docs/blink-sample-rate.txt)."
+  );
+}
+
 export type SamplingBoundCell = {
   fps: number;
   fraction: number;

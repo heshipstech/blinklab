@@ -6,8 +6,11 @@ import {
   SAMPLING_BOUND_FRACTIONS,
   SAMPLING_BOUND_SEED,
   SAMPLING_WINDOW_S,
+  WORST_PERCLOS_SAMPLING_BOUND,
+  blinkCountConditionsSentence,
   generateClosures,
   lcg,
+  perclosConditionsSentence,
   sampledClosedFraction,
   samplingBoundsTable,
   trueClosedFraction,
@@ -83,6 +86,41 @@ describe("the sampler", () => {
       0.1,
       12,
     );
+  });
+});
+
+describe("the on-page conditions sentences (roadmap 10.10b)", () => {
+  it("the worst-bound constant is the committed table's own maximum", () => {
+    // Parsed from the doc, not re-swept: the sweep already guards the
+    // table, and this pins the sentence's number to that table's worst
+    // cell so neither can move alone.
+    const doc = readRepoFile("docs/sampling-bounds.txt", repoRoot());
+    const bounds = [...doc.matchAll(/p95 (0\.\d{4})/g)].map((match) =>
+      Number(match[1]),
+    );
+    expect(bounds.length).toBeGreaterThanOrEqual(12);
+    expect(Math.max(...bounds)).toBe(WORST_PERCLOS_SAMPLING_BOUND);
+  });
+
+  it("the PERCLOS sentence quotes its document and scopes its claim", () => {
+    const sentence = perclosConditionsSentence();
+    expect(sentence).toContain("sampling term");
+    expect(sentence).toContain("±0.002");
+    expect(sentence).toContain("15 frames per second");
+    expect(sentence).toContain("docs/sampling-bounds.txt");
+    // The number's REAL conditions, named so the negligible term does
+    // not read as "this number is exact".
+    expect(sentence).toContain("shut line");
+    expect(sentence).toContain("docs/aperture-noise-floor.txt");
+  });
+
+  it("the blink-count sentence says floor, not count, and cites the tables", () => {
+    const sentence = blinkCountConditionsSentence();
+    expect(sentence).toContain("floor, not a count");
+    expect(sentence).toContain("docs/blink-sample-rate.txt");
+    // The loss is real at ordinary webcam rates and the sentence must
+    // say where it bites rather than gesture at "low fps".
+    expect(sentence).toMatch(/25|30/);
   });
 });
 
