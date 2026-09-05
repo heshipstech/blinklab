@@ -1,3 +1,26 @@
+**THE PERCLOS SAMPLING BOUND, 5 September 2026 (row 10.10a) — the last
+unmeasured error term on the page turns out to be a rounding error, with
+its mechanism visible in the table.** Prediction first, its own commit;
+then a seeded deterministic sweep (src/core/samplingBounds.ts, hand-rolled
+LCG so the table reproduces bit for bit, seed 20260905, 2000 draws per
+cell) measured the p95 absolute error between a camera's sampled PERCLOS
+and the exact closed fraction, across 15/25/30/60 fps and target fractions
+0.05/0.15/0.30 with a stated closure-generator shape. Every cell's p95 is
+exactly TWO SAMPLES over the window's count — 0.0022 at 15 fps, 0.0013 at
+25, 0.0011 at 30, 0.0006 at 60 — boundary quantization at the closure
+edges, identical across fractions because the edge count, not the
+fraction, is the driver. All four committed predictions held, the two
+headline bounds by an order of magnitude. The consequence for 10.10b is a
+sentence, not an error bar: PERCLOS's real conditions are the
+instrument-adjusted shut line and the landmark noise floor, not the frame
+rate — while blink RATE keeps the opposite story its own committed catch
+tables already tell (shallow quick blinks LOST outright at 25-30 fps: a
+floor, not a count). Result in docs/sampling-bounds.txt, recomputed by
+test on every run. 7 tests, watched failing first. Src change (new pure
+module only; ratchet quiet). The suite is 949 unit tests, 26 end to end
+tests, and 376 Python tests of which 2 skip, all green. Next: 10.10b (the
+on-page conditions lines), or the owner's pending decisions.
+
 **THE APERTURE NOISE FLOOR, 5 September 2026 (row 10.7a) — the
 instrument's wobble is a committed number at last, and it retires one
 worry while sharpening another.** Prediction first, in its own commit
