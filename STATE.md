@@ -1,3 +1,29 @@
+**THE APERTURE NOISE FLOOR, 5 September 2026 (row 10.7a) — the
+instrument's wobble is a committed number at last, and it retires one
+worry while sharpening another.** Prediction first, in its own commit
+(four numeric bounds); then src/core/apertureNoise.ts ran the REAL
+aperture pipeline (both eyes, the fixture's established 1280x720
+convention) over the recorded 300-frame fixture, with a stated stillness
+rule (a frame goes when either eye reads under 75% of its own median —
+the fixture's two real blinks must not pollute a floor) and deltas that
+never bridge an excluded frame. The floor, in
+docs/aperture-noise-floor.txt and recomputed by test on every run:
+median frame-to-frame wobble 0.020/0.019 mm per eye — an order of
+magnitude under the 0.4 mm shallow-blink band, so temporal landmark noise
+is NOT what hides shallow blinks; p95 0.286/0.242 mm — one frame pair in
+twenty jumps a quarter millimetre with nothing happening, the tail any
+per-frame threshold must price in; cross-eye disagreement 0.200 mm median
+and 0.860 mm p95 — ten times the temporal floor, the distribution row
+10.7b must derive its refusal from. All four predictions held, two
+exactly at their committed boundaries (270 kept of a 270 floor; 0.200
+against a band starting at 0.2) — the commit order is what makes that
+credible. One face, one camera, one light; 11.6 owns the
+device-conditioned version. 7 tests, watched failing first. Src change
+(new pure module only; no detector source touched, ratchet quiet). The
+suite is 942 unit tests, 26 end to end tests, and 376 Python tests of
+which 2 skip, all green. Next: 10.10 (sampling-error bounds), then Phase
+10 is done up to the owner-gated rows.
+
 **LONG-SESSION EXPORT HONESTY, 5 September 2026 (row 10.4) — the export
 says how many of its oldest seconds are missing instead of looking
 complete.** The per-second buffer keeps 3600 rows and drops the oldest

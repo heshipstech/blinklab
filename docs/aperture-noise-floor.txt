@@ -53,3 +53,37 @@ general; the per-device evaluation matrix (row 11.6) is where a
 device-conditioned version would come from. Whatever the numbers say,
 they are recorded below and the prediction is scored against them,
 not edited.
+
+
+THE FLOOR, MEASURED, 5 September 2026
+=====================================
+
+Computed by the committed pipeline (src/core/apertureNoise.ts) over
+the fixture, and recomputed by test/core/apertureNoise.test.ts on
+every run, so these numbers cannot drift from the code:
+
+  kept frames: 270 of 300 (30 excluded by the 75 percent rule)
+  left median delta mm: 0.020    left p95 delta mm: 0.286
+  right median delta mm: 0.019   right p95 delta mm: 0.242
+  cross-eye median mm: 0.200     cross-eye p95 mm: 0.860
+
+THE PREDICTION, SCORED. All four hold, two of them exactly at their
+committed boundaries. (i) and (ii): the per-eye medians (0.020 and
+0.019) sit an order of magnitude under the 0.15 bound, and both p95s
+clear 0.50. (iii): the cross-eye median lands at 0.200, on the lower
+edge of the predicted 0.2 to 1.5 band — the two eyes agree better
+than predicted. (iv): exactly 270 frames kept, the committed minimum
+to the frame.
+
+WHAT IT MEANS. On this face, this camera, this light: the aperture's
+frame-to-frame wobble at stillness is about 0.02 mm at the median —
+temporal landmark noise is NOT what hides shallow blinks, which live
+in a band twenty times wider. The tail is fatter: one frame pair in
+twenty jumps a quarter millimetre with nothing happening, which is
+the number any per-frame threshold must respect. And the two eyes of
+this one face disagree by 0.2 mm at the median and 0.86 mm at p95
+while both are open and still — ten times the temporal floor — so a
+cross-eye disagreement refusal (row 10.7b) must be derived from that
+distribution, not from the temporal one, or it would refuse every
+frame of an honest face. One face, one camera, one lighting; the
+device-conditioned version is row 11.6's to measure.
