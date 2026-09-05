@@ -1,3 +1,30 @@
+**IRIS POSITIVE CONTROL, THE INSTRUMENT AND THE PREDICTION, 5 September
+2026 (row 10.5, the era's first increment) — the caveat the iris result
+left standing gets its committed decision rule before any data.** The iris
+result (docs/iris-occlusion.txt) proved the iris aspect ratio does not fall
+on the 49 shallow-aperture misses, and its own caveat named the missing
+control: does the ratio fall on the blinks the detector CAUGHT, or is the
+signal rangeless in general at these optics? The pre-registration is now
+appended to that document — prediction: no usable range (per-blink in-span
+minimum median at or above 0.75, fewer than 25% of caught blinks ever below
+0.70), on the strength of the fixture's two detected blinks bottoming at
+~0.83 and the hallucinated-circle mechanism; decision rule fixed
+(range_absent under 25%, range_present at 75% or more, partial between; at
+least 20 analyzable blinks or the tool refuses; a blink without a finite
+in-span ratio or 10 finite baseline frames is dropped and counted, over 20%
+dropped is a refusal). The committed tool: analysis/blinklab/iris_control.py
+(pure: per_blink_table + summarize, a named IrisControlError per refusal)
+and analysis/tools/iris_positive_control.py (writes the per-blink table,
+prints the caught numbers beside the committed miss numbers). 17 tests,
+watched failing first, a mutation per refusal, plus a pin that reddens if
+the module's constants drift from the committed document. The RUN awaits
+the caught-blink span extraction (same shape as the miss extraction) from
+the machine that holds the measured folder; the row's tick waits with it.
+No src change, no corpus gate. The suite is 906 unit tests, 26 end to end
+tests, and 376 Python tests of which 2 skip, all green. Next: rows
+10.1+10.2 (the measurement ratchets), which must exist before the era's
+first detector-adjacent change.
+
 **THE NEW ERA'S LADDER: PHASES 10-14, 5 September 2026 (ROADMAP amendment 16) — the owner decided the browser prototype continues, and the next ~62
 rows are committed.** The owner's direction: keep the prototype as the
 project's working instrument (it is the thing that can be shown, and the
