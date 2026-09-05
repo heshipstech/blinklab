@@ -1,3 +1,23 @@
+**MEASUREMENT UNCERTAINTY ON THE CARD, 5 September 2026 (row 10.1b) —
+the conditions on the published numbers are now stated where a reader
+looks, and a guard holds them to the results.** MODEL_CARD.md gains a
+"Measurement uncertainty" section stating the two measured conditions the
+record already carried: precision is preparation-conditioned (the 65
+invented blinks are a property of the committed remux, digit for digit on
+two machines; re-encoded derivatives measured 12.4 points lower, one
+clip's false alarms collapsing 19 to 3), and blink duration is
+device-conditioned with the mechanism open (iPhones ~96 ms, Macs 149-166
+ms on the same protocol; comparable within a device, not across, until row
+10.9). resultGuard gains uncertaintySection(): the section must exist, its
+quoted invented count must equal the result file's own (a corpus
+re-measure that moves the count reddens the card until it moves too), and
+the committed condition figures are pinned. Note for the record: while
+building this, the count guard caught its own author shipping a stale test
+count, which is the second time today a guard fired on the increment that
+extended it. No src change, no corpus gate. The suite is 923 unit tests,
+26 end to end tests, and 376 Python tests of which 2 skip, all green.
+Next: 10.2, the vendored-model provenance hashes.
+
 **THE MEASUREMENT RATCHET, 5 September 2026 (row 10.1a) — the published
 corpus numbers are now bound to the commit that measured them, and the
 ratchet caught a real staleness in its first hour.** docs/eyeblink8-result.txt

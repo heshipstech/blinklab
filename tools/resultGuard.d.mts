@@ -55,3 +55,6 @@ export function isShallowRepo(root: string): boolean;
 
 /** Whether this run is continuous integration. */
 export function runningInCi(): boolean;
+
+/** MODEL_CARD's measurement-uncertainty section, or null when absent. */
+export function uncertaintySection(cardText: string): string | null;
