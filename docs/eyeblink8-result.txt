@@ -289,3 +289,39 @@ checked:
 
   with glasses    1 clip(s), recall 83.7%, precision 83.7%
   without         7 clip(s), recall 67.9%, precision 86.7%
+
+
+THE MEASUREMENT RATCHET, 5 September 2026 (roadmap 10.1a)
+=========================================================
+
+Built from commit 65e8e7ca2a6322c8a71f52caabcf2a189972f956 — the awake
+corpus run of 2 September 2026, the most recent run to reproduce the
+numbers at the top of this file digit for digit (a second machine,
+WebKit, all eight clips stepped, the same 67 misses blink for blink as
+docs/evidence/2026-08-21-rearm).
+
+From this line on, tools/detectorRatchet.mjs holds this file to the
+code: a commit that touches a detector source after the built-from
+commit turns the build red unless this file carries a dated caveat
+naming it — and once a corpus run moves the built-from line, a caveat
+still reading "not yet re-measured" is itself a false sentence and
+turns the build red from the other side. Retiring a caveat means
+editing its phrase to "re-measured on <date>", never deleting the
+record.
+
+DETECTOR CHANGED, not yet re-measured, 5 September 2026:
+
+  1a6c88f feat: the detector reads a person's own guided blink line
+  dce2b87 feat: guided calibration stored form and a validated parse
+  bf5bfca feat: guided calibration session state machine, the two
+          phases sequenced in core
+  fab006c feat: guided blink-line calibration, the pure core
+
+  The guided blink-line work landed after the anchor run. Argued
+  corpus-neutral: the personal line engages only when a stored guided
+  calibration exists, and a corpus clip run starts with none, so the
+  detector should fall back to the learned-baseline path unchanged.
+  But argued is not measured, and this caveat stands until the next
+  corpus run moves the built-from line — row 10.8's regression run is
+  already committed to do exactly that. The ratchet finding a real,
+  undeclared staleness in its first hour is the reason it exists.
