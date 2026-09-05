@@ -1,3 +1,27 @@
+**MODEL PROVENANCE ON THE CARD, 5 September 2026 (row 10.2) — the
+instrument's third leg is pinned before the change that would move it.**
+MODEL_CARD gains a "Model provenance" section: the face model's sha256
+(64184e22...), the runtime as the lockfile pins it (@mediapipe/tasks-vision
+1.0.1, integrity prefix quoted, the full sha512 in package-lock.json), and
+the landmarker options in a parseable block — with outputFaceBlendshapes
+stated `false` EXPLICITLY, because that is the pin the blendshape work
+(12.2) must flip in the same increment that flips the code, or CI reds.
+tools/modelProvenance.mjs recomputes every line from the committed
+artifacts; one parser reads the options from the card and from
+src/io/landmarker.ts, so the two cannot drift apart silently. The model
+file and the loader also join the detector ratchet's watch (both untouched
+since the anchor, so the bootstrap stays clean). The WASM bundle is pinned
+through the lockfile integrity rather than hashed from disk:
+public/mediapipe-wasm is generated at build time from the locked package,
+so the lockfile is its committed provenance. The card also states plainly
+that "GPU" is a request, not an observation — the executed delegate is
+unobservable in the vendored API (row 13.5 owns the discriminating
+evidence). 9 tests, watched failing first. No src change, no corpus gate.
+The suite is 932 unit tests, 26 end to end tests, and 376 Python tests of
+which 2 skip, all green. Next: Phase 10's remaining unblocked rows — 10.4
+(the long-session export warning) and 10.10's bounds work — while 10.3
+(the DROZY ruling) and the 10.5 run wait on the owner.
+
 **MEASUREMENT UNCERTAINTY ON THE CARD, 5 September 2026 (row 10.1b) —
 the conditions on the published numbers are now stated where a reader
 looks, and a guard holds them to the results.** MODEL_CARD.md gains a

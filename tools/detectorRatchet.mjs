@@ -51,6 +51,12 @@ export const DETECTOR_SOURCES = [
   "src/core/landmarks.ts",
   "src/core/frameSearch.ts",
   "src/core/frameClock.ts",
+  // The instrument is also the model and its loader (roadmap 10.2): a
+  // swapped .task file or a changed landmarker option moves the corpus
+  // numbers as surely as a detector edit, and the blendshape work
+  // (12.2) arrives through exactly these two files.
+  "public/models/face_landmarker.task",
+  "src/io/landmarker.ts",
 ];
 
 /**
