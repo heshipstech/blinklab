@@ -1,4 +1,6 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 // Roadmap 10.1a, the detector-change measurement ratchet.
 //
@@ -50,6 +52,16 @@ export const DETECTOR_SOURCES = [
   "src/core/frameSearch.ts",
   "src/core/frameClock.ts",
 ];
+
+/**
+ * The watched files that no longer exist on disk. A rename would
+ * otherwise silently drop a file out of the watch — git log on a gone
+ * path returns nothing, forever fresh — so the list must move with the
+ * code or the test that calls this goes red.
+ */
+export function missingSources(root) {
+  return DETECTOR_SOURCES.filter((file) => !existsSync(join(root, file)));
+}
 
 /** The exact caveat phrase the guard keys on. Editing "not yet
  * re-measured" into "re-measured on <date>" after a corpus run is how

@@ -1,13 +1,10 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
 import { describe, expect, it } from "vitest";
 
 import {
-  DETECTOR_SOURCES,
   STALE_MARKER,
   builtFromSha,
   commitsTouchingSince,
+  missingSources,
   ratchetVerdict,
 } from "../../tools/detectorRatchet.mjs";
 import {
@@ -113,9 +110,7 @@ describe("the source list is real", () => {
     // A rename would otherwise silently drop a file out of the watch:
     // git log on a path that no longer exists returns nothing, forever
     // fresh. The list must move with the code or go red.
-    for (const file of DETECTOR_SOURCES) {
-      expect(existsSync(join(root, file)), `${file} is gone`).toBe(true);
-    }
+    expect(missingSources(root)).toEqual([]);
   });
 });
 
