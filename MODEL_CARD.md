@@ -239,6 +239,34 @@ The published figure has been wrong twice, both times through a defect
 in this repository rather than in the data. Both wrong answers remain
 printed in the README beside the current one.
 
+## Model provenance
+
+The numbers in this card were produced by exactly one model, one
+runtime, and one configuration, each pinned here so a swap cannot leave
+this card describing an instrument that no longer exists. A test
+recomputes every line below from the committed artifacts and turns the
+build red on any mismatch.
+
+The face model is `public/models/face_landmarker.task`, sha256
+`64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff`,
+committed to this repository (ADR-0002) and served from the page's own
+origin. The runtime is @mediapipe/tasks-vision `1.0.1`, held by
+`package-lock.json` at integrity `sha512-rvRE2FmAZ6ZxKSw7wq+e` (the
+full hash lives in the lockfile). The landmarker is configured as:
+
+    delegate: "GPU"
+    runningMode: "VIDEO"
+    numFaces: 1
+    outputFacialTransformationMatrixes: true
+    outputFaceBlendshapes: false
+
+"GPU" is a request, not an observation: the vendored API cannot report
+which delegate actually executed and falls back to CPU silently;
+recording discriminating evidence for the executed delegate is roadmap
+row 13.5. The model file and `src/io/landmarker.ts` are watched by the
+detector ratchet (`tools/detectorRatchet.mjs`), so changing either
+without a corpus re-measure or a dated caveat is a red build.
+
 ## Measurement uncertainty
 
 The published numbers carry conditions, and the conditions are part of
