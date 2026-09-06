@@ -11,6 +11,11 @@ progress. Written 6 September 2026 against `main` at 8ad1c06.
 
 ## How to resume
 
+ROADMAP.md's amendment 17 (accepted 6 September 2026) names these items in
+brackets on its rows; that table is the STATUS, this file is the ORDER.
+Where the two disagree on order (10.8a before 13.8; hysteresis before the
+driver), the roadmap's amendment says why and wins.
+
 0. **`- [~]` means DECLINED, not pending.** Stage F lists every finding
    that was confirmed and is not being done, with the reason. A declined
    item is a decision. Do not reopen one without a reason that did not
