@@ -989,7 +989,7 @@ downgraded/medium · M`
       say "about 950"; scope number checks to their section.
       **Findings:** F-059.
 
-- [ ] **B16. SPEC's "kept current" contract is two fields, two states
+- [x] **B16. SPEC's "kept current" contract is two fields, two states
       and ~34 metadata keys behind.** `medium · confirmed ×2 · S`
       **What:** `SPEC.md:18-38` omits `baselineOverResting` and
       `pupilDiameterMm` (`featureRecord.ts:41`, `:55`, `csv.ts:27-36`);
@@ -1003,6 +1003,15 @@ downgraded/medium · M`
       asserts the SPEC key list equals `declared_keys()`. Pull 12.15
       forward.
       **Findings:** F-066, G-export/l-8.
+      **Done:** 6 September 2026, roadmap 10.1f1: SPEC.md's ts block
+      gains `baselineOverResting` and `pupilDiameterMm` and is now held
+      to the CSV columns, which are the record's own field set; the
+      state table gains `ended` and `cameraStopped`; and "### The
+      session metadata block" is a 57-row table of key, when written,
+      value format and reader, held to the writers from both languages.
+      Three corrections to this item's own numbers: the keys are 57 not
+      ~34, six modules write them not one, and `csv.ts` writes none of
+      its own today.
 
 - [ ] **B17. CHANGELOG's living Unreleased section publishes the
       superseded 87.7/83.3/85.4 figure outside every guard.**
@@ -1465,6 +1474,21 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       `declared_keys()`.
       **Depends on:** A3, B16.
       **Findings:** G-export/l-2, G-export/l-3, G-export/l-4,
+      **Half done:** 6 September 2026, roadmap 10.1f1 — the contract
+      half. `analysis/tests/test_metadata_contract.py` and
+      `tools/metadataKeys.mjs` read the keys out of the six writers
+      from both languages and hold them to a hand-written list and to
+      SPEC.md's table. Three corrections to this item's own fix text,
+      each of which would have produced a reader that passed while
+      reading almost nothing: the writers are six, not five; a
+      `line("...")` regex misses the thirteen calls that wrap across
+      lines, `sampled_fps` among them; and `# key:` appears in the
+      comments that describe the format, so a reader that does not
+      strip comments reports a key called `key`. Renaming `sampled_fps`
+      reddened only the Python side until the TypeScript reader was
+      added. The REQUIRED/CONDITIONAL split, the honesty rows on
+      `Session`, and the verdict fixtures are roadmap row 10.1f2.
+
       G-export/l-5, G-export/l-8 (guard half), G-export/l-9.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in

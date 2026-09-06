@@ -35,6 +35,8 @@ export type FeatureRecord = {
   fixationMedianMs: number | null;
   fixating: boolean | null;
   onScreen: boolean | null;
+  baselineOverResting: number | null; // the frozen ruler over the running median aperture (roadmap 10.1f1: this landed on 2026-08-23 and this block did not record it until 6 September)
+  pupilDiameterMm: number | null; // millimetres, or null when the estimator refuses
 };
 ```
 
@@ -107,6 +109,96 @@ rare.
 
 The file is written to the user's own device through the browser's download path. There is no server, and the export does not change the project's privacy stance.
 
+### The session metadata block
+
+Above the header of every export sits a block of `# key: value` lines.
+There are 57 keys, written by six modules under `src/core`, and this
+table is the contract: what writes each one, when, in what format, and
+which reader on the Python side consumes it.
+
+It exists because until 6 September nothing checked that the two sides
+of the border agreed. A renamed key left both suites green and turned a
+Python gate into a pass-through: the reader found nothing, took its
+default, and reported the session as fine.
+`analysis/tests/test_metadata_contract.py` now reads the keys out of the
+writers and holds this table to them in both directions, so a key added
+here that nothing writes fails, and a key written there that this table
+omits fails too.
+
+Two reading rules that the contract test learned the hard way. A `line(`
+call may wrap across lines — thirteen do, `sampled_fps` among them — so
+a one-line pattern finds two thirds of them and reports success. And
+`# key: value` appears in the comments that describe this format, so a
+reader that does not strip comments reports a key called `key`.
+
+`N` in a key name stands for an index: a session with two markers writes
+`marker_1_seconds` and `marker_2_seconds`.
+
+"Nothing" in the last column is a fact about today, not a judgement. Some
+of those keys are written for a person reading the file; three of them
+(`app_commit`, `protocol`, `feature_records_dropped`) are honesty rows
+that a reader SHOULD consume, which is roadmap row 10.1f2.
+
+| Key                              | When written                           | Value format                                                                                     | Read by                                      |
+| -------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `app_commit`                     | Every export                           | The build's short commit, or `unknown` for a build from a working tree                           | Nothing yet (10.1f2 carries it on `Session`) |
+| `blinks_detected`                | Blink log only                         | Integer count of blinks the detector reported                                                    | `blink_log.py`                               |
+| `blinks_recorded`                | Blink log only                         | Integer count of blinks the file actually holds; below `blinks_detected` when the buffer overran | `blink_log.py`                               |
+| `calibration_ceiling_bound`      | Every export, once a baseline resolved | `true` or `false`: whether the learned ruler hit its median ceiling                              | Nothing                                      |
+| `calibration_refused`            | Every export, once a baseline resolved | `true` or `false`                                                                                | Nothing                                      |
+| `calibration_samples`            | Every export, once a baseline resolved | Integer count of samples the baseline was solved from                                            | `validation.py`, `validation_checks.py`      |
+| `calibration_spread_ratio`       | Every export, once a baseline resolved | Ratio to three decimals                                                                          | `validation.py`, `validation_checks.py`      |
+| `camera`                         | Camera sessions                        | The camera's label, or `none, not a camera session` for a clip                                   | Nothing                                      |
+| `camera_declared_fps`            | Camera sessions                        | The rate `getSettings` claims, to two decimals, or `unknown`                                     | Nothing                                      |
+| `camera_delivered_fps`           | Camera sessions, once measurable       | Frames per second to one decimal, or `unknown`                                                   | Nothing                                      |
+| `camera_resolution`              | Camera sessions                        | `WIDTHxHEIGHT`, or `unknown`                                                                     | Nothing                                      |
+| `clip`                           | Every export                           | The clip's filename with line breaks flattened, or `none`                                        | Nothing                                      |
+| `clip_duration_s`                | Clip sessions                          | Seconds to two decimals, or `unknown` where the container carries none                           | Nothing                                      |
+| `delivered_frames_read_fraction` | Camera sessions, once measurable       | `sampled_fps` over `camera_delivered_fps` to three decimals, at most 1.000                       | Nothing                                      |
+| `device_pixel_ratio`             | Camera sessions                        | A number, or `unknown`                                                                           | Nothing                                      |
+| `face_detected_fraction`         | Every export                           | Share of records with a face, to three decimals                                                  | Nothing                                      |
+| `facing_mode`                    | Camera sessions                        | `user` or `environment`, or `unknown`                                                            | Nothing                                      |
+| `feature_records_dropped`        | Every export                           | Integer count of per-second rows lost to the 3600-row buffer                                     | Nothing                                      |
+| `feature_records_note`           | Only when rows were dropped            | A sentence naming the count and the buffer size                                                  | Nothing                                      |
+| `frame_interval_s`               | Stepped clips                          | The calibrated step in seconds                                                                   | Nothing                                      |
+| `frames_measured`                | Every export                           | Integer count of frames the instrument looked at                                                 | `blink_log.py`, `miss_autopsy.py`            |
+| `frames_recorded`                | Frame trace only, when truncated       | Integer count of rows the file holds                                                             | Nothing                                      |
+| `frames_sought`                  | Stepped clips                          | Integer count of frames sought                                                                   | Nothing                                      |
+| `hardware_concurrency`           | Camera sessions                        | Integer core count, or `unknown`                                                                 | Nothing                                      |
+| `inexact_landings`               | Stepped clips                          | Integer count of seeks the browser never placed on the clip's clock                              | Nothing                                      |
+| `interruption_N_seconds`         | One row per interruption               | Seconds to three decimals, or `unknown` where the moment was not stamped                         | Nothing                                      |
+| `kss_after`                      | Every export, once asked               | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                 |
+| `kss_after_at_seconds`           | Every export, once answered            | Seconds to three decimals                                                                        | Nothing                                      |
+| `kss_before`                     | Every export, once asked               | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                 |
+| `light_cycles`                   | Light-response sessions                | Integer count of dark/bright cycles                                                              | Nothing                                      |
+| `light_phase_ms`                 | Light-response sessions                | Milliseconds per phase                                                                           | Nothing                                      |
+| `light_settle_ms`                | Light-response sessions                | Milliseconds of settle before the first phase                                                    | Nothing                                      |
+| `light_stimulus`                 | Light-response sessions                | A sentence naming the schedule and its plan document                                             | Nothing                                      |
+| `light_stimulus_start_ms`        | Light-response sessions                | Milliseconds on the record clock                                                                 | `light_response.py`                          |
+| `marker_N_seconds`               | One row per marker                     | Seconds to three decimals                                                                        | `validation.py`, `round2.py`                 |
+| `marker_N_visibility_changes`    | One row per marker                     | Integer count of tab switches up to that marker                                                  | `validation.py`, `round2.py`                 |
+| `markers`                        | Every export                           | Integer count of markers                                                                         | `validation.py`, `round2.py`                 |
+| `measured_fps`                   | Every export                           | Frames per second to two decimals, or `unknown`                                                  | Nothing                                      |
+| `measurement_frame`              | Every export, once known               | `WIDTHxHEIGHT` of the frame the MODEL read, not the canvas                                       | Nothing                                      |
+| `measurement_mode`               | Every export                           | `live`, `played` or `stepped`                                                                    | `blink_log.py`, `miss_autopsy.py`            |
+| `median_iris_width_note`         | Only when the sample cap bound         | A sentence naming the cap                                                                        | Nothing                                      |
+| `median_iris_width_px`           | Every export, once measurable          | Pixels to two decimals                                                                           | Nothing                                      |
+| `observed_duration_seconds`      | Every export                           | Seconds to three decimals                                                                        | Nothing                                      |
+| `orientation`                    | Camera sessions                        | The screen orientation, or `unknown`                                                             | Nothing                                      |
+| `participant_pseudonym`          | Only when one was set                  | The pseudonym as typed                                                                           | `validation.py`, `pilot.py`                  |
+| `perclos_min_observed_ms`        | Every export                           | Milliseconds of valid span a PERCLOS value must clear                                            | Nothing                                      |
+| `perclos_min_samples`            | Every export                           | Valid samples a PERCLOS value must clear                                                         | Nothing                                      |
+| `pose_valid_fraction`            | Every export                           | Share of records with an acceptable head pose, to three decimals                                 | `validation_checks.py`                       |
+| `protocol`                       | Every export                           | The protocol document and its date                                                               | Nothing yet (10.1f2 carries it on `Session`) |
+| `records`                        | Every export                           | Integer count of per-second rows in the file                                                     | Nothing                                      |
+| `sampled_fps`                    | Camera sessions, once measurable       | Distinct camera frames read per second, to one decimal, or `unknown`                             | `verdict.py`, `validation_checks.py`         |
+| `screen`                         | Camera sessions                        | `WIDTHxHEIGHT`, or `unknown`                                                                     | Nothing                                      |
+| `source`                         | Every export                           | `camera` or `file`                                                                               | `blink_log.py`, `miss_autopsy.py`            |
+| `user_agent`                     | Camera sessions                        | The reduced browser string, or the full one when asked for                                       | Nothing                                      |
+| `user_agent_form`                | Camera sessions                        | `reduced` or `full`                                                                              | Nothing                                      |
+| `viewport`                       | Camera sessions                        | `WIDTHxHEIGHT`, or `unknown`                                                                     | Nothing                                      |
+| `visibility_changes`             | Every export                           | Integer count of tab switches during the session                                                 | `validation.py`, `round2.py`                 |
+
 ## Conventions
 
 - Coordinates: MediaPipe normalised image coordinates. Origin top left, x grows right, y grows down, values 0 to 1. Convert to pixels only at the drawing edge.
@@ -118,13 +210,21 @@ The file is written to the user's own device through the browser's download path
 
 Each state renders a readable message. The page never crashes and never shows stale numbers.
 
-| State                                    | Behaviour                                           |
-| ---------------------------------------- | --------------------------------------------------- |
-| No camera found                          | Message with what to check                          |
-| Permission denied                        | Message with recovery steps                         |
-| No face in frame                         | "No face detected", measurements stop               |
-| Low frame rate, under 25 fps             | Blink metrics return null, UI says "not measurable" |
-| Wrong landmark count, 468 instead of 478 | On screen error naming the cause, no crash          |
+The full list of `CameraState` kinds is in `core/cameraState.ts`. Two of
+them, `ended` and `cameraStopped`, arrived on 6 September 2026 and are
+recorded here on the same day the metadata contract was written down,
+because this table had the same defect the metadata block had: it was
+kept current by intention.
+
+| State                                       | Behaviour                                                                                                                                                 |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No camera found                             | Message with what to check                                                                                                                                |
+| Permission denied                           | Message with recovery steps                                                                                                                               |
+| No face in frame                            | "No face detected", measurements stop                                                                                                                     |
+| Low frame rate, under 25 fps                | Blink metrics return null, UI says "not measurable"                                                                                                       |
+| Wrong landmark count, 468 instead of 478    | On screen error naming the cause, no crash                                                                                                                |
+| Session ended (`ended`)                     | Stop, or a clip that finished. The picture, the exports, the report and the record all stay; the calibrations, the marker and the light stimulus turn off |
+| Camera stopped delivering (`cameraStopped`) | Named as the camera's silence rather than the browser's. The session ends, the record is kept, and no row is written from a frozen frame                  |
 
 ## Performance budget
 
