@@ -117,6 +117,31 @@ describe("device rows", () => {
   it("says so plainly when there was no camera at all", () => {
     expect(deviceMetadataRows(null)[0]).toContain("not a camera session");
   });
+
+  // Roadmap 10.0a2, ladder B2. The full user agent names the browser
+  // build, the engine build and often the operating system patch
+  // level, and participants are asked to email these files. The
+  // export offers the coarse form and says which form it wrote, so a
+  // reader of the file is never left guessing whether the string they
+  // are looking at is the whole one.
+  it("reduces the user agent by default and says that it did", () => {
+    const rows = deviceMetadataRows(FULL).join("\n");
+    expect(rows).toContain("# user_agent: an unknown browser on macOS");
+    expect(rows).toContain("# user_agent_form: reduced");
+    expect(rows).not.toContain("Mozilla/5.0 (Macintosh)");
+  });
+
+  it("writes the whole string when it is explicitly asked for", () => {
+    const rows = deviceMetadataRows(FULL, true).join("\n");
+    expect(rows).toContain("# user_agent: Mozilla/5.0 (Macintosh)");
+    expect(rows).toContain("# user_agent_form: full");
+  });
+
+  it("says unknown for both when the browser withheld the string", () => {
+    const rows = deviceMetadataRows(EMPTY).join("\n");
+    expect(rows).toContain("# user_agent: unknown");
+    expect(rows).toContain("# user_agent_form: reduced");
+  });
 });
 
 describe("what the session itself reveals", () => {

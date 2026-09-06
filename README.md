@@ -594,13 +594,30 @@ Safari's extra frame was the final one counted twice, which is fixed.
 
 Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend and no analytics of ours. The CSV export writes a file to your own disk and uploads nothing.
 
-**Two things are kept on your device, and the page now lists both and offers to erase them.** A gaze calibration leaves behind the solved profile and the measurements it was solved from, so it survives a reload and works from the first frame of your next visit. Nothing else is stored: those two keys are the only storage this app touches. A "Stored on this device" box at the bottom of the page names them and erases them on request, and the erase clears the profile the running session is holding as well, so the heatmap goes back to asking you to calibrate. The confirmation it prints is read back from the browser after the fact rather than assumed, because a delete that quietly does nothing is worse than one that fails loudly.
+<!-- privacy:begin -->
+<!-- Generated from src/core/storedData.ts and
+src/core/exportContents.ts by tools/privacyBlock.mjs. Edit those,
+then regenerate with: npm run privacy:write. A test regenerates
+this block and fails when the committed README drifts from it. -->
+
+**4 things are kept on your device, and the page lists all of them and offers to erase them.**
+
+- `blinklab-calibration-profile-v1` — Your gaze calibration profile, so a calibration survives a reload and works from the first frame of your next visit.
+- `blinklab-calibration-samples-v1` — The measurements that profile was solved from, so the profile can be re-solved without sitting through the nine dots again.
+- `blinklab-blink-calibration-v1` — Your personal blink line, so a guided blink calibration survives a reload and does not have to be repeated on your next visit.
+- `blinklab-participant-pseudonym-v1` — Your chosen pseudonym, so your exported files can carry a name you picked, and only if you picked one.
+
+A "Stored on this device" box at the bottom of the page names each of these, says which are present right now, and erases them on request. The erase clears the profile the running session is holding as well, so the heatmap goes back to asking you to calibrate, and the confirmation it prints is read back from the browser after the fact rather than assumed, because a delete that quietly does nothing is worse than one that fails loudly.
+
+**What an exported file contains.** Above the records the file carries a header describing this session: the camera's label (camera), the browser (user_agent), the machine's core count (hardware_concurrency), its screen and window sizes (screen, viewport), your two sleepiness answers, and the pseudonym if you set one (participant_pseudonym). The file is written to your own disk and nothing is uploaded, so sending it to anyone is your own act. The browser string is written in a reduced form by default, naming the browser, its major version and the platform family and nothing else; a checkbox beside the export buttons writes the full string instead, and a `user_agent_form` row in the file says which form you got.
+
+<!-- privacy:end -->
 
 One exception, found by the August 2026 audit and stated here because it was claimed otherwise for two weeks. The vendored MediaPipe library tries to send a `POST` to `odml.pa.googleapis.com` about sixty seconds after the face model is created, with no detections needed. It is Google's own usage reporting, it is inside the dependency rather than in any code here, and its payload is usage statistics: no video, no image, no landmark, no measurement. This page previously denied any reporting of any kind, which was false. Since 5 September 2026 that report no longer leaves your browser: the app installs a guard in front of `fetch`, `XMLHttpRequest` and `sendBeacon` before the model is loaded, and it drops any request to a `googleapis.com` host — the app has no legitimate reason to call one, since the model and its runtime are served from this origin. An end-to-end test drives a full camera session past the sixty-second mark and confirms nothing goes out. The open question in `decisions/ADR-0004-model-telemetry.md` is answered there.
 
 ## Status
 
-Phases 0 through 8 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), and the public-durability work. That is 1027 unit tests, 34 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 377 Python tests of which 2 skip, all green.
+Phases 0 through 8 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), and the public-durability work. That is 1053 unit tests, 35 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 377 Python tests of which 2 skip, all green.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 

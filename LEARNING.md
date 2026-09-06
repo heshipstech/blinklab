@@ -1265,3 +1265,48 @@ build from a month ago, and without a date beside them a reader has no
 way to know that, so the table quietly grew into a claim about the
 current code. Two lines of provenance turned it back into what it
 always was, a record.
+
+## A paragraph that counts things will be wrong by the third one
+
+README's Privacy section said two things were kept on your device and
+finished with the sentence "those two keys are the only storage this app
+touches". There are four. The personal blink line arrived in August and
+the voluntary pseudonym in September, each with its own tests, its own
+entry in the page's own list and its own line in the erase control, and
+each time the README paragraph was left alone, because nothing could
+fail when it and the code disagreed. The same file told a reader that
+the CSV export "writes a file to your own disk and uploads nothing",
+which is true and is not the question a person asks before emailing one
+to a stranger. The file also carries the camera's label, the browser
+string, the machine's core count, the screen and window sizes, two
+sleepiness answers and the pseudonym, and none of that was written down
+anywhere a person exporting would see it.
+
+The storage paragraph is now generated from the same list the page
+renders from, and the count in its first sentence is counted rather than
+typed. That is the third generated block in this repository, after the
+results block and the cannot-see block, and the pattern has now paid for
+itself three times: prose that enumerates something is a copy of that
+something, and a copy with no test between it and its original is a
+copy that will be wrong.
+
+The disclosure went the other way. Rather than list the metadata rows
+beside the row builders, the sentence asks the builders which keys they
+write and refuses to be built when a key it names is no longer among
+them. So a row deleted from the export takes its disclosure with it, and
+a disclosure that names a row nobody writes is a red build. Both
+directions matter, and this repository has now met both defects: a
+paragraph that under-counted what the code does, and, in the interface
+document last week, a document that described a box the code no longer
+built.
+
+The last piece is about how much a measurement needs. The export wrote
+the whole `navigator.userAgent`, which names the browser build, the
+engine build and often the operating system patch level. The analysis
+reads none of that. It reads which browser, roughly which version, on
+which kind of machine. Those three facts fit in thirty characters and
+identify nobody, so that is what the file carries now, with the full
+string behind a checkbox and a row in the file saying which form you
+got. The rule that falls out: when a field is collected because
+something downstream uses part of it, write the part, and make the whole
+an explicit ask.

@@ -150,6 +150,10 @@ import {
   lightPhaseMessage,
   type LightPhase,
 } from "./core/lightSchedule";
+import {
+  exportContentsSentence,
+  writtenMetadataKeys,
+} from "./core/exportContents";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
@@ -2478,7 +2482,7 @@ function exportSession(): void {
       loadedClipDurationSeconds,
     ),
     ...steppingMetadataRows(steppingWitness()),
-    ...deviceMetadataRows(deviceInfo),
+    ...deviceMetadataRows(deviceInfo, exportFullUserAgent),
     ...calibrationMetadataRows(
       // The certificate travels with a refusal exactly as with a
       // birth: both are frozen windows, and the refused export is
@@ -4531,6 +4535,31 @@ document.addEventListener("visibilitychange", () => {
   interruptionTimesMs = [...interruptionTimesMs, lastRecordAtMs];
 });
 
+// Roadmap 10.0a2, ladder B2. What an exported file carries beside the
+// records, said where the person exporting can read it, and the one
+// choice they have about it. The full browser string is offered rather
+// than written by default: it names the browser build, the engine
+// build and often the operating system patch level, and this project's
+// plans ask participants to email these files.
+let exportFullUserAgent = false;
+const fullUserAgentToggle = document.createElement("input");
+fullUserAgentToggle.type = "checkbox";
+fullUserAgentToggle.checked = exportFullUserAgent;
+fullUserAgentToggle.setAttribute("data-testid", "full-user-agent");
+fullUserAgentToggle.addEventListener("change", () => {
+  exportFullUserAgent = fullUserAgentToggle.checked;
+});
+const fullUserAgentLabel = document.createElement("label");
+fullUserAgentLabel.append(
+  fullUserAgentToggle,
+  " Full browser string in exports",
+);
+
+const exportContentsNote = document.createElement("p");
+exportContentsNote.className = "caveat";
+exportContentsNote.setAttribute("data-testid", "export-contents");
+exportContentsNote.textContent = exportContentsSentence(writtenMetadataKeys());
+
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
@@ -4617,6 +4646,8 @@ const sessionBox = box(
   featureLabel,
   exportRow,
   exportStatus,
+  exportContentsNote,
+  fullUserAgentLabel,
   markLabel,
   kssAnswerLabel,
 );
