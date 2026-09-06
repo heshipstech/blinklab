@@ -58,8 +58,8 @@ No measured value was withheld and nothing was truncated.
 
 6. WHAT THIS INSTRUMENT CANNOT SEE
 
-- Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. The mechanism is unexplained.
-  (docs/eyeblink8-result.txt; docs/miss-character.txt)
+- Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. About 49 of them are a measured ceiling rather than a tunable defect: on those closures the eyelid aperture and the iris shape are both flat, so this face model does not register them and no threshold move or signal fusion can recover a signal that is not there.
+  (docs/eyeblink8-result.txt; docs/miss-character.txt; docs/iris-occlusion.txt)
 - Whether another device would agree. Two phones measured at the same evidence rate found different blinks, and that difference is unexplained, so numbers from this device are not comparable to numbers from another.
   (docs/validation-dry-run.txt; docs/blink-sample-rate.txt)
 - A PERCLOS anyone else would recognise. The eyes-closed share here uses an instrument-adjusted threshold, not the literature's, and is not comparable to a PERCLOS figure from another system.

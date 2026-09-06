@@ -2,11 +2,21 @@
 // as resultsBlock and the guards: the generator stays .mjs because it
 // reads the disk, and its callers are type checked.
 
+/** An exact sentence a claim rests on, and the document it lives in. */
+export type ClaimPin = {
+  quote: string;
+  path: string;
+};
+
 /** One cannot-see claim with the documents that prove it. */
 export type CannotSeeSource = {
   claim: string;
   source: string;
+  pins: ClaimPin[];
 };
+
+/** The claims that carry no pin at all, by their opening words. */
+export function claimsWithoutPins(claims: CannotSeeSource[]): string[];
 
 /**
  * Assert a quoted sentence exists in its source, whitespace-collapsed

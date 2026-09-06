@@ -64,3 +64,6 @@ export type SecondMachine = {
 };
 
 export function parseSecondMachine(text: string): SecondMachine;
+
+/** Emitted bullets in the generator's own source that carry no parsed value. */
+export function unpinnedLiterals(generatorSource: string): string[];

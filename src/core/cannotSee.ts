@@ -16,8 +16,9 @@ export type CannotSeeClaim = {
 export const CANNOT_SEE_CLAIMS: readonly CannotSeeClaim[] = [
   {
     claim:
-      "Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. The mechanism is unexplained.",
-    source: "docs/eyeblink8-result.txt; docs/miss-character.txt",
+      "Ordinary blinks it simply misses. On the benchmark it was scored against, 67 of 408 annotated blinks — about one in six — were missed at healthy frame rates, deterministically: the same 67 blinks every run, 70.1 percent of them containing a frame a human marked fully closed. About 49 of them are a measured ceiling rather than a tunable defect: on those closures the eyelid aperture and the iris shape are both flat, so this face model does not register them and no threshold move or signal fusion can recover a signal that is not there.",
+    source:
+      "docs/eyeblink8-result.txt; docs/miss-character.txt; docs/iris-occlusion.txt",
   },
   {
     claim:
