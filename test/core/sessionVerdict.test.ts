@@ -104,6 +104,25 @@ describe("the session verdict", () => {
     expect(surface(missing, "evidenceRate").status).toBe("unknown");
   });
 
+  it("pins both rate floors at their literal boundaries", () => {
+    // Roadmap 10.1c's rule applied here early (audit F-018): probes
+    // derived from the constants pass at any value, so these are
+    // literals. 25 is the gate, 60 the risk band, both inclusive on
+    // the safe side.
+    const at = (sampledFps: number) => {
+      const inputs = good();
+      inputs.sampledFps = sampledFps;
+      return surface(inputs, "evidenceRate");
+    };
+    expect(at(24.9).status).toBe("refused");
+    expect(at(25).status).toBe("warned");
+    expect(at(59.9).status).toBe("warned");
+    expect(at(60).status).toBe("ok");
+    // A rate that reads 25.0 is not below 25: the sentence that once
+    // said "25.0 ... below the 25" cannot be produced (roadmap 10.15).
+    expect(at(25).sentence).not.toContain("below the 25");
+  });
+
   it("interruptions warn with their count", () => {
     const inputs = good();
     inputs.visibilityChanges = 2;

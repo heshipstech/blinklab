@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
+import { asExported } from "../../src/core/participantReport";
 import {
   assessSession,
   type VerdictInputs,
@@ -104,6 +105,38 @@ describe("the shared verdict fixture", () => {
       },
     };
     expect(canonical(inputs)).toBe(expected("degraded"));
+  });
+
+  it("the edge session reproduces the committed bytes through the file's own rounding", () => {
+    // Roadmap 10.15 (audit G-export/l-1). The export writes sampled_fps
+    // to one decimal, so a measured 24.96 reaches the file as "25.0"
+    // and the Python mirror reads 25.0: warned, not refused. The page
+    // used to hand the verdict the raw double and said refused for
+    // the same session, and pilot.py stopped the whole cohort calling
+    // that disagreement an instrument defect. The inputs here are
+    // what the page now hands over: the rate as the file has it.
+    const inputs = goodInputs();
+    inputs.sampledFps = asExported(24.96, 1);
+    expect(canonical(inputs)).toBe(expected("edge"));
+    // The mechanism, stated: the raw double lands on the other side
+    // of the floor. This line is why the rounding must happen on the
+    // page, not only in the file.
+    const raw = goodInputs();
+    raw.sampledFps = 24.96;
+    expect(JSON.parse(canonical(raw)).headline).toBe("refused");
+  });
+
+  it("the page hands the verdict the rate as the export writes it", () => {
+    // The wiring pin: participantVerdictInputs must round sampledFps
+    // through asExported, exactly as it already does for the marker
+    // seconds, so both implementations compute from one number.
+    const main = readRepoFile("src/main.ts", root);
+    const start = main.indexOf("function participantVerdictInputs");
+    const end = main.indexOf("processingFps:", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const body = main.slice(start, end);
+    expect(body).toContain("asExported(rates.sampledFps, 1)");
   });
 
   it("the export path derives no verdict", () => {

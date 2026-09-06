@@ -66,12 +66,22 @@ class TestTheBytePin:
         verdict = derive_verdict(fixture_session("degraded"))
         assert canonical_verdict_json(verdict) == expected_json("degraded")
 
+    def test_edge_fixture_reproduces_the_committed_bytes(self) -> None:
+        # Roadmap 10.15: a sampled rate the file carries as exactly
+        # 25.0 is warned on both sides. Before the page rounded through
+        # the export's own rendering, a measured 24.96 read refused on
+        # the page and warned here, and pilot.py halted the cohort on
+        # the disagreement.
+        verdict = derive_verdict(fixture_session("edge"))
+        assert canonical_verdict_json(verdict) == expected_json("edge")
+        assert surface(verdict, "evidenceRate")["status"] == "warned"
+
     def test_the_fixture_files_carry_no_derived_verdict(self) -> None:
         # Derived, never exported: the CSV holds primary facts only,
         # so no verdict sentence and no verdict vocabulary may appear
         # in it. Checked on the fixtures because they are this repo's
         # canonical examples of what an export looks like.
-        for name in ("good", "refused", "degraded"):
+        for name in ("good", "refused", "degraded", "edge"):
             csv_text = (FIXTURES / f"{name}-session.csv").read_text(
                 encoding="utf-8"
             )
