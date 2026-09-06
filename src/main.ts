@@ -251,6 +251,13 @@ import {
 } from "./io/frameLoop";
 import { loadVideoFile, unloadVideoFile } from "./io/videoFile";
 import { stepThroughVideo, type StepSummary } from "./io/videoStepper";
+import {
+  checkLandings,
+  landingRefusal,
+  steppingMetadataRows,
+  variableRateRefusal,
+  type SteppingWitness,
+} from "./core/stepCalibration";
 import type { FrameClockState, FrameSource } from "./core/frameClock";
 import type { MeasurementMode } from "./core/frameClock";
 import {
@@ -604,6 +611,20 @@ let poseValidFrames = 0;
 // a failure, and the two must not read the same. Issue #192.
 let framesBlinkMeasurable = 0;
 let loadedClipDurationSeconds: number | null = null;
+// What the last stepped run knew about its own schedule, kept for the
+// exports so a stepped file says which step it was measured on, how
+// many frames were sought and how many had no time of their own
+// (docs/stepper-honesty.txt). Null for a camera or a watched clip.
+let lastStepSummary: StepSummary | null = null;
+
+function steppingWitness(): SteppingWitness | null {
+  if (lastStepSummary === null) return null;
+  return {
+    frameIntervalSeconds: lastStepSummary.frameIntervalSeconds,
+    framesSought: lastStepSummary.framesMeasured,
+    inexactLandings: lastStepSummary.inexactLandings,
+  };
+}
 let currentFrameIndex: number | null = null;
 // The frame on which the eyelid first crossed the blink line. Held
 // here rather than in the reducer, which is pure and knows nothing
@@ -1030,6 +1051,7 @@ function resetSession(): void {
   refreshMarkButton();
   refreshLightResponseButton();
   framesBlinkMeasurable = 0;
+  lastStepSummary = null;
   currentFrameIndex = null;
   closureStartFrame = null;
   stabilitySamples = [];
@@ -1313,6 +1335,7 @@ async function beginVideoFile(file: File): Promise<void> {
         clearInterval(heartbeat);
       }
       if (runToken !== sourceRunToken) return;
+      lastStepSummary = summary;
       stopClipButton.hidden = true;
       // Finished or stopped early, the run is over either way and the
       // camera comes back on offer. The failure branches below leave
@@ -1349,11 +1372,17 @@ async function beginVideoFile(file: File): Promise<void> {
         // honest schedule to step on. Refusing beats the old fallback,
         // which assumed 60 fps and therefore visited every frame of a
         // 30 fps clip twice while reporting a perfectly ordinary
-        // looking result.
+        // looking result. A clip whose first frames are not evenly
+        // spaced is refused by that name (docs/stepper-honesty.txt),
+        // because stepping it at its smallest gap is how a 20 fps
+        // clip came to report 40.
+        const calibration = summary.calibration;
         setState({
           kind: "clipFailed",
           reason:
-            "Could not work out this clip's frame rate, so it cannot be measured frame by frame. Try re-saving it as a constant frame rate MP4.",
+            calibration !== null && calibration.kind === "variableRate"
+              ? variableRateRefusal(calibration)
+              : "Could not work out this clip's frame rate, so it cannot be measured frame by frame. Try re-saving it as a constant frame rate MP4.",
         });
         return;
       }
@@ -1368,6 +1397,21 @@ async function beginVideoFile(file: File): Promise<void> {
           reason:
             "No frames could be read from this clip. The file loaded, but seeking through it produced nothing. Try another browser, or re-save the clip as MP4.",
         });
+        return;
+      }
+      // Frames the browser could not place on the clip's own clock.
+      // The stepper records the SCHEDULE time for those, which is
+      // right for a constant rate clip and an occasional silent seek,
+      // and is how the same decoded frame came to be measured twice
+      // under invented timestamps on a variable rate clip, through
+      // the 25 fps refusal. Past the pre-registered fraction the run
+      // is refused by name, not summarised. docs/stepper-honesty.txt.
+      const landings = checkLandings(
+        summary.framesMeasured,
+        summary.inexactLandings,
+      );
+      if (landings.kind !== "ok") {
+        setState({ kind: "clipFailed", reason: landingRefusal(landings) });
         return;
       }
       // The stepper sought frames but the pipeline measured none.
@@ -2346,6 +2390,7 @@ function exportSession(): void {
       framesMeasured,
       loadedClipDurationSeconds,
     ),
+    ...steppingMetadataRows(steppingWitness()),
     ...deviceMetadataRows(deviceInfo),
     ...calibrationMetadataRows(
       // The certificate travels with a refusal exactly as with a
@@ -2706,6 +2751,7 @@ exportBlinksButton.addEventListener("click", () => {
         framesMeasured,
         loadedClipDurationSeconds,
       ),
+      ...steppingMetadataRows(steppingWitness()),
     ],
     // The detector's own count, handed over so the file can compare it
     // against its own rows and say so if any are missing. Nothing here
@@ -2739,6 +2785,7 @@ exportFramesButton.addEventListener("click", () => {
         framesMeasured,
         loadedClipDurationSeconds,
       ),
+      ...steppingMetadataRows(steppingWitness()),
     ],
     // The measurement's own count, so a capped trace declares the
     // frames that fell off its end rather than looking complete.

@@ -41,8 +41,11 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
 
 ## Stage A. Correctness: wrong numbers and defects. Fix first.
 
-- [ ] **A1. Stepped clips can re-measure the same photograph under
-      invented timestamps and open the 25 fps gate.**
+- [x] **A1. Stepped clips can re-measure the same photograph under
+      invented timestamps and open the 25 fps gate.** DONE 6 September
+      2026 for the code and the four fixtures; the corpus half of the
+      Check (a byte-identical Eyeblink8 run, or the branch B change
+      `docs/stepper-honesty.txt` predicts) awaits D10's regression run.
       `critical · confirmed ×2 (reproduced) · M`
       **What:** one short inter-frame gap among the six calibration
       probes (`src/io/videoStepper.ts:44`) sets a step shorter than the

@@ -207,7 +207,10 @@ for (const [i, clip] of clips.entries()) {
       );
     }
     const mins = ((Date.now() - started) / 60000).toFixed(1);
-    console.log(`${label}  ${summary.slice(0, 62)}  [${mins} min]`);
+    // The WHOLE sentence. Sixty-two characters hid every warning the
+    // page appended after "Check that rate against your clip", which
+    // is where a stepping fault is reported (ladder A1).
+    console.log(`${label}  ${summary}  [${mins} min]`);
   } catch (error) {
     failures += 1;
     console.log(
