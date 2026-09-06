@@ -134,6 +134,28 @@ reader that does not strip comments reports a key called `key`.
 `N` in a key name stands for an index: a session with two markers writes
 `marker_1_seconds` and `marker_2_seconds`.
 
+The "when written" column is a promise a reader can act on. A cell
+reading exactly `Every export` means every session export carries the
+row, so a file missing it has lost a line on its way here and may be
+refused. Any other cell names a condition, and absence under it is an
+ordinary session rather than a damaged file. `Every export, once a
+baseline resolved` is one of those: it reads like a promise and is not.
+
+Absent and unknown are different claims, and this column is about the
+first. A row whose value could not be determined is still written, with
+the value `unknown`, because a reader who finds no row cannot tell a
+question that was asked and unanswered from one that was never put.
+Rows that vanish do so because the thing they describe did not happen.
+
+That distinction is why the column is exercised rather than described.
+`test/core/metadataPresence.test.ts` calls the real row builders with
+the arguments three sessions supply — a thin camera session where
+nothing optional happened, a stepped clip, and a session where
+everything optional happened at least once — and holds this column to
+what comes out. It was written from reading the writers on 6 September
+and was wrong about seven keys, six of them the same mistake: a value
+that may be `unknown` described as a row that may be absent.
+
 "Nothing" in the last column is a fact about today, not a judgement.
 Most of those keys are written for a person reading the file. Three of
 them were honesty rows that nothing read at all — `app_commit`,
@@ -151,17 +173,17 @@ defaulting to zero.
 | `calibration_refused`            | Every export, once a baseline resolved | `true` or `false`                                                                                | Nothing                                                                         |
 | `calibration_samples`            | Every export, once a baseline resolved | Integer count of samples the baseline was solved from                                            | `validation.py`, `validation_checks.py`                                         |
 | `calibration_spread_ratio`       | Every export, once a baseline resolved | Ratio to three decimals                                                                          | `validation.py`, `validation_checks.py`                                         |
-| `camera`                         | Camera sessions                        | The camera's label, or `none, not a camera session` for a clip                                   | Nothing                                                                         |
+| `camera`                         | Every export                           | The camera's label, or `none, not a camera session` for a clip                                   | Nothing                                                                         |
 | `camera_declared_fps`            | Camera sessions                        | The rate `getSettings` claims, to two decimals, or `unknown`                                     | Nothing                                                                         |
 | `camera_delivered_fps`           | Camera sessions, once measurable       | Frames per second to one decimal, or `unknown`                                                   | Nothing                                                                         |
 | `camera_resolution`              | Camera sessions                        | `WIDTHxHEIGHT`, or `unknown`                                                                     | Nothing                                                                         |
 | `clip`                           | Every export                           | The clip's filename with line breaks flattened, or `none`                                        | Nothing                                                                         |
-| `clip_duration_s`                | Clip sessions                          | Seconds to two decimals, or `unknown` where the container carries none                           | Nothing                                                                         |
+| `clip_duration_s`                | Every export                           | Seconds to three decimals, or `unknown` where the source carries none                            | Nothing                                                                         |
 | `delivered_frames_read_fraction` | Camera sessions, once measurable       | `sampled_fps` over `camera_delivered_fps` to three decimals, at most 1.000                       | Nothing                                                                         |
 | `device_pixel_ratio`             | Camera sessions                        | A number, or `unknown`                                                                           | Nothing                                                                         |
 | `face_detected_fraction`         | Every export                           | Share of records with a face, to three decimals                                                  | Nothing                                                                         |
 | `facing_mode`                    | Camera sessions                        | `user` or `environment`, or `unknown`                                                            | Nothing                                                                         |
-| `feature_records_dropped`        | Every export                           | Integer count of per-second rows lost to the 3600-row buffer                                     | `loader.py` (`Session.records_dropped`); an unreadable count is refused at load |
+| `feature_records_dropped`        | Only when rows were dropped            | Integer count of per-second rows lost to the 3600-row buffer                                     | `loader.py` (`Session.records_dropped`); an unreadable count is refused at load |
 | `feature_records_note`           | Only when rows were dropped            | A sentence naming the count and the buffer size                                                  | Nothing                                                                         |
 | `frame_interval_s`               | Stepped clips                          | The calibrated step in seconds                                                                   | Nothing                                                                         |
 | `frames_measured`                | Every export                           | Integer count of frames the instrument looked at                                                 | `blink_log.py`, `miss_autopsy.py`                                               |
@@ -170,9 +192,9 @@ defaulting to zero.
 | `hardware_concurrency`           | Camera sessions                        | Integer core count, or `unknown`                                                                 | Nothing                                                                         |
 | `inexact_landings`               | Stepped clips                          | Integer count of seeks the browser never placed on the clip's clock                              | Nothing                                                                         |
 | `interruption_N_seconds`         | One row per interruption               | Seconds to three decimals, or `unknown` where the moment was not stamped                         | Nothing                                                                         |
-| `kss_after`                      | Every export, once asked               | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                                                    |
+| `kss_after`                      | Every export                           | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                                                    |
 | `kss_after_at_seconds`           | Every export, once answered            | Seconds to three decimals                                                                        | Nothing                                                                         |
-| `kss_before`                     | Every export, once asked               | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                                                    |
+| `kss_before`                     | Every export                           | `N (anchor text)` or `skipped`                                                                   | `loader.py`, `validation.py`                                                    |
 | `light_cycles`                   | Light-response sessions                | Integer count of dark/bright cycles                                                              | Nothing                                                                         |
 | `light_phase_ms`                 | Light-response sessions                | Milliseconds per phase                                                                           | Nothing                                                                         |
 | `light_settle_ms`                | Light-response sessions                | Milliseconds of settle before the first phase                                                    | Nothing                                                                         |
@@ -182,10 +204,10 @@ defaulting to zero.
 | `marker_N_visibility_changes`    | One row per marker                     | Integer count of tab switches up to that marker                                                  | `validation.py`, `round2.py`                                                    |
 | `markers`                        | Every export                           | Integer count of markers                                                                         | `validation.py`, `round2.py`                                                    |
 | `measured_fps`                   | Every export                           | Frames per second to two decimals, or `unknown`                                                  | Nothing                                                                         |
-| `measurement_frame`              | Every export, once known               | `WIDTHxHEIGHT` of the frame the MODEL read, not the canvas                                       | Nothing                                                                         |
+| `measurement_frame`              | Every export                           | `WIDTHxHEIGHT` of the frame the MODEL read, not the canvas, or `unknown`                         | Nothing                                                                         |
 | `measurement_mode`               | Every export                           | `live`, `played` or `stepped`                                                                    | `blink_log.py`, `miss_autopsy.py`                                               |
 | `median_iris_width_note`         | Only when the sample cap bound         | A sentence naming the cap                                                                        | Nothing                                                                         |
-| `median_iris_width_px`           | Every export, once measurable          | Pixels to two decimals                                                                           | Nothing                                                                         |
+| `median_iris_width_px`           | Every export                           | Pixels to one decimal, or `unknown`                                                              | Nothing                                                                         |
 | `observed_duration_seconds`      | Every export                           | Seconds to three decimals                                                                        | Nothing                                                                         |
 | `orientation`                    | Camera sessions                        | The screen orientation, or `unknown`                                                             | Nothing                                                                         |
 | `participant_pseudonym`          | Only when one was set                  | The pseudonym as typed                                                                           | `validation.py`, `pilot.py`                                                     |
