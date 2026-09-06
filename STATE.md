@@ -1,3 +1,5 @@
+**THE SEPTEMBER AUDIT, 6 September 2026 — 154 confirmed findings, one of them critical, and a ladder whose first rung is the frame stepper.** A full audit of the repository at 8ad1c06, the day after amendment 16 set the era's goal: six factual maps, twelve lenses filing 144 findings with file and line, deduplication to 109, two independent skeptics per finding (one re-running the numbers, one judging materiality against the repo's own standards, either refutation fatal), a completeness critic whose six gap finders added 50 more, and three synthesis writers. 154 survived, 5 died; the skeptics lowered the filed severity on 121 of 308 verdicts, so the published severities are the corrected ones: 1 critical, 16 high, 62 medium, 75 low. The verdict: the published corpus numbers hold, and the defects cluster at two seams the corpus never exercises, the live camera path's clock (every velocity column scales with display refresh over camera delivery; the 25 fps gate and the sample floors count processing ticks) and the person's own ruler (the guided line sits 30 to 50 percent above the passive one, has no soundness ceiling, and no export says which line produced a session), plus one instrument the corpus does exercise: the frame stepper re-measures frames under fabricated timestamps on a variable-rate clip and a 20 fps file sails through the refusal at 40 fps (the critical finding). Committed: `docs/audit/2026-09-06-audit-report.md` (the record), `2026-09-06-appendix-all-findings.md` (every finding with both verdicts), `2026-09-06-strategy.md` (the best path forward and a draft amendment 17, presented, not applied) and `REMEDIATION-2026-09.md` (the ordered ladder, A1 to E10 plus the declined list; the first ten pull requests are named). ROADMAP.md carries a one-paragraph pointer as proposed amendment 17; no row moved. No source changed, so the suite stands at 952 unit tests, 27 end to end tests and 376 Python tests, all green. Next: the owner's ruling on amendment 17, or ladder item A1 (the stepper refuses inexact landings, prediction of a byte-identical Eyeblink8 run committed first) if the owner prefers building over ruling.
+
 **THE CONDITIONS LINES ON THE PAGE, 5 September 2026 (row 10.10b) — the
 two sampling stories stand beside the numbers they scope, and Phase 10's
 unblocked work is done.** Two static sentences, built in core
@@ -2965,7 +2967,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 5 September 2026. When this file changes, this stamp changes
+Stamped: 6 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
