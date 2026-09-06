@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DELIVERY_WINDOW_MS,
   deliveryRates,
+  deliveryStaleness,
   emptyDelivery,
   noteDelivered,
   noteRead,
@@ -129,5 +130,76 @@ describe("what the camera delivered, and how much of it was read", () => {
     const state = session(30, 60, 5);
     const later = deliveryRates(state, 5000 + DELIVERY_WINDOW_MS + 1000);
     expect(later.deliveredFps).toBeNull();
+  });
+});
+
+describe("a camera that stops delivering, told apart from one never observed", () => {
+  // Roadmap 14.0d (audit A26). Before this, a frozen camera and a
+  // browser without the delivery callback produced the same null
+  // rate, and the page rendered both as the browser's silence. The
+  // difference is a fact the state can hold: whether a frame was EVER
+  // delivered, and when the last one came.
+  it("names how long it has been since the last frame once the window drains", () => {
+    const state = session(30, 60, 5);
+    // Inside the window nothing is stale, whatever the rate.
+    expect(deliveryStaleness(state, 5000)).toBeNull();
+    // Past it, the age of the last frame, so the page can say "no
+    // frames in the last 5 s" and the frame handler can end the
+    // session by name.
+    const stale = deliveryStaleness(state, 5000 + DELIVERY_WINDOW_MS + 1000);
+    expect(stale).not.toBeNull();
+    expect(stale ?? 0).toBeGreaterThanOrEqual(DELIVERY_WINDOW_MS);
+  });
+
+  it("is never stale before a first frame was delivered", () => {
+    // A browser without the callback, or a session a frame old, has
+    // not STOPPED delivering; there was never a frame to stop after.
+    // Null-never-zero in another shape: "stale for 60 s" would claim
+    // a camera that once worked.
+    expect(deliveryStaleness(emptyDelivery(), 60_000)).toBeNull();
+    const readsOnly = noteRead(emptyDelivery(), 10_000);
+    expect(deliveryStaleness(readsOnly, 60_000)).toBeNull();
+  });
+
+  it("a camera that never delivered to an attentive page is stale after a window", () => {
+    // The observer is watching, the page has been visible for longer
+    // than a window, and not one frame came: that is a camera that
+    // stopped before it started, measured from the moment the page
+    // could have received one. A row must not wait forever for it.
+    const state = noteRead(emptyDelivery(), 100);
+    const startedAt = 0;
+    expect(deliveryStaleness(state, DELIVERY_WINDOW_MS, startedAt)).toBeNull();
+    expect(deliveryStaleness(state, DELIVERY_WINDOW_MS + 1, startedAt)).toBe(
+      DELIVERY_WINDOW_MS + 1,
+    );
+  });
+
+  it("a tab that just came back is not a camera that stopped", () => {
+    // A hidden tab receives no delivery callbacks. On return, the
+    // silence is the tab's, already counted as an interruption, and
+    // the session must not end for it. Only once the page has been
+    // attentive for a whole window does silence mean the camera.
+    const state = noteDelivered(emptyDelivery(), 1000);
+    const returnedAt = 60_000;
+    expect(deliveryStaleness(state, returnedAt + 100, returnedAt)).toBeNull();
+    expect(
+      deliveryStaleness(state, returnedAt + DELIVERY_WINDOW_MS, returnedAt),
+    ).toBeNull();
+    expect(
+      deliveryStaleness(state, returnedAt + DELIVERY_WINDOW_MS + 1, returnedAt),
+    ).not.toBeNull();
+  });
+
+  it("the last frame's moment survives the window trimming", () => {
+    // The rolling window forgets timestamps older than five seconds;
+    // the moment of the last frame must not be forgotten with them,
+    // or staleness could never exceed the window it is measured
+    // against.
+    let state = noteDelivered(emptyDelivery(), 1000);
+    state = noteRead(state, 1000 + DELIVERY_WINDOW_MS + 5000);
+    expect(state.deliveredAtMs).toHaveLength(0);
+    expect(deliveryStaleness(state, 1000 + DELIVERY_WINDOW_MS + 5000)).toBe(
+      DELIVERY_WINDOW_MS + 5000,
+    );
   });
 });

@@ -171,7 +171,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       **Done:** 6 September 2026, roadmap 14.0a, straight to A17's
       ended state; the interim was never built.
 
-- [ ] **A5. A superseded camera start attaches its stream and never
+- [x] **A5. A superseded camera start attaches its stream and never
       stops it.** `high · confirmed ×2 · S`
       **What:** `src/io/camera.ts:34-36` sets `srcObject` and plays
       before returning; `main.ts:1075-1076` checks the run token only
@@ -185,6 +185,12 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       `clipInput` and the device picker while requesting or loading.
       e2e with two rapid picker changes asserting one live track.
       **Findings:** F-017.
+      **Done:** 6 September 2026, roadmap 14.0d: requestCamera,
+      attachStream and stopStream in src/io/camera.ts, the token
+      checked between request and attach, the picker and the clip
+      input disabled while a start is in flight;
+      test/e2e/cameraSupersede.spec.ts counts one live track after
+      two picks inside one request's latency.
 
 - [ ] **A6. Light response without `Element.requestFullscreen` throws
       after the black overlay is shown, and has no touch exit.**
@@ -478,7 +484,7 @@ n)` stays false (`participantReport.ts:85-97`); Stop
       the stimulus export are carried by roadmap 14.0e, as the
       roadmap already says.
 
-- [ ] **A18. Delivery rates are memoised at the first consumer, so the
+- [x] **A18. Delivery rates are memoised at the first consumer, so the
       report's evidence rate depends on click timing.**
       `medium · confirmed ×2 · M`
       **What:** `main.ts:590-596` `sessionDeliveryRates ??=
@@ -492,6 +498,13 @@ deliveryRates(...)` reads a rolling 5 s window
       the verdict use its median.
       **Depends on:** A17.
       **Findings:** F-053.
+      **Done:** 6 September 2026, roadmap 14.0d: the capture happens
+      at every camera session end (Stop, the crash path, the camera
+      that stopped) before the observer stops; the single settled
+      capture is what every consumer reads. The per-second sampledFps
+      column and its median are not built: the roadmap row asked for
+      the capture at the transition, and the median is a separate
+      decision for the ruler era.
 
 - [ ] **A19. One untrusted frame splits a closure into two long closures
       and can hand its tail to the blink counter, pinned by test as
@@ -601,7 +614,7 @@ downgraded/medium · S`
       pin with `session-01.json` fixation count before/after.
       **Findings:** F-042.
 
-- [ ] **A26. A camera that stops delivering reads as "this browser does
+- [x] **A26. A camera that stops delivering reads as "this browser does
       not report it" and records continue from a frozen frame.**
       `medium (downgraded/low once) · M`
       **What:** `deliveryRate.ts:119-124` documents null as three
@@ -614,6 +627,16 @@ downgraded/medium · S`
       failed/ended (A17); gate record writing on a delivered frame.
       **Depends on:** A17.
       **Findings:** F-054.
+      **Done:** 6 September 2026, roadmap 14.0d: `deliveryStaleness`
+      and the observed/stale readout in src/core/deliveryRate.ts, the
+      `cameraStopped` state (its own, not failed: the camera started
+      fine, and not ended: the verdict must call it a failure),
+      reached from the track's `ended` event and from a drained
+      window on an attentive page, the evidence rate null rather than
+      the display's pace when delivery is observed, and
+      src/core/recordGate.ts gating a row on a frame delivered since
+      the last one. test/e2e/cameraStopped.spec.ts freezes the fake
+      camera and reads the end by name.
 
 - [ ] **A27. Four small arithmetic and wiring defects, one PR.**
       `low · confirmed · S` - `deliveryRate.ts:100-116`, `:126-147`, `:167-179`: the two

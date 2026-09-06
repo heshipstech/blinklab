@@ -173,4 +173,18 @@ describe("the shared verdict fixture", () => {
     expect(calls.length).toBe(2);
     expect(main).toContain("function settledDeliveryRates");
   });
+
+  it("the capture happens at the session's end, before the observer stops", () => {
+    // Roadmap 14.0d (audit A18): captured by the first consumer, the
+    // rate depended on how fast the operator clicked after Stop. The
+    // Stop handler and the camera-stopped route both settle it while
+    // the observer's window still holds the last five seconds.
+    const main = readRepoFile("src/main.ts", root);
+    expect(main).toMatch(
+      /settledDeliveryRates\(\);\n\s*setState\(\{ kind: "ended" \}\);/,
+    );
+    expect(main).toMatch(
+      /settledDeliveryRates\(\);\n\s*setState\(\{ kind: "cameraStopped", reason \}\);/,
+    );
+  });
 });

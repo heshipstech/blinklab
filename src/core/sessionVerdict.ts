@@ -205,9 +205,12 @@ function cameraOutcomeFinding(state: CameraState): SurfaceFinding {
         status: "unknown",
         sentence: "The session never finished starting.",
       };
+    // A camera that stopped mid-session kept its record, but the
+    // session it describes ended in a camera failure (roadmap 14.0d).
     case "failed":
     case "clipFailed":
     case "measurementFailed":
+    case "cameraStopped":
       return {
         surface: "cameraOutcome",
         status: "refused",
