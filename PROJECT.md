@@ -38,7 +38,11 @@ d. A stranger can clone and run it in under 5 minutes.
 ## Constraints
 
 - Browser only. All processing happens on the user's device.
-- No data leaves the device, at any time, for any reason.
+- No user data leaves the device: no video, no image, no landmark, no
+  measurement, at any time, for any reason. The one thing that ever tried
+  to leave was the vendored face model's own usage report to Google, and
+  this page intercepts that request before it leaves the browser.
+  Measured and recorded in ADR-0004.
 - Explainability beats accuracy whenever the two compete.
 
 ## Out of scope

@@ -29,7 +29,13 @@ jobs:
         with:
           node-version: 26
           cache: npm
-      - run: npm ci
+      # --ignore-scripts, roadmap 10.1c and ladder D16: a dependency's
+      # own install hook runs arbitrary code from the npm tree, and this
+      # workflow has a token. Only fsevents ships one today, and it is a
+      # no-op off macOS. The project's own prebuild step is unaffected,
+      # because --ignore-scripts is per invocation: `npm run build` still
+      # runs `prepare-assets` and the MediaPipe wasm files still populate.
+      - run: npm ci --ignore-scripts
       - run: npm run build
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

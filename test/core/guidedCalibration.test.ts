@@ -66,6 +66,23 @@ describe("resolveGuidedCalibration, ready", () => {
 });
 
 describe("resolveGuidedCalibration, refusals", () => {
+  // Roadmap 10.1c, ladder D2. The refusals below use 5 samples, which
+  // is nowhere near the edge and would pass with the floor at any of
+  // 6 through 40. These are literals at the edge: 30 trusted samples
+  // per phase, one second at 30 fps, chosen before any guided data
+  // was read and never tuned against it.
+  it("refuses at 29 samples and resolves at 30, as literals", () => {
+    expect(
+      resolveGuidedCalibration(samples(repeat(8, 29), repeat(2, 30))),
+    ).toEqual({ kind: "refused", reason: "not-enough-open" });
+    expect(
+      resolveGuidedCalibration(samples(repeat(8, 30), repeat(2, 29))),
+    ).toEqual({ kind: "refused", reason: "not-enough-closed" });
+    expect(
+      resolveGuidedCalibration(samples(repeat(8, 30), repeat(2, 30))).kind,
+    ).toBe("ready");
+  });
+
   it("refuses when the open phase has too few samples", () => {
     const result = resolveGuidedCalibration(
       samples(repeat(8, 5), repeat(2, ENOUGH)),

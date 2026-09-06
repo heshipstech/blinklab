@@ -55,6 +55,46 @@ describe("baseline learning", () => {
     expect(feed(startBaseline(0), 0, sparse).kind).toBe("learning");
   });
 
+  // Roadmap 10.1c, ladder D2. Both floors are literals here. The
+  // window is 30 000 ms and the sample count is 100, and the September
+  // audit moved each an order of magnitude with the whole suite green,
+  // because every other test fed 350 samples over 35 seconds and never
+  // stood on either edge.
+  it("needs 100 samples, not 99, as a literal", () => {
+    // 30 seconds of clock either way, so only the count decides. The
+    // step is 300 ms, which puts sample 100 at 29 700 ms and sample
+    // 101 at 30 000: the run of 99 has crossed neither edge.
+    const ninetyNine = feed(
+      startBaseline(0),
+      0,
+      Array.from({ length: 99 }, () => 7),
+      300,
+    );
+    expect(ninetyNine.kind).toBe("learning");
+    const oneHundred = feed(
+      startBaseline(0),
+      0,
+      Array.from({ length: 101 }, () => 7),
+      300,
+    );
+    expect(oneHundred.kind).toBe("ready");
+  });
+
+  it("needs 30 000 ms of clock, not 29 999, as a literal", () => {
+    // The sample floor is cleared first, at one sample a millisecond,
+    // so only the clock decides the last step. One millisecond short
+    // is still learning; the 30 000th is ready.
+    const learned = feed(
+      startBaseline(0),
+      0,
+      Array.from({ length: 200 }, () => 7),
+      1,
+    );
+    expect(learned.kind).toBe("learning");
+    expect(baselineStep(learned, 29999, 7).kind).toBe("learning");
+    expect(baselineStep(learned, 30000, 7).kind).toBe("ready");
+  });
+
   it("is not dragged down by blinks during learning, the percentile holds", () => {
     const withBlinks = openEyes.map((v, i) => (i % 50 === 0 ? 2 : v));
     const state = feed(startBaseline(0), 0, withBlinks);

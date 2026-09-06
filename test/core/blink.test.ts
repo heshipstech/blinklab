@@ -272,6 +272,26 @@ describe("the refractory period of #176", () => {
     expect(state.blinkCount).toBe(2);
   });
 
+  // Roadmap 10.1c, ladder D2. The cases above are 20 ms and 180 ms
+  // from the boundary, so the September audit could move the period to
+  // 1 ms or to 10 seconds with the whole suite green. This one stands
+  // on the edge: a reopen 149 ms after the last blink ended is the
+  // tail of it, and 150 ms after is a new blink.
+  it("re-arms at exactly 150 ms and not at 149, as literals", () => {
+    let suppressed = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    suppressed = blink(suppressed, 100, 120); // ends at 220
+    // The period is measured to the moment the second closure FINISHES,
+    // which is when a blink is counted, so the second closure reopens
+    // at 369: 149 ms after the first ended.
+    suppressed = blink(suppressed, 309, 60);
+    expect(suppressed.blinkCount).toBe(1);
+
+    let counted = blinkStep(initialBlinkState, 0, OPEN, THRESHOLD);
+    counted = blink(counted, 100, 120); // ends at 220
+    counted = blink(counted, 310, 60); // reopens at 370, 150 ms after
+    expect(counted.blinkCount).toBe(2);
+  });
+
   // 150 ms is below the ~200 ms a person can manage deliberately, so
   // the fastest real blinking anyone can produce must still count.
   it("does not suppress deliberate rapid blinking at five a second", () => {

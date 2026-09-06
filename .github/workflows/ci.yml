@@ -64,7 +64,13 @@ jobs:
         with:
           node-version: 26
           cache: npm
-      - run: npm ci
+      # --ignore-scripts, roadmap 10.1c and ladder D16: a dependency's
+      # own install hook runs arbitrary code from the npm tree, and this
+      # workflow has a token. Only fsevents ships one today, and it is a
+      # no-op off macOS. The project's own prebuild step is unaffected,
+      # because --ignore-scripts is per invocation: `npm run build` still
+      # runs `prepare-assets` and the MediaPipe wasm files still populate.
+      - run: npm ci --ignore-scripts
       # Remediation F1, the Definition of Done as a mechanism rather
       # than an intention. It held for 130 pull requests on intent
       # alone, lapsed at #134, and nobody noticed for weeks. Pull
@@ -76,6 +82,16 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Roadmap 10.1c, ladder D2. The refusal constants are the ones a
+      # silent drift would turn into a published number nobody checked,
+      # and until now nothing ran this: it bent a constant removed in
+      # August, so it exited "STALE LIST" before checking anything, and
+      # it ran the whole suite per mutation, about ninety seconds each.
+      # Each entry now runs only the test file that owns its constant,
+      # so 27 mutations take about two minutes, most of which is the
+      # one full-suite preflight that proves the tree was green before
+      # anything was bent.
+      - run: node tools/mutationCheck.mjs
       # Roadmap 8.6. The floor is on src/core only, the pure layer
       # where an untested branch becomes a published number nobody
       # checked. Separate from `npm test` so a coverage failure reads

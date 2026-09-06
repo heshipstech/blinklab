@@ -26,6 +26,19 @@ describe("measurableAtFps", () => {
     expect(measurableAtFps(MIN_BLINK_FPS + 0.1)).toBe(true);
   });
 
+  // Roadmap 10.1c, ladder D2. The trio above derives its probes FROM
+  // the constant, so it moves with the constant and pins nothing: the
+  // September audit bent MIN_BLINK_FPS to 23, 24, 28 and 30 with the
+  // whole suite green. These probes are literals. The floor is 25
+  // because a fast blink's closed phase can be under 100 ms, which at
+  // 24 fps falls entirely between frames, and a count that missed
+  // blinks would read as calm.
+  it("refuses at 24.9 and measures at 25, as literals", () => {
+    expect(measurableAtFps(24.9)).toBe(false);
+    expect(measurableAtFps(25)).toBe(true);
+    expect(measurableAtFps(25.1)).toBe(true);
+  });
+
   it("treats an unknown fps as unmeasurable", () => {
     expect(measurableAtFps(null)).toBe(false);
   });
@@ -121,6 +134,24 @@ describe("the processing rate readout (remediation D1, stage one)", () => {
     expect(processingRateMessage(15, "file")).toBe(
       "Processing rate: 15 frames per second, on the clip's own clock",
     );
+  });
+});
+
+describe("the risk band's own boundaries, as literals", () => {
+  // Roadmap 10.1c, ladder D2. The band is a hysteresis pair: the
+  // warning appears under 60 and clears only at 65, so a machine
+  // hovering at the boundary does not flick it on and off every
+  // second. Both numbers are pinned here rather than derived, and the
+  // held middle is pinned in both directions, because a pair that
+  // collapsed to one threshold would still pass a test that only
+  // asked about 59 and 66.
+  it("warns below 60 and clears at 65, holding its answer between", () => {
+    expect(rateRiskActive(false, 59.9)).toBe(true);
+    expect(rateRiskActive(false, 60)).toBe(false);
+    expect(rateRiskActive(true, 60)).toBe(true);
+    expect(rateRiskActive(true, 64.9)).toBe(true);
+    expect(rateRiskActive(true, 65)).toBe(false);
+    expect(rateRiskActive(false, 65)).toBe(false);
   });
 });
 

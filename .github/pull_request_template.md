@@ -11,6 +11,7 @@ One or two sentences.
 - [ ] New or updated automated test that would fail without this change
 - [ ] Boundary cases covered
 - [ ] All local gates pass: lint, typecheck, test, build, format:check, e2e
+- [ ] `node tools/mutationCheck.mjs` is green if a refusal constant moved
 - [ ] STATE.md and ROADMAP.md updated
 - [ ] LEARNING.md has the plain English note
 - [ ] No commented out code, no TODO without a linked issue

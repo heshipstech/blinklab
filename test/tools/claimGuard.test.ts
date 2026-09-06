@@ -4,7 +4,7 @@ import {
   RETIRED_CLAIMS,
   relapses,
   repoRoot,
-  trackedFilesContaining,
+  trackedFilesMatching,
 } from "../../tools/claimGuard.mjs";
 
 // Six files claimed this page sent nothing anywhere, and one of them was
@@ -31,6 +31,11 @@ const EXEMPT = [
   "docs/audit/chunk-2-core-purity.md",
   "docs/audit/appendix-chunk-2-all-findings.md",
   "docs/audit/appendix-chunk-5-all-findings.md",
+  // The September 2026 appendix quotes the retired wording while
+  // filing the finding that PROJECT.md restated it one word away.
+  // Roadmap 10.1c widened the guard to a family of wordings, which is
+  // what brought this file into range.
+  "docs/audit/2026-09-06-appendix-all-findings.md",
   "tools/claimGuard.mjs",
   "tools/claimGuard.d.mts",
   "test/tools/claimGuard.test.ts",
@@ -40,7 +45,8 @@ describe("retired claims stay retired", () => {
   it("names why each phrase is banned, so a failure explains itself", () => {
     expect(RETIRED_CLAIMS.length).toBeGreaterThanOrEqual(3);
     for (const claim of RETIRED_CLAIMS) {
-      expect(claim.phrase.length).toBeGreaterThan(0);
+      expect(claim.pattern.length).toBeGreaterThan(0);
+      expect(claim.says.length).toBeGreaterThan(0);
       expect(claim.because.length).toBeGreaterThan(0);
     }
   });
@@ -64,13 +70,31 @@ describe("retired claims stay retired", () => {
     // This guard passed locally and failed in CI the first time it ran,
     // because the ADR describing the problem was not yet added and
     // `git grep` without --untracked could not see it.
-    const hits = trackedFilesContaining("blinklab", root);
+    const hits = trackedFilesMatching("blinklab", root);
     expect(hits.length).toBeGreaterThan(5);
   });
 
   it("searches tracked files, so nothing hides in an ignored folder", () => {
-    const hits = trackedFilesContaining("blinklab", root);
+    const hits = trackedFilesMatching("blinklab", root);
     expect(hits.length).toBeGreaterThan(5);
     expect(hits.every((f) => !f.startsWith("node_modules/"))).toBe(true);
+  });
+
+  // Roadmap 10.1c, ladder D16. The guard matched fixed strings, so
+  // "no data leaves your device" was banned and "No data leaves the
+  // device, at any time, for any reason" sat in PROJECT.md untouched:
+  // the same claim, one word away, stronger than the one that was
+  // measured false. A family of wordings needs a family of patterns.
+  it("catches the retired claim in its other wordings, not one spelling", () => {
+    // The pattern itself, exercised on the strings rather than on the
+    // disk, so a repository that happens to be clean cannot make this
+    // pass for the wrong reason.
+    const family = new RegExp(RETIRED_CLAIMS[0]?.pattern ?? "", "i");
+    expect(family.test("no data leaves your device")).toBe(true);
+    expect(family.test("No data leaves the device, at any time")).toBe(true);
+    expect(family.test("No data ever leaves this device")).toBe(true);
+    expect(family.test("your video and your measurements never leave")).toBe(
+      false,
+    );
   });
 });

@@ -38,6 +38,30 @@ describe("downloadedFilenames", () => {
   it("finds nothing in a file that downloads nothing", () => {
     expect(downloadedFilenames("const x = 1;")).toEqual([]);
   });
+
+  // Roadmap 10.1c, ladder D16. The reader matched backtick calls only,
+  // and main.ts downloads the fixture recording with a double-quoted
+  // literal. That file is 478 face-mesh points of whoever was in front
+  // of the camera, and it sat outside .gitignore because the guard
+  // could not see it.
+  it("finds a plain quoted download, not only a template one", () => {
+    expect(
+      downloadedFilenames('downloadTextFile("session-01.json", body);'),
+    ).toEqual(["session-01.json"]);
+    expect(downloadedFilenames("downloadTextFile('a.json', body);")).toEqual([
+      "a.json",
+    ]);
+  });
+
+  it("finds all three quote styles in one file, in source order", () => {
+    expect(
+      downloadedFilenames(
+        'downloadTextFile("one.json", a);\n' +
+          "downloadTextFile(`two-${s}.csv`, b);\n" +
+          "downloadTextFile('three.txt', c);",
+      ),
+    ).toEqual(["one.json", `two-${A_STAMP}.csv`, "three.txt"]);
+  });
 });
 
 describe("every file the app downloads is refused by .gitignore", () => {
@@ -46,6 +70,9 @@ describe("every file the app downloads is refused by .gitignore", () => {
     expect(names.length).toBeGreaterThanOrEqual(2);
     expect(names.some((n) => n.startsWith("blinklab-session-"))).toBe(true);
     expect(names.some((n) => n.startsWith("blinklab-blinks-"))).toBe(true);
+    // The development-only fixture recording, downloaded with a plain
+    // quoted name. It is landmark geometry of a real face.
+    expect(names).toContain("session-01.json");
   });
 
   it("refuses the per-second session export", () => {
