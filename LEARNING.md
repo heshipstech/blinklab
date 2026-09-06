@@ -1531,3 +1531,44 @@ its own suite never mentions, and only the analysis track would notice,
 on a machine nobody may run that day. So both sides read the writers
 now, independently, and the mutation was run to prove both go red rather
 than assumed to.
+
+## A number averaged across sessions is a number about one instrument
+
+Every export this browser writes has carried the commit that built it
+since the provenance work in August. Nothing read it. So the six-person
+round's published table, and every cohort table after it, could have
+averaged across a detector change and printed one number with no note,
+and the file that would have told you sat unread in every session it
+described.
+
+Two more keys were in the same position. `protocol` says which written
+plan a session was recorded under. `feature_records_dropped` says how
+many per-second rows fell out of the buffer, which is the difference
+between a short session and a truncated one, and reading it as zero
+when it is missing gets that backwards.
+
+All three now reach `Session`, and the round report opens with a
+sentence about its own cohort: one build named, several builds named
+with the warning that the average describes more than one instrument,
+or the plain statement that these files predate the stamp so the
+question cannot be answered. Three answers, because there are three
+situations, and calling the third one either of the first two would be
+a guess dressed as a fact.
+
+The dropped-row count taught the smaller lesson. An unreadable value
+there is refused when the file is opened, not when some caller happens
+to ask, because a loader that half succeeds is worse than one that
+fails: the plot still draws and the statistic still prints. And zero is
+a measurement rather than an absence, so a missing key and a key saying
+zero must not produce the same answer.
+
+Two things about the work itself are worth keeping. The module that
+builds the published table had no test file of its own — every function
+in it was reached only through the modules it calls, so a change to the
+report's own assembly could not go red anywhere. And the first version
+of the new test staged its fixture by prepending an `app_commit` line
+to a file that already had one; the loader refused it by name for
+declaring a key twice, which is the shared metadata reader from two
+increments ago catching a carelessly written test. A guard that catches
+your own mistake in an unrelated increment is the only real evidence
+that it works.
