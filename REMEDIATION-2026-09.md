@@ -1405,7 +1405,7 @@ M · owner (the eight logs)`
       reproduction block at `eyeblink8-result.txt:34-39`.
       **Findings:** F-058, G-Reproduc-6, G-Browser-2, G-Build d-3.
 
-- [ ] **D5. GitHub Pages publishes four minutes before CI finishes and
+- [x] **D5. GitHub Pages publishes four minutes before CI finishes and
       would publish a red merge.** `medium (downgraded/low once) · S`
       **What:** `deploy.yml:3-6` is `on: push: branches: [main]`; build
       (`:23-36`) runs only `npm ci` and `npm run build`; every guard
@@ -1418,6 +1418,18 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       `GITHUB_SHA` in the build env, because `vite.config.ts:18` reads
       it for the E2 provenance stamp.
       **Findings:** G-Build d-1.
+      **Done:** 6 September 2026, roadmap 10.1e: the deploy triggers on
+      `workflow_run` of CI, completed, on main, plus
+      `workflow_dispatch`, and the build job is guarded on
+      `conclusion == 'success'` — without that guard the change would
+      have been worse than the defect, since `types: [completed]` fires
+      on failure and cancellation too. Checkout takes
+      `github.event.workflow_run.head_sha` and the build step sets
+      `GITHUB_SHA` to the same value, so the page's provenance stamp
+      names the commit it was built from rather than the branch tip. A
+      new `tools/deployGuard.mjs` reads both workflow files and holds
+      all of it, including the CI workflow's own name, since a rename
+      on one side alone would stop every deployment silently.
 
 - [ ] **D6. A metadata contract across the language border: the ~42
       keys have no documented contract, no cross-language test, five
