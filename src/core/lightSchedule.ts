@@ -92,3 +92,21 @@ export function lightScheduleTransitions(): LightBoundary[] {
   boundaries.push({ atMs: LIGHT_TOTAL_MS, phase: "done" });
   return boundaries;
 }
+
+/**
+ * What the overlay says in each phase, or null where it must say
+ * nothing: text is light, and a measured phase has to be a clean flat
+ * colour. Both sentences name both ways out, the key and a tap,
+ * because a phone has no Esc (roadmap 14.0b, audit A6).
+ */
+export function lightPhaseMessage(phase: LightPhase): string | null {
+  switch (phase) {
+    case "settle":
+      return "Keep still and look at the screen. The test begins in a moment. Tap anywhere or press Esc to stop.";
+    case "done":
+      return "Finished. Tap anywhere or press Esc, then export your session.";
+    case "dark":
+    case "bright":
+      return null;
+  }
+}

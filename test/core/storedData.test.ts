@@ -8,6 +8,7 @@ import {
   eraseOutcomeMessage,
   hasSomethingToErase,
   normalizePseudonym,
+  storedItemState,
   storedSummary,
 } from "../../src/core/storedData";
 
@@ -188,5 +189,28 @@ describe("the pseudonym, voluntary identity (pilot increment 8)", () => {
       kind: "ok",
       value: "x".repeat(PSEUDONYM_MAX_CHARS),
     });
+  });
+});
+
+describe("each listed item carries its own state", () => {
+  // Roadmap 14.0b (audit E4). The box said "Nothing is stored on this
+  // device." above a list of four keys, and a reader took the list
+  // for an inventory. Each line now says whether it is stored NOW.
+  const first = STORED_ITEMS[0];
+  if (first === undefined) throw new Error("no stored items");
+
+  it("says stored when the probe found the key", () => {
+    const probe: StorageProbe = { present: [first.key], unreadable: [] };
+    expect(storedItemState(first, probe)).toBe("stored now");
+  });
+
+  it("says not stored when the probe did not", () => {
+    const probe: StorageProbe = { present: [], unreadable: [] };
+    expect(storedItemState(first, probe)).toBe("not stored");
+  });
+
+  it("says it cannot tell when the browser refused to answer", () => {
+    const probe: StorageProbe = { present: [], unreadable: [first.key] };
+    expect(storedItemState(first, probe)).toBe("cannot be read");
   });
 });

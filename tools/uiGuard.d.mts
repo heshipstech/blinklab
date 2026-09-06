@@ -14,3 +14,15 @@ export function undocumented(mainSource: string, uiDoc: string): string[];
 
 /** Boxes the document describes that the code no longer builds. */
 export function fossils(mainSource: string, uiDoc: string): string[];
+
+/** Every string literal assigned as a button's label in main.ts, once each. */
+export function buttonStrings(mainSource: string): string[];
+
+/** The idle table out of src/core/idleStrings.ts, each entry as `Label: value`. */
+export function idleStrings(idleSource: string): string[];
+
+/** The strings among `strings` that `doc` never mentions verbatim. */
+export function undocumentedStrings(
+  strings: readonly string[],
+  doc: string,
+): string[];

@@ -282,17 +282,20 @@ body {
 }
 
 /* Reading order on a phone, which is not the desktop column order:
- * the score, then the controls that start a session, then the camera,
- * then what it measured, then the instrument's own health, then storage.
+ * the way in first, so Start camera is on screen before anything
+ * scrolls (roadmap 14.0b: it used to sit below the fold behind a score
+ * that said "measuring..." and five disabled exports), then the score,
+ * then the session's controls, then what was measured, then the
+ * instrument's own health, then storage.
  */
 @media (max-width: 999px) {
-  #box-alertness {
+  #box-source {
     order: 1;
   }
-  #box-session {
+  #box-alertness {
     order: 2;
   }
-  #box-source {
+  #box-session {
     order: 3;
   }
   #box-gaze {

@@ -106,6 +106,21 @@ function known(keys: readonly string[]): string[] {
   return keys.filter((key) => KNOWN_KEYS.has(key));
 }
 
+/**
+ * What one listed item's line says about itself. Roadmap 14.0b (audit
+ * E4): the box said "Nothing is stored on this device." above a list
+ * of four keys, and a reader took the list for an inventory.
+ */
+export function storedItemState(
+  item: StoredItem,
+  probe: StorageProbe,
+): "stored now" | "not stored" | "cannot be read" {
+  if (probe.unreadable.includes(item.key)) {
+    return "cannot be read";
+  }
+  return probe.present.includes(item.key) ? "stored now" : "not stored";
+}
+
 /** Whether the probe found anything worth offering to erase. */
 export function hasSomethingToErase(probe: StorageProbe): boolean {
   return known(probe.present).length > 0;

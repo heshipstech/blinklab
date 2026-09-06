@@ -7,6 +7,7 @@ import {
   LIGHT_TOTAL_MS,
   lightPhaseAt,
   lightPhaseBackground,
+  lightPhaseMessage,
   lightScheduleTransitions,
 } from "../../src/core/lightSchedule";
 import { lightStimulusMetadataRows } from "../../src/core/sessionMetadata";
@@ -134,5 +135,27 @@ describe("lightStimulusMetadataRows", () => {
       "# light_cycles: 6",
       "# light_stimulus_start_ms: 1725000000",
     ]);
+  });
+});
+
+describe("what the overlay says, and when it says nothing", () => {
+  // Roadmap 14.0b (audit A6). The overlay's words lived in main.ts,
+  // and a phone had no way out of it: the only exit was a key. The
+  // sentence now names a touch exit as well as the key, and it lives
+  // here so the test and the page cannot disagree about it.
+  it("names both ways out during the settle and at the end", () => {
+    for (const phase of ["settle", "done"] as const) {
+      const message = lightPhaseMessage(phase);
+      expect(message).not.toBeNull();
+      expect(message ?? "").toContain("Tap anywhere");
+      expect(message ?? "").toContain("Esc");
+    }
+    expect(lightPhaseMessage("settle") ?? "").toContain("Keep still");
+    expect(lightPhaseMessage("done") ?? "").toContain("Finished");
+  });
+
+  it("says nothing during a measured phase, where text would be light", () => {
+    expect(lightPhaseMessage("dark")).toBeNull();
+    expect(lightPhaseMessage("bright")).toBeNull();
   });
 });

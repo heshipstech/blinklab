@@ -147,9 +147,11 @@ import {
 import {
   lightPhaseAt,
   lightPhaseBackground,
+  lightPhaseMessage,
   type LightPhase,
 } from "./core/lightSchedule";
-import { demoNoticeText } from "./core/notice";
+import { demoNoticeShort, demoNoticeText } from "./core/notice";
+import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -241,7 +243,9 @@ import {
   eraseOutcomeMessage,
   hasSomethingToErase,
   normalizePseudonym,
+  storedItemState,
   storedSummary,
+  type StorageProbe,
 } from "./core/storedData";
 import {
   attachStream,
@@ -873,6 +877,11 @@ function render(): void {
   // too, and the flag is gone.
   const over = sessionOver(state);
   const showing = running || over;
+  // Nothing running and nothing kept: the readouts say so, rather
+  // than holding whatever a refusal or a reload left in them.
+  if (!showing) {
+    applyIdleReadouts();
+  }
   status.textContent = cameraStateMessage(state);
   // The state's name, machine readable. The status text is prose for
   // a person, and the batch runner in tools/measure_corpus.mjs was
@@ -1190,12 +1199,20 @@ async function beginCamera(deviceId?: string): Promise<void> {
       kssBeforeAsked = true;
     });
     setState({ kind: "running" });
+    // Said on the status line, as the clip path says it: before this
+    // the camera path went quiet while the model downloaded and the
+    // headline went blank (roadmap 14.0b, audit E5).
+    status.textContent =
+      "Loading the measuring model. The picture is live; measurement begins when it is ready.";
     // Fired, not awaited: the camera preview is honest on its own
     // while the model downloads. But the failure is no longer
     // fire-and-forget with it. Before B2 this call swallowed a failed
     // download and the session ran forever looking healthy, readouts
     // saying "measuring..." for a measurement that could never come.
     void ensureLandmarker().then((ready) => {
+      if (ready && runToken === sourceRunToken && state.kind === "running") {
+        status.textContent = "";
+      }
       if (ready || runToken !== sourceRunToken) return;
       // The camera stops with the session. Leaving it capturing
       // behind a failure screen that says "nothing can be measured"
@@ -1891,12 +1908,24 @@ refreshHeatmapButton();
 const storedSummaryLabel = document.createElement("p");
 const storedList = document.createElement("ul");
 storedList.className = "stored-list";
-for (const item of STORED_ITEMS) {
-  const entry = document.createElement("li");
-  const name = document.createElement("strong");
-  name.textContent = item.what;
-  entry.append(name, document.createTextNode(`, ${item.why} (${item.key})`));
-  storedList.append(entry);
+// Each line says whether it is stored NOW: the summary above once
+// said "Nothing is stored" over a list a reader took for an inventory
+// (roadmap 14.0b, audit E4).
+function renderStoredList(probe: StorageProbe): void {
+  storedList.replaceChildren(
+    ...STORED_ITEMS.map((item) => {
+      const entry = document.createElement("li");
+      const name = document.createElement("strong");
+      name.textContent = item.what;
+      entry.append(
+        name,
+        document.createTextNode(
+          `, ${item.why} (${item.key}): ${storedItemState(item, probe)}`,
+        ),
+      );
+      return entry;
+    }),
+  );
 }
 // The pilot's voluntary identity (increment 8): a pseudonym exists
 // only when a person types one and saves it — never invented on
@@ -1962,6 +1991,7 @@ let eraseArmed = false;
 function refreshStoredBox(): void {
   const probe = probeStoredData();
   storedSummaryLabel.textContent = storedSummary(probe);
+  renderStoredList(probe);
   const somethingToErase = hasSomethingToErase(probe);
   eraseButton.disabled = !somethingToErase;
   if (!somethingToErase) {
@@ -3738,10 +3768,14 @@ function processFrame(
       );
       writeReadout(
         baselineLabel,
-        storedBlinkCalibration !== null
-          ? `Personal blink threshold: ${storedBlinkCalibration.personalLineMm.toFixed(1)} mm (from your guided calibration)`
-          : calibrationRefused
-            ? CALIBRATION_REFUSED_SENTENCE
+        // The refusal first: every number below is withheld on it
+        // whatever line the detector holds, and the sentence that says
+        // why used to be unreachable behind the guided line's label
+        // (roadmap 14.0b, audit E4).
+        calibrationRefused
+          ? CALIBRATION_REFUSED_SENTENCE
+          : storedBlinkCalibration !== null
+            ? `Personal blink threshold: ${storedBlinkCalibration.personalLineMm.toFixed(1)} mm (from your guided calibration)`
             : baselineState.kind === "ready" && personalMm !== null
               ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
               : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
@@ -4092,7 +4126,12 @@ function processFrame(
         // there is no arithmetic to explain, and an empty list under
         // a refusal would read as a broken panel.
         if (breakdown === null) {
-          panelSummaryLabel.textContent = "";
+          // The countdown to the first score sits under the score, not
+          // in the last card on the page (roadmap 14.0b, audit E5).
+          panelSummaryLabel.textContent =
+            !calibrationRefused && secondsLeft !== null
+              ? `Learning your open eyes: ${String(secondsLeft)} s left, then the score begins.`
+              : "";
           panelList.replaceChildren();
         } else {
           panelSummaryLabel.textContent = panelSummary(breakdown);
@@ -4320,15 +4359,11 @@ function paintLightPhase(phase: LightPhase): void {
   // Text is light, so it shows only where it cannot corrupt a measured
   // phase: the discarded settle and the finished screen. Dark and bright
   // stay a clean flat colour.
-  if (phase === "settle" || phase === "done") {
-    lightMessage.hidden = false;
+  const message = lightPhaseMessage(phase);
+  lightMessage.hidden = message === null;
+  if (message !== null) {
     lightMessage.style.color = "#888888";
-    lightMessage.textContent =
-      phase === "settle"
-        ? "Keep still and look at the screen. The test begins in a moment."
-        : "Finished. Press Esc, then export your session.";
-  } else {
-    lightMessage.hidden = true;
+    lightMessage.textContent = message;
   }
 }
 
@@ -4364,9 +4399,18 @@ function startLightStimulus(): void {
   // Fullscreen makes the screen the dominant light; best effort, because
   // the overlay already covers the viewport and the stimulus still runs
   // windowed where fullscreen is refused (a permission, a headless run).
-  void lightOverlay.requestFullscreen().catch(() => {
-    // Windowed is fine; the overlay covers the page either way.
-  });
+  // Guarded: a browser without the method (an iPhone's Safari) used to
+  // throw here, after the black overlay was shown and before the
+  // schedule started, trapping a phone behind it (roadmap 14.0b,
+  // audit A6).
+  const requestFullscreen = (
+    lightOverlay as { requestFullscreen?: () => Promise<void> }
+  ).requestFullscreen;
+  if (typeof requestFullscreen === "function") {
+    void requestFullscreen.call(lightOverlay).catch(() => {
+      // Windowed is fine; the overlay covers the page either way.
+    });
+  }
   const step = (): void => {
     if (lightStimulusStartMs === null) {
       return;
@@ -4396,6 +4440,13 @@ lightResponseButton.addEventListener("click", startLightStimulus);
 // keydown and the fullscreen exit converge on the same end.
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !lightOverlay.hidden) {
+    endLightStimulus();
+  }
+});
+// A tap ends it too: a phone has no Esc, and the overlay's own words
+// promise this exit (roadmap 14.0b, audit A6).
+lightOverlay.addEventListener("click", () => {
+  if (!lightOverlay.hidden) {
     endLightStimulus();
   }
 });
@@ -4546,7 +4597,19 @@ const sourceBox = box(
   cameraLine,
 );
 
-const alertnessBox = box("Alertness", scoreLabel, panelSummaryLabel, panelList);
+// The short caveat, directly under the number in smaller type: a
+// screenshot of the score carries it. Increment 6.9's rule, which
+// audit B19 found had quietly stopped being rendered (roadmap 14.0b).
+const scoreCaveat = document.createElement("p");
+scoreCaveat.className = "caveat";
+scoreCaveat.textContent = demoNoticeShort();
+const alertnessBox = box(
+  "Alertness",
+  scoreLabel,
+  scoreCaveat,
+  panelSummaryLabel,
+  panelList,
+);
 scoreLabel.className = "headline";
 
 const sessionBox = box(
@@ -4697,37 +4760,6 @@ function sizeGraphsToBox(): void {
   }
 }
 
-// Every readout starts with the same sentence it will show when a
-// measurement is refused, so the page at idle looks like the page
-// running, minus the numbers. The line count never changes as values
-// arrive, which is what stops the layout reflowing through the first
-// minute while somebody is deciding whether to trust it.
-for (const [element, initial] of [
-  [scoreLabel, "Alertness score: measuring..."],
-  [panelSummaryLabel, "Nothing is costing points."],
-  [earLabel, "Eye aspect ratio: no valid measurement"],
-  [apertureLabel, "Eyelid aperture: no valid measurement"],
-  [pupilLabel, "Pupil diameter: no valid measurement"],
-  [stabilityLabel, "Aperture stability: measuring..."],
-  [perclosLabel, "PERCLOS (eyes closed share, last 60 s): measuring..."],
-  [longClosureLabel, "Long closures: waiting for the baseline"],
-  [gazeLabel, "Iris offset: no valid measurement"],
-  [quadrantLabel, "Looking toward: no valid measurement"],
-  [gazeStateLabel, "Gaze state: no valid measurement"],
-  [fixationStatsLabel, "Fixations in the last 10 s: none yet"],
-  [headPoseLabel, "Head pose: no valid measurement"],
-  [blinkLabel, "Blinks: 0"],
-  [baselineLabel, "Personal blink threshold: not learned yet"],
-  [rulerFitLabel, "Ruler fit: waiting for the baseline"],
-  [featureLabel, "Feature records: none yet (about one per second)"],
-] as const) {
-  // Through writeReadout, not textContent. Setting it directly skipped
-  // the label/value split, so every readout rendered as one flat run in
-  // the idle state and only snapped into two columns once a session
-  // started. The starting state is the one a visitor sees first.
-  writeReadout(element, initial);
-}
-
 // Labels light, measurements bold. Done here rather than in the
 // message functions because those are tested constants and the tests
 // assert whole sentences; this is a rendering concern and belongs at
@@ -4816,6 +4848,48 @@ app.append(
   lightOverlay,
   kssPanel,
 );
+// Every readout starts with the sentence the idle page shows, from
+// the table in core/idleStrings.ts (roadmap 14.0b, audit B19): "not
+// measuring" where a number would sit, never "measuring..." and never
+// a count of something never counted. The line count never changes as
+// values arrive, which is what stops the layout reflowing through the
+// first minute while somebody is deciding whether to trust it.
+const idleReadoutElements: Readonly<Record<string, HTMLElement>> = {
+  "Alertness score": scoreLabel,
+  "Eye aspect ratio": earLabel,
+  "Eyelid aperture": apertureLabel,
+  "Pupil diameter": pupilLabel,
+  "Aperture stability": stabilityLabel,
+  "PERCLOS (eyes closed share, last 60 s)": perclosLabel,
+  "Long closures": longClosureLabel,
+  "Iris offset": gazeLabel,
+  "Looking toward": quadrantLabel,
+  "Gaze state": gazeStateLabel,
+  "Fixations in the last 10 s": fixationStatsLabel,
+  "Head pose": headPoseLabel,
+  Blinks: blinkLabel,
+  "Personal blink threshold": baselineLabel,
+  "Ruler fit": rulerFitLabel,
+  "Feature records": featureLabel,
+};
+
+function applyIdleReadouts(): void {
+  for (const [label, value] of IDLE_READOUTS) {
+    const element = idleReadoutElements[label];
+    if (element === undefined) {
+      throw new Error(`no readout element for the idle string "${label}"`);
+    }
+    // Through writeReadout, not textContent: setting it directly skipped
+    // the label/value split, so every readout rendered as one flat run
+    // in the idle state and only snapped into two columns once a
+    // session started. The starting state is the one a visitor sees.
+    writeReadout(element, idleReadoutText(label, value));
+  }
+  // Nothing is costing points when nothing is being scored.
+  panelSummaryLabel.textContent = "";
+  panelList.replaceChildren();
+}
+
 render();
 
 // The display loop drives the camera. A clip is driven by its own
