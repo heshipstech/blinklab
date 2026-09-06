@@ -296,6 +296,10 @@ describe("the participant report", () => {
     // Roadmap 14.0a: the ended state is the ordinary way a session
     // finishes, and a report needs records even then.
     expect(reportAvailable("ended", 120)).toBe(true);
+    // Roadmap 14.0d: a camera that stopped mid-session ended the
+    // session with its record kept, so the report is on offer there.
+    expect(reportAvailable("cameraStopped", 120)).toBe(true);
+    expect(reportAvailable("cameraStopped", 0)).toBe(false);
     expect(reportAvailable("ended", 0)).toBe(false);
   });
 });

@@ -187,6 +187,20 @@ describe("the session verdict", () => {
     expect(finding.sentence).toContain("boom");
   });
 
+  it("a camera that stopped mid-session is a failure, carrying its reason", () => {
+    // Roadmap 14.0d: the session kept its record, so it is over in
+    // the ended sense, but a camera that died is a camera failure and
+    // the verdict must not call it the ordinary outcome.
+    const inputs = good();
+    inputs.cameraOutcome = {
+      kind: "cameraStopped",
+      reason: "no frames in the last 5 s",
+    };
+    const finding = surface(inputs, "cameraOutcome");
+    expect(finding.status).toBe("refused");
+    expect(finding.sentence).toContain("no frames in the last 5 s");
+  });
+
   it("a distrusted model refuses its surface", () => {
     const inputs = good();
     inputs.modelTrusted = false;

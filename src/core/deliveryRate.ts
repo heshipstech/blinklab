@@ -62,10 +62,22 @@ export type DeliveryState = {
   reads: readonly Read[];
   /** Frames delivered since the session began, which never resets. */
   deliveredCount: number;
+  /**
+   * When the last frame arrived, on the page clock, kept outside the
+   * window so it survives the trimming. Null until a first frame:
+   * a camera that never delivered has not STOPPED delivering, and
+   * the difference is the one this field exists for (roadmap 14.0d).
+   */
+  lastDeliveredAtMs: number | null;
 };
 
 export function emptyDelivery(): DeliveryState {
-  return { deliveredAtMs: [], reads: [], deliveredCount: 0 };
+  return {
+    deliveredAtMs: [],
+    reads: [],
+    deliveredCount: 0,
+    lastDeliveredAtMs: null,
+  };
 }
 
 /** A frame arrived from the camera. */
@@ -80,7 +92,45 @@ export function noteDelivered(
     ],
     reads: state.reads.filter((r) => nowMs - r.atMs <= DELIVERY_WINDOW_MS),
     deliveredCount: state.deliveredCount + 1,
+    lastDeliveredAtMs: nowMs,
   };
+}
+
+/**
+ * How long the camera has been silent, once that silence has outlasted
+ * the window; null while frames are inside the window.
+ *
+ * Silence is measured from the last delivered frame, or, when no frame
+ * was ever delivered, from the moment the page became able to receive
+ * one. Without that moment there is nothing to measure from: a camera
+ * that never started has not stopped, and "stale for 60 s" would claim
+ * one that once worked.
+ *
+ * Roadmap 14.0d (audit A26): before this the drained window left a null
+ * rate that the page rendered as the browser's inability to report,
+ * and records went on being written from the frozen frame.
+ */
+export function deliveryStaleness(
+  state: DeliveryState,
+  nowMs: number,
+  // Since when the page has been able to receive frames at all. A
+  // hidden tab gets no delivery callbacks, so on return the silence
+  // is the tab's, not the camera's, and it must not end the session:
+  // that gap is already an interruption in the record. Staleness is
+  // counted only once the page has been attentive for a whole window.
+  attentiveSinceMs: number = Number.NEGATIVE_INFINITY,
+): number | null {
+  if (nowMs - attentiveSinceMs <= DELIVERY_WINDOW_MS) {
+    return null;
+  }
+  const since =
+    state.lastDeliveredAtMs ??
+    (Number.isFinite(attentiveSinceMs) ? attentiveSinceMs : null);
+  if (since === null) {
+    return null;
+  }
+  const silentForMs = nowMs - since;
+  return silentForMs > DELIVERY_WINDOW_MS ? silentForMs : null;
 }
 
 /** The detector ran, reading whichever frame arrived most recently. */
@@ -164,11 +214,28 @@ export function deliveryRates(
  * would take a limitation out of the open on exactly the devices where
  * it cannot be checked, which is the wrong direction for this project.
  */
-export function deliveryRateMessage(rates: DeliveryRates): string {
-  if (rates.deliveredFps === null) {
+export type DeliveryObservation = {
+  /** Whether a delivery callback is watching this source at all. */
+  observed: boolean;
+  /** deliveryStaleness() at the same moment, when observed. */
+  staleForMs: number | null;
+};
+
+export function deliveryRateMessage(
+  rates: DeliveryRates,
+  observation: DeliveryObservation,
+): string {
+  // The browser's silence is only the browser's when nothing is
+  // watching. An observed source with no rate is either not yet
+  // measurable or has stopped, and those are different sentences
+  // (roadmap 14.0d, audit A26).
+  if (!observation.observed) {
     return "Camera delivery: this browser does not report it";
   }
-  if (rates.sampledFps === null) {
+  if (observation.staleForMs !== null) {
+    return `Camera delivery: no frames in the last ${String(Math.round(DELIVERY_WINDOW_MS / 1000))} s`;
+  }
+  if (rates.deliveredFps === null || rates.sampledFps === null) {
     return "Camera delivery: measuring...";
   }
   return (

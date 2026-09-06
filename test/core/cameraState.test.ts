@@ -39,10 +39,26 @@ describe("cameraStateMessage", () => {
       { kind: "modelFailed" },
       { kind: "measurementFailed", reason: "boom" },
       { kind: "ended" },
+      { kind: "cameraStopped", reason: "no frames in the last 5 s" },
     ];
     for (const state of states) {
       expect(cameraStateMessage(state).length).toBeGreaterThan(10);
     }
+  });
+
+  it("a camera that stopped mid-session names why, keeps the record, and offers the camera again", () => {
+    // Roadmap 14.0d (audit A26). A camera that stops delivering is
+    // neither a camera that could not start (so no permission advice)
+    // nor an internal error (so no reload). The record it left is
+    // kept, and the way back is the same button as the way in.
+    const message = cameraStateMessage({
+      kind: "cameraStopped",
+      reason: "no frames in the last 5 s",
+    });
+    expect(message).toContain("no frames in the last 5 s");
+    expect(message).toContain("kept");
+    expect(message).toContain("Start camera");
+    expect(message).not.toMatch(/permission|could not start|reload|internal/i);
   });
 
   it("a session that has ended says what is still on offer and the way back", () => {
@@ -63,6 +79,9 @@ describe("sessionOver, the states that keep a session's record on offer", () => 
   it("is true for an ended session and for one that crashed with its data kept", () => {
     expect(sessionOver({ kind: "ended" })).toBe(true);
     expect(sessionOver({ kind: "measurementFailed", reason: "boom" })).toBe(
+      true,
+    );
+    expect(sessionOver({ kind: "cameraStopped", reason: "track ended" })).toBe(
       true,
     );
   });

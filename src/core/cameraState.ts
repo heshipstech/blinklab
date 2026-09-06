@@ -39,17 +39,32 @@ export type CameraState =
   // for a clip at all. One state for both: reached from Stop and from
   // a clip's end, it keeps the exports and the report on offer and
   // offers the camera again.
-  | { kind: "ended" };
+  | { kind: "ended" }
+  // The camera stopped delivering frames mid-session: the track ended,
+  // or nothing arrived for the whole delivery window. Roadmap 14.0d:
+  // before this state existed a frozen camera behind a running loop
+  // kept the page "running", the rate line blamed the browser, and
+  // rows went on being written from the last photograph. Its own state
+  // rather than "failed", whose sentence sends people to permission
+  // settings for a camera that started fine, and rather than "ended",
+  // which the verdict reads as the ordinary outcome. The record it
+  // left is kept, as after a crash.
+  | { kind: "cameraStopped"; reason: string };
 
 /**
  * Is the session over with its record still on offer?
  *
- * True for the ordinary end and for the crash that kept its data; false
- * while running, before a session, and for every refusal, where there
- * is nothing to offer or the refusal says why not.
+ * True for the ordinary end, for the crash that kept its data and for
+ * the camera that stopped; false while running, before a session, and
+ * for every refusal, where there is nothing to offer or the refusal
+ * says why not.
  */
 export function sessionOver(state: CameraState): boolean {
-  return state.kind === "ended" || state.kind === "measurementFailed";
+  return (
+    state.kind === "ended" ||
+    state.kind === "measurementFailed" ||
+    state.kind === "cameraStopped"
+  );
 }
 
 export function classifyCameraError(errorName: string): CameraState {
@@ -108,5 +123,10 @@ export function cameraStateMessage(state: CameraState): string {
       // Three facts: it is over, what it recorded is still here, and
       // the way back is the same button as the way in.
       return 'The session has ended. What it recorded is kept: export the CSV or the blink log, or show the report. Click "Start camera" to begin a new session.';
+    case "cameraStopped":
+      // The cause by name, the record kept, and the camera offered
+      // again. No permission advice (it started) and no reload (the
+      // page is fine): both would teach the wrong lesson.
+      return `The camera stopped delivering frames (${state.reason}). Anything recorded before the stop is kept for export. Click "Start camera" to try again.`;
   }
 }

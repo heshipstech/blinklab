@@ -154,13 +154,16 @@ import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
+  DELIVERY_WINDOW_MS,
   deliveryRateMessage,
   deliveryRates,
+  deliveryStaleness,
   type DeliveryRates,
   emptyDelivery,
   noteDelivered,
   noteRead,
 } from "./core/deliveryRate";
+import { recordDue } from "./core/recordGate";
 import {
   initialLongClosureState,
   longClosureStep,
@@ -240,7 +243,14 @@ import {
   normalizePseudonym,
   storedSummary,
 } from "./core/storedData";
-import { listMediaDevices, startCamera, stopCamera } from "./io/camera";
+import {
+  attachStream,
+  listMediaDevices,
+  requestCamera,
+  stopCamera,
+  stopStream,
+  streamOf,
+} from "./io/camera";
 import { readDeviceInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
@@ -950,6 +960,12 @@ function render(): void {
   // run has its own stop, and a session that never ran has nothing
   // to end.
   stopCameraButton.hidden = !running || frameSource !== "camera";
+  // While a start is in flight nothing else may start: a second
+  // source picked inside the permission prompt's latency was how a
+  // live track escaped ownership (roadmap 14.0d, audit A5).
+  const starting = state.kind === "requesting" || state.kind === "loadingClip";
+  picker.disabled = starting;
+  clipInput.disabled = starting;
   // The marker and the light stimulus act on a running measurement;
   // both read the state, so the transition out of running turns
   // them off here rather than waiting for a frame that will not come.
@@ -989,6 +1005,7 @@ function resetSession(): void {
   featureRecords = [];
   featureRecordsDropped = 0;
   lastRecordAtMs = null;
+  deliveredCountAtLastRecord = 0;
   exportButton.disabled = true;
   exportBlinksButton.disabled = true;
   frameTraceRows = [];
@@ -1098,8 +1115,32 @@ async function beginCamera(deviceId?: string): Promise<void> {
     return;
   }
   try {
-    const frame = await startCamera(video, deviceId);
-    if (runToken !== sourceRunToken) return;
+    // Request, decide, then attach (roadmap 14.0d, audit A5). A start
+    // superseded while the permission prompt was up used to attach
+    // its stream and return, leaving a live track nothing owned: the
+    // recording light stayed on for the page's life.
+    const stream = await requestCamera(deviceId);
+    if (runToken !== sourceRunToken) {
+      stopStream(stream);
+      return;
+    }
+    const frame = await attachStream(video, stream);
+    if (runToken !== sourceRunToken) {
+      // Superseded during play(): the superseder's stopCamera ran
+      // before this stream reached the element, so it is ours to end.
+      stopStream(stream);
+      if (video.srcObject === stream) video.srcObject = null;
+      return;
+    }
+    // The track's own word that it stopped: unplugged, revoked, or
+    // taken by the system. Staleness in the display loop catches a
+    // camera that merely went quiet.
+    for (const track of stream.getVideoTracks()) {
+      track.addEventListener("ended", () => {
+        if (runToken !== sourceRunToken) return;
+        endCameraSession("the camera track ended");
+      });
+    }
     frameSource = "camera";
     // Issue #221's missing half: a stepped clip may have left the
     // model's clock in the future, so the camera rebases too.
@@ -1118,6 +1159,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
       `Camera resolution: ${String(frame.widthPx)} x ${String(frame.heightPx)} pixels`,
     );
     resetSession();
+    attentiveSinceMs = performance.now();
     // AFTER resetSession, because that clears the counts this fills.
     // A browser without requestVideoFrameCallback simply gets no
     // observer, and the readout says the browser does not report it
@@ -1634,6 +1676,11 @@ let rateRiskShown = false;
 // without requestVideoFrameCallback, and the readout says which.
 let deliveryState = emptyDelivery();
 let deliveryObserver: { stop: () => void } | null = null;
+// Since when the page has been able to receive frames: the session's
+// start, or the last return from a hidden tab. Camera silence is
+// measured from here, so a tab switch is an interruption, not a dead
+// camera (roadmap 14.0d).
+let attentiveSinceMs = performance.now();
 
 function stopDeliveryObserver(): void {
   deliveryObserver?.stop();
@@ -2735,6 +2782,12 @@ stopCameraButton.addEventListener("click", () => {
   // ENDED, not idle, because idle greys the exports and the next
   // Start wipes the records (roadmap 14.0a, audit F-015).
   sourceRunToken += 1;
+  // The session's delivery rates are captured HERE, at the end, while
+  // the observer's window still holds the last five seconds, and every
+  // consumer after reads this capture (roadmap 14.0d, audit A18). It
+  // used to be captured by whichever consumer asked first, so the
+  // report's evidence rate depended on how fast the operator clicked.
+  settledDeliveryRates();
   setState({ kind: "ended" });
   try {
     stopDeliveryObserver();
@@ -2748,6 +2801,26 @@ stopCameraButton.addEventListener("click", () => {
   // this never did.
   askAfterQuestionOnce();
 });
+
+/**
+ * The camera stopped delivering mid-session: the track said so, or
+ * nothing arrived for a whole delivery window. The session ends with
+ * its record kept, the cause on the status line, and the after
+ * question asked as at any other end (roadmap 14.0d, audit A26).
+ */
+function endCameraSession(reason: string): void {
+  if (state.kind !== "running" || frameSource !== "camera") return;
+  sourceRunToken += 1;
+  settledDeliveryRates();
+  setState({ kind: "cameraStopped", reason });
+  try {
+    stopDeliveryObserver();
+    stopCamera(video);
+  } catch (stopError: unknown) {
+    console.error("the camera could not be stopped:", stopError);
+  }
+  askAfterQuestionOnce();
+}
 
 /**
  * Ask how sleepy the person feels now, exactly once per session and
@@ -2889,6 +2962,10 @@ let featureRecords: FeatureRecord[] = [];
 // the file via featureRecordOverrunRows (roadmap 10.4).
 let featureRecordsDropped = 0;
 let lastRecordAtMs: number | null = null;
+// deliveredCount when the last row was written: a row needs a frame
+// that arrived since the one before, or a frozen camera keeps writing
+// rows from the same photograph (roadmap 14.0d, audit A26).
+let deliveredCountAtLastRecord = 0;
 // The frame clock is milliseconds since page load, which is right
 // for durations and useless for dating a session, so the wall clock
 // is captured once when recording begins. Taken from the buffer's
@@ -3047,12 +3124,22 @@ function processFrame(
   // so every decoded frame is read exactly once by construction and a
   // delivery rate there would be the clip's own frame rate wearing a
   // different name.
-  const delivery =
-    state.kind !== "running" || frameSource !== "camera"
-      ? null
-      : deliveryRates(deliveryState, performance.now());
+  const liveCamera = state.kind === "running" && frameSource === "camera";
+  const delivery = liveCamera
+    ? deliveryRates(deliveryState, performance.now())
+    : null;
+  // Whether anything is watching delivery, and for how long the
+  // camera has been silent: the browser's silence is only the
+  // browser's when nothing is watching (roadmap 14.0d, audit A26).
+  const observation = {
+    observed: deliveryObserver !== null,
+    staleForMs:
+      deliveryObserver === null
+        ? null
+        : deliveryStaleness(deliveryState, performance.now(), attentiveSinceMs),
+  };
   deliveryLabel.textContent =
-    delivery === null ? "" : deliveryRateMessage(delivery);
+    delivery === null ? "" : deliveryRateMessage(delivery, observation);
   // Camera sessions only: on a clip the number rides the media clock
   // and the risk belongs to the recording's own rate, which the
   // export already carries. The rate judged is the EVIDENCE rate —
@@ -3060,7 +3147,13 @@ function processFrame(
   // processing rate where it cannot (pre-decision rule one,
   // docs/blink-sample-rate.txt, triggered by the M5 Max measurement
   // of 24 August 2026: processing 120, reading 30).
-  const evidenceFps = delivery?.sampledFps ?? fps;
+  // The measured sampled rate where delivery is observed; the
+  // processing rate only where the browser cannot report delivery.
+  // An observed camera with no rate is UNKNOWN, never the display's
+  // rate: a frozen camera used to inherit the animation loop's pace.
+  const evidenceFps = observation.observed
+    ? (delivery?.sampledFps ?? null)
+    : fps;
   rateRiskShown =
     state.kind === "running" && frameSource === "camera"
       ? rateRiskActive(rateRiskShown, evidenceFps)
@@ -3071,6 +3164,16 @@ function processFrame(
       : "";
   if (rateWarningLabel.textContent !== riskText) {
     rateWarningLabel.textContent = riskText;
+  }
+  // A whole window with no frame, on a page that has been able to
+  // receive them: the camera stopped, and the session ends by name
+  // rather than writing rows from a photograph nobody is taking.
+  if (liveCamera && observation.staleForMs !== null) {
+    const track = streamOf(video)?.getVideoTracks()[0];
+    const silence = `no frames in the last ${String(DELIVERY_WINDOW_MS / 1000)} s`;
+    endCameraSession(
+      track?.muted === true ? `the camera track is muted, ${silence}` : silence,
+    );
   }
 
   if (state.kind === "running" && canvasContext !== null) {
@@ -3864,8 +3967,17 @@ function processFrame(
       // One typed row per second. The assembler's identity shape is
       // the honesty here: every field must be supplied, so a metric
       // cannot silently fall out of the record.
-      if (lastRecordAtMs === null || nowMs - lastRecordAtMs >= 1000) {
+      if (
+        recordDue({
+          lastRecordAtMs,
+          nowMs,
+          observed: deliveryObserver !== null,
+          deliveredCount: deliveryState.deliveredCount,
+          deliveredCountAtLastRecord,
+        })
+      ) {
         lastRecordAtMs = nowMs;
+        deliveredCountAtLastRecord = deliveryState.deliveredCount;
         const lastShape = blinkEvents[blinkEvents.length - 1]?.shape ?? null;
         // The ruler fit consumes exactly the aperture the record
         // carries, one value per record, because the published check
@@ -4349,6 +4461,11 @@ markButton.addEventListener("click", () => {
 // gap that looks like a person who stopped blinking. Counting the
 // switches lets the analysis tell one from the other.
 document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    // Frames could not arrive while hidden; the camera's silence is
+    // measured from here, not from the last frame before the switch.
+    attentiveSinceMs = performance.now();
+  }
   // Only a RUNNING measurement can be interrupted. Before roadmap
   // 14.0a every tab switch after Stop, or before Start, counted as an
   // interruption of a session that was not measuring, and degraded
@@ -4731,6 +4848,8 @@ startFrameLoop(
     sourceRunToken += 1;
     frameLoopCrashReason =
       error instanceof Error ? error.message : String(error);
+    // Captured before the observer stops, as at every other end.
+    settledDeliveryRates();
     setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
     try {
       stopDeliveryObserver();
