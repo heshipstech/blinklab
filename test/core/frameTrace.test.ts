@@ -55,8 +55,22 @@ describe("the per-frame trace", () => {
     expect(csv).toContain(
       "# WARNING: 4 later frames were measured but are NOT in this file",
     );
-    expect(csv).toContain("# frames_measured: 5");
     expect(csv).toContain("# frames_recorded: 1");
+  });
+
+  // Roadmap 10.16, ladder A27. The warning used to declare its own
+  // `frames_measured` row while the caller's coverage rows already
+  // carried that key, and a repeated key is what loader.py refuses as
+  // an edited or damaged file. So the one file the warning exists for
+  // was the one file the Python side would not read.
+  it("never writes a key its caller already owns", () => {
+    const coverage = ["# frames_measured: 5"];
+    const csv = serialiseFrameTrace([row(0)], coverage, 5) ?? "";
+    // The file uses CRLF, as every export here does.
+    const declared = csv
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("# frames_measured:"));
+    expect(declared).toEqual(["# frames_measured: 5"]);
   });
 
   it("says nothing about loss when nothing was lost", () => {

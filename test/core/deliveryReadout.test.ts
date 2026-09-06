@@ -16,6 +16,9 @@ const OBSERVED = { observed: true, staleForMs: null };
 
 describe("what the page says about the camera's rate", () => {
   it("names the delivered rate and how much of it was read", () => {
+    // 29.9 of 30.1 rounds to 30 of 30, and printing the same number
+    // twice reads as a coincidence. Roadmap 10.16 gives that case its
+    // own words.
     expect(
       deliveryRateMessage(
         {
@@ -26,7 +29,7 @@ describe("what the page says about the camera's rate", () => {
         OBSERVED,
       ),
     ).toBe(
-      "Camera delivery: 30 frames per second, of which this instrument read 30",
+      "Camera delivery: 30 frames per second, and this instrument read all 30",
     );
   });
 
@@ -127,5 +130,30 @@ describe("what the export carries about the camera's rate", () => {
     // there is no camera and no delivery rate. Writing "unknown" there
     // would invite a reader to look for a camera that never existed.
     expect(deliveryMetadataRows(null)).toEqual([]);
+  });
+});
+
+describe("the readout when everything that arrived was read", () => {
+  // Roadmap 10.16, ladder A27. Printing the same number twice —
+  // "30 frames per second, of which this instrument read 30" — reads
+  // as a coincidence rather than as the fact it is, and the sentence
+  // was reachable in a stranger form before the two rates shared a
+  // span.
+  it("says it read all of them rather than repeating the number", () => {
+    const line = deliveryRateMessage(
+      { deliveredFps: 30, sampledFps: 30, readFraction: 1 },
+      { observed: true, staleForMs: null },
+    );
+    expect(line).toContain("read all 30");
+    expect(line).not.toContain("of which");
+  });
+
+  it("still names both numbers when they differ", () => {
+    const line = deliveryRateMessage(
+      { deliveredFps: 30, sampledFps: 24, readFraction: 0.8 },
+      { observed: true, staleForMs: null },
+    );
+    expect(line).toContain("30 frames per second");
+    expect(line).toContain("of which this instrument read 24");
   });
 });

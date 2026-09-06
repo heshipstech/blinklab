@@ -7,6 +7,7 @@ import {
   PERCLOS_STALE_MS,
   PERCLOS_CLOSED_FRACTION,
   PERCLOS_MIN_OBSERVED_MS,
+  PERCLOS_MIN_SAMPLES,
   perclosStep,
   perclosValue,
   type PerclosState,
@@ -88,23 +89,59 @@ describe("the observation minimum", () => {
     expect(perclosValue(state, endMs)).toBeNull();
   });
 
-  it("runs the boundary trio at exactly the minimum span", () => {
+  // Both floors have to be cleared, so these fill the span with
+  // samples: the span rule is what is being probed, not the count.
+  const filled = (spanMs: number): PerclosState => {
     let state = emptyPerclos();
-    state = perclosStep(state, 0, OPEN_MM, BASELINE_MM);
-    const justUnder = perclosStep(
-      state,
-      PERCLOS_MIN_OBSERVED_MS - 1,
-      OPEN_MM,
-      BASELINE_MM,
-    );
-    expect(perclosValue(justUnder, PERCLOS_MIN_OBSERVED_MS - 1)).toBeNull();
-    const exactly = perclosStep(
-      justUnder,
-      PERCLOS_MIN_OBSERVED_MS,
-      OPEN_MM,
-      BASELINE_MM,
-    );
-    expect(perclosValue(exactly, PERCLOS_MIN_OBSERVED_MS)).toBe(0);
+    const last = PERCLOS_MIN_SAMPLES - 1;
+    for (let i = 0; i <= last; i += 1) {
+      // The last stamp is placed exactly, not stepped to: i * (span/n)
+      // lands a fraction of a millisecond short and the span rule is
+      // a strict comparison.
+      state = perclosStep(
+        state,
+        i === last ? spanMs : (i * spanMs) / last,
+        OPEN_MM,
+        BASELINE_MM,
+      );
+    }
+    return state;
+  };
+
+  it("runs the boundary trio at exactly the minimum span", () => {
+    expect(
+      perclosValue(
+        filled(PERCLOS_MIN_OBSERVED_MS - 1),
+        PERCLOS_MIN_OBSERVED_MS - 1,
+      ),
+    ).toBeNull();
+    expect(
+      perclosValue(filled(PERCLOS_MIN_OBSERVED_MS), PERCLOS_MIN_OBSERVED_MS),
+    ).toBe(0);
+  });
+
+  // Roadmap 10.16, ladder A27. The span rule alone was satisfied by two
+  // samples fifteen seconds apart, which published a share of a minute
+  // from two frames.
+  it("refuses 99 samples across a long enough span and answers at 100", () => {
+    const sparse = (count: number): PerclosState => {
+      let state = emptyPerclos();
+      const last = count - 1;
+      for (let i = 0; i <= last; i += 1) {
+        state = perclosStep(
+          state,
+          i === last
+            ? PERCLOS_MIN_OBSERVED_MS
+            : (i * PERCLOS_MIN_OBSERVED_MS) / last,
+          OPEN_MM,
+          BASELINE_MM,
+        );
+      }
+      return state;
+    };
+    expect(perclosValue(sparse(2), PERCLOS_MIN_OBSERVED_MS)).toBeNull();
+    expect(perclosValue(sparse(99), PERCLOS_MIN_OBSERVED_MS)).toBeNull();
+    expect(perclosValue(sparse(100), PERCLOS_MIN_OBSERVED_MS)).toBe(0);
   });
 
   // Roadmap 10.1c, ladder D2. The trio above derives its probes FROM
@@ -112,12 +149,8 @@ describe("the observation minimum", () => {
   // literals: 15 000 ms is the shortest span PERCLOS will answer from,
   // and 14 999 is not.
   it("refuses a 14 999 ms span and answers a 15 000 ms one, as literals", () => {
-    let state = emptyPerclos();
-    state = perclosStep(state, 0, OPEN_MM, BASELINE_MM);
-    const justUnder = perclosStep(state, 14999, OPEN_MM, BASELINE_MM);
-    expect(perclosValue(justUnder, 14999)).toBeNull();
-    const exactly = perclosStep(justUnder, 15000, OPEN_MM, BASELINE_MM);
-    expect(perclosValue(exactly, 15000)).toBe(0);
+    expect(perclosValue(filled(14999), 14999)).toBeNull();
+    expect(perclosValue(filled(15000), 15000)).toBe(0);
   });
 
   it("ignores gap frames when measuring the observed span", () => {
@@ -295,8 +328,15 @@ describe("the closed line", () => {
     state = perclosStep(state, 0, threshold - 0.001, BASELINE_MM);
     state = perclosStep(state, 20000, threshold, BASELINE_MM);
     state = perclosStep(state, 40000, threshold + 0.001, BASELINE_MM);
-    // Three samples: closed, open, open.
-    expect(perclosValue(state, 40000)).toBeCloseTo(1 / 3, 12);
+    // Three samples: closed, open, open. Read off the state rather
+    // than through perclosValue, which since roadmap 10.16 refuses a
+    // ratio built from three samples — and rightly, but what this test
+    // is about is which side of the line each sample landed on.
+    expect(state.samples.map((sample) => sample.closed)).toEqual([
+      true,
+      false,
+      false,
+    ]);
   });
 
   it("classifies at push time, a later baseline never rewrites history", () => {
@@ -306,7 +346,7 @@ describe("the closed line", () => {
     let state = emptyPerclos();
     state = perclosStep(state, 0, 5, 10);
     state = perclosStep(state, 20000, 5, 30);
-    expect(perclosValue(state, 20000)).toBeCloseTo(1 / 2, 12);
+    expect(state.samples.map((sample) => sample.closed)).toEqual([false, true]);
   });
 
   it("counts a missing baseline as untrusted, not open", () => {

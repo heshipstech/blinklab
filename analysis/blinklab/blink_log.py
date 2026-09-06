@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from blinklab.blink_match import Interval
+from blinklab.metadata import read_metadata
 
 # The contract from src/core/blinkLog.ts, in the order it is written.
 BLINK_COLUMNS = [
@@ -74,15 +75,19 @@ class BlinkLog:
 
 
 def _read_metadata(path: Path) -> dict[str, str]:
-    metadata: dict[str, str] = {}
-    with path.open(encoding="utf-8", newline="") as handle:
-        for line in handle:
-            if not line.startswith("#"):
-                break
-            key, separator, value = line.lstrip("# ").partition(":")
-            if separator:
-                metadata[key.strip()] = value.strip()
-    return metadata
+    """The shared reader.
+
+    This module used to accept a repeated key while loader.py and
+    validation.py refused one, so the same damaged file was rejected by
+    two readers and silently misread by the third. Roadmap 10.16.
+    """
+    return read_metadata(
+        path,
+        lambda key: ValueError(
+            f"{path.name}: the metadata declares {key!r} twice, and "
+            "the exporter never writes a key twice"
+        ),
+    )
 
 
 def load_blink_log(path: Path) -> BlinkLog:

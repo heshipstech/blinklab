@@ -84,6 +84,20 @@ class TestRefusals:
         with pytest.raises(ValueError, match="camera session"):
             load_blink_log(write(tmp_path, body))
 
+    def test_a_repeated_metadata_key(self, tmp_path: Path) -> None:
+        # Roadmap 10.16, ladder A27. loader.py and validation.py have
+        # always refused a repeated key, because a dict resolves it in
+        # favour of whichever line came last and there is no way to
+        # know from here which value is true. This reader accepted it,
+        # so one damaged file was rejected by two readers and silently
+        # misread by the third. All three share one reader now.
+        path = write(
+            tmp_path,
+            META + "# frames_measured: 9999\r\n" + HEADER + "\r\n",
+        )
+        with pytest.raises(ValueError, match="twice"):
+            load_blink_log(path)
+
     def test_a_blink_that_ends_before_it_starts(self, tmp_path: Path) -> None:
         body = META + HEADER + "\r\n40,10,10,50,1,1,1\r\n"
         with pytest.raises(ValueError, match="before it starts"):

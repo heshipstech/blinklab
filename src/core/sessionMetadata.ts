@@ -2,6 +2,7 @@ import type { CalibrationWindow } from "./calibrationWindow";
 import type { DeliveryRates } from "./deliveryRate";
 import { FEATURE_RECORD_CAP, type FeatureRecord } from "./featureRecord";
 import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
+import { PERCLOS_MIN_OBSERVED_MS, PERCLOS_MIN_SAMPLES } from "./perclos";
 import { percentile } from "./statistics";
 import { reduceUserAgent } from "./userAgent";
 
@@ -288,6 +289,11 @@ export function sessionMetadataRows(
       duration === null ? null : duration.toFixed(3),
     ),
     line("records", records.length),
+    // Roadmap 10.16, ladder A27. The two rules a PERCLOS value has to
+    // clear before it exists, written into the file so a reader knows
+    // what a blank perclos column means and what a filled one cleared.
+    line("perclos_min_observed_ms", PERCLOS_MIN_OBSERVED_MS),
+    line("perclos_min_samples", PERCLOS_MIN_SAMPLES),
     line(
       "face_detected_fraction",
       detected === null ? null : detected.toFixed(3),

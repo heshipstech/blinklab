@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from blinklab.metadata import read_metadata
+
 # The shared contract, in the order the browser writes it. Kept in
 # step with src/core/csv.ts by tests/test_csv_contract.py, which reads
 # the TypeScript source and compares.
@@ -97,33 +99,14 @@ class Session:
 
 
 def _read_metadata(path: Path) -> dict[str, str]:
-    """Pull the `# key: value` block the exporter writes above the header.
-
-    pandas skips these with comment="#", which is what makes them a
-    good place for session level facts, but it also means the only
-    labels a session carries would be dropped on the floor unless
-    something reads them deliberately.
-    """
-    metadata: dict[str, str] = {}
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not line.startswith("#"):
-                break
-            key, separator, value = line.lstrip("# ").partition(":")
-            if separator:
-                key = key.strip()
-                # A dict would resolve a repeated key in favour of
-                # whichever line came last, silently. The exporter
-                # never writes a key twice, so a file that does has
-                # been edited or damaged, and which value is true
-                # cannot be known from here.
-                if key in metadata:
-                    raise SessionError(
-                        f"the metadata declares {key!r} twice, and the "
-                        "exporter never writes a key twice"
-                    )
-                metadata[key] = value.strip()
-    return metadata
+    """The shared reader, with this module's own refusal."""
+    return read_metadata(
+        path,
+        lambda key: SessionError(
+            f"the metadata declares {key!r} twice, and the "
+            "exporter never writes a key twice"
+        ),
+    )
 
 
 def _check_columns(found: list[str]) -> list[str]:

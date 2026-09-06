@@ -30,6 +30,23 @@ export const PERCLOS_CLOSED_FRACTION = EYES_SHUT_FRACTION;
 // enough reality to summarize. Fifteen seconds of valid span.
 export const PERCLOS_MIN_OBSERVED_MS = 15000;
 
+// And enough samples inside that span to have summarised anything.
+//
+// Roadmap 10.16, ladder A27 (F-093). The span rule alone is satisfied
+// by two samples fifteen seconds apart: one closed frame and one open
+// frame, no observation of the fourteen seconds between them, and a
+// published eyes-closed share of exactly 50 percent. That is not a
+// measurement of a minute, it is a coin toss with a decimal point.
+//
+// 100 is deliberately far below what any session this instrument
+// accepts can produce — the frame-rate gate refuses below 25 per
+// second, which is 375 samples in fifteen seconds — so this cannot
+// refuse an honest session; it refuses only the degenerate one. It is
+// the same floor and the same reasoning as BASELINE_MIN_SAMPLES, and
+// it is written into every export so a reader of a file knows which
+// rule the number cleared.
+export const PERCLOS_MIN_SAMPLES = 100;
+
 // How stale the newest sample may be before the value is refused.
 // A window that has stopped receiving samples is not measuring any
 // more, and worse, its ratio DRIFTS on its own: no new evidence
@@ -101,6 +118,10 @@ export function perclosValue(
     return null;
   }
   if (last.timestampMs - first.timestampMs < PERCLOS_MIN_OBSERVED_MS) {
+    return null;
+  }
+  // A span that long held by two samples is not an observation of it.
+  if (inWindow.length < PERCLOS_MIN_SAMPLES) {
     return null;
   }
   // Nothing recent means nothing to report. Without this the ratio

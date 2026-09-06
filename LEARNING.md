@@ -1408,3 +1408,44 @@ guard whose test was deleted would have gone on looking like a control.
 Each of those is the same lesson the mutation runner is: a check is
 worth exactly what it reads, and the question to ask about one is never
 whether it passes, it is what would have to be true for it to fail.
+
+## Two numbers you are going to compare have to be counted the same way
+
+The page printed a sentence of the form "30 frames per second, of which
+this instrument read 24". It was built from two measurements that had
+nothing in common but a window. The delivered rate was measured between
+the first and the last frame the camera handed over; the sampled rate
+was measured between the first and the last tick of the detector. On a
+steady camera those spans are nearly the same and the sentence reads
+fine. On a camera that changed rate mid-window they are not, and the
+page could say it read thirty frames out of ten, which is not a
+statement about anything.
+
+The fix is not a clamp. A clamp would have hidden the disagreement and
+turned a measurement artefact into a claim, which the code's own comment
+had already noticed and decided against, correctly. The fix is to count
+both numbers over one span and to make the smaller quantity a subset of
+the larger by construction: the frames read inside a span are among the
+frames delivered inside it, so the ratio cannot exceed one, and nothing
+has to be clipped to make that true. That needed one extra field, a read
+remembering WHEN its frame arrived rather than only which frame it was,
+which is what lets a frame delivered before the span be left out of it.
+
+The same increment carried three more of the same shape, and the shape
+is the lesson. A PERCLOS value needed fifteen seconds of span and
+nothing else, so two samples fifteen seconds apart could publish an
+eyes-closed share of exactly fifty percent: a rule that measured the
+distance between the first and last observation and never asked how much
+was observed in between. A permutation test divided by the number of
+shuffles rather than by the number of shuffles plus one, so a result no
+shuffle reproduced printed p = 0.0000, which claims that a thousand
+shuffles established impossibility. And an exporter wrote one metadata
+key twice, in the one file where it mattered, breaking the contract that
+three readers rely on — two of which refused a repeated key while the
+third quietly kept the last one.
+
+Four defects, one family: a quantity that was not counted the way the
+sentence around it assumed. None of them was found by a test failing,
+because each test asserted what the code did. They were found by reading
+the arithmetic and asking what it would take for the printed sentence to
+be false.
