@@ -1,0 +1,128 @@
+Stepper honesty on variable-rate clips
+=====================================
+
+Pre-registered 6 September 2026, ladder item A1 of REMEDIATION-2026-09.md,
+the September audit's one critical finding (G-Stepped-1 in
+docs/audit/2026-09-06-appendix-all-findings.md). Committed BEFORE the
+code that implements it and BEFORE any clip is re-measured. The outcome
+section at the end is appended after the regression run; nothing above
+it is edited afterwards.
+
+The defect
+----------
+
+The stepper (src/io/videoStepper.ts) learns a clip's frame interval from
+the first six frames it can land on and takes the SMALLEST gap as the
+interval, on the reasoning that a probe can skip a frame and see two
+intervals but can never see less than one. That reasoning holds for a
+constant frame rate clip and fails for anything else: one short gap
+among the first six frames sets a step shorter than the clip's true
+period. Every later target that falls inside a frame already showing
+produces no frame callback, so the landing is "inexact", the stepper
+falls back to the SCHEDULE time (origin + index x step) and counts the
+frame as new. The same decoded frame is measured again under an
+invented timestamp.
+
+Reproduced by two independent verifiers through the real stepper
+against a fake decoder with an explicit frame-time list: a 200 frame
+clip at 20 frames per second with one short gap reports 399 frames at
+40.0 frames per second with stoppedEarly false. The 25 fps refusal
+passes on a clip the instrument declares unmeasurable, and blink rate,
+PERCLOS, long closures and the score are published for it. The
+duplicate-visit check (checkStepping, #193) cannot see it, because the
+invented timestamps are monotonic and the pipeline accepts every one.
+
+The rule, fixed here before any data is read
+--------------------------------------------
+
+1. Calibration collects up to twelve frame times (was six), within the
+   same probe budget, and hands them to a pure function in src/core.
+
+2. Every calibration gap must be a whole multiple of the smallest gap,
+   within CALIBRATION_QUANTUM_S = 0.0015 s. The tolerance is one
+   millisecond of container timestamp rounding plus margin: a 29.97 fps
+   clip with millisecond timestamps alternates 33 and 34 ms gaps and
+   must calibrate; a gap that is not a multiple of the smallest is what
+   a variable frame rate looks like, and the run is refused by name
+   before the first frame is measured.
+
+3. The step is the MEAN period, (last time - first time) divided by the
+   sum of the multiples, not the smallest gap. On a clip whose
+   timestamps are exact the two are the same number. On a
+   millisecond-quantised clip the smallest gap under-reads the period
+   by up to a millisecond, the schedule drifts by that much per frame,
+   and about one target in ninety lands inside the frame already
+   showing. That drift is the "+1" the published Eyeblink8 table
+   carries on two clips (docs/eyeblink8-result.txt) with no
+   explanation; this is the candidate explanation, and the regression
+   run decides it.
+
+4. An inexact landing is a first-class fact. The stepper counts them
+   and returns the count in its summary. When more than
+   INEXACT_LANDING_TOLERANCE = 0.02 of the frames sought landed
+   inexactly, the run is REFUSED by name, not summarised. The fraction
+   mirrors STEPPING_DUPLICATE_TOLERANCE (0.98) in
+   src/core/frameClock.ts: a seek that lands on the frame already
+   showing is possible but rare once calibration is right, so more than
+   two in a hundred is the step being wrong, or a browser that does not
+   report where it lands, and either way the frame has no time of its
+   own. A frame without a time of its own is not a measurement.
+
+5. Every stepped export (the per-second CSV, the blink log, the frame
+   trace) carries three header rows: frame_interval_s, frames_sought,
+   inexact_landings. A kept file says what it is.
+
+6. A glitch of exactly half the period cannot be told from a skipped
+   probe at calibration (40 ms gaps are whole multiples of a 20 ms
+   glitch). Such a clip calibrates at the glitch and is then refused by
+   rule 4, because about half its targets land inside frames already
+   showing. Both routes end in refusal by name; neither ends in a
+   fabricated rate.
+
+Predictions for the Eyeblink8 regression run
+--------------------------------------------
+
+The run is the owner's (ladder item D10, roadmap row 10.8): the eight
+prepared clips, WebKit, tools/measure_corpus.mjs, on the machine that
+produced the anchor run. Two branches are pre-committed; the
+frame_interval_s row of each clip's export says which branch that clip
+is in.
+
+Branch A, a clip whose calibration gaps are all equal (exact
+timestamps): the step is unchanged, the schedule is unchanged, the
+export is byte-identical to the anchor run's apart from the three new
+header rows, and inexact_landings is 0.
+
+Branch B, a clip whose gaps alternate by one timestamp quantum: the
+step changes from the smallest gap to the mean period. Predicted:
+inexact_landings falls from roughly 1 in 90 to 0, frames_measured
+falls by that same fabricated excess and matches the container's frame
+count exactly (the coverage check's "+1" disappears), and the blink
+match count on that clip moves by at most the number of blinks whose
+annotated window sat within one frame of a fabricated timestamp, which
+is at most a handful and in no consistent direction.
+
+Across all eight clips: inexact_landings is 0 on every clip, no clip is
+refused, and the published counts (341 of 408 caught, 65 invented)
+stay within the anchor run's own repeatability, which the record
+already states as digit-for-digit on two WebKit machines. A clip that
+lands in neither branch, or a refusal on any corpus clip, falsifies
+the rule as stated and is reported as such.
+
+What would falsify the design, stated now
+-----------------------------------------
+
+- A corpus clip refused as variable rate: the quantum tolerance is too
+  tight for real container timestamps, and the number and the gaps are
+  reported before any tolerance is changed.
+- inexact_landings above 0 on a branch A clip: the schedule drifts for
+  a reason other than quantisation, and the run is not re-anchored
+  until it is explained.
+- A blink count moving on a branch A clip: impossible by construction
+  (the schedule is unchanged), so it would mean the run is not
+  repeatable and the anchor itself is in question.
+
+Outcome
+-------
+
+(appended after the regression run; nothing above this line changes)
