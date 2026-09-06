@@ -1,4 +1,5 @@
 import { findFirstFrame } from "../core/frameSearch";
+import { calibrateStep, type StepCalibration } from "../core/stepCalibration";
 import type { VideoWithFrameCallback } from "./frameLoop";
 
 // Stepping a clip, rather than watching it.
@@ -29,10 +30,21 @@ export type SteppedFrame = {
 };
 
 export type StepSummary = {
+  /** Frames SOUGHT, which the pipeline's own count is checked against. */
   framesMeasured: number;
   lastMediaTimeSeconds: number | null;
   frameIntervalSeconds: number | null;
   stoppedEarly: boolean;
+  /**
+   * Sought frames the browser never placed on the clip's clock, so the
+   * schedule time was recorded instead. A counted fact since
+   * docs/stepper-honesty.txt: past a stated fraction the caller
+   * refuses the run, because a frame without a time of its own is not
+   * a measurement.
+   */
+  inexactLandings: number;
+  /** What calibration made of the first frames, or null if none decoded. */
+  calibration: StepCalibration | null;
 };
 
 // A seek that lands on the frame already showing produces no new frame
@@ -41,7 +53,12 @@ export type StepSummary = {
 const SEEK_TIMEOUT_MS = 2000;
 
 // Sampled to learn the clip's frame interval before stepping begins.
-const CALIBRATION_FRAMES = 6;
+// Twelve rather than the original six, within the same probe budget:
+// one short gap among six frames set the whole schedule (the September
+// audit's critical finding), and more frames make a lone glitch a
+// minority the multiple-of-the-smallest rule can see. On a slow clip
+// the budget runs out first and calibration proceeds on what it has.
+const CALIBRATION_FRAMES = 12;
 
 // How many seeks calibration may spend finding those frames. Generous
 // on purpose: a probe that lands on the frame already showing costs an
@@ -177,7 +194,7 @@ function frameProbe(
 async function measureFrameInterval(
   video: VideoWithFrameCallback,
   originSeconds: number,
-): Promise<number | null> {
+): Promise<StepCalibration> {
   const times: number[] = [];
   let probe = originSeconds;
   for (let attempt = 0; attempt < CALIBRATION_ATTEMPTS; attempt += 1) {
@@ -208,32 +225,17 @@ async function measureFrameInterval(
     probe = Math.max(probe, mediaTime) + CALIBRATION_STEP_S;
   }
 
-  if (times.length < 2) return null;
-
-  const gaps: number[] = [];
-  for (let index = 1; index < times.length; index += 1) {
-    const later = times[index];
-    const earlier = times[index - 1];
-    if (later === undefined || earlier === undefined) continue;
-    gaps.push(later - earlier);
-  }
-  if (gaps.length === 0) return null;
-  // The SMALLEST gap, not the median or the average, and the reasoning
-  // matters. Frame times are quantised, so every observed gap is a
-  // whole number of frame intervals. Probing can accidentally step over
-  // a frame and see two intervals; it can never see less than one. So
-  // the minimum is the interval and anything larger is a skip.
-  //
-  // The median was wrong and WebKit on a Linux runner proved it: half
-  // the probes skipped a frame there, the median came out about 2.2
-  // times too large, and a 60 frame clip was measured as 27.
-  const smallest = Math.min(...gaps);
-  // A clip claiming frames a microsecond or ten seconds apart is not
-  // something to build a seek schedule on.
-  if (!Number.isFinite(smallest) || smallest <= 0.001 || smallest > 1) {
-    return null;
-  }
-  return smallest;
+  // The rule lives in core so it can be pinned. Its history matters:
+  // the SMALLEST gap was once the whole answer, because probing can
+  // step over a frame and see two intervals but never less than one,
+  // and the median was wrong (WebKit on a Linux runner skipped half
+  // the probes, the median came out 2.2 times too large, and a 60
+  // frame clip measured as 27). The smallest gap is still the unit;
+  // every other gap must now be a whole multiple of it, and the step
+  // is the mean period those multiples imply. A gap that is no
+  // multiple is a variable frame rate, refused by name rather than
+  // stepped at the glitch. docs/stepper-honesty.txt.
+  return calibrateStep(times);
 }
 
 /**
@@ -264,28 +266,36 @@ export async function stepThroughVideo(
       lastMediaTimeSeconds: null,
       frameIntervalSeconds: null,
       stoppedEarly: true,
+      inexactLandings: 0,
+      calibration: null,
     };
   }
 
-  const interval = await measureFrameInterval(video, origin);
+  const calibration = await measureFrameInterval(video, origin);
   // REFUSED rather than guessed, and this is the whole lesson of the
   // first corpus run. The old fallback assumed 60 frames per second
   // when calibration failed. On a 30 fps clip that halves the step, so
   // every frame is visited twice: a 15,784 frame recording reported
   // 31,568 measurements, every timestamp was double, and the file
   // looked entirely normal. A wrong number that looks right is worse
-  // than no number.
-  if (interval === null) {
+  // than no number. The calibration result travels with the refusal so
+  // the caller can say WHICH refusal: too few frames, an implausible
+  // gap, or a variable frame rate.
+  if (calibration.kind !== "calibrated") {
     return {
       framesMeasured: 0,
       lastMediaTimeSeconds: null,
       frameIntervalSeconds: null,
       stoppedEarly: true,
+      inexactLandings: 0,
+      calibration,
     };
   }
+  const interval = calibration.periodSeconds;
   const step = interval;
 
   let index = 0;
+  let inexactLandings = 0;
   let lastMediaTimeSeconds: number | null = null;
   // The end is re-read on every frame rather than captured once. A
   // browser can report a short duration while a clip is still buffering
@@ -305,6 +315,8 @@ export async function stepThroughVideo(
         lastMediaTimeSeconds,
         frameIntervalSeconds: interval,
         stoppedEarly: true,
+        inexactLandings,
+        calibration,
       };
     }
 
@@ -335,6 +347,11 @@ export async function stepThroughVideo(
     const mediaTimeSeconds = landing.exact
       ? landing.mediaTimeSeconds
       : origin + index * step;
+    // Counted, not merely tolerated. On a variable rate clip stepped at
+    // the wrong interval this is the same decoded frame again under a
+    // schedule time, and the caller refuses the run past a stated
+    // fraction of these. docs/stepper-honesty.txt.
+    if (!landing.exact) inexactLandings += 1;
 
     // The last frame, twice. Near the end of a clip the schedule can
     // aim at a target that is still inside the duration but lands on
@@ -363,5 +380,7 @@ export async function stepThroughVideo(
     lastMediaTimeSeconds,
     frameIntervalSeconds: interval,
     stoppedEarly: false,
+    inexactLandings,
+    calibration,
   };
 }

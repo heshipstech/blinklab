@@ -325,3 +325,15 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   corpus run moves the built-from line — row 10.8's regression run is
   already committed to do exactly that. The ratchet finding a real,
   undeclared staleness in its first hour is the reason it exists.
+
+  6 September 2026, the stepper (ladder A1, docs/stepper-honesty.txt):
+  the step is now the mean period across calibration gaps that must
+  be whole multiples of the smallest, and a run whose inexact landings
+  exceed two in a hundred is refused by name. NOT argued neutral: a
+  clip with millisecond-quantised timestamps changes schedule, and the
+  pre-registered prediction is a frame count that drops by the
+  fabricated excess and a blink count that moves by at most a handful.
+  The stepper and its rule are NOT yet on the ratchet's watch list, so
+  this paragraph is the only record that the schedule moved: ladder
+  item D4 adds them and names the merged commit, which a rebase merge
+  does not let this pull request know in advance.
