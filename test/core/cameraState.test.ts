@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   cameraStateMessage,
   classifyCameraError,
+  sessionOver,
   type CameraState,
 } from "../../src/core/cameraState";
 
@@ -37,9 +38,49 @@ describe("cameraStateMessage", () => {
       { kind: "failed", reason: "AbortError" },
       { kind: "modelFailed" },
       { kind: "measurementFailed", reason: "boom" },
+      { kind: "ended" },
     ];
     for (const state of states) {
       expect(cameraStateMessage(state).length).toBeGreaterThan(10);
+    }
+  });
+
+  it("a session that has ended says what is still on offer and the way back", () => {
+    // Roadmap 14.0a (audit F-015, F-057). Stop used to drop the page
+    // into idle, whose sentence invites a fresh start while the
+    // exports beside it went grey and the records were one click from
+    // being wiped. Ended is its own state: the session is over, what
+    // it recorded is kept, and the camera may be started again.
+    const message = cameraStateMessage({ kind: "ended" });
+    expect(message).toContain("ended");
+    expect(message).toMatch(/export/i);
+    expect(message).toContain("Start camera");
+    expect(message).not.toMatch(/permission|could not/i);
+  });
+});
+
+describe("sessionOver, the states that keep a session's record on offer", () => {
+  it("is true for an ended session and for one that crashed with its data kept", () => {
+    expect(sessionOver({ kind: "ended" })).toBe(true);
+    expect(sessionOver({ kind: "measurementFailed", reason: "boom" })).toBe(
+      true,
+    );
+  });
+
+  it("is false while running, before a session, and for every refusal", () => {
+    const states: CameraState[] = [
+      { kind: "idle" },
+      { kind: "requesting" },
+      { kind: "loadingClip" },
+      { kind: "running" },
+      { kind: "denied" },
+      { kind: "noCamera" },
+      { kind: "failed", reason: "AbortError" },
+      { kind: "clipFailed", reason: "no" },
+      { kind: "modelFailed" },
+    ];
+    for (const state of states) {
+      expect(sessionOver(state)).toBe(false);
     }
   });
 

@@ -153,7 +153,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       **Findings:** G-export/l-1.
       **Done:** 6 September 2026, roadmap 10.15.
 
-- [ ] **A4. Stop camera greys out Export CSV and the blink log; the
+- [x] **A4. Stop camera greys out Export CSV and the blink log; the
       natural stop-then-export order loses the session.**
       `high · confirmed ×2 · S`
       **What:** `render()` disables both exports whenever
@@ -168,6 +168,8 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       Stop, assert both exports enabled and the KSS-after prompt fires.
       A17 replaces the interim with a real ended state.
       **Findings:** F-015.
+      **Done:** 6 September 2026, roadmap 14.0a, straight to A17's
+      ended state; the interim was never built.
 
 - [ ] **A5. A superseded camera start attaches its stream and never
       stops it.** `high · confirmed ×2 · S`
@@ -444,7 +446,7 @@ measurableAtFps(fps)` gates the reducer, long closures (`:3693`)
       **Depends on:** C1 (the observation), A3, A18.
       **Findings:** F-003.
 
-- [ ] **A17. There is no ended state: a finished clip stays running,
+- [x] **A17. There is no ended state: a finished clip stays running,
       the report is unreachable for every clip session, interruptions
       are counted after the end and stamped 0.000 s, and reset residue
       leaks across sessions.** `medium · confirmed ×2 · M`
@@ -469,6 +471,12 @@ n)` stays false (`participantReport.ts:85-97`); Stop
       export every stimulus start; word the gate per source; unit
       tests plus one e2e per transition. Supersedes A4's interim.
       **Findings:** F-057, F-055, F-095, (F-015 structural).
+      **Done:** 6 September 2026, roadmap 14.0a: the `ended` state,
+      exports, report and KSS-after on it, markers and light on
+      `running && camera`, interruptions gated with a null stamp.
+      The reset residue (calibration state, inference samples) and
+      the stimulus export are carried by roadmap 14.0e, as the
+      roadmap already says.
 
 - [ ] **A18. Delivery rates are memoised at the first consumer, so the
       report's evidence rate depends on click timing.**
@@ -531,7 +539,7 @@ downgraded/medium · S`
       stepped clip asserting `# source: file` and the clip name.
       **Findings:** F-016.
 
-- [ ] **A22. KSS-after is re-asked on every export after a Skip and is
+- [x] **A22. KSS-after is re-asked on every export after a Skip and is
       stamped by whichever export comes first, even mid-session.**
       `medium · confirmed ×2 · S`
       **What:** `main.ts:2760-2783` guards on `kssAfter === null`
@@ -543,6 +551,9 @@ downgraded/medium · S`
       ask on A17's ended transition rather than on export.
       **Depends on:** A17 (or land the guard first, S).
       **Findings:** F-056.
+      **Done:** 6 September 2026, roadmap 14.0a: guarded on asked,
+      asked once on the ended transition, `kss_after_at_seconds`
+      exported.
 
 - [ ] **A23. Gaze calibration has no goodness-of-fit refusal; a garbage
       axis is stored and labelled "(calibrated)".**

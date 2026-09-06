@@ -186,6 +186,11 @@ function rulerFitFinding(shown: RulerFitVerdict | null): SurfaceFinding {
 
 function cameraOutcomeFinding(state: CameraState): SurfaceFinding {
   switch (state.kind) {
+    // "ended" is the ordinary end since roadmap 14.0a. "running" and
+    // "idle" stay listed because a fixture written before that state
+    // existed, and a report drawn mid-run, both name them for the
+    // same outcome.
+    case "ended":
     case "running":
     case "idle":
       return {

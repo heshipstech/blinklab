@@ -177,6 +177,14 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
     page.getByRole("button", { name: "Start camera" }),
   ).toBeVisible();
 
+  // Roadmap 14.0a: a finished clip is an ENDED session, so the report
+  // that only renders after a session ends is reachable for a clip
+  // too, and the exports stay on offer beside it.
+  await expect(page.getByTestId("show-report")).toBeEnabled();
+  await expect(page.getByTestId("export-csv")).toBeEnabled();
+  await page.getByTestId("show-report").click();
+  await expect(page.getByTestId("participant-report")).toBeVisible();
+
   const text = (await finished.textContent()) ?? "";
   const measured = Number(/Measured (\d+)/.exec(text)?.[1] ?? Number.NaN);
 

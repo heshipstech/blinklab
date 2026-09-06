@@ -293,5 +293,9 @@ describe("the participant report", () => {
     // A failed session with records still gets its report: refusals
     // lead, and a failure is a result.
     expect(reportAvailable("measurementFailed", 120)).toBe(true);
+    // Roadmap 14.0a: the ended state is the ordinary way a session
+    // finishes, and a report needs records even then.
+    expect(reportAvailable("ended", 120)).toBe(true);
+    expect(reportAvailable("ended", 0)).toBe(false);
   });
 });

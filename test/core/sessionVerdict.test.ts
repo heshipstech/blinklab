@@ -166,6 +166,19 @@ describe("the session verdict", () => {
     expect(surface(missing, "rulerFit").status).toBe("unknown");
   });
 
+  it("an ended session is the ordinary outcome, the same as running", () => {
+    // Roadmap 14.0a: Stop and a finished clip land in "ended", and a
+    // report drawn there must not read the end as a failure or an
+    // unknown. The fixture written before the state existed still
+    // says "running" for the same outcome.
+    const inputs = good();
+    inputs.cameraOutcome = { kind: "ended" };
+    const finding = surface(inputs, "cameraOutcome");
+    expect(finding.status).toBe("ok");
+    expect(finding.sentence).toContain("without a camera failure");
+    expect(assessSession(inputs).headline).toBe("ok");
+  });
+
   it("a broken session outcome refuses, carrying its reason", () => {
     const inputs = good();
     inputs.cameraOutcome = { kind: "measurementFailed", reason: "boom" };

@@ -61,9 +61,20 @@ function describe(rating: KssRating | null): string {
 export function kssMetadataRows(
   before: KssRating | null,
   after: KssRating | null,
+  afterAtMs: number | null = null,
 ): string[] {
-  return [
+  const rows = [
     `# kss_before: ${describe(before)}`,
     `# kss_after: ${describe(after)}`,
   ];
+  // WHEN the after answer was given, on the record clock, so a reader
+  // knows which moment a session-level label describes. Roadmap 14.0a:
+  // the answer used to attach to whichever export came first, which
+  // could be mid-session. Absent when the question was never asked,
+  // never a zero; a skipped answer still carries its moment, because
+  // "asked and declined at 61 s" is data.
+  if (afterAtMs !== null) {
+    rows.push(`# kss_after_at_seconds: ${(afterAtMs / 1000).toFixed(3)}`);
+  }
+  return rows;
 }

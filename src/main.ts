@@ -6,6 +6,7 @@ import "./styles.css";
 import {
   cameraStateMessage,
   classifyCameraError,
+  sessionOver,
   type CameraState,
 } from "./core/cameraState";
 import {
@@ -582,7 +583,8 @@ let visibilityChanges = 0;
 // When each visibility change happened, on the record clock. The
 // export's count row derives from this array's length so the two can
 // never disagree; the counter above stays for the suspension guard.
-let interruptionTimesMs: number[] = [];
+// Null for a change before the first record: the moment is unknown.
+let interruptionTimesMs: (number | null)[] = [];
 // The session's delivery rates, measured ONCE at the first moment any
 // consumer needs them and reused by every consumer after: the export,
 // the report's verdict and the report's conditions must carry the SAME
@@ -721,10 +723,11 @@ video.addEventListener("ended", () => {
   // finished sentence the moment it was written — caught by the
   // watched-path e2e test in CI, invisible locally where clips
   // cannot decode.
-  clipRunEnded = true;
-  render();
+  // ENDED, the same state Stop reaches: the exports and the report
+  // stay on offer and the way back is shown (roadmap 14.0a).
+  setState({ kind: "ended" });
   status.textContent =
-    "The clip finished. Export the CSV, or pick another clip.";
+    "The clip finished. Export the CSV, show the report, or pick another clip.";
 });
 
 // People expect to see themselves as a mirror shows them.
@@ -849,18 +852,17 @@ const status = document.createElement("p");
 
 let state: CameraState = { kind: "idle" };
 
-// A clip run that ENDED leaves the page in the running state on
-// purpose — the readouts and exports still describe a real session —
-// but it must not keep hiding the way back to the camera. Issue
-// #303, found by the owner attempting #221's live reproduction,
-// which this had made unreachable on a one-camera machine: the only
-// way back was a reload, and a reload resets the very clock the bug
-// needs. Set where a clip run finishes or stops, cleared on any new
-// source start.
-let clipRunEnded = false;
-
 function render(): void {
   const running = state.kind === "running";
+  // Roadmap 14.0a: a session that has ENDED is not a session that
+  // never was. Its picture, its traces and its exports describe a
+  // real recording and stay on the page; only the live controls, the
+  // ones that need a frame arriving, come off. Issue #303 used to
+  // keep a finished clip "running" with a flag so its readouts would
+  // survive; the ended state carries that on its own, for the camera
+  // too, and the flag is gone.
+  const over = sessionOver(state);
+  const showing = running || over;
   status.textContent = cameraStateMessage(state);
   // The state's name, machine readable. The status text is prose for
   // a person, and the batch runner in tools/measure_corpus.mjs was
@@ -876,16 +878,16 @@ function render(): void {
 
   // The picture. An empty canvas is a blank rectangle that reads as a
   // failure, so it is the one thing genuinely hidden.
-  canvas.hidden = !running;
-  mirrorLabel.hidden = !running;
-  eyeMarkerLabel.hidden = !running;
-  faceMeshLabel.hidden = !running;
-  resolutionLabel.hidden = !running;
+  canvas.hidden = !showing;
+  mirrorLabel.hidden = !showing;
+  eyeMarkerLabel.hidden = !showing;
+  faceMeshLabel.hidden = !showing;
+  resolutionLabel.hidden = !showing;
 
   // The traces, same reason: three empty strips look broken.
-  sparkCanvas.hidden = !running;
-  gazeTraceHorizontalCanvas.hidden = !running;
-  gazeTraceVerticalCanvas.hidden = !running;
+  sparkCanvas.hidden = !showing;
+  gazeTraceHorizontalCanvas.hidden = !showing;
+  gazeTraceVerticalCanvas.hidden = !showing;
 
   // Left alone this reports the DISPLAY's refresh rate as though it
   // were the instrument's, which is a wrong number rather than a
@@ -918,19 +920,18 @@ function render(): void {
   if (running) {
     refreshHeatmapButton();
   }
-  if (!running) {
+  if (!showing) {
+    // An ended session keeps its exports, its heatmap and its replay.
+    // The messages for "ended" and "measurementFailed" both promise
+    // the recorded data is still here, and buttons that contradict
+    // the message are worse than no message. The count rule from the
+    // last running frame still holds, so a session that recorded
+    // nothing stays disabled. Remediation B3, widened by 14.0a.
     for (const button of [heatmapButton, replayButton]) {
       button.disabled = true;
     }
-    // measurementFailed keeps the exports. Its message promises the
-    // recorded data can still be exported, and buttons that
-    // contradict the message are worse than no message. The count
-    // rule from the last running frame still holds, so a session
-    // that recorded nothing stays disabled. Remediation B3.
-    if (state.kind !== "measurementFailed") {
-      exportButton.disabled = true;
-      exportBlinksButton.disabled = true;
-    }
+    exportButton.disabled = true;
+    exportBlinksButton.disabled = true;
   }
   if (recorder !== null) {
     recorder.button.disabled = !running;
@@ -943,14 +944,17 @@ function render(): void {
   }
 
   startButton.hidden =
-    (running && !clipRunEnded) ||
-    state.kind === "requesting" ||
-    state.kind === "loadingClip";
+    running || state.kind === "requesting" || state.kind === "loadingClip";
   retryModelButton.hidden = state.kind !== "modelFailed";
   // The intentional way out of a live session. Camera only: a clip
   // run has its own stop, and a session that never ran has nothing
   // to end.
   stopCameraButton.hidden = !running || frameSource !== "camera";
+  // The marker and the light stimulus act on a running measurement;
+  // both read the state, so the transition out of running turns
+  // them off here rather than waiting for a frame that will not come.
+  refreshMarkButton();
+  refreshLightResponseButton();
   refreshReportGate();
 }
 
@@ -970,7 +974,6 @@ function setState(next: CameraState): void {
 // blink duration into the next session's score.
 function resetSession(): void {
   // Light, distance and even the person may have changed.
-  clipRunEnded = false;
   baselineState = null;
   rulerFitState = initialRulerFitState;
   rateState = null;
@@ -996,6 +999,7 @@ function resetSession(): void {
   kssAfter = null;
   kssBeforeAsked = false;
   kssAfterAsked = false;
+  kssAfterAtMs = null;
   kssPanel.hidden = true;
   refreshKssLine();
   writeReadout(featureLabel, "");
@@ -1341,8 +1345,10 @@ async function beginVideoFile(file: File): Promise<void> {
       // camera comes back on offer. The failure branches below leave
       // the running state through setState, which restores the button
       // by itself; this covers the outcomes that keep the session.
-      clipRunEnded = true;
-      render();
+      // ENDED rather than a flag on running: the report only renders
+      // after a session ends, and a stepped clip is a session that
+      // ended (roadmap 14.0a, audit F-057).
+      setState({ kind: "ended" });
       const tookSeconds = Math.round((performance.now() - startedAtMs) / 1000);
       // Deliberately NOT "measured every frame". The instrument cannot
       // know how many frames a file contains, only how many it looked
@@ -2274,6 +2280,10 @@ let kssBefore: KssRating | null = null;
 let kssBeforeAsked = false;
 let kssAfter: KssRating | null = null;
 let kssAfterAsked = false;
+// The record clock at the moment the after answer was given, written
+// into the export beside the answer so a reader knows which moment a
+// session label describes. Roadmap 14.0a.
+let kssAfterAtMs: number | null = null;
 // A modal, not a panel inside the Session card.
 //
 // As a panel it sat low in a card that can run past the fold, and the
@@ -2414,7 +2424,7 @@ function exportSession(): void {
     // of its oldest seconds are missing rather than looking complete
     // (roadmap 10.4, the blink log's WARNING precedent).
     ...featureRecordOverrunRows(featureRecordsDropped),
-    ...kssMetadataRows(kssBefore, kssAfter),
+    ...kssMetadataRows(kssBefore, kssAfter, kssAfterAtMs),
     // Appended last: new keys after every row a reader already
     // parses. The commit comes from the meta tag the build stamps
     // (REMEDIATION E2), so the file and the page can never claim two
@@ -2721,16 +2731,42 @@ reportButton.addEventListener("click", () => {
 
 stopCameraButton.addEventListener("click", () => {
   // The state is written first, the hardware release is best effort
-  // (the crash path's own lesson), and the records stay exportable.
+  // (the crash path's own lesson), and the records stay exportable:
+  // ENDED, not idle, because idle greys the exports and the next
+  // Start wipes the records (roadmap 14.0a, audit F-015).
   sourceRunToken += 1;
-  setState({ kind: "idle" });
+  setState({ kind: "ended" });
   try {
     stopDeliveryObserver();
     stopCamera(video);
   } catch (stopError: unknown) {
     console.error("the camera could not be stopped:", stopError);
   }
+  // The after question belongs to the moment the session ends, not
+  // to whichever export comes first (audit F-056). Asked once, here,
+  // and stamped on the record clock; the export path only asks if
+  // this never did.
+  askAfterQuestionOnce();
 });
+
+/**
+ * Ask how sleepy the person feels now, exactly once per session and
+ * only on a camera session (asking whoever watches a recording would
+ * label the recorded person with the viewer's answer). A Skip is an
+ * answer: it is stamped and never re-asked.
+ */
+function askAfterQuestionOnce(onAnswered: () => void = () => {}): void {
+  if (kssAfterAsked || frameSource !== "camera") {
+    onAnswered();
+    return;
+  }
+  askKss("How sleepy do you feel now?", (rating) => {
+    kssAfter = rating;
+    kssAfterAsked = true;
+    kssAfterAtMs = lastRecordAtMs;
+    onAnswered();
+  });
+}
 
 const exportButton = document.createElement("button");
 exportButton.textContent = "Export CSV";
@@ -2823,17 +2859,17 @@ exportButton.addEventListener("click", () => {
   // asking whoever is watching a recording how sleepy THEY feel would
   // write the viewer's answer into the file as the recorded person's
   // label, which is the exact mislabelling a dataset exists to avoid.
-  if (kssAfter === null && frameSource === "camera") {
+  // Since roadmap 14.0a the question is asked when the session ends,
+  // so this path only fires for a session that reached export some
+  // other way. Guarded on ASKED, not on the answer: a Skip used to be
+  // re-asked on every export (audit F-056).
+  if (!kssAfterAsked && frameSource === "camera") {
     // The click that looks like nothing. It opens the question below
     // and returns, and the file only arrives once the question is
     // answered, so the button now says so instead of leaving a person
     // clicking it again.
     exportStatus.textContent = EXPORT_WAITING_FOR_KSS;
-    askKss("How sleepy do you feel now?", (rating) => {
-      kssAfter = rating;
-      kssAfterAsked = true;
-      exportSession();
-    });
+    askAfterQuestionOnce(exportSession);
     return;
   }
   exportSession();
@@ -4200,8 +4236,15 @@ function endLightStimulus(): void {
 
 function startLightStimulus(): void {
   // Nothing to measure against until the recording is running, and the
-  // stimulus is for a live eye, not a clip.
-  if (sessionStartedAtEpochMs === null || frameSource !== "camera") {
+  // stimulus is for a live eye, not a clip. Running, not merely
+  // started: an ended session has no eye left to read the reflex
+  // from, so the stimulus refuses there exactly as its button does
+  // (roadmap 14.0a).
+  if (
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera"
+  ) {
     return;
   }
   lightStimulusStartMs = performance.now();
@@ -4231,7 +4274,9 @@ function startLightStimulus(): void {
 
 function refreshLightResponseButton(): void {
   lightResponseButton.disabled =
-    sessionStartedAtEpochMs === null || frameSource !== "camera";
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera";
 }
 
 lightResponseButton.addEventListener("click", startLightStimulus);
@@ -4265,7 +4310,12 @@ const markLabel = document.createElement("p");
 // breaks the circle: the truth becomes "ten blinks between marker 1
 // and marker 2", whatever the instrument thought happened.
 function refreshMarkButton(): void {
-  markButton.disabled = sessionStartedAtEpochMs === null;
+  // A marker names a moment of a RUNNING measurement. After the end
+  // there is no moment left to mark, and before roadmap 14.0a the
+  // button stayed live on a stopped session and stamped the last
+  // record's time on whatever the operator meant (audit A17).
+  markButton.disabled =
+    state.kind !== "running" || sessionStartedAtEpochMs === null;
   markLabel.textContent =
     sessionMarkers.length === 0
       ? ""
@@ -4278,6 +4328,9 @@ function refreshMarkButton(): void {
 }
 
 markButton.addEventListener("click", () => {
+  // The gate, re-checked at click time: a stale enabled button must
+  // not mark a session that has ended.
+  if (state.kind !== "running") return;
   // Stamped on the same clock the records use, so a marker and a
   // measurement can be compared without a conversion nobody checked.
   const atMs = lastRecordAtMs ?? 0;
@@ -4296,11 +4349,18 @@ markButton.addEventListener("click", () => {
 // gap that looks like a person who stopped blinking. Counting the
 // switches lets the analysis tell one from the other.
 document.addEventListener("visibilitychange", () => {
+  // Only a RUNNING measurement can be interrupted. Before roadmap
+  // 14.0a every tab switch after Stop, or before Start, counted as an
+  // interruption of a session that was not measuring, and degraded
+  // the verdict on a non-event (audit F-055).
+  if (state.kind !== "running") return;
   visibilityChanges += 1;
   // Stamped on the same clock the records use, like a marker: the
   // last record is the last moment the measurement was alive, which
   // is where the gap this change opened actually sits in the file.
-  interruptionTimesMs = [...interruptionTimesMs, lastRecordAtMs ?? 0];
+  // Null before the first record: the moment is unknown, and the
+  // export writes exactly that rather than a literal zero.
+  interruptionTimesMs = [...interruptionTimesMs, lastRecordAtMs];
 });
 
 const exportRow = document.createElement("div");
