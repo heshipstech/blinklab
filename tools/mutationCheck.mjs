@@ -187,6 +187,20 @@ const MUTATIONS = [
     "test/core/validityGate.test.ts",
   ],
   [
+    "src/core/perclos.ts",
+    "PERCLOS_MIN_SAMPLES = 100",
+    "PERCLOS_MIN_SAMPLES = 2",
+    "PERCLOS sample floor removed: two frames could publish a share of a minute",
+    "test/core/perclos.test.ts",
+  ],
+  [
+    "src/core/perclos.ts",
+    "PERCLOS_MIN_SAMPLES = 100",
+    "PERCLOS_MIN_SAMPLES = 1000",
+    "PERCLOS sample floor bloated past what a 25 fps session can produce",
+    "test/core/perclos.test.ts",
+  ],
+  [
     "src/core/constants.ts",
     "MIN_BLINK_FPS = 25",
     "MIN_BLINK_FPS = 24",

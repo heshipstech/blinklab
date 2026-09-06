@@ -213,7 +213,8 @@ def _permutation_control(
     The values are held fixed and the dark/bright labels reshuffled, so the
     null is "the same pupils, with the light phase forgotten". The observed
     difference has to sit above the 97.5th percentile of that null to count,
-    and the one-sided p is the share of shuffles at least as large.
+    and the one-sided p is the share of shuffles at least as large, with one
+    added to both parts so it can never read as exactly zero.
     """
     values = dark + bright
     labels = [True] * len(dark) + [False] * len(bright)
@@ -230,4 +231,9 @@ def _permutation_control(
         )
     percentile = float(np.percentile(differences, SIGNIFICANCE_PERCENTILE))
     at_least = sum(1 for d in differences if d >= observed)
-    return percentile, at_least / PERMUTATIONS
+    # Add one to both parts, as stats.py and rldd.py already do. A p of
+    # exactly zero would claim the observed value is impossible by
+    # chance, and a thousand shuffles cannot establish that: the most
+    # they can say is that none of a thousand reproduced it, which is
+    # 1/1001. Roadmap 10.16, ladder A27.
+    return percentile, (at_least + 1) / (PERMUTATIONS + 1)

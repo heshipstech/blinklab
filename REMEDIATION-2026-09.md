@@ -643,7 +643,7 @@ downgraded/medium · S`
       the last one. test/e2e/cameraStopped.spec.ts freezes the fake
       camera and reads the end by name.
 
-- [ ] **A27. Four small arithmetic and wiring defects, one PR.**
+- [x] **A27. Four small arithmetic and wiring defects, one PR.**
       `low · confirmed · S` - `deliveryRate.ts:100-116`, `:126-147`, `:167-179`: the two
       rates are measured over different spans and printed as
       part-of-whole ("3 per second, of which this instrument read
@@ -661,6 +661,23 @@ downgraded/medium · S`
       `loader.py:118-127`; `blink_log.py:76-85` does not enforce the
       rule at all. Drop the redundant row; hoist one `_read_metadata`
       shared by loader, validation and blink_log. (G-export/l-7)
+      **Done:** 6 September 2026, roadmap 10.16. Both delivery rates are
+      counted inside the reads' span, a read remembers when its frame
+      arrived so a frame delivered before the span is not credited to
+      it, and the frames read in a span are a subset of the frames
+      delivered in it, so the read fraction is at most one by
+      construction rather than by a clamp; the equal case says "read
+      all N". `PERCLOS_MIN_SAMPLES` is 100, deliberately far below the
+      375 a 25 fps session produces in fifteen seconds, and both floors
+      are exported. `light_response.py` uses (k+1)/(N+1), so the floor
+      is 1/1001. `frameTrace.ts` no longer declares a key its caller
+      owns, and one `read_metadata` in `blinklab/metadata.py` serves
+      loader, validation and blink_log, each handing it its own
+      exception; `blink_log.py` refuses a repeated key for the first
+      time. One correction to this item's own wording: the reader that
+      actually consumes a frame trace (`tools/miss_autopsy.py`) skips
+      metadata lines entirely, so the duplicate key broke the
+      exporter's stated contract without yet breaking a reader.
 
 ---
 

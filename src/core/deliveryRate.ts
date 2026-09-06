@@ -53,6 +53,14 @@ type Read = {
    * same photograph, however far apart they are.
    */
   deliveredCount: number;
+  /**
+   * When that photograph arrived, or null before any had. Roadmap
+   * 10.16, ladder A27: the two rates are compared, so they have to be
+   * counted over one span, and a frame read inside the span but
+   * DELIVERED before it is not a frame the span can be credited with.
+   * Without this the sampled rate could exceed the delivered one.
+   */
+  frameAtMs: number | null;
 };
 
 export type DeliveryState = {
@@ -140,7 +148,11 @@ export function noteRead(state: DeliveryState, nowMs: number): DeliveryState {
     deliveredAtMs: keepRecent(state.deliveredAtMs, nowMs, DELIVERY_WINDOW_MS),
     reads: [
       ...state.reads.filter((r) => nowMs - r.atMs <= DELIVERY_WINDOW_MS),
-      { atMs: nowMs, deliveredCount: state.deliveredCount },
+      {
+        atMs: nowMs,
+        deliveredCount: state.deliveredCount,
+        frameAtMs: state.lastDeliveredAtMs,
+      },
     ],
   };
 }
@@ -156,10 +168,14 @@ export type DeliveryRates = {
   sampledFps: number | null;
   /**
    * `sampledFps` over `deliveredFps`. Below one on a machine slower
-   * than its camera; at one on a machine faster than it. Deliberately
-   * NOT clamped: a value a shade over one means the two rates were
-   * measured across slightly different spans, and hiding that behind a
-   * clamp would turn a measurement artefact into a claim.
+   * than its camera; at one on a machine faster than it.
+   *
+   * It cannot exceed one, and it is not clamped to get there: since
+   * roadmap 10.16 both rates count events inside ONE span, and the
+   * frames read in that span are a subset of the frames delivered in
+   * it, so the ratio is at most one by construction. Before that the
+   * two were measured across different spans and a camera that sped up
+   * mid-window could print reading 30 frames out of 10.
    */
   readFraction: number | null;
 };
@@ -179,19 +195,60 @@ export function deliveryRates(
 ): DeliveryRates {
   const delivered = keepRecent(state.deliveredAtMs, nowMs, DELIVERY_WINDOW_MS);
   const reads = state.reads.filter((r) => nowMs - r.atMs <= DELIVERY_WINDOW_MS);
-  const deliveredFps = measureFps(delivered);
 
-  // Distinct photographs, not ticks. Two ticks that read the same
-  // frame are one observation of the eye, and counting them as two is
-  // exactly the overstatement this module exists to correct.
-  const distinct = new Set(reads.map((r) => r.deliveredCount)).size;
   const first = reads[0];
   const last = reads[reads.length - 1];
   const spanMs =
     first === undefined || last === undefined ? 0 : last.atMs - first.atMs;
-  const sampledFps =
-    distinct < 2 || spanMs <= 0 ? null : ((distinct - 1) * 1000) / spanMs;
 
+  // No reads yet, so nothing to compare and nothing to get wrong: the
+  // camera's own rate is measured over its own frames and the sampled
+  // rate says nothing rather than zero.
+  if (spanMs <= 0) {
+    return {
+      deliveredFps: measureFps(delivered),
+      sampledFps: null,
+      readFraction: null,
+    };
+  }
+
+  // One span, from the first read to the last, and both numbers count
+  // events inside it. Roadmap 10.16, ladder A27: measured over their
+  // own spans the two rates answered different questions and were
+  // printed as one, so a camera that sped up mid-window could read 30
+  // frames out of 10.
+  const spanStart = first?.atMs ?? 0;
+  const spanEnd = last?.atMs ?? 0;
+  const deliveredInSpan = delivered.filter(
+    (atMs) => atMs >= spanStart && atMs <= spanEnd,
+  ).length;
+
+  // Distinct photographs, not ticks. Two ticks that read the same
+  // frame are one observation of the eye, and counting them as two is
+  // exactly the overstatement this module exists to correct. A read
+  // whose frame arrived before the span is not counted either: the
+  // span cannot be credited with a frame it did not receive.
+  const distinctInSpan = new Set(
+    reads
+      .filter(
+        (r) =>
+          r.frameAtMs !== null &&
+          r.frameAtMs >= spanStart &&
+          r.frameAtMs <= spanEnd,
+      )
+      .map((r) => r.deliveredCount),
+  ).size;
+
+  // Intervals, not events, which is the convention measureFps already
+  // uses: N frames inside a span cover N-1 gaps. Both numbers are
+  // counted the same way, so the invariant survives it — a subset of
+  // the frames gives a subset of the gaps.
+  const deliveredFps =
+    deliveredInSpan < 2 ? null : ((deliveredInSpan - 1) * 1000) / spanMs;
+  const sampledFps =
+    deliveredFps === null
+      ? null
+      : (Math.max(distinctInSpan - 1, 0) * 1000) / spanMs;
   const readFraction =
     deliveredFps === null || sampledFps === null || deliveredFps <= 0
       ? null
@@ -238,9 +295,20 @@ export function deliveryRateMessage(
   if (rates.deliveredFps === null || rates.sampledFps === null) {
     return "Camera delivery: measuring...";
   }
+  // "3 per second, of which this instrument read 5" was a sentence
+  // about nothing, and it was reachable because the two rates were
+  // measured over different spans. They share a span now, so the
+  // whole-of-part reading is always true, and the equal case gets its
+  // own words rather than printing the same number twice (roadmap
+  // 10.16, ladder A27).
+  const delivered = Math.round(rates.deliveredFps);
+  const sampled = Math.round(rates.sampledFps);
+  if (sampled >= delivered) {
+    return `Camera delivery: ${String(delivered)} frames per second, and this instrument read all ${String(delivered)}`;
+  }
   return (
-    `Camera delivery: ${String(Math.round(rates.deliveredFps))} frames ` +
+    `Camera delivery: ${String(delivered)} frames ` +
     `per second, of which this instrument read ` +
-    `${String(Math.round(rates.sampledFps))}`
+    `${String(sampled)}`
   );
 }

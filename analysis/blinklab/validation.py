@@ -28,6 +28,7 @@ from pathlib import Path
 
 from blinklab.blink_log import BLINK_COLUMNS
 from blinklab.loader import Session, SessionError, load_session
+from blinklab.metadata import read_metadata
 
 SESSION_PREFIX = "blinklab-session-"
 BLINKS_PREFIX = "blinklab-blinks-"
@@ -78,27 +79,15 @@ class CameraBlinkLog:
 
 
 def _read_metadata(path: Path) -> dict[str, str]:
-    """The `# key: value` block above the header, as written."""
-    metadata: dict[str, str] = {}
-    with path.open(encoding="utf-8", newline="") as handle:
-        for line in handle:
-            if not line.startswith("#"):
-                break
-            key, separator, value = line.lstrip("# ").partition(":")
-            if separator:
-                key = key.strip()
-                # A dict would resolve a repeated key in favour of
-                # whichever line came last, silently. The exporter
-                # never writes a key twice, so which value is true
-                # cannot be known from here.
-                if key in metadata:
-                    raise ValidationError(
-                        f"{path.name}: the metadata declares {key!r} "
-                        "twice, and the exporter never writes a key "
-                        "twice"
-                    )
-                metadata[key] = value.strip()
-    return metadata
+    """The shared reader, with this module's own refusal."""
+    return read_metadata(
+        path,
+        lambda key: ValidationError(
+            f"{path.name}: the metadata declares {key!r} "
+            "twice, and the exporter never writes a key "
+            "twice"
+        ),
+    )
 
 
 def _refuse_clip(metadata: dict[str, str], name: str) -> None:

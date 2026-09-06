@@ -133,6 +133,73 @@ describe("what the camera delivered, and how much of it was read", () => {
   });
 });
 
+describe("the two rates are measured over one span (roadmap 10.16, A27)", () => {
+  // The audit's finding: the delivered rate was measured between the
+  // first and last DELIVERED frame in the window, and the sampled rate
+  // between the first and last READ. Two spans, printed as a
+  // part-of-whole — "3 frames per second, of which this instrument
+  // read 5" — which is not a sentence about anything. Both are
+  // measured over the reads' span now, counting the frames that
+  // arrived inside it, so the smaller number cannot exceed the larger.
+  it("never reports reading more frames than arrived", () => {
+    for (const deliveryHz of [15, 24, 30, 60, 120]) {
+      for (const processHz of [7.5, 14.3, 29.2, 30, 61, 126.7]) {
+        const rates = deliveryRates(session(deliveryHz, processHz, 5), 5000);
+        if (rates.deliveredFps === null || rates.sampledFps === null) {
+          continue;
+        }
+        expect(
+          rates.sampledFps,
+          `${String(processHz)} Hz reading a ${String(deliveryHz)} Hz camera`,
+        ).toBeLessThanOrEqual(rates.deliveredFps);
+        expect(rates.readFraction ?? 0).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("does not read 30 out of 10 when the camera sped up mid-window", () => {
+    // The defect, staged. Twenty frames arrive at 10 Hz, then the
+    // camera settles at 30 and the page starts reading. Measured over
+    // two spans, the delivered rate is the whole window's average, 9.9,
+    // and the sampled rate is the last second's, 30. The page then
+    // printed "10 frames per second, of which this instrument read 30".
+    let state = emptyDelivery();
+    for (let i = 0; i < 20; i += 1) {
+      state = noteDelivered(state, i * 100);
+    }
+    for (let i = 0; i < 30; i += 1) {
+      const atMs = 4000 + i * (1000 / 30);
+      state = noteDelivered(state, atMs);
+      state = noteRead(state, atMs);
+    }
+    const rates = deliveryRates(state, 5000);
+    expect(rates.deliveredFps).not.toBeNull();
+    expect(rates.sampledFps).not.toBeNull();
+    expect(rates.sampledFps ?? 0).toBeLessThanOrEqual(rates.deliveredFps ?? 0);
+    expect(rates.deliveredFps).toBeCloseTo(30, 0);
+  });
+
+  it("holds at exactly one when every delivered frame is read", () => {
+    const rates = deliveryRates(session(30, 126.7, 5), 5000);
+    expect(rates.readFraction).toBe(1);
+    expect(rates.sampledFps).toBe(rates.deliveredFps);
+  });
+
+  it("still reports a delivered rate before the detector has run", () => {
+    // A camera delivering into a page whose loop has not ticked yet.
+    // There is no comparison to get wrong, so the delivered rate is
+    // measured over its own frames and the sampled rate says nothing.
+    let state = emptyDelivery();
+    for (let i = 0; i < 60; i += 1) {
+      state = noteDelivered(state, i * (1000 / 30));
+    }
+    const rates = deliveryRates(state, 2000);
+    expect(rates.deliveredFps).toBeCloseTo(30, 0);
+    expect(rates.sampledFps).toBeNull();
+    expect(rates.readFraction).toBeNull();
+  });
+});
+
 describe("a camera that stops delivering, told apart from one never observed", () => {
   // Roadmap 14.0d (audit A26). Before this, a frozen camera and a
   // browser without the delivery callback produced the same null

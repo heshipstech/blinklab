@@ -100,11 +100,18 @@ export function serialiseFrameTrace(
   framesMeasured?: number,
 ): string | null {
   if (rows.length === 0) return null;
+  // Roadmap 10.16, ladder A27. This used to write its own
+  // `# frames_measured` row beside the warning, while the caller
+  // already passes coverageMetadataRows, which writes that key for
+  // every mode. Two rows with the same key is exactly what loader.py
+  // refuses as "edited or damaged", so a TRUNCATED trace — the one
+  // case this warning exists for — was the one file the Python side
+  // would not read. The warning keeps the number in its own sentence
+  // and stops declaring a key somebody else owns.
   const lostRows =
     framesMeasured !== undefined && framesMeasured > rows.length
       ? [
           `# WARNING: ${String(framesMeasured - rows.length)} later frames were measured but are NOT in this file`,
-          `# frames_measured: ${String(framesMeasured)}`,
           `# frames_recorded: ${String(rows.length)}`,
         ]
       : [];

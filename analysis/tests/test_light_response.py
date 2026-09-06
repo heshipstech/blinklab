@@ -134,6 +134,14 @@ class TestTheVerdictWhenTheGateClears:
         assert result.dark_minus_bright_mm > 0
         assert result.dark_minus_bright_mm > result.permutation_percentile_mm
         assert result.p_one_sided < 0.025
+        # Roadmap 10.16, ladder A27. This returned at_least/N, so a
+        # split no shuffle reproduced printed p = 0.0000: a claim that
+        # the observed value is impossible by chance, which a thousand
+        # shuffles cannot establish. stats.py and rldd.py already added
+        # one to both parts; this now does too, so the floor is
+        # 1/(N+1) and never zero.
+        assert result.p_one_sided > 0
+        assert result.p_one_sided == pytest.approx(1 / 1001)
 
     def test_no_real_difference_is_a_null_not_a_detection(self) -> None:
         # Dark and bright drawn from one interleaved distribution: the gate
