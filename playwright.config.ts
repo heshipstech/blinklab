@@ -16,6 +16,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: /phone\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         launchOptions: {
@@ -44,6 +45,24 @@ export default defineConfig({
     // protection actually lives. Continuous integration covers
     // Chromium. Safari proper is manual check 58, because Playwright's
     // WebKit is not Safari either.
+    // Roadmap 14.0b: the phone. A 375-wide viewport with the same fake
+    // camera, running only the specs written for it, because the desktop
+    // specs assert desktop geometry and would double the run for no new
+    // fact.
+    {
+      name: "phone",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 375, height: 667 },
+        launchOptions: {
+          args: [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+          ],
+        },
+      },
+      testMatch: /phone\.spec\.ts/,
+    },
     ...(process.env.CI
       ? []
       : [

@@ -37,11 +37,14 @@ be tall without stretching Gaze beside it.
 
 **Below 1000px there is one column, and the order is not the desktop order.**
 The column wrappers become `display: contents`, every card becomes a direct
-grid item, and the stylesheet orders them by id: Alertness, Session, Source,
+grid item, and the stylesheet orders them by id: Source, Alertness, Session,
 Gaze, Eyes, Blinks, Live signals, Stored on this device, Report. That is reading order
-for a phone: the score, what starts a session, the camera, what it measured,
-the instrument's own health, then storage. Doing it with `order` rather than a
-second DOM tree means one list of cards, not two that can disagree.
+for a phone: the way in first, so Start camera is on screen before anything
+scrolls (roadmap 14.0b; it used to sit third, below the fold), then the score,
+what the session offers, the camera's measurements, the instrument's own
+health, then storage. Doing it with `order` rather than a second DOM tree means
+one list of cards, not two that can disagree. The `phone` Playwright project,
+375 px wide, asserts Start camera is in the idle viewport.
 
 **Below 560px a label and its value stop being two columns and become two
 lines.** There is one set of strings at every width, deliberately; the
@@ -156,6 +159,8 @@ From `cameraStateMessage` in `core/cameraState.ts`:
 **"Retry loading the model"** button, rendered beside the status line. Every
 other state is text only.
 
+While a camera session starts, the same line carries `Loading the measuring model. The picture is live; measurement begins when it is ready.` until the model is ready, then goes empty (roadmap 14.0b; the camera path used to say nothing while the clip path announced it).
+
 While a clip runs, the same line carries:
 
 - Loading the model before the clip starts...
@@ -219,19 +224,20 @@ Drawn on the canvas, all optional and all off by default:
 Visible only when running. Sits in the top row, in the right column above
 Session. Contains the only large text on the page.
 
-| Element       | Type                     | Visible when                       |
-| ------------- | ------------------------ | ---------------------------------- |
-| Score         | Large text               | Running                            |
-| Caveat        | Small grey text          | Running, always, never conditional |
-| Panel summary | Text                     | Running                            |
-| Panel list    | List, 0 to 3 items       | Running                            |
-| Alert banner  | Text, styled as an alert | Only while an alert is live        |
+| Element       | Type                     | Visible when                          |
+| ------------- | ------------------------ | ------------------------------------- |
+| Score         | Large text               | Always: `not measuring` at idle       |
+| Caveat        | Small grey text          | Always, never conditional             |
+| Panel summary | Text                     | Running; the countdown before a score |
+| Panel list    | List, 0 to 3 items       | Running                               |
+| Alert banner  | Text, styled as an alert | Only while an alert is live           |
 
 Score, three forms:
 
 - Alertness score: N / 100
 - Alertness score: no face in frame
-- Alertness score: measuring... _(until PERCLOS exists, about 45 s)_
+- Alertness score: measuring... _(while running, until PERCLOS exists, about 45 s)_
+- Alertness score: not measuring _(idle, from the idle table below; roadmap 14.0b)_
 
 Caveat, from `demoNoticeShort()`: Demo, not a safety or medical device.
 Not diagnostic.
@@ -239,6 +245,8 @@ Not diagnostic.
 Panel summary, from `panelSummary` in `core/scorePanel.ts`:
 
 - Nothing is costing points.
+- Learning your open eyes: N s left, then the score begins. _(before the first score, while the baseline learns; roadmap 14.0b moved the countdown here from the Blinks card)_
+- _(empty at idle and under a refusal)_
 - Top drivers of the score:
 - N signal unavailable. / N signals unavailable.
 
@@ -267,14 +275,15 @@ hidden**: the export keeps it, so the panel must not disagree with the file.
 An unmeasurable shape shows an em dash per cell rather than a blank, because a
 blank cell reads as a rendering fault.
 
-| Element            | Strings                                                                                                                                                                                      |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Blink count        | `Blinks: N` or `Blinks: N (last: T ms)`                                                                                                                                                      |
-| Frame rate refusal | Blink metrics not measurable: F fps is below the 25 fps a short blink needs. _(or)_ Blink metrics not measurable: the frame rate is still unknown.                                           |
-| Personal threshold | `Personal blink threshold: X mm (half of your Y mm baseline)` or `Learning your open eyes: N s left`                                                                                         |
-| Ruler fit          | `Ruler fit: waiting for the baseline`, then `Ruler fit: baseline is R x your resting eye (ceiling 1.25)`, with `, too long to trust` added (and the warning colour) once the verdict settles |
-| Last blink shape   | `Last blink shape: amplitude X mm, peak closing Y mm/s, A/V Z ms`, or empty until the first analysable blink                                                                                 |
-| Blink log          | A list, **capped at 50 entries**, newest first. Each: `T s, D ms, A mm at V mm/s, A/V Z ms` or `T s, D ms, shape unavailable`                                                                |
+| Element            | Strings                                                                                                                                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Blink count        | `Blinks: N` or `Blinks: N (last: T ms)`                                                                                                                                                                                                   |
+| Frame rate refusal | Blink metrics not measurable: F fps is below the 25 fps a short blink needs. _(or)_ Blink metrics not measurable: the frame rate is still unknown.                                                                                        |
+| Calibrate blinks   | Button. `Calibrate blinks`, then `Recalibrate blinks` once a guided line is stored. Opens the guided blink calibration overlay; enabled only while a source runs                                                                          |
+| Personal threshold | `Personal blink threshold: X mm (half of your Y mm baseline)` or `Learning your open eyes: N s left`; the refusal sentence from `core/baseline.ts` whenever the calibration was refused, whatever line the detector holds (roadmap 14.0b) |
+| Ruler fit          | `Ruler fit: waiting for the baseline`, then `Ruler fit: baseline is R x your resting eye (ceiling 1.25)`, with `, too long to trust` added (and the warning colour) once the verdict settles                                              |
+| Last blink shape   | `Last blink shape: amplitude X mm, peak closing Y mm/s, A/V Z ms`, or empty until the first analysable blink                                                                                                                              |
+| Blink log          | A list, **capped at 50 entries**, newest first. Each: `T s, D ms, A mm at V mm/s, A/V Z ms` or `T s, D ms, shape unavailable`                                                                                                             |
 
 **The blink log is the only element with unbounded vertical growth up to
 its cap. At 50 entries it is by far the tallest thing on the page.**
@@ -315,18 +324,19 @@ strip plus the footer below.
 
 #### Box: Session
 
-| Element            | Type   | Notes                                                                                                                                                                                      |
-| ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Feature records    | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)`                             |
-| Export CSV         | Button | Disabled until at least one record exists                                                                                                                                                  |
-| Mark this moment   | Button | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export |
-| Export state       | Text   | Empty until an export is attempted. See the five strings below                                                                                                                             |
-| Sleepiness         | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                     |
-| Marks              | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                             |
-| Export blink log   | Button | Disabled until at least one blink exists                                                                                                                                                   |
-| Export frame trace | Button | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                                                        |
-| Sleepiness panel   | Panel  | See below                                                                                                                                                                                  |
-| Record fixture     | Button | **Development builds only.** Never on the live site                                                                                                                                        |
+| Element            | Type   | Notes                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feature records    | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)`                                                                                                                                                                                              |
+| Export CSV         | Button | Disabled until at least one record exists                                                                                                                                                                                                                                                                                                                   |
+| Mark this moment   | Button | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export                                                                                                                                                                  |
+| Light response     | Button | `Light response`. Camera sessions only, on the same record gate as the marker. Opens a full-screen stimulus overlay (fullscreen requested only where the browser offers it); its words during the settle and at the end come from `lightPhaseMessage` in `core/lightSchedule.ts` and name both exits, Esc and a tap anywhere on the overlay (roadmap 14.0b) |
+| Export state       | Text   | Empty until an export is attempted. See the five strings below                                                                                                                                                                                                                                                                                              |
+| Sleepiness         | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                                                                                                                                                                                      |
+| Marks              | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                                                                                                                                                                                              |
+| Export blink log   | Button | Disabled until at least one blink exists                                                                                                                                                                                                                                                                                                                    |
+| Export frame trace | Button | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                                                                                                                                                                                                                         |
+| Sleepiness panel   | Panel  | See below                                                                                                                                                                                                                                                                                                                                                   |
+| Record fixture     | Button | **Development builds only.** Never on the live site                                                                                                                                                                                                                                                                                                         |
 
 **Every export outcome says what happened, including the successful one.**
 The button had three outcomes and only one was visible, so a click that was
@@ -422,7 +432,7 @@ with nothing on the page saying so and no way to erase them)_
 | Element     | Strings                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Summary     | `Nothing is stored on this device.` or `Stored on this device now: N of M.` or `This browser will not let the page read its own storage, so what is stored here cannot be listed or erased from this page.`                                                                                                                                                                                                                                                                   |
-| List        | One line per stored item, rendered from `core/storedData.ts`: what it holds, why it is kept, and the storage key in brackets                                                                                                                                                                                                                                                                                                                                                  |
+| List        | One line per stored item, rendered from `core/storedData.ts`: what it holds, why it is kept, the storage key in brackets, and its state now, `stored now`, `not stored` or `cannot be read` (roadmap 14.0b)                                                                                                                                                                                                                                                                   |
 | Pseudonym   | Text input + `Save pseudonym` button (pilot increment 8). Voluntary identity: a pseudonym exists only when a person types one and saves it, never invented on load. Saving an empty field removes it. Over-long input is refused with `Not saved: a pseudonym is one short name, at most 64 characters.`, never truncated. Status lines: `Saved. Your exports will carry the name "X".`, `Pseudonym removed. Your exports will carry no name.`, or the refused-write sentence |
 | Erase       | Button. `Erase stored data`, then `Click again to erase it` once armed. Disabled as `Erase stored data (nothing stored)`, or as `Erase stored data (this browser will not let the page look)`                                                                                                                                                                                                                                                                                 |
 | Erase state | Hidden until an erase is attempted. `Erased. Nothing is stored on this device now.` or `Erase did not work: N of M item(s) is/are still stored.` or `Tried to erase, but this browser will not let the page read its storage, so the result cannot be confirmed here.`                                                                                                                                                                                                        |
@@ -458,6 +468,33 @@ report that needs a browser. A new session clears it with the records
 it described.
 
 ---
+
+### 5.9 Idle strings, every readout before anything runs
+
+From `IDLE_READOUTS` in `core/idleStrings.ts` (roadmap 14.0b, audit B19). The
+page seeds these at load and re-applies them whenever nothing is running and
+nothing has been kept; a session that has ended keeps its last values instead.
+The guard in `tools/uiGuard.mjs` holds this list to the code. None says
+`measuring...`, and none counts what was never counted.
+
+| Idle string                                             |
+| ------------------------------------------------------- |
+| `Alertness score: not measuring`                        |
+| `Eye aspect ratio: no valid measurement`                |
+| `Eyelid aperture: no valid measurement`                 |
+| `Pupil diameter: no valid measurement`                  |
+| `Aperture stability: not measuring`                     |
+| `PERCLOS (eyes closed share, last 60 s): not measuring` |
+| `Long closures: not measuring`                          |
+| `Iris offset: no valid measurement`                     |
+| `Looking toward: no valid measurement`                  |
+| `Gaze state: no valid measurement`                      |
+| `Fixations in the last 10 s: not measuring`             |
+| `Head pose: no valid measurement`                       |
+| `Blinks: not measuring`                                 |
+| `Personal blink threshold: not learned yet`             |
+| `Ruler fit: not measuring`                              |
+| `Feature records: none yet (about one per second)`      |
 
 ## 6. Region 4: Overlays
 
@@ -514,9 +551,10 @@ surprise you.
    something is badly wrong, which is exactly when it must be readable.
 6. **Tier 2 stacks below about 1000 px** of column width, tripling the
    height of the middle of the page.
-7. **Nothing has a loading skeleton.** Readouts say `measuring...` or
-   `no valid measurement` rather than appearing later, so the number of
-   lines does not change as values arrive. This is deliberate: a layout
+7. **Nothing has a loading skeleton.** Readouts say `not measuring` at idle
+   and `measuring...` or `no valid measurement` while a session runs, rather
+   than appearing later, so the number of lines does not change as values
+   arrive. This is deliberate: a layout
    that reflows as measurements arrive is unreadable during the first
    minute, which is exactly when someone is deciding whether to trust it.
 

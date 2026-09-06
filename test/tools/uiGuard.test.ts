@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
 import {
   boxHeadings,
+  buttonStrings,
   documentedBoxes,
   fossils,
+  idleStrings,
   undocumented,
+  undocumentedStrings,
 } from "../../tools/uiGuard.mjs";
 
 // Remediation F3. docs/UI.md is the compensating control for the
@@ -20,6 +23,38 @@ import {
 const root = repoRoot();
 const main = readRepoFile("src/main.ts", root);
 const uiDoc = readRepoFile("docs/UI.md", root);
+const idleSource = readRepoFile("src/core/idleStrings.ts", root);
+
+describe("reading the page's button and idle strings", () => {
+  // Roadmap 14.0b. The box check held docs/UI.md to the page's
+  // headings; three button labels and every idle string had drifted
+  // out of it unnoticed, because nothing read them.
+  it("finds every button label the page assigns", () => {
+    const found = buttonStrings(main);
+    expect(found).toContain("Start camera");
+    expect(found).toContain("Light response");
+    expect(found).toContain("Recalibrate blinks");
+    expect(found.length).toBeGreaterThan(10);
+  });
+
+  it("reads the idle table out of core, not out of main", () => {
+    const found = idleStrings(idleSource);
+    expect(found).toContain("Alertness score: not measuring");
+    expect(found.length).toBeGreaterThan(10);
+  });
+
+  it("reports the strings the document does not carry", () => {
+    expect(
+      undocumentedStrings(
+        ["Start camera", "Brand new button"],
+        "`Start camera`",
+      ),
+    ).toEqual(["Brand new button"]);
+    expect(
+      undocumentedStrings(["Start camera"], "Click Start camera."),
+    ).toEqual([]);
+  });
+});
 
 describe("reading the boxes out of the page", () => {
   it("finds boxes written on one line and boxes written across several", () => {
@@ -63,6 +98,17 @@ describe("docs/UI.md and the page agree", () => {
     expect(
       fossils(main, uiDoc),
       "boxes documented in docs/UI.md that main.ts no longer builds",
+    ).toEqual([]);
+  });
+
+  it("documents every button label and every idle string", () => {
+    expect(
+      undocumentedStrings(buttonStrings(main), uiDoc),
+      "button labels in main.ts that docs/UI.md never mentions",
+    ).toEqual([]);
+    expect(
+      undocumentedStrings(idleStrings(idleSource), uiDoc),
+      "idle strings in core that docs/UI.md never mentions",
     ).toEqual([]);
   });
 

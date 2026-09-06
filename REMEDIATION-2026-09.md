@@ -192,7 +192,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       test/e2e/cameraSupersede.spec.ts counts one live track after
       two picks inside one request's latency.
 
-- [ ] **A6. Light response without `Element.requestFullscreen` throws
+- [x] **A6. Light response without `Element.requestFullscreen` throws
       after the black overlay is shown, and has no touch exit.**
       `high · confirmed ×2 (reproduced headless) · S`
       **What:** `main.ts:4152-4155` unhides the overlay then calls
@@ -205,6 +205,11 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       exit and touch wording; add the no-fullscreen path to
       `lightResponse.spec.ts` via `addInitScript`.
       **Findings:** F-028.
+      **Done:** 6 September 2026, roadmap 14.0b: fullscreen requested
+      only where the method exists, a tap anywhere on the overlay ends
+      it, and the overlay's words come from `lightPhaseMessage` in
+      core and name both exits; the no-fullscreen path and the tap
+      exit are in lightResponse.spec.ts.
 
 - [ ] **A7. Long-closure reducer has no hysteresis: one hovering
       closure fires two or three times on phones.**
@@ -955,7 +960,7 @@ LICENSE Version 1.1", "PREAMBLE" and each family
 `src/styles.css:21-27` imports.
       **Findings:** G-Build d-2, G-Build d-6.
 
-- [ ] **B19. The idle page asserts a measurement in progress, and the
+- [x] **B19. The idle page asserts a measurement in progress, and the
       short caveat no longer sits beside the score.** `medium · confirmed
 ×2 (F-077); confirmed/high + downgraded/low (F-026) · S`
       **What:** `main.ts:4471-4495` seeds "Alertness score:
@@ -971,6 +976,12 @@ LICENSE Version 1.1", "PREAMBLE" and each family
       constant and its tests, rewrite `docs/UI.md:220-231`,
       `:527-529`, `LEARNING.md:500`, `MANUAL.md:64`); update UI.md.
       **Findings:** F-077, F-026.
+      **Done:** 6 September 2026, roadmap 14.0b: the idle table in
+      `core/idleStrings.ts` ("not measuring", never "measuring..." or
+      "Blinks: 0"), seeded at load and re-applied whenever nothing runs
+      and nothing is kept; the caveat is back under the score, pinned
+      by an e2e on `#box-alertness`; uiGuard now holds docs/UI.md to
+      every button label and every idle string.
 
 - [ ] **B20. The guided-calibration refusals blame the person's eyelids
       for what is most likely reading time or a low-held phone.**
@@ -1544,7 +1555,7 @@ probed) · M · owner`
 
 ## Stage E. UX and demo
 
-- [ ] **E1. On a phone the Start camera button is below the fold behind
+- [x] **E1. On a phone the Start camera button is below the fold behind
       a "measuring..." score and five disabled exports.** `medium ·
 downgraded ×2 · S`
       `src/styles.css:284-306` orders alertness, session, source under
@@ -1553,6 +1564,9 @@ downgraded ×2 · S`
       Reorder to Source first; fix the comment; a 375-wide Playwright
       project (`playwright.config.ts:17-27`) asserting Start camera is
       within the viewport at idle. (F-027)
+      **Done:** 6 September 2026, roadmap 14.0b: Source first under
+      1000 px, the comment corrected, a `phone` Playwright project at
+      375 px asserting Start camera in the idle viewport.
 
 - [ ] **E2. Keyboard users cannot leave the calibration or heatmap
       overlays; the KSS dialog has no focus trap and lands on rating 1.** `medium · confirmed ×2 · M`
@@ -1582,7 +1596,7 @@ downgraded ×2 · S`
       closed eyes can perform. (G-Guided b-2, G-Guided b-7,
       G-Guided b-8)
 
-- [ ] **E4. The refusal sentence is hidden behind the guided-line label,
+- [x] **E4. The refusal sentence is hidden behind the guided-line label,
       and the stored-data box lists four keys under "Nothing is
       stored".** `low · confirmed · S`
       `main.ts:3543-3552`'s ternary tests the stored line first so
@@ -1592,8 +1606,12 @@ downgraded ×2 · S`
       builds the list unconditionally while `:1865-1874` sets the
       summary; render each item with its state or retitle "What this
       page can store, and why" (`docs/UI.md:419-420`). (F-087, F-106)
+      **Done:** 6 September 2026, roadmap 14.0b: the refusal sentence
+      is the first branch of the threshold line; each stored item is
+      rendered with its state (`storedItemState`: stored now, not
+      stored, cannot be read).
 
-- [ ] **E5. The camera path says nothing while the model downloads and
+- [x] **E5. The camera path says nothing while the model downloads and
       the score headline goes blank.** `low · confirmed/downgraded · S`
       `main.ts:981` blanks the headline, `:1125-1141` fires
       `ensureLandmarker()` with no status write, only the clip path
@@ -1601,6 +1619,10 @@ downgraded ×2 · S`
       (`:3543-3552`, `:4409`). Write a loading status on the camera
       path; keep "measuring..." in `resetSession`; put the countdown in
       `panelSummaryLabel`. (F-078)
+      **Done:** 6 September 2026, roadmap 14.0b: the camera path says
+      the model is loading until it is ready; the countdown to the
+      first score sits under the score; "measuring..." stays the
+      running page's word.
 
 - [ ] **E6. Capability ladder 13.6a now: rate and iris-px verdicts,
       light unknown.** `medium · confirmed ×2 · S`

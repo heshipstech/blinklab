@@ -65,3 +65,31 @@ test("the light-response stimulus starts and its schedule reaches the export", a
   expect(csv).toContain("# light_cycles: 6");
   expect(csv).toMatch(/# light_stimulus_start_ms: [0-9]/);
 });
+
+test("without fullscreen the stimulus still runs, and a tap ends it", async ({
+  page,
+}) => {
+  // Roadmap 14.0b (audit A6). Browsers that expose no
+  // requestFullscreen (an iPhone's Safari) used to throw after the
+  // black overlay was shown: the schedule never started, and a phone
+  // had no exit but a reload, which discards the session.
+  await page.addInitScript(() => {
+    delete (Element.prototype as { requestFullscreen?: unknown })
+      .requestFullscreen;
+  });
+  await page.goto("./");
+  await page.getByRole("button", { name: "Start camera" }).click();
+  await answerOpeningQuestion(page);
+  const light = page.getByTestId("light-response");
+  await expect(light).toBeEnabled({ timeout: 30_000 });
+  await light.click();
+
+  const overlay = page.getByTestId("light-overlay");
+  await expect(overlay).toBeVisible();
+  await expect(overlay).toHaveAttribute("data-phase", "settle");
+  // The wording names the touch exit.
+  await expect(page.getByTestId("light-message")).toContainText("Tap anywhere");
+  // A tap, not a key, ends it.
+  await overlay.click({ position: { x: 20, y: 20 } });
+  await expect(overlay).toBeHidden();
+});

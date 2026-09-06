@@ -54,3 +54,39 @@ export function fossils(mainSource, uiDoc) {
   const real = new Set(boxHeadings(mainSource));
   return documentedBoxes(uiDoc).filter((name) => !real.has(name));
 }
+
+/**
+ * Every string literal assigned as a button's label in main.ts, in
+ * source order, once each.
+ *
+ * Roadmap 14.0b: the box check held docs/UI.md to the page's headings
+ * and nothing else, and three button labels had drifted out of the
+ * document unnoticed. The pattern reads `xButton.textContent = "..."`
+ * and `button.textContent = "..."`, which is how every button on the
+ * page gets its words; a template literal is not a label and is left
+ * alone.
+ */
+export function buttonStrings(mainSource) {
+  const found = [
+    ...mainSource.matchAll(/\b\w*[bB]utton\.textContent = "([^"]+)"/g),
+  ].map((m) => m[1]);
+  return [...new Set(found)];
+}
+
+/**
+ * The idle table out of src/core/idleStrings.ts, each entry joined the
+ * way the page shows it: `Label: value`.
+ *
+ * Read from the core file as text rather than imported, so this guard
+ * stays a plain script with no build step between it and the disk.
+ */
+export function idleStrings(idleSource) {
+  return [...idleSource.matchAll(/^\s*\["([^"]+)", "([^"]+)"\],?$/gm)].map(
+    (m) => `${m[1]}: ${m[2]}`,
+  );
+}
+
+/** The strings among `strings` that `doc` never mentions verbatim. */
+export function undocumentedStrings(strings, doc) {
+  return strings.filter((text) => !doc.includes(text));
+}
