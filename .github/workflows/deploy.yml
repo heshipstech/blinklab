@@ -1,7 +1,21 @@
 name: Deploy
 
+# Roadmap 10.1e, ladder D5. This used to publish on every push to main,
+# which meant Pages went live about four minutes before CI finished:
+# every guard this repository has — the lint, the types, the suite, the
+# coverage floor, the bundle budget, the mutation runner, the end to end
+# specs — runs in the CI workflow, which had no power to stop the
+# publish. A merge that turned out to be red was already the live site.
+#
+# So the trigger is CI finishing on main, and `types: [completed]` fires
+# on failure and cancellation too, which is why the build job below is
+# guarded on the conclusion. Without that guard this change would make
+# things worse rather than better: a red CI would still publish, just
+# later.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -23,8 +37,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # A manual run has no workflow_run to read, so it publishes on the
+    # operator's say-so; a triggered run publishes only what CI passed.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The commit CI actually tested. On a workflow_run the default
+          # is the branch TIP, and two merges a minute apart are enough
+          # for those to differ, which would publish a commit nothing
+          # checked. Empty on a manual run, where checkout falls back to
+          # the tip, which is what a person pressing the button means.
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
@@ -36,7 +62,14 @@ jobs:
       # because --ignore-scripts is per invocation: `npm run build` still
       # runs `prepare-assets` and the MediaPipe wasm files still populate.
       - run: npm ci --ignore-scripts
+      # vite.config.ts stamps this into the page as the build's commit
+      # (remediation E2). On a workflow_run the ambient GITHUB_SHA is
+      # the branch tip, not the commit being built, so without this the
+      # published page would report a commit it was not built from,
+      # which is worse than reporting none.
       - run: npm run build
+        env:
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist

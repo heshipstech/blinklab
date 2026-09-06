@@ -1449,3 +1449,42 @@ sentence around it assumed. None of them was found by a test failing,
 because each test asserted what the code did. They were found by reading
 the arithmetic and asking what it would take for the printed sentence to
 be false.
+
+## A guard in one workflow cannot stop a publish in another
+
+Every check this repository has runs in the CI workflow: the lint, the
+types, the suite, the coverage floor, the bundle budget, the mutation
+runner, the end to end specs. The deploy workflow published on every push
+to main. Those are two independent reactions to the same event, and the
+publish is the faster of the two, so the live site went up about four
+minutes before anything had been checked. A merge that turned out to be
+red was already the site a visitor would load.
+
+Nothing about that is a missing test. Both workflows were written
+carefully and each does its own job correctly. The defect is that they
+were wired in parallel where the intent was a sequence, and a sequence
+between two workflows is expressed as a trigger: deploy runs when CI
+completes, and only when it succeeded. The second half of that sentence
+matters more than it looks, because the completion event fires on
+failure and cancellation too. Making the change without the success
+condition would have been strictly worse than leaving it alone: a red CI
+would still publish, just later and with the appearance of a gate.
+
+The change carries a smaller trap worth writing down. Once the deploy
+reacts to a workflow rather than to a commit, it no longer knows which
+commit it is for. The checkout defaults to the branch tip, and the
+environment variable the build reads to stamp the page's own commit is
+the tip as well. Two merges a minute apart are enough for the tip and
+the tested commit to differ, and a page that reports a commit it was not
+built from is worse than a page that reports none: the whole point of
+the stamp is that a reader can go and check what they are looking at.
+Both are passed explicitly now.
+
+The lesson is about where a rule can be enforced. A workflow file is
+never executed by the test suite, so no test in the suite can notice
+when its trigger drifts, and this project's usual answer — a guard that
+reads the file — is the only one available. That guard now reads both
+workflows and holds the CI workflow's own name to the string the deploy
+watches for, because a rename on one side with no rename on the other
+would stop every deployment silently, which is the same class of failure
+in the opposite direction.

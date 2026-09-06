@@ -48,6 +48,6 @@ describe("every guard is armed by a test that runs it", () => {
     // Bump this deliberately when a guard is added, and use the bump as
     // the moment to check the new guard is actually reached by its test
     // rather than merely imported by it.
-    expect(guardModules(root)).toHaveLength(13);
+    expect(guardModules(root)).toHaveLength(14);
   });
 });
