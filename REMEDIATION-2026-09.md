@@ -666,7 +666,7 @@ downgraded/medium · S`
 
 ## Stage B. Honesty: overclaims and missing conditions
 
-- [ ] **B1. MODEL_CARD says the alertness score was never tested;
+- [x] **B1. MODEL_CARD says the alertness score was never tested;
       README says AUC 0.70; `cannotSeeBlock` pins the stale sentence
       into the participant report.** `high · confirmed ×2 · S`
       **What:** `MODEL_CARD.md:34`, `:47-57` (revised 5 September, one
@@ -680,6 +680,14 @@ downgraded/medium · S`
       add the 0.70 / p 0.001 pair to `resultGuard`'s pins against
       `alertness-score-result.txt`.
       **Findings:** F-014.
+      **Done:** 6 September 2026, roadmap 10.0a1: the card's alertness
+      row carries AUC 0.70 at p 0.001, cohort-level, per person
+      unvalidated, and `resultGuard.parseAlertnessResult` reads those
+      numbers out of `docs/alertness-score-result.txt` so the card is
+      held to the record rather than to whoever edited it last; the
+      tested-on table gains both UTA-RLDD reads, 54 subjects and 52,
+      each parsed from its own file, and names tablets as untested.
+      `cannotSee.ts` is 10.0a3's.
 
 - [ ] **B2. README's Privacy section says two localStorage keys; the app
       writes four, including a pseudonym and a personal blink line; the
@@ -703,7 +711,7 @@ downgraded/medium · S`
       the full string is needed.
       **Findings:** F-023, F-064.
 
-- [ ] **B3. The on-page notice and six documents say the model "does
+- [x] **B3. The on-page notice and six documents say the model "does
       send" usage statistics after the 5 September block made that
       false; the install-order comment overclaims.**
       `medium · confirmed/high + downgraded/medium · S`
@@ -723,6 +731,13 @@ downgraded/medium · S`
       reason for the install order and the bundle property it relies
       on (or install from a side-effect module imported first).
       **Findings:** F-024, F-096.
+      **Done:** 6 September 2026, roadmap 10.0a1: `DEMO_NOTICE` says
+      the model tries to send and this page intercepts the request
+      before it leaves the browser, and the seven echoes (README,
+      MODEL_CARD twice, PROJECT, CONTRIBUTING, docs/UI.md, MANUAL item 52) say the same. README and MODEL_CARD now quote the constant
+      verbatim, held by a test that collapses whitespace on both sides,
+      so a reworded copy is a red build. The two pinning tests carry
+      the new half. The install-order sentence is 10.1c's.
 
 - [ ] **B4. `drozyGuard` watches one file while four of the seven DROZY
       rows depend on code that has since moved; the guarded caveat is
@@ -775,8 +790,15 @@ downgraded/medium · S`
       add "no engine other than WebKit has measured this corpus"
       (C11 is the measurement).
       **Findings:** G-Browser-5, G-Browser-1.
+      **Half done:** 6 September 2026, roadmap 10.0a1 — the dating
+      half. The table now says it was measured 8 August 2026 on
+      `1de3ae4`, names the two fixes that landed after it, and calls
+      itself a historical record; the results block and the card say
+      "WebKit binary" and add that no engine other than WebKit has
+      measured this corpus. The re-measurement is roadmap row 13.0 and
+      this item stays open until it runs.
 
-- [ ] **B7. SECURITY.md sends reporters to a private channel that is
+- [x] **B7. SECURITY.md sends reporters to a private channel that is
       switched off.** `medium · confirmed live · S`
       **What:** `SECURITY.md:18-23` names the Security tab and forbids
       public issues; the API returns `private-vulnerability-reporting:
@@ -785,6 +807,12 @@ enabled false`.
       mailto already on the page (`main.ts:414`); record the
       verification date as `dependabot.yml` does.
       **Findings:** F-022.
+      **Done:** 6 September 2026, roadmap 10.0a1: the private report
+      is not enabled, so the section names the contact link the
+      published page already carries and records the date the channel
+      was last verified switched off, the dating rule `dependabot.yml`
+      set. Enabling GitHub's private vulnerability reporting stays open
+      to the owner; this file changes with it if they do.
 
 - [ ] **B8. The UTA-RLDD result omits the pre-registered per-subject
       scores and coefficients.** `medium · confirmed ×2 · S`
@@ -865,7 +893,7 @@ enabled false`.
       precision to the conditions block; record an unrounded fixture
       for 10.7b. (F-094)
 
-- [ ] **B13. "Reliable near the centre, degrades at the corners" is
+- [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2
 · S`
       **What:** `MODEL_CARD.md:32` in the Result column beside
@@ -877,6 +905,10 @@ enabled false`.
       produces a number; add the sentence to `resultGuard` /
       `claimGuard`.
       **Findings:** F-012.
+      **Done:** 6 September 2026, roadmap 10.0a1: both sites say "not
+      measured", name MANUAL item 34 as the only check that exists and
+      row 14.9 as the instrument that would put a number on it, and a
+      test holds the retired sentence out of both documents.
 
 - [ ] **B14. One freshness PR: a dozen stale sentences under fresh
       stamps, plus the parser fix.** `medium · confirmed/medium +

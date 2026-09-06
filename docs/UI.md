@@ -105,13 +105,12 @@ present. Cannot be dismissed by any interaction.
 
 Text is `DEMO_NOTICE` from `core/notice.ts`, a tested constant:
 
-> Demo, not a safety or medical device. This is a learning project. It is
-> not for clinical, workplace or safety use, its numbers are not
-> diagnostic, and it has not been validated against any medical standard.
-> Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.
+> Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.
 
-**Wraps to two lines at 1512 px, three on narrower windows.** Budget for
-three.
+**Wraps to two lines at 1512 px, three on narrower windows.** That count
+was measured on the shorter sentence, before the interception clause was
+added on 6 September 2026, which made the notice about a quarter longer.
+Treat it as a floor and budget generously until it is re-measured.
 
 ---
 

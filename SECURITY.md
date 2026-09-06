@@ -16,9 +16,16 @@ Two properties shape what a vulnerability means here:
 
 ## Reporting
 
-Open a **private** vulnerability report through GitHub: the Security tab →
-"Report a vulnerability". That keeps the report out of public issues while it
-is being fixed.
+Use the **Email** contact link at the bottom of the published page,
+https://heshipstech.github.io/blinklab/, and say in the subject line that the
+report is a security one. That reaches the maintainer directly and keeps the
+report out of public issues while it is being fixed.
+
+This file used to send reporters to GitHub's private vulnerability reporting.
+That channel is switched off for this repository, so the instruction pointed at
+a door that does not open. Last verified switched off on 6 September 2026, by
+the September audit; if it is ever enabled, this section changes with it and the
+verification date moves. The dating rule is `dependabot.yml`'s.
 
 Please do not open a public issue for anything exploitable.
 

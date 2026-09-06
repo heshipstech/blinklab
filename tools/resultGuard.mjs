@@ -266,3 +266,42 @@ export function uncertaintySection(cardText) {
   );
   return match === null ? null : match[1];
 }
+
+/**
+ * The alertness comparison's headline, parsed out of
+ * docs/alertness-score-result.txt.
+ *
+ * Roadmap 10.0a1, ladder B1. MODEL_CARD.md was revised the day AFTER
+ * this record landed and still said the alertness score had never
+ * been tested, while README.md reported the number. Two documents
+ * disagreeing about the same run is the defect this guard exists for,
+ * so the card is now held to the record rather than to whoever edited
+ * it last. Throws rather than returning null: a record whose headline
+ * cannot be read is itself a finding.
+ */
+export function parseAlertnessResult(text) {
+  const match = text.match(/above chance \(AUC ([\d.]+), p ([\d.]+)\)/);
+  if (match === null) {
+    throw new Error(
+      "alertness result: could not find the headline AUC and p value",
+    );
+  }
+  return { auc: match[1], p: match[2] };
+}
+
+/**
+ * The subject count a result file states in its data block.
+ *
+ * The two UTA-RLDD reads survive the frame-rate floor differently —
+ * 54 subjects for the leave-one-subject-out classification, 52 for the
+ * alertness comparison — and a card that printed one number for both
+ * would be wrong for one of them. Each file states its own, so each is
+ * read from its own file.
+ */
+export function parseSubjectCount(text) {
+  const match = text.match(/^\s*subjects\s+(\d+)/m);
+  if (match === null) {
+    throw new Error("result file: could not find the subject count");
+  }
+  return Number(match[1]);
+}
