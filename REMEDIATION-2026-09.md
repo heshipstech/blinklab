@@ -134,7 +134,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       runs on the corrected sample cadence.
       **Findings:** F-001, F-002 (F-044, F-082 partially).
 
-- [ ] **A3. `sampled_fps` crosses the export border rounded to one
+- [x] **A3. `sampled_fps` crosses the export border rounded to one
       decimal, so the page and the Python mirror disagree on the 25 fps
       refusal and `pilot.py` halts the cohort.**
       `high · confirmed ×2 · S`
@@ -151,6 +151,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       are pinned at the edges.
       **Depends on:** nothing. D6 later regenerates the fixtures.
       **Findings:** G-export/l-1.
+      **Done:** 6 September 2026, roadmap 10.15.
 
 - [ ] **A4. Stop camera greys out Export CSV and the blink log; the
       natural stop-then-export order loses the session.**

@@ -2462,7 +2462,17 @@ function participantVerdictInputs() {
   return {
     calibration: baselineState,
     cameraOutcome: state,
-    sampledFps: rates?.sampledFps ?? null,
+    // Through the file's own rounding (asExported), as the marker
+    // seconds below already are: the export writes sampled_fps to one
+    // decimal and the Python mirror reads that, so a measured 24.96
+    // must reach the verdict as 25.0 on this side too. Handed the raw
+    // double, the page said refused where the file said warned, and
+    // pilot.py stopped the whole cohort calling the disagreement an
+    // instrument defect (roadmap 10.15, audit G-export/l-1).
+    sampledFps:
+      rates === null || rates.sampledFps === null
+        ? null
+        : asExported(rates.sampledFps, 1),
     // The committed fallback: the interpolating median of the
     // per-record fps column, the same function the ruler fit uses
     // and the same number the analysis mirror derives from the file.
