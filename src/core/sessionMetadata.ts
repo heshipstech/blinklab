@@ -3,6 +3,7 @@ import type { DeliveryRates } from "./deliveryRate";
 import { FEATURE_RECORD_CAP, type FeatureRecord } from "./featureRecord";
 import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
 import { percentile } from "./statistics";
+import { reduceUserAgent } from "./userAgent";
 
 // What the conditions of a measurement were, written into the export
 // beside the measurement itself.
@@ -117,8 +118,24 @@ function line(key: string, value: string | number | null): string {
   return `# ${key}: ${value === null ? "unknown" : value}`;
 }
 
-/** The camera and machine rows. Every field says "unknown" rather than vanishing. */
-export function deviceMetadataRows(info: DeviceInfo | null): string[] {
+/**
+ * The camera and machine rows. Every field says "unknown" rather than
+ * vanishing.
+ *
+ * `fullUserAgent` defaults to false, and the default is the point.
+ * Roadmap 10.0a2, ladder B2: the whole `navigator.userAgent` names the
+ * browser build, the engine build and often the operating system patch
+ * level, which together identify a machine rather than describe one,
+ * and this project asks participants to email these files. The coarse
+ * form carries what the analysis reads. Whichever form is written, a
+ * `user_agent_form` row says which, so a reader of the file is never
+ * left deciding whether a short string is a reduction or a browser
+ * that says little.
+ */
+export function deviceMetadataRows(
+  info: DeviceInfo | null,
+  fullUserAgent = false,
+): string[] {
   if (info === null) {
     // A clip run has no camera. Saying so beats omitting the block and
     // leaving a reader to wonder whether it was dropped or never existed.
@@ -141,7 +158,11 @@ export function deviceMetadataRows(info: DeviceInfo | null): string[] {
     line("camera_resolution", size),
     line("camera_declared_fps", info.cameraDeclaredFps),
     line("facing_mode", info.facingMode),
-    line("user_agent", info.userAgent),
+    line(
+      "user_agent",
+      fullUserAgent ? info.userAgent : reduceUserAgent(info.userAgent),
+    ),
+    line("user_agent_form", fullUserAgent ? "full" : "reduced"),
     line("hardware_concurrency", info.hardwareConcurrency),
     line("viewport", viewport),
     line("screen", screen),

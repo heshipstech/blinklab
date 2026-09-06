@@ -16,6 +16,7 @@
     "bundle:budget": "node tools/checkBundleBudget.mjs",
     "results:write": "node tools/writeResultsBlock.mjs",
     "cannotsee:write": "node tools/writeCannotSeeBlock.mjs",
+    "privacy:write": "node tools/writePrivacyBlock.mjs",
     "e2e": "playwright test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
