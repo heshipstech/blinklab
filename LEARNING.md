@@ -1310,3 +1310,41 @@ string behind a checkbox and a row in the file saying which form you
 got. The rule that falls out: when a field is collected because
 something downstream uses part of it, write the part, and make the whole
 an explicit ask.
+
+## A generator that freezes a sentence is slower hand-maintained prose
+
+This repository built two generators for exactly one reason: published
+prose drifts from the record it describes, so let the prose BE the parse
+and there is nothing left to disagree. Both generators then carried
+sentences that were neither parsed from a document nor pinned to one.
+The clearest was the miss mechanism. "The mechanism is unexplained" was
+emitted into the participant report, the README and the model card as
+bare template text, and it stayed true for exactly as long as it took to
+run the experiment that explained it. `docs/iris-occlusion.txt` settled
+the question on 2 September: on about 49 of the 67 misses the eyelid
+aperture and the iris shape are both flat, so those closures are
+invisible to this face model and no threshold move can recover them.
+The generator went on saying the opposite for four days, and its test
+was green throughout, because the test asserted the template.
+
+The rule now is that a generated claim has to be one of two things: a
+sentence built around a value parsed out of a document, or a sentence
+pinned by an exact quote to the document that supports it. The
+cannot-see generator carries the pins as data and refuses to emit a
+claim with none, so a new claim cannot be added without one. The
+results block has no claim objects, so it is read the other way: a
+bullet with no interpolation in it took no number from any document,
+and a test names any bullet that stops interpolating. Both mutations
+were checked rather than assumed.
+
+The lesson generalises past generators. A test that pins a template is
+testing that someone typed what they typed. The question a test has to
+ask is whether the sentence is still true, and the only way to ask that
+is to make the sentence depend on the thing that could stop being true.
+Anything else is a snapshot with an opinion.
+
+The smaller lesson cost twenty minutes: the generated file is compared
+to the generator's output byte for byte, and the repository also runs a
+formatter over that file. So the generator has to make the same line
+breaking choice the formatter would, or the two fight forever. It now
+does, at the one place a value can be long enough to matter.

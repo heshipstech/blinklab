@@ -32,6 +32,22 @@ export function assertQuote(sourceText, quote, sourcePath) {
   }
 }
 
+/**
+ * Claims that carry no pin at all, by their opening words.
+ *
+ * Roadmap 10.0a3, ladder B5. A generator exists so published prose
+ * cannot drift from the record; a claim that is neither built around a
+ * parsed value nor pinned to a quoted sentence is hand-maintained
+ * prose wearing a generator's coat, and this repository published one
+ * for a month ("The mechanism is unexplained", explained on
+ * 2 September in docs/iris-occlusion.txt).
+ */
+export function claimsWithoutPins(claims) {
+  return claims
+    .filter((entry) => entry.pins.length === 0)
+    .map((entry) => entry.claim);
+}
+
 /** The claims, each pinned to its sources; throws on any missing pin. */
 export function buildCannotSeeClaims(root) {
   const result = readRepoFile("docs/eyeblink8-result.txt", root);
@@ -42,9 +58,23 @@ export function buildCannotSeeClaims(root) {
   const freeze = readRepoFile("docs/baseline-freeze.txt", root);
   const card = readRepoFile("MODEL_CARD.md", root);
   const drozyText = readRepoFile("docs/drozy-result.txt", root);
+  const iris = readRepoFile("docs/iris-occlusion.txt", root);
 
   const parsed = parseResultFile(result);
   const missed = parsed.annotated - parsed.found;
+  // Roadmap 10.0a3, ladder B5. The generator said the mechanism was
+  // unexplained for a month after docs/iris-occlusion.txt explained
+  // it, so the number that settles it is parsed rather than typed.
+  const ceilingMisses = (() => {
+    const match = iris.match(/Of the \d+ misses, ~(\d+) are this ceiling/);
+    if (match === null) {
+      throw new Error(
+        "cannot-see block: docs/iris-occlusion.txt no longer states how " +
+          "many of the misses are the recall ceiling",
+      );
+    }
+    return match[1];
+  })();
   const closedShare = (() => {
     const match =
       missChar.match(/against the overall ([\d.]+)\s*$/m) ??
@@ -111,8 +141,25 @@ export function buildCannotSeeClaims(root) {
         `blinks — about one in six — were missed at healthy frame rates, ` +
         `deterministically: the same ${String(missed)} blinks every run, ` +
         `${closedShare} percent of them containing a frame a human marked ` +
-        `fully closed. The mechanism is unexplained.`,
-      source: "docs/eyeblink8-result.txt; docs/miss-character.txt",
+        `fully closed. About ${ceilingMisses} of them are a measured ` +
+        `ceiling rather than a tunable defect: on those closures the ` +
+        `eyelid aperture and the iris shape are both flat, so this face ` +
+        `model does not register them and no threshold move or signal ` +
+        `fusion can recover a signal that is not there.`,
+      source:
+        "docs/eyeblink8-result.txt; docs/miss-character.txt; " +
+        "docs/iris-occlusion.txt",
+      pins: [
+        {
+          quote: "CEILING, not a tunable defect",
+          path: "docs/iris-occlusion.txt",
+        },
+        {
+          quote:
+            "the rearm run did not just reproduce the counts, it missed exactly the same blinks",
+          path: "docs/miss-character.txt",
+        },
+      ],
     },
     {
       claim:
@@ -121,6 +168,13 @@ export function buildCannotSeeClaims(root) {
         `unexplained, so numbers from this device are not comparable to ` +
         `numbers from another.`,
       source: "docs/validation-dry-run.txt; docs/blink-sample-rate.txt",
+      pins: [
+        {
+          quote:
+            "the evidence rate cannot explain why one missed 3 of 10 and the other caught 10 of 10",
+          path: "docs/validation-dry-run.txt",
+        },
+      ],
     },
     {
       claim:
@@ -128,12 +182,24 @@ export function buildCannotSeeClaims(root) {
         `uses an instrument-adjusted threshold, not the literature's, and ` +
         `is not comparable to a PERCLOS figure from another system.`,
       source: "MODEL_CARD.md",
+      pins: [
+        {
+          quote: "not comparable to a PERCLOS figure from another system",
+          path: "MODEL_CARD.md",
+        },
+      ],
     },
     {
       claim:
         `Its own misses. A missed blink writes no row, so the blink log is ` +
         `censored and cannot count what it failed to see.`,
       source: "docs/validation-round.txt",
+      pins: [
+        {
+          quote: "a missed blink writes no row",
+          path: "docs/validation-round.txt",
+        },
+      ],
     },
     {
       claim:
@@ -143,6 +209,20 @@ export function buildCannotSeeClaims(root) {
         `visible only afterwards as over_resting below 1.0 — and a ruler ` +
         `born short stays short, by the freeze's own stated trade.`,
       source: "docs/calibration-refusal.txt; docs/baseline-freeze.txt",
+      pins: [
+        {
+          quote: "the future is not available at birth",
+          path: "docs/calibration-refusal.txt",
+        },
+        {
+          quote: "over_resting below 1.0",
+          path: "docs/calibration-refusal.txt",
+        },
+        {
+          quote: "A short ruler now stays short",
+          path: "docs/baseline-freeze.txt",
+        },
+      ],
     },
     {
       claim:
@@ -150,6 +230,12 @@ export function buildCannotSeeClaims(root) {
         `skin tone, eye shape, visual impairment or eyewear here, and it ` +
         `would be dishonest to imply equal performance.`,
       source: "MODEL_CARD.md",
+      pins: [
+        {
+          quote: "it would be dishonest to imply it does",
+          path: "MODEL_CARD.md",
+        },
+      ],
     },
     {
       claim:
@@ -161,18 +247,45 @@ export function buildCannotSeeClaims(root) {
         // printed "WACV 2016.." on the dry run's report.
         `Cite: ${drozy.cite.replace(/\.$/, "")}.`,
       source: "MODEL_CARD.md; docs/drozy-result.txt",
+      pins: [
+        {
+          quote: "It has never been shown to correspond to how sleepy anyone",
+          path: "MODEL_CARD.md",
+        },
+      ],
     },
   ];
 }
 
-/** The whole generated module, byte for byte. */
+/**
+ * The whole generated module, byte for byte.
+ *
+ * The pins stay in the generator and never reach the browser: they are
+ * how a claim earns its place here, not something a participant reads,
+ * and this page ships under a bundle budget.
+ */
 export function buildCannotSeeModule(root) {
   const claims = buildCannotSeeClaims(root);
+  const unpinned = claimsWithoutPins(claims);
+  if (unpinned.length > 0) {
+    throw new Error(
+      `cannot-see block: ${String(unpinned.length)} claim(s) carry no ` +
+        `pin, so nothing holds them to a document: ` +
+        unpinned.map((claim) => JSON.stringify(claim.slice(0, 60))).join(", "),
+    );
+  }
   const rows = claims
     .map(
       (entry) =>
         `  {\n    claim:\n      ${JSON.stringify(entry.claim)},\n` +
-        `    source: ${JSON.stringify(entry.source)},\n  },`,
+        // The formatter breaks an assignment whose value will not fit
+        // in 80 columns, and the committed module is compared to this
+        // output byte for byte, so the generator has to make the same
+        // choice the formatter would. A one-line source that fits stays
+        // on one line; a longer one takes the wrapped shape.
+        (`    source: ${JSON.stringify(entry.source)},`.length > 80
+          ? `    source:\n      ${JSON.stringify(entry.source)},\n  },`
+          : `    source: ${JSON.stringify(entry.source)},\n  },`),
     )
     .join("\n");
   return (

@@ -768,7 +768,7 @@ downgraded/medium · S`
       stale list.
       **Findings:** F-020.
 
-- [ ] **B5. Generator tests freeze hard-coded prose: the report and
+- [x] **B5. Generator tests freeze hard-coded prose: the report and
       README say the miss mechanism is unexplained while the record
       calls it a measured ceiling.** `medium · confirmed/high +
 downgraded/medium · M`
@@ -784,6 +784,18 @@ downgraded/medium · M`
       `:236`; rewrite `README:339-354` and drop the duplicate; a test
       that greps generators for unpinned sentence literals.
       **Findings:** F-021.
+      **Done:** 6 September 2026, roadmap 10.0a3: every cannot-see
+      claim now carries the exact sentences it rests on, the generator
+      refuses to emit a claim with none, and the miss claim reads the
+      ceiling count out of `docs/iris-occlusion.txt` and is pinned to
+      "CEILING, not a tunable defect". The results block's limitations
+      bullet was the one emitted line with no parsed value in it, so it
+      now interpolates the alertness AUC and p value and the DROZY
+      session count, and `unpinnedLiterals` reads the generator's own
+      source and names any bullet that stops doing so. README's
+      duplicated miss paragraph is one paragraph, and it states the
+      mechanism. Two mutations reddened their tests: a claim stripped
+      of its pins, and the bullet returned to a typed literal.
 
 - [ ] **B6. The only cross-engine table was measured on pre-fix code and
       never re-run; the headline says "different browser binary" where
