@@ -17,10 +17,12 @@ number.
 
 - **Nothing you measure leaves your browser.** There is no server, no account
   and no database. The one exception is documented in
-  `decisions/ADR-0004-model-telemetry.md`: the vendored MediaPipe library sends
-  its own usage statistics to Google, which is inside the dependency rather
-  than in any code here. The page used to deny any reporting at all, which was
-  false, and the correction is on the page.
+  `decisions/ADR-0004-model-telemetry.md`: the vendored MediaPipe library tries
+  to send its own usage statistics to Google, which is inside the dependency
+  rather than in any code here, and this page intercepts the request before it
+  leaves the browser. The page used to deny any reporting at all, which was
+  false; then it said the report did leave, which stopped being true on
+  5 September 2026. Both corrections are on the page.
 - **The numbers can be checked.** `docs/eyeblink8-result.txt` and
   `docs/drozy-result.txt` are committed, and continuous integration fails when
   a summary document stops agreeing with them.

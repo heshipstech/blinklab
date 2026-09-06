@@ -23,6 +23,14 @@ describe("the permanent demo notice", () => {
     // this assertion is what stops the pleasanter sentence coming back.
     // ADR-0004.
     expect(notice).toContain("usage statistics to Google");
+    // And since 5 September the request is intercepted before it
+    // leaves, so the notice names the attempt AND the interception.
+    // Either half alone is a different promise: "does send" understates
+    // the protection, "sends nothing" is the retired lie.
+    expect(notice).toContain("tries to send");
+    expect(notice).toContain(
+      "this page intercepts the request before it leaves the browser",
+    );
   });
 
   it("is one string, used everywhere, so the wording cannot drift", () => {

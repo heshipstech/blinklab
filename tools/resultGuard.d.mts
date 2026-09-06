@@ -58,3 +58,15 @@ export function runningInCi(): boolean;
 
 /** MODEL_CARD's measurement-uncertainty section, or null when absent. */
 export function uncertaintySection(cardText: string): string | null;
+
+/** The alertness comparison's headline numbers, as the record prints them. */
+export type AlertnessResult = {
+  auc: string;
+  p: string;
+};
+
+/** The headline AUC and p value from docs/alertness-score-result.txt. Throws when absent. */
+export function parseAlertnessResult(text: string): AlertnessResult;
+
+/** The subject count a result file states in its data block. Throws when absent. */
+export function parseSubjectCount(text: string): number;

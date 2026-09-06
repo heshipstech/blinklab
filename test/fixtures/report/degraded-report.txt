@@ -2,7 +2,7 @@ BLINKLAB PARTICIPANT REPORT
 
 1. WHAT THIS IS
 
-Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles does send anonymous usage statistics to Google.
+Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.
 
 This report belongs to a research pilot session, run with your consent to test the instrument, not you. The alertness score is an unvalidated heuristic: it has never been shown to correspond to how sleepy anyone actually is.
 

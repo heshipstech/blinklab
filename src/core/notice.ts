@@ -16,12 +16,21 @@
 // No video, image, landmark or measurement is in it. The claim was
 // still false as written, so it says less and says it truthfully.
 // See ADR-0004.
+//
+// The last sentence changed again on 2026-09-06, for the opposite
+// reason. Since 5 September the app installs a block in front of
+// fetch, XMLHttpRequest and sendBeacon before the model loads and
+// drops the request, so "does send" had become false in the direction
+// that matters: it understated the protection and overstated the
+// leak. The sentence now names both halves, the attempt and the
+// interception, because either one on its own is a different promise.
 export const DEMO_NOTICE =
   "Demo, not a safety or medical device. " +
   "It is not for clinical, workplace or safety use, its numbers are not " +
   "diagnostic, and it has not been validated against any medical standard. " +
   "Your video and your measurements never leave your browser. The face " +
-  "model this page bundles does send anonymous usage statistics to Google.";
+  "model this page bundles tries to send anonymous usage statistics to " +
+  "Google, and this page intercepts the request before it leaves the browser.";
 
 export function demoNoticeText(): string {
   return DEMO_NOTICE;

@@ -3,7 +3,7 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 5 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 6 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
@@ -13,8 +13,16 @@ leaving a gap that reads as a pass.
 
 A browser page that watches a face through an ordinary webcam and turns
 what the eyes are doing into numbers. Nothing you record is uploaded.
-There is no server and no account. The vendored face model does report
-its own usage statistics to Google; see Privacy below.
+There is no server and no account.
+
+The page carries a permanent notice, and this is it word for word,
+quoted from `src/core/notice.ts` so the card and the page cannot say
+different things:
+
+> Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.
+
+The interception is measured, not asserted: see Privacy below and
+`decisions/ADR-0004-model-telemetry.md`.
 
 It is **not a medical device, not a safety device, and not a product**.
 It is an instrument that measures eye signals, published so the
@@ -26,12 +34,12 @@ measurements can be checked.
 | --------------- | ------ | ------------------------------------------- | --------------------------------------------------- |
 | Blink detection | events | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **84.0%**, F1 **83.8%** |
 
-**These numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. **Confirmed 26 August 2026: the table above reproduces identically on a second machine.** The full corpus, prepared by the committed remux tool, returned every count, percentage and coverage number digit for digit across a different processor generation, operating system, browser binary and fifteen commits of instrument change. The apparent machine gap reported on 25 August was the file preparation: that run's clips had been re-encoded instead of remuxed, and re-encoding alone collapses false alarms from 19 to 3 on the worst clip at every quality from lossless to visibly lossy. Two things follow: these numbers are a measured property of the instrument and the prepared files, on two machines; and the instrument's precision is sensitive to how a video was transcoded, so any comparison against other published numbers must state the preparation. The re-encoded table stays published as the record of that discovery; it is not an Eyeblink8 result. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+**These numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. **Confirmed 26 August 2026: the table above reproduces identically on a second machine.** The full corpus, prepared by the committed remux tool, returned every count, percentage and coverage number digit for digit across a different processor generation, operating system, WebKit binary and fifteen commits of instrument change. The apparent machine gap reported on 25 August was the file preparation: that run's clips had been re-encoded instead of remuxed, and re-encoding alone collapses false alarms from 19 to 3 on the worst clip at every quality from lossless to visibly lossy. Two things follow: these numbers are a measured property of the instrument and the prepared files, on two machines; and the instrument's precision is sensitive to how a video was transcoded, so any comparison against other published numbers must state the preparation. The re-encoded table stays published as the record of that discovery; it is not an Eyeblink8 result. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 | Eyelid aperture | millimetres | iris as a physical ruler | not validated against a physical measurement |
 | Blink duration, amplitude, closing velocity | ms, mm, mm/s | nothing external | unvalidated |
-| Gaze direction | screen region | nine point calibration, one person | reliable near the centre, degrades at the corners |
+| Gaze direction | screen region | nine point calibration, one person | not measured; quadrant-level target checked by the owner on one setup (MANUAL item 34) |
 | PERCLOS | share of a minute | nothing external | unvalidated, and see the caveat below |
-| Alertness score | 0 to 100 | nothing external | **a heuristic, not a measurement** |
+| Alertness score | 0 to 100 | UTA-RLDD, 95 videos, 52 subjects | **a heuristic**; separates self-reported alert from drowsy across strangers above chance, AUC 0.70 at p 0.001, cohort-level, per person unvalidated |
 
 Blink detection is the only thing here that has been checked against
 somebody else's ground truth. Everything else in that table is
@@ -188,12 +196,27 @@ period is a period during which the instrument is not yet measuring.
 
 This is the section most model cards leave vague, so here it is plainly.
 
-| Group              | Number of people      | What is known about them                                      |
-| ------------------ | --------------------- | ------------------------------------------------------------- |
-| Eyeblink8 subjects | 8                     | Nothing beyond one glasses annotation                         |
-| DROZY subjects     | 14, of whom 13 usable | Nothing published beyond subject number                       |
-| The author         | 1                     | One adult, four devices, six sessions                         |
-| Round volunteers   | 6                     | Six adults, six devices, one scripted session each, anonymous |
+| Group                         | Number of people      | What is known about them                                                                 |
+| ----------------------------- | --------------------- | ---------------------------------------------------------------------------------------- |
+| Eyeblink8 subjects            | 8                     | Nothing beyond one glasses annotation                                                    |
+| DROZY subjects                | 14, of whom 13 usable | Nothing published beyond subject number                                                  |
+| The author                    | 1                     | One adult, four devices, six sessions                                                    |
+| Round volunteers              | 6                     | Six adults, six devices, one scripted session each, anonymous                            |
+| UTA-RLDD, classification read | 54 of 60              | Self-recording strangers; six subjects lose every video to the frame-rate floor          |
+| UTA-RLDD, alertness read      | 52 of those           | The subset the alertness comparison could score; nothing published beyond subject number |
+
+The two UTA-RLDD counts are different reads of one dataset and are
+listed separately on purpose: 54 subjects survive the frame-rate floor
+for the leave-one-subject-out classification
+(`docs/uta-rldd-result.txt`) and 52 for the alertness comparison
+(`docs/alertness-score-result.txt`). One number standing for both would
+be wrong for one of them.
+
+**Devices: Tablets are untested; no tablet has run this instrument.**
+Every session behind every number above came from a laptop, a desktop
+or a phone. A tablet is a different camera at a different distance in a
+different holding posture, so the honest word for it is untested, not
+supported.
 
 **Both committed human-data fixtures are the author's own**, confirmed by
 the owner on 2026-08-15: `test/fixtures/session-01.json`, 300 frames of face
@@ -316,11 +339,14 @@ Video never leaves the browser. There is no server component and no
 analytics of ours. Exported files are written to the reader's own disk
 by their own action.
 
-The vendored MediaPipe library does send its own usage statistics to
+The vendored MediaPipe library tries to send its own usage statistics to
 Google about sixty seconds after the face model loads, needing no
-detections. No video, image, landmark or measurement is included. This
-page denied any reporting at all until the August 2026 audit measured
-it. See
+detections, and this page intercepts the request before it leaves the
+browser. No video, image, landmark or measurement is in it either way.
+This page denied any reporting at all until the August 2026 audit
+measured it, and then said the report did leave until the block landed
+on 5 September 2026. An end-to-end test drives a full session past the
+sixty-second mark and confirms nothing goes out. See
 `decisions/ADR-0004-model-telemetry.md`.
 
 Dataset video is never committed to this repository, and derived numbers

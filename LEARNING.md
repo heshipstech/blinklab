@@ -1223,3 +1223,45 @@ Before any camera had started, the page said "Alertness score: measuring..." and
 The fixes are each small and each about honesty at the surface. An idle table says "not measuring" where a number would sit and never counts what was never counted; the page seeds it and re-applies it whenever nothing runs and nothing is kept. The caveat is a paragraph under the score, and an end to end test reads it out of the score's own box. The way in comes first on a phone, and a 375-wide project asserts it is on screen. The overlay's words come from core, name both exits, and the fullscreen request is guarded.
 
 The lesson is about what a guard can see. The interface document claimed to list everything the page shows and a guard held it to the page's box headings, so three button labels and every idle string drifted out of it unnoticed. A guard sees exactly what it reads and nothing beside it, and the compensating control for a folder that does not exist has to read the strings, not the headings. It now reads every button label and every idle string out of the source and refuses a document that lacks one.
+
+## Five sentences that were true when they were written
+
+None of these was a lie and none of them was a number. A model card
+revised on 5 September still said the alertness score had never been
+tested, one day after the record that tested it landed and while the
+README reported the result. The permanent notice said the face model
+does send usage statistics to Google, which had stopped being true on
+5 September when the block went in front of fetch: the sentence
+understated the protection and overstated the leak, and six documents
+echoed it. The card published a gaze reliability, reliable near the
+centre and degrading at the corners, that nobody has ever measured. The
+only cross-engine table in the repository carried no date and had been
+measured on code two fixes older than the code it appeared to describe.
+And the security policy sent reporters to a private channel that is
+switched off.
+
+Every one of them was written correctly and then the thing underneath
+moved. That is the same shape as the prose defects the result guard was
+built for, and the fix has the same shape too. Correcting a sentence is
+an afternoon; keeping it corrected needs a test that reads the record
+and the document and refuses to let them disagree. So the card's
+alertness numbers are parsed out of the result file, both UTA-RLDD
+subject counts are parsed out of the two files that state them, and the
+notice is quoted verbatim into the README and the card with the
+whitespace collapsed on both sides so a reflow cannot break the pin.
+
+The lesson is about the direction of a pin. This repository already had
+a guard that banned retired sentences, which is a NEGATIVE pin: it
+stops the pleasant old claim coming back. A negative pin cannot notice
+that the replacement was never written, or that it drifted somewhere
+else, or that one document was corrected and its five echoes were not.
+The corrected sentence needs a positive pin of its own, read from the
+record it came from, or the correction lasts exactly until the next
+person tidies the paragraph.
+
+The smaller lesson is that a date is part of a measurement. The
+cross-engine table's numbers are not wrong; they are simply about a
+build from a month ago, and without a date beside them a reader has no
+way to know that, so the table quietly grew into a claim about the
+current code. Two lines of provenance turned it back into what it
+always was, a record.
