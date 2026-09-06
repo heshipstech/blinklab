@@ -19,6 +19,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from blinklab.loader import Session, cohort_commit_line, cohort_commits
 from blinklab.pilot import InstrumentDefect, pilot_verdict_lines
 from blinklab.round2 import (
     RefusedCalibration,
@@ -456,6 +457,12 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     refusals: list[tuple[PairPaths, str]] = []
     calibration_refusals: list[RefusedCalibration] = []
     rule_outcomes: list[Round2Rules] = []
+    # Roadmap 10.1f2, ladder D6. Every export has carried the build that
+    # wrote it since remediation E2 and no tool read it, so a table
+    # averaging across a detector change reported one number with no
+    # note. The sessions are kept so the report can say whether it is
+    # describing one instrument.
+    loaded: list[Session] = []
     for paths in pairs:
         try:
             pair = load_pair(paths)
@@ -473,6 +480,7 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
             accounts.append(
                 (row.label, ruler_fit_cross_check(pair.session.frame))
             )
+            loaded.append(pair.session)
         except ValidationError as error:
             # Never a skip. A person missing from the table is a person
             # nobody looks for, so a refusal takes a line of its own
@@ -483,6 +491,7 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     lines = [
         f"Validation round: {len(pairs)} {noun} in {directory}",
         f"Ground truth between the two marks: {EXPECTED_BLINKS} blinks.",
+        cohort_commit_line(cohort_commits(loaded)),
         "",
         *calibration_refused_lines(calibration_refusals),
         "CHECKS",

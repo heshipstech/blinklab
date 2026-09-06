@@ -83,6 +83,35 @@ class Session:
     metadata: dict[str, str] = field(default_factory=dict)
 
     @property
+    def app_commit(self) -> str | None:
+        """Which build wrote this file, or None for one that predates the row.
+
+        Roadmap 10.1f2, ladder D6. The browser has stamped this into
+        every export since remediation E2 and nothing read it, so a
+        cohort table could average two instruments without saying so.
+        None rather than a guess: exports before that build carry no
+        such row, and they are old rather than damaged.
+        """
+        return self.metadata.get("app_commit")
+
+    @property
+    def protocol(self) -> str | None:
+        """Which protocol this session was recorded under, or None."""
+        return self.metadata.get("protocol")
+
+    @property
+    def records_dropped(self) -> int | None:
+        """Per-second rows that fell out of the buffer, or None if unstated.
+
+        Zero is a measurement, not an absence: the exporter writes this
+        key on every session, so a zero means nothing was lost and a
+        MISSING key means an older build. An unreadable value is
+        refused rather than defaulted, because "lots" quietly becoming
+        zero is how a truncated session passes for a complete one.
+        """
+        return _records_dropped(self.metadata)
+
+    @property
     def duration_s(self) -> float:
         """Wall time the recording spans, from timestamps not row count.
 
@@ -96,6 +125,65 @@ class Session:
             - self.frame["timestampMs"].iloc[0]
         )
         return float(span) / 1000.0
+
+
+def cohort_commits(sessions: list[Session]) -> list[str]:
+    """The distinct builds a set of sessions was recorded by, sorted.
+
+    Roadmap 10.1f2, ladder D6. Sessions with no stamp are left out
+    rather than counted as a build of their own: they predate the
+    stamp, which is a different fact from being a different build, and
+    `cohort_commit_line` says which.
+    """
+    return sorted(
+        {
+            session.app_commit
+            for session in sessions
+            if session.app_commit is not None
+        }
+    )
+
+
+def cohort_commit_line(commits: list[str]) -> str:
+    """One sentence about whether a cohort is one instrument.
+
+    A table that averages across sessions is a table about one
+    instrument, and until now nothing said whether it was. A cohort
+    spanning a detector change would have been reported as one number
+    with no note.
+    """
+    if not commits:
+        return (
+            "No session names the build that recorded it, so these "
+            "files predate the build stamp and whether they share an "
+            "instrument is unknown."
+        )
+    if len(commits) == 1:
+        return f"All sessions were recorded by build {commits[0]}."
+    return (
+        f"These sessions come from {len(commits)} different builds "
+        f"({', '.join(commits)}), so they are not one instrument and "
+        "any number averaged across them describes more than one."
+    )
+
+
+def _records_dropped(metadata: dict[str, str]) -> int | None:
+    """The dropped-row count, or None when the file predates the key.
+
+    An unreadable value is refused rather than defaulted: "lots"
+    quietly becoming zero is how a truncated session passes for a
+    complete one.
+    """
+    raw = metadata.get("feature_records_dropped")
+    if raw is None:
+        return None
+    try:
+        return int(raw)
+    except ValueError as error:
+        raise SessionError(
+            f"the metadata says feature_records_dropped: {raw!r}, "
+            "which is not a count the exporter could have written"
+        ) from error
 
 
 def _read_metadata(path: Path) -> dict[str, str]:
@@ -154,6 +242,11 @@ def load_session(path: str | Path) -> Session:
         )
 
     metadata = _read_metadata(path)
+    # Parsed here rather than lazily, so a damaged count is refused
+    # when the file is opened rather than at whatever moment a caller
+    # happens to ask. A loader that half succeeds is worse than one
+    # that fails, which is this module's oldest rule.
+    _records_dropped(metadata)
 
     # pandas gets exactly the lines the checks below see. It used to
     # read the file itself with comment="#", which cuts a line at a

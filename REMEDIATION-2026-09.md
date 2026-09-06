@@ -1474,22 +1474,32 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       `declared_keys()`.
       **Depends on:** A3, B16.
       **Findings:** G-export/l-2, G-export/l-3, G-export/l-4,
-      **Half done:** 6 September 2026, roadmap 10.1f1 — the contract
-      half. `analysis/tests/test_metadata_contract.py` and
-      `tools/metadataKeys.mjs` read the keys out of the six writers
-      from both languages and hold them to a hand-written list and to
+      G-export/l-5, G-export/l-8 (guard half), G-export/l-9.
+      **Half done:** 6 September 2026, roadmap 10.1f1 and 10.1f2.
+      `analysis/tests/test_metadata_contract.py` and
+      `tools/metadataKeys.mjs` read the keys out of the six writers from
+      both languages and hold them to a hand-written list and to
       SPEC.md's table. Three corrections to this item's own fix text,
       each of which would have produced a reader that passed while
       reading almost nothing: the writers are six, not five; a
       `line("...")` regex misses the thirteen calls that wrap across
       lines, `sampled_fps` among them; and `# key:` appears in the
-      comments that describe the format, so a reader that does not
-      strip comments reports a key called `key`. Renaming `sampled_fps`
+      comments that describe the format, so a reader that does not strip
+      comments reports a key called `key`. Renaming `sampled_fps`
       reddened only the Python side until the TypeScript reader was
-      added. The REQUIRED/CONDITIONAL split, the honesty rows on
-      `Session`, and the verdict fixtures are roadmap row 10.1f2.
-
-      G-export/l-5, G-export/l-8 (guard half), G-export/l-9.
+      added. Then 10.1f2 gave the three honesty rows their readers:
+      `Session` carries `app_commit`, `protocol` and `records_dropped`,
+      an unreadable dropped-row count is refused at load rather than
+      defaulting to zero, and `cohort_commits` with `cohort_commit_line`
+      say whether a table describes one instrument, several, or a set of
+      files that predate the build stamp, printed above the round
+      report's tables. `validation_report.py` had no test file of its
+      own, so one was written. A fourth correction: `analyse_drozy.py`
+      and `analyse_rldd.py` analyse DROZY and UTA-RLDD feature records
+      rather than browser exports, so they carry no `app_commit` at all
+      and a commit line there would promise a field that cannot exist.
+      The absence policies and the verdict fixtures are roadmap row
+      10.1f3.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**

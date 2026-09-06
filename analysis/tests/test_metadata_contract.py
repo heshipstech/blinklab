@@ -116,6 +116,13 @@ EXPECTED_WRITTEN = [
 # below reads every `metadata.get("...")` literal in the tree and
 # demands it appear here, so a new read cannot be added silently.
 READ_BY_PYTHON = [
+    # Roadmap 10.1f2: three keys the browser had written into every
+    # export since remediation E2 that nothing read. A cohort table
+    # could mix two builds without saying so, and a truncated session
+    # was indistinguishable from a short one.
+    "app_commit",
+    "feature_records_dropped",
+    "protocol",
     "blinks_detected",
     "blinks_recorded",
     "calibration_samples",

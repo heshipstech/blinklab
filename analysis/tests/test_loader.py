@@ -15,6 +15,8 @@ from blinklab.loader import (
     LEGACY_COLUMNS,
     PRE_PUPIL_COLUMNS,
     SessionError,
+    cohort_commit_line,
+    cohort_commits,
     load_session,
 )
 
@@ -299,3 +301,118 @@ class TestTheSourceOfASession:
         text = HEADER + "\r\n" + a_row(1000) + "\r\n" + a_row(2000) + "\r\n"
         session = load_session(write(tmp_path, text))
         assert "source" not in session.metadata
+
+
+class TestTheHonestyRowsNothingRead:
+    """Roadmap 10.1f2, ladder D6.
+
+    Three keys were written into every export and read by nothing.
+    `app_commit` and `protocol` say which build and which protocol
+    produced a file, so without them a cohort table can silently mix
+    two instruments; `feature_records_dropped` says how many per-second
+    rows fell out of the buffer, so without it a truncated session is
+    indistinguishable from a short one.
+    """
+
+    def _session(self, tmp_path: Path, header_lines: str) -> object:
+        path = tmp_path / "s.csv"
+        path.write_text(
+            header_lines
+            + HEADER
+            + "\r\n1,true,60,7,,,,,,,,0,,,false,true,,\r\n",
+            encoding="utf-8",
+        )
+        return load_session(path)
+
+    def test_carries_the_build_and_the_protocol(self, tmp_path: Path) -> None:
+        session = self._session(
+            tmp_path,
+            "# app_commit: abc1234\r\n# protocol: docs/plan.md, 1 January\r\n",
+        )
+        assert session.app_commit == "abc1234"
+        assert session.protocol == "docs/plan.md, 1 January"
+
+    def test_says_unknown_rather_than_guessing_on_an_older_file(
+        self, tmp_path: Path
+    ) -> None:
+        # Every export before 2026-08-28 predates these keys. A file
+        # without them is old, not damaged, and the honest answer is
+        # None rather than a made-up commit.
+        session = self._session(tmp_path, "")
+        assert session.app_commit is None
+        assert session.protocol is None
+
+    def test_counts_the_rows_that_fell_out_of_the_buffer(
+        self, tmp_path: Path
+    ) -> None:
+        session = self._session(tmp_path, "# feature_records_dropped: 12\r\n")
+        assert session.records_dropped == 12
+
+    def test_a_file_with_no_dropped_row_says_zero_not_unknown(
+        self, tmp_path: Path
+    ) -> None:
+        # Zero is a measurement here: the exporter writes this key on
+        # every session, so its absence means an older build and its
+        # presence with a zero means nothing was lost.
+        assert (
+            self._session(
+                tmp_path, "# feature_records_dropped: 0\r\n"
+            ).records_dropped
+            == 0
+        )
+        assert self._session(tmp_path, "").records_dropped is None
+
+    def test_an_unreadable_count_is_refused_rather_than_defaulted(
+        self, tmp_path: Path
+    ) -> None:
+        with pytest.raises(SessionError, match="feature_records_dropped"):
+            self._session(tmp_path, "# feature_records_dropped: lots\r\n")
+
+
+class TestTheCohortsBuild:
+    """Roadmap 10.1f2, ladder D6.
+
+    A table that averages across sessions is a table about one
+    instrument, and nothing checked that. `app_commit` has been in
+    every export since remediation E2 and no tool read it, so a cohort
+    spanning a detector change would have been reported as one number
+    with no note.
+    """
+
+    def test_one_commit_is_named(self) -> None:
+        assert cohort_commit_line(["abc1234"]) == (
+            "All sessions were recorded by build abc1234."
+        )
+
+    def test_a_mixed_cohort_says_so_and_names_the_builds(self) -> None:
+        line = cohort_commit_line(["abc1234", "def5678"])
+        assert "2 different builds" in line
+        assert "abc1234" in line and "def5678" in line
+        # The point of the sentence is that the reader stops trusting
+        # the average, so it has to say that in words.
+        assert "not one instrument" in line
+
+    def test_a_cohort_with_no_stamp_says_which_way_it_is_unknown(self) -> None:
+        # Every export before remediation E2 carries no app_commit. That
+        # is an older cohort, not a mixed one, and calling it mixed
+        # would be as wrong as calling it uniform.
+        assert cohort_commit_line([]) == (
+            "No session names the build that recorded it, so these "
+            "files predate the build stamp and whether they share an "
+            "instrument is unknown."
+        )
+
+    def test_the_distinct_set_is_sorted_and_ignores_the_unstamped(
+        self, tmp_path: Path
+    ) -> None:
+        def session(commit: str | None) -> object:
+            path = tmp_path / f"{commit or 'none'}.csv"
+            stamp = f"# app_commit: {commit}\r\n" if commit else ""
+            path.write_text(
+                stamp + HEADER + "\r\n1,true,60,7,,,,,,,,0,,,false,true,,\r\n",
+                encoding="utf-8",
+            )
+            return load_session(path)
+
+        sessions = [session("def5678"), session("abc1234"), session(None)]
+        assert cohort_commits(sessions) == ["abc1234", "def5678"]
