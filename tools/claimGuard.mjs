@@ -18,18 +18,32 @@ import { fileURLToPath } from "node:url";
 // the page used to deny, do not quote the sentence back, or the guard
 // cannot tell a confession from a relapse.
 
-/** Claims this repository is no longer allowed to make, and why each is false. */
+/**
+ * Claims this repository is no longer allowed to make, and why each is
+ * false.
+ *
+ * Patterns rather than fixed strings, since roadmap 10.1c and ladder
+ * D16. The guard searched for exact wordings, so "no data leaves your
+ * device" was banned while PROJECT.md carried "No data leaves the
+ * device, at any time, for any reason": the same claim one word away,
+ * and stronger than the one that had been measured false. A claim is a
+ * family of sentences, not a spelling, so each entry now carries the
+ * family. `says` is the wording a message can quote back.
+ */
 export const RETIRED_CLAIMS = [
   {
-    phrase: "no data leaves your device",
+    pattern: "no +data +(ever +)?leaves +(your|the|this) +device",
+    says: "no data leaves your device",
     because: "the vendored model posts usage statistics to Google",
   },
   {
-    phrase: "no telemetry",
+    pattern: "no +telemetry",
+    says: "no telemetry",
     because: "MediaPipe reports its own usage; ours is the only absent kind",
   },
   {
-    phrase: "zero runtime third party calls",
+    pattern: "zero +runtime +third +party +calls",
+    says: "zero runtime third party calls",
     because: "ADR-0002 claimed this as a benefit and it was never measured",
   },
 ];
@@ -43,7 +57,7 @@ export function repoRoot() {
 }
 
 /**
- * Every file containing the phrase, tracked or newly added, case
+ * Every file matching the pattern, tracked or newly added, case
  * insensitive.
  *
  * Uses `git grep` so the set searched is the set that ships, with no
@@ -55,11 +69,11 @@ export function repoRoot() {
  * is committed is a guard that reports the fire from inside the
  * building.
  */
-export function trackedFilesContaining(phrase, root) {
+export function trackedFilesMatching(pattern, root) {
   try {
     const out = execFileSync(
       "git",
-      ["grep", "--files-with-matches", "--untracked", "-i", "-F", phrase],
+      ["grep", "--files-with-matches", "--untracked", "-i", "-E", pattern],
       {
         cwd: root,
         encoding: "utf8",
@@ -76,11 +90,11 @@ export function trackedFilesContaining(phrase, root) {
 export function relapses(root, exempt = []) {
   const found = [];
   for (const claim of RETIRED_CLAIMS) {
-    const files = trackedFilesContaining(claim.phrase, root).filter(
+    const files = trackedFilesMatching(claim.pattern, root).filter(
       (file) => !exempt.includes(file),
     );
     if (files.length > 0) {
-      found.push({ phrase: claim.phrase, because: claim.because, files });
+      found.push({ phrase: claim.says, because: claim.because, files });
     }
   }
   return found;

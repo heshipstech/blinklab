@@ -107,6 +107,19 @@ describe("the observation minimum", () => {
     expect(perclosValue(exactly, PERCLOS_MIN_OBSERVED_MS)).toBe(0);
   });
 
+  // Roadmap 10.1c, ladder D2. The trio above derives its probes FROM
+  // the constant, so it moves with it and pins nothing. These are
+  // literals: 15 000 ms is the shortest span PERCLOS will answer from,
+  // and 14 999 is not.
+  it("refuses a 14 999 ms span and answers a 15 000 ms one, as literals", () => {
+    let state = emptyPerclos();
+    state = perclosStep(state, 0, OPEN_MM, BASELINE_MM);
+    const justUnder = perclosStep(state, 14999, OPEN_MM, BASELINE_MM);
+    expect(perclosValue(justUnder, 14999)).toBeNull();
+    const exactly = perclosStep(justUnder, 15000, OPEN_MM, BASELINE_MM);
+    expect(perclosValue(exactly, 15000)).toBe(0);
+  });
+
   it("ignores gap frames when measuring the observed span", () => {
     // Two valid frames 10 seconds apart, padded with gaps beyond the
     // minimum: the VALID span is still only 10 seconds, so null.
@@ -175,6 +188,18 @@ describe("a window that stopped receiving samples, fix #122", () => {
     ).not.toBeNull();
     expect(perclosValue(state, lastSampleMs + PERCLOS_STALE_MS)).not.toBeNull();
     expect(perclosValue(state, lastSampleMs + PERCLOS_STALE_MS + 1)).toBeNull();
+  });
+
+  // Roadmap 10.1c, ladder D2, the staleness rule as literals. Two
+  // seconds after the last sample PERCLOS still answers; one
+  // millisecond later it does not, because a frozen face that kept
+  // answering was the defect this rule was built for.
+  it("answers at last + 2000 ms and blanks at last + 2001, as literals", () => {
+    const state = seatedThenGone();
+    const lastSampleMs = 60 * 30 * DT_MS - DT_MS;
+    expect(perclosValue(state, lastSampleMs + 1999)).not.toBeNull();
+    expect(perclosValue(state, lastSampleMs + 2000)).not.toBeNull();
+    expect(perclosValue(state, lastSampleMs + 2001)).toBeNull();
   });
 
   it("resumes the moment samples return", () => {

@@ -1307,7 +1307,7 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
       thresholds and A12's new refusals.
       **Findings:** G-Reproduc-2.
 
-- [ ] **D2. Refusal-threshold constants survive mutation; the mutation
+- [x] **D2. Refusal-threshold constants survive mutation; the mutation
       runner has been unrunnable since 20 August.** `high · confirmed ×2
 (reproduced on scratch copies) · S`
       **What:** `MIN_BLINK_FPS` bends to 23, 24, 28, 30 and six other
@@ -1328,6 +1328,17 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
       redden, derive the header count from the array, run it in CI,
       add a PR-template line.
       **Findings:** F-018, F-019.
+      **Done:** 6 September 2026, roadmap 10.1c: literal boundary
+      probes in each owning test (24.9/25/25.1; the 60/65 hysteresis
+      pair in both directions including the held middle; 14 999/15 000
+      ms; last+1999/2000/2001; 99/100 samples; 29 999/30 000 ms; 29/30
+      guided; 20 and 25 degrees on the pose axes; 149/150 ms on the
+      refractory). The RISE entries are gone, six entries for the
+      frame-rate and guided constants are added, each entry names the
+      one test file that must go red, and the whole list runs in CI in
+      about two minutes. Narrowing the entries turned 10 of the 27
+      from caught into SURVIVED before those two owning tests were
+      fixed, and two entries had been pointed at the wrong file.
 
 - [ ] **D3. Commit the anchor run's inputs and bind the committed miss
       table to the numbers it reproduces.** `medium · confirmed ×2 ·
@@ -1583,7 +1594,7 @@ probed) · M · owner`
       reason for "n/a".
       **Findings:** F-068.
 
-- [ ] **D16. Four small guard repairs, one PR.** `low · confirmed · S` - `tools/claimGuard.mjs:22-35` uses `git grep -F`; `PROJECT.md:41`
+- [x] **D16. Four small guard repairs, one PR.** `low · confirmed · S` - `tools/claimGuard.mjs:22-35` uses `git grep -F`; `PROJECT.md:41`
       restates the retired absolute claim one word away
       (`README.md:587`, `ADR-0004:108-115`). Regex family with the
       same exempt list; reword `PROJECT.md:41` to the disclosure
@@ -1612,6 +1623,21 @@ probed) · M · owner`
       runner's only automated protection; after C10, decide from data
       whether the runner stays on WebKit.
       **Findings:** G-Browser-7.
+      **Done:** 6 September 2026, roadmap 10.1c. `claimGuard` matches a
+      family of wordings with `git grep -E` instead of one spelling
+      with `-F`, and PROJECT.md's constraint says what actually
+      happens; the September appendix joins the exempt list, since
+      quoting the retired wording while filing the finding is its job.
+      `exportGuard` reads all three quote styles, `.gitignore` refuses
+      `session-*.json` with a negation for the one committed consented
+      fixture, and the guard now asks git about five downloads rather
+      than four. `guardsArmed.test.ts` demands a sibling test per
+      guard, generator and ratchet in `tools/`, states the count so
+      adding one is deliberate, and leaves out the `write*`
+      regeneration commands by name. Both workflows install with
+      `npm ci --ignore-scripts`; the flag is per invocation, so
+      `npm run build` still runs `prepare-assets` and the wasm assets
+      still populate, verified locally.
 
 ---
 

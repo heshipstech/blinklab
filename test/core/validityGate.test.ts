@@ -31,6 +31,35 @@ describe("poseValidity", () => {
     ).toMatchObject({ kind: "invalid", axis: "roll" });
   });
 
+  // Roadmap 10.1c, ladder D2. Every probe above is computed FROM the
+  // limits, so the September audit bent pitch to 89 degrees and to 1
+  // with the whole suite green: a gate open enough to measure a face
+  // in profile, and a gate shut enough to refuse every real one, both
+  // invisible. These are literals. Pitch is 20 because the aperture is
+  // read as a distance between landmarks and foreshortening shrinks it;
+  // yaw and roll are 25.
+  it("holds pitch at 20 degrees, as literals in both directions", () => {
+    expect(poseValidity({ ...level, pitchDeg: 20 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, pitchDeg: -20 }).kind).toBe("valid");
+    expect(poseValidity({ ...level, pitchDeg: 20.1 }).kind).toBe("invalid");
+    expect(poseValidity({ ...level, pitchDeg: -20.1 }).kind).toBe("invalid");
+    // A gate opened to 89 would call a face in profile measurable, and
+    // a gate shut to 1 would refuse an ordinary seated head.
+    expect(poseValidity({ ...level, pitchDeg: 45 }).kind).toBe("invalid");
+    expect(poseValidity({ ...level, pitchDeg: 2 }).kind).toBe("valid");
+  });
+
+  it("holds yaw and roll at 25 degrees, as literals in both directions", () => {
+    for (const axis of ["yawDeg", "rollDeg"] as const) {
+      expect(poseValidity({ ...level, [axis]: 25 }).kind).toBe("valid");
+      expect(poseValidity({ ...level, [axis]: -25 }).kind).toBe("valid");
+      expect(poseValidity({ ...level, [axis]: 25.1 }).kind).toBe("invalid");
+      expect(poseValidity({ ...level, [axis]: -25.1 }).kind).toBe("invalid");
+      expect(poseValidity({ ...level, [axis]: 45 }).kind).toBe("invalid");
+      expect(poseValidity({ ...level, [axis]: 2 }).kind).toBe("valid");
+    }
+  });
+
   it("treats a missing pose as invalid, unknown is not acceptable", () => {
     expect(poseValidity(null)).toEqual({ kind: "noPose" });
   });

@@ -21,13 +21,23 @@ import { fileURLToPath } from "node:url";
 // it touches the filesystem and shells out, so it cannot live in core,
 // and its types are written by hand next door.
 
-/** Every filename `downloadTextFile` can produce, with stamps filled in. */
+/**
+ * Every filename `downloadTextFile` can produce, with stamps filled in.
+ *
+ * All three quote styles, since roadmap 10.1c and ladder D16. This
+ * read backticks only, because every export it was written for used a
+ * template. `main.ts` also downloads the fixture recording under a
+ * plain double-quoted name, and that file is 478 face-mesh points of
+ * whoever sat in front of the camera. The guard could not see it, so
+ * nothing noticed that `.gitignore` did not refuse it either. A guard
+ * that reads one of three syntaxes reports on a third of the door.
+ */
 export function downloadedFilenames(mainSource) {
   const names = [];
-  const pattern = /downloadTextFile\(\s*`([^`]+)`/g;
+  const pattern = /downloadTextFile\(\s*(["'`])((?:[^\\]|\\.)*?)\1/g;
   let match = pattern.exec(mainSource);
   while (match !== null) {
-    const template = match[1];
+    const template = match[2];
     if (template !== undefined) {
       // Any interpolation becomes a plausible stamp, so what comes out
       // is a filename a real download would actually produce.

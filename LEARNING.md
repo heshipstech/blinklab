@@ -1348,3 +1348,63 @@ to the generator's output byte for byte, and the repository also runs a
 formatter over that file. So the generator has to make the same line
 breaking choice the formatter would, or the two fight forever. It now
 does, at the one place a value can be long enough to matter.
+
+## A test that derives its probe from the constant tests nothing
+
+The frame-rate floor is 25 because a fast blink's closed phase can be
+under 100 milliseconds, and at 24 frames a second that closure can fall
+entirely between two frames, so a count that missed blinks would read as
+a calm person. The test for it asked whether the gate refused at the
+floor minus a tenth and passed at the floor. That reads like a boundary
+check and is not one: both probes are computed from the constant, so
+they travel with it, and the September audit moved the floor to 23, to
+24, to 28 and to 30 with the whole suite green. Six other floors moved an
+order of magnitude the same way.
+
+The fix is a literal. Twenty four point nine refuses and twenty five
+measures, written out, so the sentence in the test says the same thing
+the comment beside the constant says. The derived probes stay too,
+because they document the intent, but they are not what holds the line.
+
+The second half is worse and is about a check that could not run. This
+repository has a mutation runner: it bends each safety constant, runs
+the suite, and demands that something goes red. It had been unrunnable
+since 20 August, because it still bent a constant that had been deleted
+on that day, so it exited on a stale-list error before checking
+anything. Meanwhile the remediation document said the check was
+runnable. Nobody noticed for seventeen days, and the reason nobody
+noticed is that it was a local gate: something you were supposed to
+remember to run, which is the same category of promise as a paragraph
+you are supposed to remember to update.
+
+So it runs in CI now, and the thing that made that possible is worth
+keeping. Each mutation used to run the whole suite, about ninety
+seconds, which is thirty minutes for the list. Each entry now names the
+one test file that owns its constant, and the list takes about half a
+minute. That is not only faster, it is a stricter question: a mutation
+caught by some unrelated snapshot three folders away is not evidence
+that the constant is pinned, it is evidence that the constant leaks into
+a fixture.
+
+The stricter question paid within the hour. Narrowing the entries turned
+ten of the twenty seven from caught into survived. Nine were the pose
+gate, whose owning test computed every probe from the limits, so the
+gate could open wide enough to measure a face in profile or shut tight
+enough to refuse an ordinary seated head and only some distant fixture
+would notice. The tenth was the blink refractory, whose two cases stood
+twenty and a hundred and eighty milliseconds away from a hundred and
+fifty millisecond boundary. Two of the entries had also been pointed at
+the wrong test file, which the whole-suite runner could never have
+revealed, because it never asked.
+
+The rest of this increment is one shape repeated. A guard that matched
+one spelling of a retired claim let the same claim back in one word
+away, in a stronger form than the sentence that had been measured false.
+A guard that read backtick calls found four of the five files this app
+downloads, and the one it missed is landmark geometry of a real face
+that was not refused by .gitignore either, because nothing ever asked.
+And nothing at all ran any guard except its own sibling test file, so a
+guard whose test was deleted would have gone on looking like a control.
+Each of those is the same lesson the mutation runner is: a check is
+worth exactly what it reads, and the question to ask about one is never
+whether it passes, it is what would have to be true for it to fail.

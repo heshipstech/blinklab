@@ -36,6 +36,22 @@ there instead. From the repository root:
 npm run lint && npm run typecheck && npm test && npm run coverage && npm run build && npm run bundle:budget && npm run format:check && npm run e2e
 ```
 
+Install with `npm ci --ignore-scripts`, which is what both workflows run since
+6 September 2026. A dependency's own install hook runs arbitrary code out of
+the npm tree, and only `fsevents` ships one today, a no-op away from macOS.
+The flag is per invocation, so the project's own steps are unaffected:
+`npm run build` still runs `prepare-assets` and the MediaPipe wasm files still
+populate.
+
+If you moved one of the refusal constants — the frame-rate floor, the risk
+band, the PERCLOS spans, the baseline floors, the guided sample floor — run
+the mutation check too. It bends each one and demands that the test which owns
+it goes red:
+
+```bash
+node tools/mutationCheck.mjs
+```
+
 In `analysis/`:
 
 ```bash

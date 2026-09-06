@@ -17,146 +17,216 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
+// Each entry names the file, the exact source text, the bent version,
+// the drift it guards against, and the ONE test file that must go red.
+//
+// Roadmap 10.1c, ladder D2. Two things were wrong with this list. It
+// still bent BASELINE_RISE_MIN_SAMPLES, removed by 171b5f4, so the
+// script exited "STALE LIST" before checking anything and had been
+// unrunnable since 20 August while REMEDIATION.md said it was
+// runnable. And every entry ran the WHOLE suite, about ninety seconds
+// each, which is why this was a local gate nobody ran rather than a CI
+// step. Naming the owning test file makes each entry a second or two,
+// so the whole list plus its one full-suite preflight takes about two
+// minutes.
+//
+// It is a sharper check as well, and the sharpening found something
+// the same hour: narrowing the entries turned 10 of these 27 from
+// caught into SURVIVED. Nine were the pose gate, whose owning test
+// derived every probe from the limits; the tenth was the refractory,
+// whose cases stood 20 ms and 180 ms from a 150 ms boundary. Both now
+// carry literals. A mutation caught by an unrelated snapshot three
+// folders away is not evidence that a constant is pinned, it is
+// evidence that the constant leaks into a fixture.
 const MUTATIONS = [
-  // Each entry: the file, the exact source text, the bent version,
-  // and which direction of drift it guards against.
   [
     "src/core/constants.ts",
     "BLINK_REFRACTORY_MS = 150",
     "BLINK_REFRACTORY_MS = 1",
     "refractory collapsed: chatter would count as blinks",
+    "test/core/blink.test.ts",
   ],
   [
     "src/core/constants.ts",
     "BLINK_REFRACTORY_MS = 150",
     "BLINK_REFRACTORY_MS = 10000",
     "refractory bloated: real blinks would be swallowed",
+    "test/core/blink.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxPitchDeg: 20",
     "maxPitchDeg: 89",
     "pose gate opened: foreshortened faces would measure",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxPitchDeg: 20",
     "maxPitchDeg: 1",
     "pose gate slammed: every real face would be refused",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxRollDeg: 25",
     "maxRollDeg: 89",
     "pose gate opened on roll",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxRollDeg: 25",
     "maxRollDeg: 1",
     "pose gate slammed on roll",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxYawDeg: 25",
     "maxYawDeg: 89",
     "pose gate opened on yaw",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxYawDeg: 25",
     "maxYawDeg: 1",
     "pose gate slammed on yaw",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "BASELINE_LEARN_MS = 30000",
     "BASELINE_LEARN_MS = 1000",
     "learning window cut: the instrument would claim to know a face after one second",
+    "test/core/baseline.test.ts",
   ],
   [
     "src/core/constants.ts",
     "BASELINE_LEARN_MS = 30000",
     "BASELINE_LEARN_MS = 600000",
     "learning window bloated: no session would ever finish learning",
+    "test/core/baseline.test.ts",
   ],
   [
     "src/core/constants.ts",
     "BASELINE_MIN_SAMPLES = 100",
     "BASELINE_MIN_SAMPLES = 1",
     "sample floor removed: one frame could set a baseline",
+    "test/core/baseline.test.ts",
   ],
   [
     "src/core/constants.ts",
     "BASELINE_MIN_SAMPLES = 100",
     "BASELINE_MIN_SAMPLES = 10000",
     "sample floor bloated",
-  ],
-  [
-    "src/core/constants.ts",
-    "BASELINE_RISE_MIN_SAMPLES = 300",
-    "BASELINE_RISE_MIN_SAMPLES = 1",
-    "ratchet rise floor removed",
+    "test/core/baseline.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_WINDOW_MS = 60000",
     "PERCLOS_WINDOW_MS = 5000",
     "PERCLOS window cut",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_WINDOW_MS = 60000",
     "PERCLOS_WINDOW_MS = 600000",
     "PERCLOS window bloated",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_MIN_OBSERVED_MS = 15000",
     "PERCLOS_MIN_OBSERVED_MS = 1",
     "PERCLOS valid-span rule removed: it would answer from one frame",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_MIN_OBSERVED_MS = 15000",
     "PERCLOS_MIN_OBSERVED_MS = 60000",
     "PERCLOS valid-span bloated",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_STALE_MS = 2000",
     "PERCLOS_STALE_MS = 2000000",
     "staleness rule disabled: a frozen face would keep answering",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/perclos.ts",
     "PERCLOS_STALE_MS = 2000",
     "PERCLOS_STALE_MS = 1",
     "staleness hair trigger: ordinary frame gaps would blank PERCLOS",
+    "test/core/perclos.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxPitchDeg: 20",
     "maxPitchDeg: 19",
     "pose gate tightened by one degree unnoticed",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxRollDeg: 25",
     "maxRollDeg: 24",
     "pose gate tightened by one degree on roll",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
     "maxYawDeg: 25",
     "maxYawDeg: 24",
     "pose gate tightened by one degree on yaw",
+    "test/core/validityGate.test.ts",
   ],
   [
     "src/core/constants.ts",
-    "BASELINE_RISE_MIN_SAMPLES = 300",
-    "BASELINE_RISE_MIN_SAMPLES = 10000",
-    "ratchet rise floor bloated past the recent cap",
+    "MIN_BLINK_FPS = 25",
+    "MIN_BLINK_FPS = 24",
+    "blink floor lowered: 24 fps sessions would report counts they cannot support",
+    "test/core/fpsGate.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "MIN_BLINK_FPS = 25",
+    "MIN_BLINK_FPS = 26",
+    "blink floor raised: honest 25 fps sessions would be refused",
+    "test/core/fpsGate.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "BLINK_RISK_FPS = 60",
+    "BLINK_RISK_FPS = 30",
+    "risk band collapsed: the sampling warning would go quiet where the misses are",
+    "test/core/fpsGate.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "BLINK_RISK_CLEAR_FPS = 65",
+    "BLINK_RISK_CLEAR_FPS = 60",
+    "hysteresis removed: the warning would flick on and off at the boundary",
+    "test/core/fpsGate.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_MIN_SAMPLES = 30",
+    "GUIDED_CALIBRATION_MIN_SAMPLES = 3",
+    "guided sample floor removed: three frames could draw a personal blink line",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_MIN_SAMPLES = 30",
+    "GUIDED_CALIBRATION_MIN_SAMPLES = 300",
+    "guided sample floor bloated past a three second phase",
+    "test/core/guidedCalibration.test.ts",
   ],
 ];
 
@@ -165,9 +235,12 @@ const MUTATIONS = [
 // review demonstrated this script printing "All 18 mutations
 // caught" with the test runner replaced by a nonexistent command,
 // silent success inside the one tool whose job is refusing it.
-function runSuite() {
+function runSuite(testFile) {
   try {
-    execSync("npx vitest run", { stdio: "pipe" });
+    execSync(
+      testFile === undefined ? "npx vitest run" : `npx vitest run ${testFile}`,
+      { stdio: "pipe" },
+    );
     return "green";
   } catch (error) {
     // 126 and 127 are the shell saying the command itself could not
@@ -188,7 +261,7 @@ if (preflight !== "green") {
 }
 
 let survived = 0;
-for (const [file, find, replace, why] of MUTATIONS) {
+for (const [file, find, replace, why, owner] of MUTATIONS) {
   const original = readFileSync(file, "utf8");
   if (!original.includes(find)) {
     // A renamed or retuned constant makes the list stale. That is a
@@ -199,7 +272,7 @@ for (const [file, find, replace, why] of MUTATIONS) {
   writeFileSync(file, original.replace(find, replace));
   let verdict;
   try {
-    verdict = runSuite();
+    verdict = runSuite(owner);
   } finally {
     writeFileSync(file, original);
   }
@@ -210,10 +283,12 @@ for (const [file, find, replace, why] of MUTATIONS) {
     process.exit(4);
   }
   if (verdict === "red") {
-    console.log(`caught: ${find.padEnd(36)} -> ${why}`);
+    console.log(`caught by ${owner}: ${find.padEnd(36)} -> ${why}`);
   } else {
     survived += 1;
-    console.error(`SURVIVED: ${find} -> ${replace} (${why})`);
+    console.error(
+      `SURVIVED: ${find} -> ${replace} (${why}); ${owner} stayed green`,
+    );
   }
 }
 

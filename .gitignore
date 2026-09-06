@@ -54,10 +54,22 @@ blinklab-frames-*.csv
 blinklab-report-*.txt
 recordings/
 
+# The development build's fixture recording. It is 478 face-mesh points
+# per frame of whoever was in front of the camera, which is landmark
+# geometry of a real person's face, and it downloads under a plain name
+# with no stamp in it. Roadmap 10.1c, ladder D16: the export guard read
+# only backtick calls, so it never asked about this one and nothing
+# noticed the rule was missing.
+session-*.json
+
 # Except the synthetic test clip, which is generated from a recorded
 # command and contains nothing but a test pattern. See
 # test/fixtures/README.md.
 !test/fixtures/*.mp4
+
+# And except the one committed recording, which is the owner's own and
+# is recorded as such in MODEL_CARD's "who it has been tested on".
+!test/fixtures/session-*.json
 
 # Throwaway probe scripts written while debugging in a browser.
 # They are not part of the project and must not reach a commit.
