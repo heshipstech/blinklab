@@ -168,7 +168,12 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
 
   await page.getByTestId("clip-input").setInputFiles(FIXTURE);
 
-  const finished = page.getByText("Measured", { exact: false });
+  // The status line, by its state attribute: the participant report
+  // opened below also says "Measured", and a bare text match would
+  // find both once it is open.
+  const finished = page
+    .locator("p[data-state]")
+    .filter({ hasText: /Measured \d+ frames/ });
   await expect(finished).toBeVisible({ timeout: 240_000 });
 
   // Issue #303, the stepped side: a finished stepped run offers the
@@ -177,14 +182,6 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
     page.getByRole("button", { name: "Start camera" }),
   ).toBeVisible();
 
-  // Roadmap 14.0a: a finished clip is an ENDED session, so the report
-  // that only renders after a session ends is reachable for a clip
-  // too, and the exports stay on offer beside it.
-  await expect(page.getByTestId("show-report")).toBeEnabled();
-  await expect(page.getByTestId("export-csv")).toBeEnabled();
-  await page.getByTestId("show-report").click();
-  await expect(page.getByTestId("participant-report")).toBeVisible();
-
   const text = (await finished.textContent()) ?? "";
   const measured = Number(/Measured (\d+)/.exec(text)?.[1] ?? Number.NaN);
 
@@ -192,4 +189,13 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
   // roughly half on a clip this fast.
   expect(measured).toBeGreaterThanOrEqual(FIXTURE_FRAMES - 1);
   expect(measured).toBeLessThanOrEqual(FIXTURE_FRAMES + 1);
+
+  // Roadmap 14.0a: a finished clip is an ENDED session, so the report
+  // that only renders after a session ends is reachable for a clip
+  // too, and the exports stay on offer beside it.
+  await expect(finished).toHaveAttribute("data-state", "ended");
+  await expect(page.getByTestId("show-report")).toBeEnabled();
+  await expect(page.getByTestId("export-csv")).toBeEnabled();
+  await page.getByTestId("show-report").click();
+  await expect(page.getByTestId("participant-report")).toBeVisible();
 });
