@@ -251,7 +251,10 @@ export function sessionMetadataRows(
   records: readonly FeatureRecord[],
   irisWidths: readonly number[],
   markers: readonly SessionMarker[],
-  interruptionTimesMs: readonly number[],
+  // Null for a change that happened before any record existed: the
+  // moment is unknown, and the export says so rather than 0.000
+  // (roadmap 14.0a).
+  interruptionTimesMs: readonly (number | null)[],
   measurementFrame: MeasurementFrame | null,
   poseFrames: PoseFrameCounts,
 ): string[] {
@@ -326,7 +329,10 @@ export function sessionMetadataRows(
   // against no benchmark.
   interruptionTimesMs.forEach((atMs, position) => {
     rows.push(
-      line(`interruption_${position + 1}_seconds`, (atMs / 1000).toFixed(3)),
+      line(
+        `interruption_${position + 1}_seconds`,
+        atMs === null ? null : (atMs / 1000).toFixed(3),
+      ),
     );
   });
   rows.push(

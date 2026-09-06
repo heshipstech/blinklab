@@ -97,6 +97,24 @@ describe("kssMetadataRows", () => {
     ]);
   });
 
+  it("stamps WHEN the after answer was given, on the record clock, when it was", () => {
+    // Roadmap 14.0a (audit F-056). The after answer used to attach to
+    // whichever export came first, mid-session included, and the file
+    // could not say which moment it described. The stamp is seconds
+    // on the same clock the records and markers use; absent when no
+    // answer was asked for, never a zero.
+    expect(kssMetadataRows(three, seven, 61_250)).toEqual([
+      `# kss_before: 3 (${KSS_SCALE[2]?.label ?? ""})`,
+      `# kss_after: 7 (${KSS_SCALE[6]?.label ?? ""})`,
+      "# kss_after_at_seconds: 61.250",
+    ]);
+    expect(kssMetadataRows(three, null, 61_250)).toContain(
+      "# kss_after_at_seconds: 61.250",
+    );
+    expect(kssMetadataRows(three, seven, null)).toHaveLength(2);
+    expect(kssMetadataRows(three, seven)).toHaveLength(2);
+  });
+
   it("prefixes every line with a comment marker a reader can skip", () => {
     for (const row of kssMetadataRows(three, seven)) {
       expect(row.startsWith("# ")).toBe(true);

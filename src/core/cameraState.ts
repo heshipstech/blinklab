@@ -28,7 +28,29 @@ export type CameraState =
   // and the page froze silently, every readout stuck on its last
   // value. The reason is carried because the operator is being asked
   // to reload and deserves to know why.
-  | { kind: "measurementFailed"; reason: string };
+  | { kind: "measurementFailed"; reason: string }
+  // The session is over and what it recorded is kept. Roadmap 14.0a:
+  // before this state existed, Stop dropped the page into idle, whose
+  // sentence invites a fresh start while the exports beside it went
+  // grey, and the next Start wiped the records under a comment that
+  // said they stayed exportable. A finished clip, meanwhile, stayed
+  // "running" so its readouts and exports would survive, and the
+  // report that renders only after a session ends could never render
+  // for a clip at all. One state for both: reached from Stop and from
+  // a clip's end, it keeps the exports and the report on offer and
+  // offers the camera again.
+  | { kind: "ended" };
+
+/**
+ * Is the session over with its record still on offer?
+ *
+ * True for the ordinary end and for the crash that kept its data; false
+ * while running, before a session, and for every refusal, where there
+ * is nothing to offer or the refusal says why not.
+ */
+export function sessionOver(state: CameraState): boolean {
+  return state.kind === "ended" || state.kind === "measurementFailed";
+}
 
 export function classifyCameraError(errorName: string): CameraState {
   switch (errorName) {
@@ -82,5 +104,9 @@ export function cameraStateMessage(state: CameraState): string {
       // is included because "internal error" alone teaches nobody
       // anything and cannot be reported.
       return `Measurement stopped because of an internal error (${state.reason}). Anything recorded before the stop is kept for export. Reload the page to measure again.`;
+    case "ended":
+      // Three facts: it is over, what it recorded is still here, and
+      // the way back is the same button as the way in.
+      return 'The session has ended. What it recorded is kept: export the CSV or the blink log, or show the report. Click "Start camera" to begin a new session.';
   }
 }

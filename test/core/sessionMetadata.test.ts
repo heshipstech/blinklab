@@ -241,6 +241,25 @@ describe("session rows", () => {
     expect(quiet).not.toContain("interruption_");
   });
 
+  it("an interruption before the first record is unknown, never 0.000", () => {
+    // Roadmap 14.0a (audit F-055). The listener stamped a change that
+    // happened before any record existed as `lastRecordAtMs ?? 0`, a
+    // literal zero where the rule says a moment nobody measured is
+    // unknown. The count still comes from the same list.
+    const rows = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [null, 80000],
+      FRAME,
+      NO_POSE,
+    ).join("\n");
+    expect(rows).toContain("# visibility_changes: 2");
+    expect(rows).toContain("# interruption_1_seconds: unknown");
+    expect(rows).toContain("# interruption_2_seconds: 80.000");
+    expect(rows).not.toContain("interruption_1_seconds: 0.000");
+  });
+
   it("reports the pose-valid fraction, and absence is unknown, never zero", () => {
     const rows = sessionMetadataRows(records, [30], [], [], FRAME, {
       gated: 4,

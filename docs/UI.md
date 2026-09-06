@@ -125,16 +125,16 @@ rather than the page.
 
 **Always visible, in every state.** The only box present before starting.
 
-| Element                    | Type                            | Visible when                                                                                                                                                                                                                       | Disabled when |
-| -------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| Start camera               | Button                          | Not `running`, not `requesting` — or `running` after a clip run ended (issue #303: the finished-clip sentence invites a next source, and hiding this button made the camera unreachable without a reload)                          | Never         |
-| Stop camera                | Button                          | Only while a live camera session is `running` (never for a clip). The intentional end of a session: the pilot's report renders only after the camera stops, and until this button a live session could only end by closing the tab | Never         |
-| Or measure a recorded clip | File input                      | Always                                                                                                                                                                                                                             | Never         |
-| Measure every frame        | Checkbox, **ticked** by default | Always                                                                                                                                                                                                                             | Never         |
-| Stop measuring             | Button                          | Only during a stepped clip run                                                                                                                                                                                                     | Never         |
-| Camera picker              | Dropdown                        | Only if more than one camera exists                                                                                                                                                                                                | Never         |
-| Status line                | Text                            | Always                                                                                                                                                                                                                             | n/a           |
-| Model status               | Text                            | Always, but usually empty                                                                                                                                                                                                          | n/a           |
+| Element                    | Type                            | Visible when                                                                                                                                                                                                                                | Disabled when |
+| -------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Start camera               | Button                          | Not `running`, not `requesting`, not `loadingClip`. Shown on `ended`, which is where Stop and a finished clip both land since roadmap 14.0a (issue #303 used to keep a finished clip `running` under a flag so this button could come back) | Never         |
+| Stop camera                | Button                          | Only while a live camera session is `running` (never for a clip). The intentional end of a session: the pilot's report renders only after the camera stops, and until this button a live session could only end by closing the tab          | Never         |
+| Or measure a recorded clip | File input                      | Always                                                                                                                                                                                                                                      | Never         |
+| Measure every frame        | Checkbox, **ticked** by default | Always                                                                                                                                                                                                                                      | Never         |
+| Stop measuring             | Button                          | Only during a stepped clip run                                                                                                                                                                                                              | Never         |
+| Camera picker              | Dropdown                        | Only if more than one camera exists                                                                                                                                                                                                         | Never         |
+| Status line                | Text                            | Always                                                                                                                                                                                                                                      | n/a           |
+| Model status               | Text                            | Always, but usually empty                                                                                                                                                                                                                   | n/a           |
 
 #### Status line, every possible string
 
@@ -149,6 +149,7 @@ From `cameraStateMessage` in `core/cameraState.ts`:
 - `clipFailed`: passes a written reason straight through, for example: This browser could not decode NAME. Try an MP4 or WebM file.
 - `modelFailed`: The measuring model could not be loaded, so nothing can be measured. This is often a network problem. Check your connection, then click "Retry loading the model". _(added by remediation B2, PR #223; this list omitted it until 2026-08-14)_
 - `measurementFailed`: Measurement stopped because of an internal error (REASON). Anything recorded before the stop is kept for export. Reload the page to measure again. _(added by remediation B3, PR #224)_
+- `ended`: The session has ended. What it recorded is kept: export the CSV or the blink log, or show the report. Click "Start camera" to begin a new session. _(roadmap 14.0a: reached from Stop camera and from a finished clip; the clip paths then overwrite the line with their own finished sentence below)_
 
 `modelFailed` is the only state that brings its own control with it: a
 **"Retry loading the model"** button, rendered beside the status line. Every
@@ -165,7 +166,7 @@ While a clip runs, the same line carries:
 - Stopping after this frame...
 - Measured N frames at R frames per second, in T s. Check that rate against your clip. Export the CSV, or pick another clip.
 - Stopped after N frames. Export the CSV to keep what was measured, or pick another clip.
-- The clip finished. Export the CSV, or pick another clip.
+- The clip finished. Export the CSV, show the report, or pick another clip.
 - No frames could be read from this clip. The file loaded, but seeking through it produced nothing. Try another browser, or re-save the clip as MP4.
 
 **Longest is about 130 characters. Budget two lines.**
@@ -184,7 +185,10 @@ normal operation. One failure string, and it is long:
 
 ### 5.3 The video (not in a box)
 
-Visible only when running.
+Visible while running and after the session has `ended` (or
+`measurementFailed`): the last frame stays as the picture of what was
+recorded. Hidden in every other state, because an empty canvas reads
+as a failure.
 
 | Element                 | Notes                                                                                                                                                                                                                                                         |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -310,18 +314,18 @@ strip plus the footer below.
 
 #### Box: Session
 
-| Element            | Type   | Notes                                                                                                                                                          |
-| ------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Feature records    | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)` |
-| Export CSV         | Button | Disabled until at least one record exists                                                                                                                      |
-| Mark this moment   | Button | Disabled until at least one record exists. Each click writes a timestamped marker into the export                                                              |
-| Export state       | Text   | Empty until an export is attempted. See the five strings below                                                                                                 |
-| Sleepiness         | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label         |
-| Marks              | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                 |
-| Export blink log   | Button | Disabled until at least one blink exists                                                                                                                       |
-| Export frame trace | Button | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                            |
-| Sleepiness panel   | Panel  | See below                                                                                                                                                      |
-| Record fixture     | Button | **Development builds only.** Never on the live site                                                                                                            |
+| Element            | Type   | Notes                                                                                                                                                                                      |
+| ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Feature records    | Text   | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)`                             |
+| Export CSV         | Button | Disabled until at least one record exists                                                                                                                                                  |
+| Mark this moment   | Button | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export |
+| Export state       | Text   | Empty until an export is attempted. See the five strings below                                                                                                                             |
+| Sleepiness         | Text   | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                     |
+| Marks              | Text   | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                             |
+| Export blink log   | Button | Disabled until at least one blink exists                                                                                                                                                   |
+| Export frame trace | Button | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                                                        |
+| Sleepiness panel   | Panel  | See below                                                                                                                                                                                  |
+| Record fixture     | Button | **Development builds only.** Never on the live site                                                                                                                                        |
 
 **Every export outcome says what happened, including the successful one.**
 The button had three outcomes and only one was visible, so a click that was
