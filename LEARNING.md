@@ -1488,3 +1488,46 @@ workflows and holds the CI workflow's own name to the string the deploy
 watches for, because a rename on one side with no rename on the other
 would stop every deployment silently, which is the same class of failure
 in the opposite direction.
+
+## A contract test is worth exactly what its reader reads
+
+The eighteen data columns of the CSV export have been asserted from both
+languages since Phase 7 and have never drifted. The metadata block above
+those columns had no such test, and it holds fifty-seven keys written by
+six modules and read by a dozen Python functions. A renamed key left
+both suites green and turned a Python gate into a pass-through: the
+reader found nothing, took its default, and reported the session as
+fine.
+
+Writing that test was the easy part. Getting the reader right took three
+attempts, and each failure is the same failure in a different costume.
+
+The obvious pattern is `line("key"` on one line. Thirteen keys in one
+file are written by a call that wraps across lines, `sampled_fps` among
+them, which is the key the session verdict is derived from on both sides
+of this border. That reader would have found twenty-nine of forty-two
+and reported success.
+
+Then `# key: value` turned out to appear in the comments that describe
+the format, so the second reader confidently reported a metadata key
+called `key`, which nothing writes and nothing reads.
+
+Then the formatter padded the columns of the table the third reader was
+comparing against, and a pattern that assumed the cells were flush found
+one key of fifty-seven. That one was caught only because the comparison
+happened to be against a full list on the other side and failed loudly.
+A different pair of lists would have agreed on nothing and said nothing.
+
+So every reader in this increment carries two things it did not have
+before: a case that must be found, fed to it directly, and a floor on
+how many things it finds in the real repository. A reader that returns
+nothing is indistinguishable from a repository that contains nothing,
+and only one of those is ever true.
+
+The last lesson is about which suite goes red. Renaming a key reddened
+three Python tests and left the entire TypeScript suite green. That is a
+border with a guard on one side of it: the browser could rename a key
+its own suite never mentions, and only the analysis track would notice,
+on a machine nobody may run that day. So both sides read the writers
+now, independently, and the mutation was run to prove both go red rather
+than assumed to.
