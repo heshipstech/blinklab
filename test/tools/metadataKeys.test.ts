@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   declaredMetadataKeys,
+  exportRowBuilders,
   keysIn,
   specMetadataKeys,
+  specPresenceRules,
   stripComments,
 } from "../../tools/metadataKeys.mjs";
 import { repoRoot } from "../../tools/resultGuard.mjs";
@@ -79,5 +81,34 @@ describe("the contract", () => {
     ]) {
       expect(keys, `${key} is read by the analysis track`).toContain(key);
     }
+  });
+});
+
+describe("when each key is written", () => {
+  // Roadmap 10.1f3. `test/core/metadataPresence.test.ts` does the
+  // exercising; these are the floors under the two readers it uses, so
+  // a reader that quietly stopped finding anything could not carry it.
+
+  it("reads a when-written rule for every documented key", () => {
+    const rules = specPresenceRules(root);
+    expect(Object.keys(rules).sort()).toEqual(specMetadataKeys(root));
+    expect(rules["source"]).toBe("Every export");
+  });
+
+  it("reads the export's own row builders rather than a copy of them", () => {
+    const builders = exportRowBuilders(root);
+    expect(builders.length).toBeGreaterThan(8);
+    expect(builders[0]).toBe("sourceMetadataRows");
+    expect(builders).toContain("provenanceMetadataRows");
+    // Each name appears once: a list with a duplicate would make the
+    // presence test's order comparison pass on a coincidence.
+    expect(new Set(builders).size).toBe(builders.length);
+  });
+
+  it("refuses a tree it cannot find the export in", () => {
+    // The silent success this repository keeps meeting: a reader that
+    // returned nothing here would report an empty builder list, and a
+    // test comparing two empty lists is a test of nothing.
+    expect(() => exportRowBuilders("/nonexistent")).toThrow();
   });
 });

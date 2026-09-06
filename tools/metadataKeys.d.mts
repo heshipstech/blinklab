@@ -16,3 +16,9 @@ export function declaredMetadataKeys(root: string): string[];
 
 /** The keys SPEC.md's session-metadata table names, sorted. Throws when absent. */
 export function specMetadataKeys(root: string): string[];
+
+/** SPEC.md's "when written" cell for each key in the metadata table. */
+export function specPresenceRules(root: string): Record<string, string>;
+
+/** The row builders `exportSession` spreads into the session CSV, in order. */
+export function exportRowBuilders(root: string): string[];

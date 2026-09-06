@@ -47,69 +47,95 @@ WRITERS = [
     "stepCalibration",
 ]
 
-# What the analysis track believes the browser writes. Written out
-# rather than derived, so a change on the TypeScript side has to be
-# acknowledged here by a human editing this list. `N` stands for the
-# index in a family of keys built per marker or per interruption.
-EXPECTED_WRITTEN = [
+# What the analysis track believes the browser writes, split by WHEN.
+#
+# Roadmap 10.1f3, ladder D6. The distinction is the whole reason this
+# split exists: a key that is always written and turns up missing is a
+# damaged file, and a key that is written only sometimes and turns up
+# missing is an ordinary session. A reader cannot tell those apart from
+# the absence, so the contract has to say which the key is.
+#
+# `N` stands for the index in a family of keys built per marker or per
+# interruption.
+
+# Every session export carries these, whatever happened in the session.
+# A file missing one has lost a line on its way here, and a reader is
+# entitled to refuse it. Held below against SPEC.md's when-written
+# column, which `test/core/metadataPresence.test.ts` exercises by
+# calling the real row builders with the arguments three real sessions
+# supply — so this list is transitively held to the exporter itself,
+# not to a second description of it.
+ALWAYS_WRITTEN = [
     "app_commit",
-    "blinks_detected",
-    "blinks_recorded",
-    "calibration_ceiling_bound",
-    "calibration_refused",
-    "calibration_samples",
-    "calibration_spread_ratio",
     "camera",
-    "camera_declared_fps",
-    "camera_delivered_fps",
-    "camera_resolution",
     "clip",
     "clip_duration_s",
-    "delivered_frames_read_fraction",
-    "device_pixel_ratio",
     "face_detected_fraction",
-    "facing_mode",
-    "feature_records_dropped",
-    "feature_records_note",
-    "frame_interval_s",
     "frames_measured",
-    "frames_recorded",
-    "frames_sought",
-    "hardware_concurrency",
-    "inexact_landings",
-    "interruption_N_seconds",
     "kss_after",
-    "kss_after_at_seconds",
     "kss_before",
-    "light_cycles",
-    "light_phase_ms",
-    "light_settle_ms",
-    "light_stimulus",
-    "light_stimulus_start_ms",
-    "marker_N_seconds",
-    "marker_N_visibility_changes",
     "markers",
     "measured_fps",
     "measurement_frame",
     "measurement_mode",
-    "median_iris_width_note",
     "median_iris_width_px",
     "observed_duration_seconds",
-    "orientation",
-    "participant_pseudonym",
     "perclos_min_observed_ms",
     "perclos_min_samples",
     "pose_valid_fraction",
     "protocol",
     "records",
-    "sampled_fps",
-    "screen",
     "source",
-    "user_agent",
-    "user_agent_form",
-    "viewport",
     "visibility_changes",
 ]
+
+# Written only when the thing they describe happened, each with the
+# condition in words. Absence here is a fact about the session, not a
+# damaged file, so a reader that refuses one of these refuses good
+# measurements.
+CONDITIONAL = {
+    "blinks_detected": "the blink log, which is a different file",
+    "blinks_recorded": "the blink log, which is a different file",
+    "calibration_ceiling_bound": "a baseline that froze",
+    "calibration_refused": "a baseline that froze",
+    "calibration_samples": "a baseline that froze",
+    "calibration_spread_ratio": "a baseline that froze",
+    "camera_declared_fps": "a camera session",
+    "camera_delivered_fps": "a camera session with a measurable rate",
+    "camera_resolution": "a camera session",
+    "delivered_frames_read_fraction": (
+        "a camera session with a measurable rate"
+    ),
+    "device_pixel_ratio": "a camera session",
+    "facing_mode": "a camera session",
+    "feature_records_dropped": "rows lost to the per-second buffer",
+    "feature_records_note": "rows lost to the per-second buffer",
+    "frame_interval_s": "a stepped clip",
+    "frames_recorded": "the frame trace, which is a different file",
+    "frames_sought": "a stepped clip",
+    "hardware_concurrency": "a camera session",
+    "inexact_landings": "a stepped clip",
+    "interruption_N_seconds": "one row per interruption",
+    "kss_after_at_seconds": "an after-answer that was given",
+    "light_cycles": "a light-response session",
+    "light_phase_ms": "a light-response session",
+    "light_settle_ms": "a light-response session",
+    "light_stimulus": "a light-response session",
+    "light_stimulus_start_ms": "a light-response session",
+    "marker_N_seconds": "one row per marker",
+    "marker_N_visibility_changes": "one row per marker",
+    "median_iris_width_note": "an iris sample that hit its cap",
+    "orientation": "a camera session",
+    "participant_pseudonym": "a pseudonym that was set",
+    "sampled_fps": "a camera session with a measurable rate",
+    "screen": "a camera session",
+    "user_agent": "a camera session",
+    "user_agent_form": "a camera session",
+    "viewport": "a camera session",
+}
+
+# The two kinds together are the whole contract.
+EXPECTED_WRITTEN = ALWAYS_WRITTEN + list(CONDITIONAL)
 
 # What this folder actually reads out of a metadata block. Also written
 # out: a key added here has to exist on the other side, and the test
@@ -265,6 +291,74 @@ class TestTheContract:
         assert undeclared == [], (
             f"read somewhere in analysis/ and not declared here: {undeclared}"
         )
+
+
+def spec_presence() -> dict[str, str]:
+    """SPEC.md's when-written cell for each key, keyed by the key.
+
+    A cell reading exactly "Every export" is a promise the exporter
+    keeps for every file. Anything else names a condition, and
+    "Every export, once a baseline resolved" is one of those: it reads
+    like a promise and is not, which is why the comparison is against
+    the exact string rather than against a prefix.
+    """
+    text = SPEC.read_text(encoding="utf-8")
+    start = text.find("### The session metadata block")
+    assert start != -1, "SPEC.md has no session metadata block section"
+    end = text.find("\n## ", start)
+    section = text[start : None if end == -1 else end]
+    return {
+        key: when.strip()
+        for key, when in re.findall(
+            r"^\| *`([a-z_0-9N]+)` *\| *([^|]*?) *\|", section, re.M
+        )
+    }
+
+
+class TestWhenEachKeyIsWritten:
+    """Which keys a reader may demand, and which it must do without.
+
+    The exercise that makes this mean anything lives on the other side:
+    `test/core/metadataPresence.test.ts` calls the real row builders
+    with the arguments three real sessions supply — a thin camera
+    session, a clip, and a session where every optional thing happened —
+    and holds SPEC.md's column to what comes out. This end holds the
+    Python lists to that same column, so a reader here that believes a
+    key is unconditional is believing something the exporter was made
+    to prove.
+
+    Writing the column by reading the writers was not enough. It was
+    written that way in 10.1f1 and was wrong about seven keys, six of
+    them in the same direction: `line()` writes `unknown` rather than
+    dropping a row, so a value that may be unknown was described as a
+    row that may be absent. Those are different claims, and the reader
+    on this side acts on the difference.
+    """
+
+    def test_the_reader_finds_a_rule_for_every_key(self) -> None:
+        # The floor. A reader that matched nothing would make both
+        # comparisons below run against an empty dictionary.
+        rules = spec_presence()
+        assert len(rules) > 40
+        assert sorted(rules) == declared_keys()
+
+    def test_no_key_is_both_kinds(self) -> None:
+        assert set(ALWAYS_WRITTEN) & set(CONDITIONAL) == set()
+
+    def test_the_unconditional_keys_are_the_ones_spec_promises(self) -> None:
+        rules = spec_presence()
+        promised = sorted(
+            key for key, when in rules.items() if when == "Every export"
+        )
+        assert promised == sorted(ALWAYS_WRITTEN)
+
+    def test_every_conditional_key_names_its_condition(self) -> None:
+        # In both places: a condition in words here, and a cell in
+        # SPEC.md that is not the unconditional promise.
+        rules = spec_presence()
+        for key, condition in CONDITIONAL.items():
+            assert condition, key
+            assert rules[key] != "Every export", key
 
 
 def spec_record_fields() -> list[str]:

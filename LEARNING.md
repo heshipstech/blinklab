@@ -1572,3 +1572,45 @@ declaring a key twice, which is the shared metadata reader from two
 increments ago catching a carelessly written test. A guard that catches
 your own mistake in an unrelated increment is the only real evidence
 that it works.
+
+## Absent and unknown are different claims, and prose merges them
+
+Yesterday's increment wrote a table into the specification saying when
+each of the export's 57 metadata rows is written. It was written the
+careful way: by opening each writer and reading what it does. Four
+hours later a test called those same writers and compared what came out
+against the table. Seven of the 57 rules were wrong.
+
+Six were the same mistake. This exporter has one helper that turns a
+key and a value into a row, and when the value is missing it writes the
+word `unknown` rather than dropping the row. So a session where the
+camera never reported a resolution still carries a resolution row; it
+says `unknown`. Reading the writer, I saw a value that might not be
+known and wrote down "written once known", which describes a row that
+might not be there. Those are different files and a reader acts on the
+difference: an absent row can mean a damaged file, and `unknown` never
+does.
+
+The seventh was the opposite error, and it landed on a key the previous
+increment had just given a reader. The dropped-row count is written
+only when rows were actually dropped, because a zero would teach people
+to ignore the key. I had described it as written by every export, which
+would invite a reader to refuse a healthy session for missing it.
+
+The lesson is not that I was careless. It is that reading a function
+tells you what it CAN write, and only running it tells you what it
+DOES. The table now has a test that builds three real sessions — a thin
+camera session where nothing optional happened, a clip, and one where
+everything optional happened at least once — and asks the actual
+builders for their rows. Two value formats fell out of the same pass:
+one number carries one decimal where the table said two, another three
+where it said two.
+
+There is a second habit here worth naming. The test assembles the
+export by calling twelve row builders in order, which is a copy of what
+the page does at export time, and a copy drifts. So the list of
+builders is read out of the page itself and the test's own calls are
+compared against it. A builder added to the export and not to the test
+would otherwise leave its keys unclassified with every assertion still
+passing, which is the failure this whole run of increments keeps
+finding in different costumes.

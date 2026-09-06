@@ -1498,8 +1498,20 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       and `analyse_rldd.py` analyse DROZY and UTA-RLDD feature records
       rather than browser exports, so they carry no `app_commit` at all
       and a commit line there would promise a field that cannot exist.
-      The absence policies and the verdict fixtures are roadmap row
-      10.1f3.
+      Then 10.1f3 split the keys by WHEN they are written: 21 that
+      every export carries and 36 written only when the thing they
+      describe happened, with SPEC.md's column exercised against the
+      real row builders rather than described from reading them. That
+      exercise found seven drifts in a column written four hours
+      earlier, six of them one mistake: `line()` writes `unknown`
+      rather than dropping a row, so a value that may be unknown had
+      been described as a row that may be absent. A fifth correction to
+      this item's own text follows from that: the split is not
+      REQUIRED and CONDITIONAL as written here but always-written and
+      conditional, because a key can be unconditional in the file and
+      still say `unknown`, and a loader that refused an `unknown` value
+      would refuse most healthy sessions. The read-site policies are
+      roadmap row 10.1f4 and the verdict fixtures 10.1f5.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**
