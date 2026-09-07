@@ -92,6 +92,22 @@ export function blendshapesEnabled(root) {
 const STARTABLE =
   /Rows? ([\d.a-z]+(?:,\s*[\d.a-z]+)*(?:,?\s*and\s+[\d.a-z]+)?) remains? startable and (?:are|is) not marked/g;
 
+// Roadmap 10.0b11, amendment 21. The state amendment 19 predicted and
+// left unhandled: "if nothing outside Phase 12 is genuinely startable,
+// say so in the sentence rather than naming something that is not."
+//
+// The ladder reached it. Every remaining row needs a camera, a corpus,
+// a second engine or a decision, and naming one anyway is precisely
+// the mistake amendment 19 was written after — three rows claimed in
+// one day from their headlines rather than from their last clause.
+//
+// So emptiness gets a FORM instead of being expressed by deleting the
+// sentence. A declaration of nothing is a claim somebody made and can
+// be held to; silence is a file nobody finished. The two must not look
+// alike to a reader or to this guard, which is the same reason
+// `unreleasedSection` refuses a changelog with no Unreleased heading.
+const NONE_STARTABLE = /NOTHING outside Phase \d+ remains startable/;
+
 /**
  * The rows the ladder claims can still be started.
  *
@@ -108,12 +124,20 @@ export function startableClaims(roadmapText) {
       .map((id) => id.trim())
       .filter((id) => id.length > 0),
   );
+  // An explicit declaration that nothing is startable is a CLAIM, and
+  // the empty list is the right answer to it. Deleting the sentence is
+  // still not: that is the silence this guard exists to refuse.
+  if (found.length === 0 && NONE_STARTABLE.test(roadmapText)) {
+    return [];
+  }
   if (found.length === 0) {
     throw new Error(
       "ROADMAP.md: no sentence naming which rows remain startable. The " +
         'form is "Rows <a>, <b> and <c> remain startable and are not ' +
         'marked", and it is held to the rows themselves, so deleting it ' +
-        "is not a way to make it true",
+        "is not a way to make it true. When nothing is startable, say " +
+        'so: "NOTHING outside Phase <n> remains startable", which is a ' +
+        "claim a reader can disagree with, unlike a missing sentence",
     );
   }
   return found;
