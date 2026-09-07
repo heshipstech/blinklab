@@ -2037,3 +2037,69 @@ The constant is now exported from the recorder rather than typed into
 the calculation. A published figure derived from a copy of a number can
 drift away from the number it claims to describe, silently, the first
 time somebody changes one of them.
+
+## An answer without its question
+
+Every blink number this project publishes is measured from one moment:
+the frame where the eye's aperture crosses a line. The count is how
+many crossings there were, the duration is how long the aperture stayed
+under, the amplitude and the velocity are measured across the same
+descent. Move the line and every one of those numbers moves.
+
+Three different lines can be in force. Half the passively learned
+baseline, a personal line from the guided calibration, and a fixed
+constant when the detector holds neither. On one face they differ by
+millimetres. Until this increment the export wrote all those numbers
+and never wrote the line.
+
+That is a whole class of defect rather than one bug, and it is worth
+naming: a record that carries an answer without the question it
+answers. Two exports of the same session could disagree about every
+blink number while agreeing about every column that was supposed to
+explain them, and nothing in either file would show it. The Python side
+was worse off than a human reader: the plot drew a threshold by
+multiplying the baseline by a half, which is the passive line and is
+simply the wrong line whenever somebody had calibrated. It drew a
+confident dashed line the detector had never used.
+
+Four columns fix it, and the interesting part was deciding what `none`
+means. It is not a gap. A frame with no line is the measured fact that
+nothing was compared, and that is different from a file that never
+recorded the column. The loader keeps them apart: a session from before
+today reads as missing, not as `none`, because those files did not
+measure no line, they did not say.
+
+The same distinction settled two other decisions. A stored line read
+back on a video clip is refused outright, because a guided line is a
+measurement of a person at a camera and a clip has neither, so using
+one would measure a stranger against this visitor's eyelids. But a
+stored line whose camera has moved is only flagged, because the
+millimetre goes through each frame's own iris ruler and a person who
+shifted in their seat still has a line in the same units. Refuse what
+is wrong; flag what is merely less certain. Collapsing those two into
+one response would have thrown away a usable line or trusted an
+unusable one.
+
+The margin for that flag was the one number here at risk of being
+invented. It is taken from the pose-bias simulation instead: the
+validity gate already accepts head angles across which the published
+millimetre swings 16.369 percent, so a condition change smaller than an
+error the instrument already tolerates is not worth flagging. A test
+holds the typed constant to the simulation, because the simulation
+cannot go in the browser bundle and a number copied out of one is a
+number free to drift away from it.
+
+One thing this increment found rather than built. The refusal document
+has always said that numbers depending on the blink line are "withheld
+rather than guessed", and listed blink durations among them. The record
+withheld the rate and wrote the durations. Four places decided
+withholding separately, so they could disagree, and they did. They
+share one decision now.
+
+Five Python test helpers broke at the same moment, and all five for the
+same reason: each built a CSV row by counting cell positions, with the
+count written into a comment that had to be right for the rows to mean
+anything. Appending four columns broke every one. They build rows by
+column name now, and take the header generation they are writing for
+rather than writing the current one and trimming it — a trim carries a
+count of how many columns to drop, and that count goes stale silently.

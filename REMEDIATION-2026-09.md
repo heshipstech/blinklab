@@ -274,6 +274,37 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       calibrate. Land BEFORE D10's regression run.
       **Unblocks:** A9, C2, C3, D10.
       **Findings:** F-007, G-Guided b-6, F-052, G-Guided b-11.
+      **Most of it done:** 7 September 2026, roadmap 10.13a. The four
+      line columns are in `CSV_COLUMNS` and `FeatureRecord` by the
+      trailing-append discipline; the eleven `guided_*` rows are in the
+      export; one `blinksWithheld` decision serves the readout, the
+      record, the report and the log button, and the refusal now
+      withholds the durations, the amplitude and the velocity that
+      `docs/calibration-refusal.txt` always promised it withheld; a
+      stored line is refused when `frameSource` is file and flagged
+      when the live camera no longer matches its stamp; both calibrate
+      buttons are gated on a live camera; the stored shape carries the
+      camera label, the frame size, the iris ruler and an ISO
+      timestamp, with `parseBlinkCalibration` still strict; `plot.py`
+      reads the exported line rather than redrawing half the baseline;
+      and `docs/validation-plan-round2.md` has a dated section on
+      reading a guided session.
+      Two corrections to this item's own text. The conditions check is
+      a FLAG and not a refusal, because the millimetre is computed
+      through each frame's own iris ruler and a person who moved closer
+      still has a line in the same units; only the clip case is a
+      refusal, because there the line would be measuring somebody else.
+      And keeping `parseBlinkCalibration` strict has a cost the item
+      does not name: an entry stored before today lacks the stamp and
+      is refused whole, so a person who calibrated earlier calibrates
+      once more. That is the right trade — a line whose conditions
+      nobody recorded is the line this item exists to stop being used
+      unexamined — but it is a cost and it is now written down.
+      Still open in this item: cancelling an in-flight calibration in
+      `resetSession`, and the ADR on whether a guided line should serve
+      the shut baseline. The shut line has exactly two sources today
+      and `resolveShutLine` says so, rather than answering that
+      question by wiring.
 
 - [ ] **A9. The guided line has no soundness ceiling, and its open
       phase samples the eye while the person is reading the

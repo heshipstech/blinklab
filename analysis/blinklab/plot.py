@@ -18,13 +18,69 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
 
 from blinklab.loader import Session  # noqa: E402
 
-# Mirrors the thresholds the browser applies, so the lines drawn here
-# are the lines the instrument actually used, not an approximation.
+# The fractions the browser applies to a PASSIVE baseline. They are a
+# fallback now, not the answer: a person who has calibrated has a
+# stored guided line that overrides the baseline entirely, and half
+# their baseline is simply not what the detector read. Files exported
+# from 7 September 2026 carry the line itself (roadmap 10.13a, ladder
+# A8); older ones do not, and for those these are the best that can be
+# done, said out loud in the legend rather than implied.
 BLINK_LINE_FRACTION = 0.5
 SHUT_LINE_FRACTION = 0.4
+
+
+def _line_series(
+    frame: pd.DataFrame,
+    column: str,
+    source_column: str,
+    baseline_column: str,
+    fraction: float,
+    name: str,
+) -> tuple[pd.Series, str]:
+    """The line the detector read, or the best reconstruction of it.
+
+    Returns the series and the legend label, because the two must not
+    come apart: a reconstructed line drawn under a label that says
+    "measured" is worse than no line, since a reader would check the
+    aperture against it and believe the answer.
+    """
+    exported = frame[column]
+    if exported.notna().any():
+        sources = frame[source_column].dropna().unique()
+        named = ", ".join(sorted(str(source) for source in sources))
+        return exported, f"{name} ({named})"
+    return (
+        frame[baseline_column] * fraction,
+        f"{name} (reconstructed from the baseline)",
+    )
+
+
+def blink_line_series(frame: pd.DataFrame) -> tuple[pd.Series, str]:
+    """The blink line the detector read, and what to call it."""
+    return _line_series(
+        frame,
+        "blinkLineMm",
+        "blinkLineSource",
+        "baselineMm",
+        BLINK_LINE_FRACTION,
+        "blink line",
+    )
+
+
+def shut_line_series(frame: pd.DataFrame) -> tuple[pd.Series, str]:
+    """The shut line PERCLOS and the long-closure detector read."""
+    return _line_series(
+        frame,
+        "shutLineMm",
+        "shutLineSource",
+        "shutBaselineMm",
+        SHUT_LINE_FRACTION,
+        "shut line",
+    )
 
 
 def plot_session(session: Session, path: str | Path) -> Path:
@@ -38,19 +94,21 @@ def plot_session(session: Session, path: str | Path) -> Path:
     aperture.plot(seconds, frame["apertureMm"], linewidth=1, label="aperture")
     # Gaps are gaps: pandas leaves NaN where nothing was measured and
     # matplotlib breaks the line there, which is the honest picture.
+    blink_line, blink_label = blink_line_series(frame)
     aperture.plot(
         seconds,
-        frame["baselineMm"] * BLINK_LINE_FRACTION,
+        blink_line,
         linewidth=1,
         linestyle="--",
-        label="blink line",
+        label=blink_label,
     )
+    shut_line, shut_label = shut_line_series(frame)
     aperture.plot(
         seconds,
-        frame["shutBaselineMm"] * SHUT_LINE_FRACTION,
+        shut_line,
         linewidth=1,
         linestyle=":",
-        label="shut line",
+        label=shut_label,
     )
     aperture.set_ylabel("millimetres")
     aperture.set_title(_title(session))

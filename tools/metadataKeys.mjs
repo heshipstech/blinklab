@@ -21,6 +21,7 @@ import { join } from "node:path";
 /** Every module that writes a `# key: value` row, plus the assembler. */
 export const METADATA_WRITERS = [
   "sessionMetadata",
+  "blinkCalibrationStamp",
   "blinkLog",
   "csv",
   "frameClock",

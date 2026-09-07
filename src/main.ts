@@ -245,7 +245,13 @@ import {
   blinksWithheld,
   resolveBlinkLine,
   resolveShutLine,
+  storedLineForSource,
 } from "./core/lineProvenance";
+import {
+  conditionsMismatch,
+  guidedCalibrationMetadataRows,
+  type ConditionsMismatch,
+} from "./core/blinkCalibrationStamp";
 import {
   STORED_ITEMS,
   eraseButtonLabel,
@@ -532,6 +538,20 @@ let canvasContext: CanvasRenderingContext2D | null = null;
 // mirrored, downscaled and may carry the landmark overlays.
 const pupilCanvas = document.createElement("canvas");
 const pupilContext = pupilCanvas.getContext("2d");
+
+// The iris ruler in video pixels for one frame, or null when it cannot
+// be measured. This is the working distance: how many pixels the iris
+// spans says how far the face is sitting from the camera, which is
+// what a stored blink line's conditions are checked against (roadmap
+// 10.13a, ladder A8).
+function liveIrisWidthPx(face: readonly Point2[]): number | null {
+  const frameWidth = video.videoWidth;
+  const frameHeight = video.videoHeight;
+  if (frameWidth === 0 || frameHeight === 0) {
+    return null;
+  }
+  return irisWidthPx(face, RIGHT_IRIS_RING_INDICES, frameWidth, frameHeight);
+}
 
 // The pupil diameter for one frame, or null when the estimator cannot
 // resolve it (which on a webcam is often). It measures in the unmirrored
@@ -934,10 +954,11 @@ function render(): void {
   // and the frame loop sets those while running. Here they are only
   // forced off, never on, or this would overrule them.
   calibrateButton.disabled = !running;
-  // The blink calibration also needs a live aperture stream to read, so
-  // it is available exactly while a source runs, the same as the gaze
-  // one.
-  blinkCalibrateButton.disabled = !running;
+  // The blink calibration needs a live aperture stream to read AND a
+  // live person to read it from. It used to be available for any
+  // running source, so three seconds of a recorded stranger's eye
+  // became this visitor's stored line (roadmap 10.13a, ladder A8).
+  blinkCalibrateButton.disabled = !running || frameSource !== "camera";
   // Entering the running state recomputes the heatmap button from
   // the stored profile. The force-off below is only half a rule:
   // without this half, a returning visitor with a saved calibration
@@ -1019,6 +1040,7 @@ function resetSession(): void {
   perclosState = emptyPerclos();
   longClosureState = initialLongClosureState;
   frozenShutBaselineMm = null;
+  lastLiveIrisWidthPx = null;
   alertState = initialAlertState;
   featureRecords = [];
   featureRecordsDropped = 0;
@@ -2338,6 +2360,9 @@ let longClosureState = initialLongClosureState;
 // shared, neither can happen and the two detectors cannot drift
 // apart. Camera restart re-learns.
 let frozenShutBaselineMm: number | null = null;
+// The iris ruler at the most recent frame that could measure one. Read
+// by the export's guided-conditions check (roadmap 10.13a).
+let lastLiveIrisWidthPx: number | null = null;
 
 // The alert banner: hidden until a firing, then visible for the
 // display window. The frame loop owns its visibility while the
@@ -2478,6 +2503,32 @@ function askKss(
   }
 }
 
+/**
+ * Whether the camera in front of the person still matches the stamp on
+ * their stored line, at the last frame that could say.
+ *
+ * A flag rather than a refusal: the millimetre is computed through each
+ * frame's own iris ruler, so a changed working distance leaves the line
+ * in the same units. What changes is how much a reader should trust the
+ * comparison, and that belongs in the export rather than in a silent
+ * decision (roadmap 10.13a, ladder A8).
+ */
+function guidedConditionsMismatch(): ConditionsMismatch | null {
+  const line = storedLineForSource(
+    storedBlinkCalibration,
+    frameSource === "camera",
+  );
+  if (line === null) {
+    return null;
+  }
+  return conditionsMismatch(
+    line.stamp,
+    video.videoWidth,
+    video.videoHeight,
+    lastLiveIrisWidthPx,
+  );
+}
+
 function exportSession(): void {
   const csv = serializeRecords(featureRecords, [
     ...sourceMetadataRows(frameSource, loadedClipName),
@@ -2496,6 +2547,13 @@ function exportSession(): void {
         ? baselineState.window
         : null,
       baselineState !== null && baselineState.kind === "refused",
+    ),
+    ...guidedCalibrationMetadataRows(
+      // The line actually in force, which on a clip is none: the
+      // export must describe the ruler the session used, not the one
+      // sitting in storage.
+      storedLineForSource(storedBlinkCalibration, frameSource === "camera"),
+      guidedConditionsMismatch(),
     ),
     ...deliveryMetadataRows(settledDeliveryRates()),
     ...sessionMetadataRows(
@@ -3703,6 +3761,19 @@ function processFrame(
               personalLineMm: result.personalLineMm,
               openMedianMm: result.openMedianMm,
               closedMedianMm: result.closedMedianMm,
+              openSampleCount: result.openSampleCount,
+              closedSampleCount: result.closedSampleCount,
+              // The conditions this line was measured under. Stored
+              // with it so the camera in front of the person can be
+              // checked against them later; a line nobody can judge is
+              // one the detector uses anyway.
+              stamp: {
+                cameraLabel: deviceInfo?.cameraLabel ?? null,
+                frameWidthPx: video.videoWidth,
+                frameHeightPx: video.videoHeight,
+                irisWidthPx: face === undefined ? null : liveIrisWidthPx(face),
+                recordedAtIso: new Date().toISOString(),
+              },
             };
             // Active THIS session from the next frame, whether or not
             // the write survives: the in-memory line is what the
@@ -3770,11 +3841,22 @@ function processFrame(
       // baseline. storedBlinkCalibration is null in a corpus run's fresh
       // browser, so this whole path collapses to the passive baseline
       // there and the benchmark is unchanged (docs/blink-line-adoption.txt).
-      const hasGuidedLine = storedBlinkCalibration !== null;
-      const blinkLineMm = effectiveBlinkLineMm(
+      // Refused outright on a clip: a stored line is a measurement of
+      // a person at a camera, and a file has neither, so reading one
+      // back on a clip would measure a stranger against this visitor's
+      // eyelids (roadmap 10.13a, ladder A8).
+      // Kept for the export's conditions check, which runs long after
+      // this frame: the last frame that could measure the ruler is the
+      // best evidence of where the person was sitting.
+      if (face !== undefined) {
+        lastLiveIrisWidthPx = liveIrisWidthPx(face) ?? lastLiveIrisWidthPx;
+      }
+      const usableStoredLine = storedLineForSource(
         storedBlinkCalibration,
-        personalMm,
+        frameSource === "camera",
       );
+      const hasGuidedLine = usableStoredLine !== null;
+      const blinkLineMm = effectiveBlinkLineMm(usableStoredLine, personalMm);
       writeReadout(
         baselineLabel,
         // The refusal first: every number below is withheld on it
@@ -3783,8 +3865,8 @@ function processFrame(
         // (roadmap 14.0b, audit E4).
         calibrationRefused
           ? CALIBRATION_REFUSED_SENTENCE
-          : storedBlinkCalibration !== null
-            ? `Personal blink threshold: ${storedBlinkCalibration.personalLineMm.toFixed(1)} mm (from your guided calibration)`
+          : usableStoredLine !== null
+            ? `Personal blink threshold: ${usableStoredLine.personalLineMm.toFixed(1)} mm (from your guided calibration)`
             : baselineState.kind === "ready" && personalMm !== null
               ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
               : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
@@ -4067,7 +4149,7 @@ function processFrame(
           featureRecordsDropped += 1;
         }
         const recordedBlinkLine = resolveBlinkLine(
-          storedBlinkCalibration,
+          usableStoredLine,
           personalMm,
           calibrationRefused,
           usedFixedFallback,

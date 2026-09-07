@@ -7,7 +7,9 @@ import {
   blinksWithheld,
   resolveBlinkLine,
   resolveShutLine,
+  storedLineForSource,
 } from "../../src/core/lineProvenance";
+import { aStoredLine } from "../support/storedLine";
 
 // Roadmap 10.13a, ladder A8, audit F-007 and G-Guided b-11. The line
 // the detector read travels with the numbers it produced.
@@ -26,7 +28,7 @@ import {
 // already makes, which is why every case below is stated as "what the
 // reducer was handed", not as "what the line should be".
 
-const GUIDED = { personalLineMm: 3.4, openMedianMm: 7, closedMedianMm: 1.8 };
+const GUIDED = aStoredLine();
 
 describe("the source vocabulary", () => {
   it("is the four the export's column is documented to hold", () => {
@@ -163,5 +165,27 @@ describe("whether the blink numbers are withheld this frame", () => {
         }
       }
     }
+  });
+});
+
+describe("whether a stored line may be used at all", () => {
+  it("passes it through on a live camera", () => {
+    expect(storedLineForSource(GUIDED, true)).toBe(GUIDED);
+  });
+
+  it("refuses it on a clip, because a clip is not this person", () => {
+    // The line is a measurement of a person at a camera, and a file
+    // has neither. Read back on a clip it would measure a stranger
+    // against the visitor's eyelids.
+    expect(storedLineForSource(GUIDED, false)).toBeNull();
+  });
+
+  it("is a refusal, not the flag the conditions check raises", () => {
+    // A drifted working distance leaves the line in millimetres of the
+    // same face, so it is flagged. A clip leaves it measuring somebody
+    // else, so it is refused. The two are deliberately different.
+    expect(
+      resolveBlinkLine(storedLineForSource(GUIDED, false), 3.9, false),
+    ).toEqual({ mm: 3.9, source: "passive" });
   });
 });

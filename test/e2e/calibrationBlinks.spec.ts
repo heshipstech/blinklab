@@ -96,7 +96,26 @@ test("a stored guided line is adopted as the detector's blink line", async ({
   await page.addInitScript((k: string) => {
     localStorage.setItem(
       k,
-      JSON.stringify({ personalLineMm: 5, openMedianMm: 8, closedMedianMm: 2 }),
+      JSON.stringify({
+        personalLineMm: 5,
+        openMedianMm: 8,
+        closedMedianMm: 2,
+        openSampleCount: 90,
+        closedSampleCount: 45,
+        // The conditions the line was measured under (roadmap 10.13a).
+        // A stored line without them is refused now, deliberately: a
+        // line nobody can check against the camera in front of them is
+        // one the detector would use anyway. The frame size here does
+        // not match the fake camera's, which is the point of the last
+        // assertion in this test.
+        stamp: {
+          cameraLabel: "a seeded camera",
+          frameWidthPx: 1280,
+          frameHeightPx: 720,
+          irisWidthPx: 40,
+          recordedAtIso: "2026-09-07T00:00:00.000Z",
+        },
+      }),
     );
   }, BLINK_KEY);
   await page.goto("./");
@@ -116,5 +135,52 @@ test("a stored guided line is adopted as the detector's blink line", async ({
   await expect(page.getByTestId("blink-threshold")).toHaveText(
     /from your guided calibration/,
     { timeout: 30_000 },
+  );
+
+  // And it reaches the EXPORT, which is the half that was missing: the
+  // line that produced every blink number in the file is now written
+  // beside them, with the conditions it was measured under, so a
+  // reader can tell which ruler this session used (roadmap 10.13a,
+  // ladder A8).
+  const exportCsv = page.getByTestId("export-csv");
+  await expect(exportCsv).toBeEnabled({ timeout: 30_000 });
+  const download = page.waitForEvent("download");
+  await exportCsv.click();
+  const skip = page.getByRole("button", { name: "Skip" });
+  if (await skip.isVisible()) {
+    await skip.click();
+  }
+  const stream = await (await download).createReadStream();
+  const csv = await new Promise<string>((resolve, reject) => {
+    let text = "";
+    stream.on("data", (chunk: unknown) => (text += String(chunk)));
+    stream.on("end", () => resolve(text));
+    stream.on("error", reject);
+  });
+
+  expect(csv).toContain("# guided_line_mm: 5");
+  expect(csv).toContain("# guided_open_median_mm: 8");
+  expect(csv).toContain("# guided_closed_median_mm: 2");
+  expect(csv).toContain("# guided_open_samples: 90");
+  expect(csv).toContain("# guided_closed_samples: 45");
+  // 1 - 2/8, the quantity the resolver's own separation gate is
+  // expressed in, so an exported line can be checked against the rule
+  // that admitted it.
+  expect(csv).toContain("# guided_separation_ratio: 0.750");
+  expect(csv).toContain("# guided_recorded_at: 2026-09-07T00:00:00.000Z");
+
+  // The per-row provenance, which is what makes the blink numbers
+  // beside it readable. The header keeps its append-only shape.
+  expect(csv).toContain(
+    ",blinkLineMm,blinkLineSource,shutLineMm,shutLineSource",
+  );
+  expect(csv).toContain(",5,guided,");
+
+  // The fake camera does not negotiate 1280x720, so the stamp no
+  // longer matches and the export says which condition differs rather
+  // than only that something does. If this ever reads `true` the fake
+  // stream has changed size, not the flag broken.
+  expect(csv).toMatch(
+    /# guided_conditions_match: false \((frame-size|iris-width)\)/,
   );
 });

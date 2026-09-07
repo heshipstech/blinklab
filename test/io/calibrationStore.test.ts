@@ -10,6 +10,7 @@ import {
 } from "../../src/io/calibrationStore";
 import type { CalibrationProfile } from "../../src/core/calibrationProfile";
 import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
+import { aStoredLine } from "../support/storedLine";
 
 // Remediation B3. localStorage is allowed to throw: reads under
 // Safari's blocked-storage settings, writes when the quota is full.
@@ -23,11 +24,11 @@ const PROFILE: CalibrationProfile = {
   vertical: { slope: 1, intercept: 0 },
 };
 
-const BLINK: StoredBlinkCalibration = {
+const BLINK: StoredBlinkCalibration = aStoredLine({
   personalLineMm: 5,
   openMedianMm: 8,
   closedMedianMm: 2,
-};
+});
 
 function stubStorage(behaviour: Partial<Storage>): void {
   vi.stubGlobal("localStorage", behaviour);
