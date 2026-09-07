@@ -339,8 +339,8 @@ describe("a claimed row its phase will not let start", () => {
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
     const claimed = roadmap.replace(
-      "Row 14.0f remains startable and is not marked",
-      "Rows 12.7 and 14.0f remain startable and are not marked",
+      "Row 14.0f2 remains startable and is not marked",
+      "Rows 12.7 and 14.0f2 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);

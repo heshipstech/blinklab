@@ -6,10 +6,13 @@ import {
   buttonStrings,
   documentedBoxes,
   fossils,
+  hiddenAssignments,
   idleStrings,
+  overlayHandles,
   undocumented,
   undocumentedStrings,
 } from "../../tools/uiGuard.mjs";
+import { OVERLAYS } from "../../src/core/overlayEscape";
 
 // Remediation F3. docs/UI.md is the compensating control for the
 // src/ui folder SPEC.md describes and that has never existed, it
@@ -120,5 +123,76 @@ describe("docs/UI.md and the page agree", () => {
     expect(fossils('box("Alertness", x);', "#### Box: Instrument\n")).toEqual([
       "Instrument",
     ]);
+  });
+});
+
+// Roadmap 14.0f1 [E2]. Two checks over the screens the page raises
+// over itself. Both exist because the failure they catch is INVISIBLE
+// to somebody testing with a mouse: one leaves a keyboard trapped
+// behind a sheet, the other leaves the whole page inert with nothing
+// on screen to answer.
+
+describe("every screen the page raises is in the escape register", () => {
+  it("finds the handles the page gives them", () => {
+    expect(overlayHandles('x.dataset.testid = "heatmap-overlay";')).toEqual([
+      "heatmap-overlay",
+    ]);
+    expect(overlayHandles('x.dataset.testid = "kss-dialog";')).toEqual([
+      "kss-dialog",
+    ]);
+  });
+
+  it("ignores a handle that is not a screen", () => {
+    // `calibration-dot` lives inside the calibration overlay and is not
+    // a screen anybody can be trapped behind.
+    expect(overlayHandles('d.dataset.testid = "calibration-dot";')).toEqual([]);
+  });
+
+  it("holds the page and the register to each other", () => {
+    // Both directions. A screen the page raises with no entry in core
+    // is a screen Escape will not close, and an entry naming a screen
+    // the page no longer builds is a fossil that makes the register
+    // look more complete than it is.
+    const onThePage = [...overlayHandles(main)].sort();
+    const registered = OVERLAYS.map((overlay) => overlay.id).sort();
+    expect(onThePage, "screens on the page versus the escape register").toEqual(
+      registered,
+    );
+  });
+
+  it("would notice a screen the register never heard of", () => {
+    const page =
+      'a.dataset.testid = "heatmap-overlay"; b.dataset.testid = "new-overlay";';
+    expect(overlayHandles(page)).toContain("new-overlay");
+  });
+});
+
+describe("the dialog is closed, never hidden", () => {
+  it("reads which elements are assigned .hidden", () => {
+    expect(hiddenAssignments("alertBanner.hidden = true;")).toEqual([
+      "alertBanner",
+    ]);
+    expect(hiddenAssignments("x.hidden = false;\ny.hidden = true;")).toEqual([
+      "x",
+      "y",
+    ]);
+  });
+
+  it("never assigns .hidden on the modal dialog", () => {
+    // Probed in Chromium before this row was written: setting `hidden`
+    // on an OPEN modal gives display:none while the element still
+    // matches :modal, so the question disappears and the page behind it
+    // stays inert. A page that looks fine and accepts nothing. Every
+    // reset path used to spell it exactly that way, so this holds the
+    // new spelling rather than trusting five call sites to stay right.
+    expect(
+      hiddenAssignments(main),
+      "kssDialog must be closed with .close(), never hidden",
+    ).not.toContain("kssDialog");
+  });
+
+  it("still sees the ordinary elements that ARE hidden", () => {
+    // So the check above cannot pass because the reader broke.
+    expect(hiddenAssignments(main)).toContain("alertBanner");
   });
 });

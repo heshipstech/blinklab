@@ -26,3 +26,9 @@ export function undocumentedStrings(
   strings: readonly string[],
   doc: string,
 ): string[];
+
+/** Every `dataset.testid` in main.ts naming a screen raised over the page. */
+export function overlayHandles(mainSource: string): string[];
+
+/** Every identifier assigned `.hidden` in a source file, once each. */
+export function hiddenAssignments(source: string): string[];

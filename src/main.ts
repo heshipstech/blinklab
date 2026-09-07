@@ -156,6 +156,12 @@ import {
 } from "./core/exportContents";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
+import {
+  escapeBlocked,
+  escapeCloses,
+  overlayById,
+  type OverlayId,
+} from "./core/overlayEscape";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -1065,7 +1071,7 @@ function render(): void {
 
   // A question, not a readout.
   if (!running) {
-    kssPanel.hidden = true;
+    closeKssDialog();
     alertBanner.hidden = true;
   }
 
@@ -1134,7 +1140,7 @@ function resetSession(): void {
   kssBeforeAsked = false;
   kssAfterAsked = false;
   kssAfterAtMs = null;
-  kssPanel.hidden = true;
+  closeKssDialog();
   refreshKssLine();
   writeReadout(featureLabel, "");
   writeReadout(scoreLabel, "");
@@ -1844,7 +1850,8 @@ const gazeStateLabel = document.createElement("p");
 const fixationStatsLabel = document.createElement("p");
 
 // The calibration capture screen: a dark overlay, one moving dot,
-// click anywhere to cancel. A profile solved in an earlier visit
+// click anywhere or press Esc to cancel. A profile solved in an
+// earlier visit
 // survives in local storage and works from the first frame.
 let calibrationProfile: CalibrationProfile | null = loadCalibrationProfile();
 const calibrateButton = document.createElement("button");
@@ -1889,10 +1896,11 @@ Object.assign(calibrationProgress.style, {
   color: "#ffffff",
 });
 calibrationOverlay.append(calibrationDot, calibrationProgress);
+// Click and Escape run the SAME closer, from OVERLAY_CONTROLS below.
+// Two paths out of one screen that each wrote their own teardown is
+// how one of them ends up forgetting a field.
 calibrationOverlay.addEventListener("click", () => {
-  captureState = null;
-  calibrationRequested = false;
-  calibrationOverlay.hidden = true;
+  OVERLAY_CONTROLS["calibration-overlay"].close();
 });
 
 // The guided blink calibration (core/guidedCalibration.ts), live. A
@@ -1970,12 +1978,11 @@ blinkCalibrationInner.append(
   blinkCalibrationProgress,
 );
 blinkCalibrationOverlay.append(blinkCalibrationInner);
-// Click anywhere to cancel, the same escape hatch as the gaze overlay.
-// A cancelled run stores nothing.
+// Click anywhere or press Esc to cancel, the same escape hatch as the
+// gaze overlay. A cancelled run stores nothing. Both paths run the one
+// closer in OVERLAY_CONTROLS below.
 blinkCalibrationOverlay.addEventListener("click", () => {
-  blinkCalibrationSession = null;
-  blinkCalibrationRequested = false;
-  blinkCalibrationOverlay.hidden = true;
+  OVERLAY_CONTROLS["blink-calibration-overlay"].close();
 });
 
 // The visitor-facing sentence for each refusal. The reasons are named
@@ -2141,6 +2148,10 @@ eraseButton.addEventListener("click", () => {
 refreshStoredBox();
 
 const heatmapOverlay = document.createElement("div");
+// A stable handle, added with the keyboard exit in 14.0f1: the escape
+// register names this overlay, and a register the page cannot be held
+// to by name is a register nothing checks.
+heatmapOverlay.dataset.testid = "heatmap-overlay";
 heatmapOverlay.hidden = true;
 Object.assign(heatmapOverlay.style, {
   position: "fixed",
@@ -2221,10 +2232,7 @@ replayButton.addEventListener("click", () => {
   renderReplay();
 });
 heatmapOverlay.addEventListener("click", () => {
-  heatmapOpen = false;
-  heatmapOverlay.hidden = true;
-  scanpathSlider.hidden = true;
-  refreshReplayButton();
+  OVERLAY_CONTROLS["heatmap-overlay"].close();
 });
 
 // The test card: five distinct shapes at known screen fractions, so
@@ -2275,7 +2283,7 @@ function drawHeatmapCard(context: CanvasRenderingContext2D): void {
   context.font = "16px system-ui, sans-serif";
   context.textAlign = "center";
   context.fillText(
-    "Look at the shapes, hold on each. Click anywhere to close.",
+    "Look at the shapes, hold on each. Click anywhere or press Esc to close.",
     width / 2,
     height - 24,
   );
@@ -2483,24 +2491,51 @@ kssPrompt.className = "kss-prompt";
 const kssButtons = document.createElement("div");
 kssButtons.className = "kss-grid";
 
-const kssDialog = document.createElement("div");
+// A native <dialog>, roadmap 14.0f1. It was a div with role="dialog"
+// and aria-modal="true", which is the hand-rolled imitation: the words
+// were right and none of the behaviour came with them. The page behind
+// it stayed reachable by Tab, so a keyboard could walk out of a
+// question that blocks the export and answer nothing. showModal()
+// brings the focus trap, the inert page and the backdrop for free.
+const kssDialog = document.createElement("dialog");
 kssDialog.className = "kss-dialog";
-kssDialog.setAttribute("role", "dialog");
-kssDialog.setAttribute("aria-modal", "true");
+kssDialog.dataset.testid = "kss-dialog";
 kssDialog.setAttribute("aria-labelledby", "kss-prompt");
 kssPrompt.id = "kss-prompt";
 kssDialog.append(kssPrompt, kssButtons);
-
-const kssPanel = document.createElement("div");
-kssPanel.id = "kss-backdrop";
-kssPanel.hidden = true;
-kssPanel.append(kssDialog);
 
 // Deliberately NOT closable by clicking the backdrop or pressing
 // Escape. Every way out of this dialog records an answer, and Skip is
 // one of them: a dismissal that recorded nothing would leave a session
 // whose file cannot say whether the question was declined or never
 // asked.
+//
+// A native dialog cancels on Escape by default, so this is the one
+// place the free behaviour is the wrong behaviour, and the refusal
+// reads its reason from the register in core rather than from this
+// comment.
+kssDialog.addEventListener("cancel", (event) => {
+  if (!overlayById("kss-dialog").dismissible) {
+    event.preventDefault();
+  }
+});
+
+/**
+ * Close the question, from any of the paths that end it.
+ *
+ * `.close()` rather than `hidden`, and the difference is not cosmetic:
+ * setting `hidden` on an OPEN modal hides it and leaves it open, so
+ * the dialog vanishes while the page behind it stays inert. Probed in
+ * Chromium before this row was written — the element still matched
+ * :modal with display:none. That is a page which looks fine and
+ * accepts nothing, and a test in test/tools/uiGuard.test.ts holds this
+ * element to `.close()` so the old spelling cannot come back.
+ */
+function closeKssDialog(): void {
+  if (kssDialog.open) {
+    kssDialog.close();
+  }
+}
 
 // The answer stays visible after the dialog closes. As an inline panel
 // it simply stayed on screen as a disabled button, and being able to
@@ -2543,7 +2578,7 @@ function askKss(
     // The dialog closes on every path out of it. Left open it blocks
     // the page it is asking about, which is the difference between a
     // modal and the panel this used to be.
-    kssPanel.hidden = true;
+    closeKssDialog();
     onAnswer(rating);
     refreshKssLine();
   };
@@ -2569,15 +2604,18 @@ function askKss(
     choose(null);
   });
   kssButtons.append(skip);
-  kssPanel.hidden = false;
-  // Focus moves into the dialog so a keyboard reaches the ratings
-  // without tabbing the whole page first, and so a screen reader
-  // announces the question rather than leaving the user where they
-  // were.
-  const first = kssButtons.querySelector("button");
-  if (first !== null) {
-    first.focus();
-  }
+  kssDialog.showModal();
+  // Focus lands on SKIP, not on the first rating, and the reason is
+  // the file the answer ends up in. A modal focuses its first
+  // focusable element by default, which here is "1 Extremely alert",
+  // so somebody who presses Enter to make the box go away writes a
+  // sleepiness label nobody meant into an exported CSV. Skip records a
+  // declining, which is true, and every rating is still one Tab or one
+  // click away. Same rule as everywhere else in this project: a
+  // refusal is never rounded into a value.
+  //
+  // Skip stays LAST in the tab order. Focused first, offered last.
+  skip.focus();
 }
 
 /**
@@ -3817,7 +3855,7 @@ function processFrame(
             calibrationDot.style.left = `${String(target.x * 100)}%`;
             calibrationDot.style.top = `${String(target.y * 100)}%`;
           }
-          calibrationProgress.textContent = `Follow the dot (${String(captureState.targetIndex + 1)}/9). Click anywhere to cancel.`;
+          calibrationProgress.textContent = `Follow the dot (${String(captureState.targetIndex + 1)}/9). Click anywhere or press Esc to cancel.`;
         }
       }
 
@@ -3896,7 +3934,7 @@ function processFrame(
           );
           blinkCalibrationProgress.textContent =
             phase === "open"
-              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere to cancel.`
+              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
               : `Step 2 of 2 · ${String(secondsLeft)} s left.`;
         }
       }
@@ -4658,13 +4696,6 @@ function refreshLightResponseButton(): void {
 }
 
 lightResponseButton.addEventListener("click", startLightStimulus);
-// Esc ends the stimulus. Browsers also exit fullscreen on Esc, so the
-// keydown and the fullscreen exit converge on the same end.
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !lightOverlay.hidden) {
-    endLightStimulus();
-  }
-});
 // A tap ends it too: a phone has no Esc, and the overlay's own words
 // promise this exit (roadmap 14.0b, audit A6).
 lightOverlay.addEventListener("click", () => {
@@ -4679,6 +4710,93 @@ document.addEventListener("fullscreenchange", () => {
     endLightStimulus();
   }
 });
+
+// Roadmap 14.0f1 [E2]: one Escape handler for every screen the page
+// raises over itself.
+//
+// The light stimulus had a keydown listener of its own from 14.0b,
+// written beside it for a good reason — a fullscreen flash nobody can
+// dismiss is frightening — and nothing carried that reason to the
+// other three overlays, so a keyboard could not leave any of them.
+// That listener is gone and this is what replaced it.
+//
+// Each screen keeps its OWN closer rather than being hidden
+// generically, because closing is not one thing: the light stimulus
+// cancels an animation frame and leaves fullscreen, the calibrations
+// discard a partial run, the heatmap re-enables the replay button.
+// A Record over the union is what makes this exhaustive — add an id to
+// the register in core and this object stops compiling until the page
+// says how that screen closes.
+const OVERLAY_CONTROLS: Record<
+  OverlayId,
+  { isOpen: () => boolean; close: () => void }
+> = {
+  "calibration-overlay": {
+    isOpen: () => !calibrationOverlay.hidden,
+    close: () => {
+      captureState = null;
+      calibrationRequested = false;
+      calibrationOverlay.hidden = true;
+    },
+  },
+  "blink-calibration-overlay": {
+    isOpen: () => !blinkCalibrationOverlay.hidden,
+    close: () => {
+      blinkCalibrationSession = null;
+      blinkCalibrationRequested = false;
+      blinkCalibrationOverlay.hidden = true;
+    },
+  },
+  "heatmap-overlay": {
+    isOpen: () => !heatmapOverlay.hidden,
+    close: () => {
+      heatmapOpen = false;
+      heatmapOverlay.hidden = true;
+      scanpathSlider.hidden = true;
+      refreshReplayButton();
+    },
+  },
+  "light-overlay": {
+    isOpen: () => !lightOverlay.hidden,
+    close: endLightStimulus,
+  },
+  // Present and never reached: the register marks it undismissible, so
+  // `escapeCloses` never names it. It is here because leaving it out
+  // would mean the exhaustive Record was not exhaustive, and then the
+  // compiler would stop being the thing that notices a new screen.
+  "kss-dialog": {
+    isOpen: () => kssDialog.open,
+    close: closeKssDialog,
+  },
+};
+
+// The CAPTURE phase, and that is load bearing rather than a style
+// choice. A native <dialog>'s Escape is handled by the browser's close
+// watcher, and preventing its `cancel` event works for exactly one
+// press: with no user activation in between, Chromium fires cancel a
+// second time, sees it prevented again, and closes the dialog anyway.
+// Watched happen. The only way to refuse the key is to stop it before
+// a close request exists, which means catching the keydown on its way
+// down and calling preventDefault.
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    const open = (Object.keys(OVERLAY_CONTROLS) as OverlayId[]).filter((id) =>
+      OVERLAY_CONTROLS[id].isOpen(),
+    );
+    if (escapeBlocked(open)) {
+      event.preventDefault();
+      return;
+    }
+    for (const id of escapeCloses(open)) {
+      OVERLAY_CONTROLS[id].close();
+    }
+  },
+  true,
+);
 
 const markButton = document.createElement("button");
 markButton.textContent = "Mark this moment";
@@ -5095,7 +5213,7 @@ app.append(
   blinkCalibrationOverlay,
   heatmapOverlay,
   lightOverlay,
-  kssPanel,
+  kssDialog,
 );
 // Every readout starts with the sentence the idle page shows, from
 // the table in core/idleStrings.ts (roadmap 14.0b, audit B19): "not

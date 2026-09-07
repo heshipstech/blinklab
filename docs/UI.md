@@ -385,12 +385,32 @@ It was a panel until 16 August, and because the export waits on its answer, a
 card that can run past the fold plus a question that gave no sign of itself
 produced a report that Export CSV was broken when it was only waiting.
 
+Since roadmap 14.0f1 it is a **native `<dialog>`** opened with `showModal()`.
+It was a div carrying `role="dialog"` and `aria-modal="true"`, which is the
+hand-rolled imitation: the words were right and none of the behaviour came with
+them, so the page behind stayed reachable by Tab and a keyboard could walk out
+of a question that blocks the export. The element brings the focus trap, the
+inert page and the backdrop with it.
+
 It is **deliberately not closable** by the backdrop or by Escape: every way out
 records an answer, Skip included, and a dismissal that recorded nothing would
 leave a file that cannot say whether the question was declined or never asked.
-Focus moves into the dialog on open. The answer it records then appears in the
-Session card, because that answer goes into the exported file and being able to
-see what you said is part of trusting the data.
+Refusing Escape takes more than the obvious: a dialog's `cancel` event honours
+`preventDefault()` for ONE press, and with no user activation in between
+Chromium fires it again and closes anyway. Measured. So the page consumes the
+Escape keydown in the capture phase while the question is up, and no close
+request is ever made.
+
+**Focus opens on Skip**, not on the first rating, and that is a data decision
+rather than a layout one. A modal focuses its first focusable element by
+default, which here is `1 Extremely alert`, so pressing Enter to make the box
+go away would write a sleepiness label nobody meant into an exported file. Skip
+records a declining, which is true. Skip stays last in the tab order: focused
+first, offered last.
+
+The answer it records then appears in the Session card, because that answer
+goes into the exported file and being able to see what you said is part of
+trusting the data.
 
 Never appears at all on a clip session. Two prompts:
 
@@ -499,26 +519,38 @@ The guard in `tools/uiGuard.mjs` holds this list to the code. None says
 
 ## 6. Region 4: Overlays
 
-Both cover the whole window and sit above everything.
+All cover the whole window and sit above everything.
+
+**Escape closes every one of them**, roadmap 14.0f1. Before that row exactly
+one of them could be left with a key: 14.0b gave the light stimulus its own
+Escape listener, written beside it, and nothing carried that to the others — so
+a visitor working by keyboard who opened the gaze calibration was behind a
+black sheet with no way back. The rule now lives in `src/core/overlayEscape.ts`
+as a register of every screen the page raises over itself and whether Escape
+may close it, and `tools/uiGuard.mjs` holds that register to `src/main.ts` in
+both directions. The sleepiness dialog is the one entry marked undismissible,
+for the reason given in its own section above.
 
 ### Calibration overlay
 
-Opens on Calibrate gaze. Closes on any click, or on completion.
+Opens on Calibrate gaze. Closes on any click, on Escape, or on completion.
 
-| Element  | Content                                                    |
-| -------- | ---------------------------------------------------------- |
-| Dot      | Moves through nine positions at 10%, 50%, 90% of each axis |
-| Progress | `Follow the dot (N/9). Click anywhere to cancel.`          |
+| Element  | Content                                                        |
+| -------- | -------------------------------------------------------------- |
+| Dot      | Moves through nine positions at 10%, 50%, 90% of each axis     |
+| Progress | `Follow the dot (N/9). Click anywhere or press Esc to cancel.` |
 
 ### Heatmap overlay
 
-Opens on Gaze heatmap. Requires a calibration profile.
+Opens on Gaze heatmap. Requires a calibration profile. Closes on any click or
+on Escape.
 
-| Element         | Content                                                        |
-| --------------- | -------------------------------------------------------------- |
-| Heatmap canvas  | A test image with dwell shown as orange heat                   |
-| Caption         | `Gaze heatmap accumulating over a test image`                  |
-| Scanpath slider | Visible only after samples exist. Shows `Replay at X s of Y s` |
+| Element         | Content                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| Heatmap canvas  | A test image with dwell shown as orange heat                              |
+| Caption in card | `Look at the shapes, hold on each. Click anywhere or press Esc to close.` |
+| Caption         | `Gaze heatmap accumulating over a test image`                             |
+| Scanpath slider | Visible only after samples exist. Shows `Replay at X s of Y s`            |
 
 ---
 
