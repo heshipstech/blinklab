@@ -1886,16 +1886,25 @@ person on a fast laptop and an alert person on a slow one move the
 published number in the same direction, and nothing on the page said
 so until now.
 
-A postscript about the guards, learned the hard way in the same hour.
-Every local check passed before this was committed, and the build went
+A postscript about the guards, learned the hard way in the same hour,
+and I got the lesson wrong the first time I wrote it down.
+
+Every local check passed before this was committed and the build went
 red anyway. One of this repository's guards watches whether any file in
-the detection path has changed since the corpus was last measured, and
-it identifies those changes by commit. A commit that does not exist yet
-cannot be found, so that particular guard cannot fire until after the
-commit is made — which means the local checklist has to be run twice,
-once before committing and once after, and only then pushed. That is
-not the guard being awkward. A check that can be satisfied before the
-thing it checks exists would be checking nothing.
+the detection path has changed since the corpus was last measured. I
+concluded that the local checklist simply had to be run twice, once
+before committing and once after, because the guard identifies changes
+by commit and a commit that does not exist yet cannot be found.
+
+That was true and it was not the reason. The real reason is that this
+working copy was a SHALLOW clone, with only the last sixty commits in
+it, and the guard cannot walk from the anchor commit to the present in
+a history that does not reach back that far — so it skips itself
+entirely and reports nothing. Running the checklist twice would have
+changed nothing at all. The guard was not unavailable because of when
+I ran it; it was unavailable because of what I had checked out. One
+`git fetch --unshallow` later it runs here, and it immediately found
+two more things than the doubled checklist ever would have.
 
 The guard was also right in an interesting way. The change it caught
 adds twenty-six lines to a detector file and every one of them is a
@@ -1904,3 +1913,79 @@ file rather than on the diff, and it should: one that could be talked
 out of firing by an argument about the diff would eventually be talked
 out of firing by a wrong one. So the caveat is written anyway, with the
 one command a reader can run to see that the movement was words.
+
+## The ruler and the thing it measures do not turn together
+
+Every millimetre this project publishes is a vertical distance divided
+by a horizontal one: how far the eyelid is open, in pixels, over how
+wide the iris is, in pixels. Dividing by the iris is what makes the
+number mean something across sessions, because it cancels how far away
+the face is. Move closer and both grow together.
+
+Turn your head and they do not. A nod foreshortens the vertical
+opening and leaves the horizontal ruler alone. A turn foreshortens the
+ruler and leaves the opening alone. So the two shrink on different
+axes, in opposite directions for the ratio, and nothing cancels.
+
+The instrument already refuses a frame beyond twenty degrees of nod or
+twenty-five of turn. Inside those limits it publishes every frame as
+though the head were straight. Measured through the real function with
+a synthetic eye of known geometry, that costs six per cent low at the
+nod limit and ten per cent high at the turn limit: a spread of sixteen
+points on a quantity whose own calibration check refuses a session for
+a twenty-five per cent disagreement. Tilting your head sideways, the
+loosest limit of the three, costs exactly nothing, and now it is clear
+why it can afford to be the loosest.
+
+Two of six predictions moved this time, and both are the kind that only
+turn up because the prediction was written first.
+
+The smaller one: I expected the nod and the turn to cancel neatly when
+they happen together, cos over cos. They cancel less than that, because
+a nod pushes the eyelid chord's ends apart in depth and a turn then
+swings some of that depth into width, so the chord picks up a sideways
+component and is longer than the nod alone leaves it. The exact factor
+is a square root with two terms in it rather than one cosine, and it is
+in the test where anyone can check it by hand.
+
+The larger one: the audit this row came from says a turn costs up to
+twelve per cent, and the measurement says ten point three. Twelve would
+need nearly twenty-seven degrees, which the gate refuses. That is
+recorded as not reproduced rather than quietly adopted, with the
+likeliest explanation named — this projection has no camera distance in
+it, and a real lens does. Somebody who wants to settle it will have to
+state one.
+
+## A rebase merge rewrites the name your note was written against
+
+The guard above wants a written note naming any commit that touched the
+detection path since the last measurement. It matched those notes by
+the commit's short identifier.
+
+This project merges by replaying a branch's commits onto the main line,
+which gives each of them a new identifier. So a note written while the
+work is still a proposal can only name the identifier the commit has on
+the branch — and that identifier stops existing at the moment the work
+lands. The guard was therefore green on every proposal and red on the
+main line, for any change touching those files at all. It went red on
+mine, which is how this was found.
+
+The project had already noticed the shape of this and written it down
+in the very file the guard reads: a rebase merge does not let a
+proposal know its own future name. Nobody had connected that sentence
+to the comparison a few hundred lines away that depended on the name.
+
+The fix is to accept either the identifier or the commit's subject
+line, because a subject survives the replay. Nothing is loosened: an
+undeclared change is still red. Writing that took two attempts, and the
+first attempt was worse than it looked. Searching the whole document
+for the subject means a short subject that happens to be the opening of
+some other line counts as declaring that other commit — a guard
+accepting the wrong declaration, which is the failure it exists to
+prevent. Matching whole lines fixes it, at the cost that a subject
+written into a note has to sit on one line.
+
+The general lesson is about identifiers rather than about git. A check
+that keys on a name must key on a name that outlives the thing it
+identifies. If the name can be rewritten between writing the check and
+running it, the check is testing the rewriting.

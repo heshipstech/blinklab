@@ -106,6 +106,20 @@ export function irisAspectRatio(
   return verticalPx / horizontalPx;
 }
 
+/**
+ * The lid opening in millimetres, using the iris as the ruler.
+ *
+ * The division is what makes this independent of how far the face sits
+ * from the camera, and it is why the number can be compared across
+ * sessions at all.
+ *
+ * It does NOT make it independent of head angle, and the validity gate
+ * accepts a wide one. The opening is a vertical distance and the ruler
+ * is a horizontal one, so a nod shrinks the first and a turn shrinks
+ * the second: at the gate's limits the result reads 6.03 percent low
+ * at 20 degrees of pitch and 10.34 percent high at 25 of yaw
+ * (docs/pose-aperture-bias.txt, roadmap 10.10c4c). Roll costs nothing.
+ */
 export function apertureMm(
   face: readonly Point2[],
   map: EarIndexMap,

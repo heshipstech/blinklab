@@ -230,6 +230,7 @@ defaulting to zero.
 - Units: every measured value carries its unit in its name. `apertureMm`, not `aperture`. `durationMs`, not `duration`.
 - Time: milliseconds from `performance.now()`, always passed in as a parameter so tests can control the clock.
 - Trust: a function that cannot produce a trustworthy number returns `null`. Never zero, never a guess.
+- Pose: `apertureMm` is a vertical lid opening divided by a horizontal iris width, so it is independent of distance from the camera and NOT independent of head angle. Inside the validity gate's own limits the published millimetre reads 6.03% low at 20 degrees of pitch and 10.34% high at 25 of yaw, a span of 16.4 points; roll costs nothing. Measured in `docs/pose-aperture-bias.txt`. The gate is a refusal, not a correction.
 
 ## Error and degraded states
 

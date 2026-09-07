@@ -103,7 +103,7 @@ function sampledShape(
   fps: number,
   closingMs: number,
   phaseMs: number,
-): { peakMmPerS: number; amplitudeMm: number } | null {
+): { peakMmPerS: number; amplitudeMm: number } {
   const intervalMs = 1000 / fps;
   const samples: ApertureSample[] = [];
   for (
@@ -118,7 +118,17 @@ function sampledShape(
   }
   const shape = analyzeClosing(samples);
   if (shape === null) {
-    return null;
+    // Unreachable by construction rather than defended against: the
+    // window above always brackets the descent with an open sample
+    // before it and a shut one after, at every rate, so there is
+    // always a maximum before a minimum and a positive amplitude
+    // between them. Stated as a throw because if it ever does happen
+    // the generator's contract has broken, and a cell that quietly
+    // recorded a made-up "total loss" would put that breakage into a
+    // published bound.
+    throw new Error(
+      `the descent generator produced no readable descent at ${String(fps)} fps`,
+    );
   }
   return {
     peakMmPerS: shape.peakClosingVelocityMmPerS,
@@ -138,14 +148,6 @@ export function velocityBiasCell(
   for (let step = 0; step < VELOCITY_BIAS_PHASES; step += 1) {
     const phaseMs = (step / VELOCITY_BIAS_PHASES) * intervalMs;
     const shape = sampledShape(fps, closingMs, phaseMs);
-    if (shape === null) {
-      // A rate this slow cannot describe a descent this short at all,
-      // which is a refusal rather than a bias. Recorded as total loss
-      // so the cell cannot quietly average over the gap.
-      losses.push(1);
-      inflations.push(Number.POSITIVE_INFINITY);
-      continue;
-    }
     losses.push((truth - shape.peakMmPerS) / truth);
     const trueRatioMs = (AMPLITUDE_MM / truth) * 1000;
     const seenRatioMs = (shape.amplitudeMm / shape.peakMmPerS) * 1000;
