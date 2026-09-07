@@ -264,6 +264,34 @@ export function phaseGates(roadmapText) {
   return gates;
 }
 
+/**
+ * A row and every row it is a lettered part of, longest first.
+ *
+ * This ladder splits a row that outgrows one pull request into
+ * lettered halves, and an era rule tells it to: 9.3 became 9.3a and
+ * 9.3b, 10.0b became nine sub-rows, 12.16 became 12.16a and 12.16b.
+ * Splitting for SIZE cannot change whether the work is exempt from a
+ * phase gate — 12.16b is 12.16 — so an exemption is looked for up
+ * the parent chain rather than against the spelling. The alternative
+ * was to edit a dated amendment's exemption list every time a row was
+ * split, which is a gate quietly widened by a rename.
+ *
+ * Only the chain counts, never a neighbour: 9.4 is not a part of 9.5
+ * and no reader of the gate would think it was.
+ */
+export function rowAncestry(id) {
+  const chain = [id];
+  let current = id;
+  for (;;) {
+    const shorter = current.replace(/[a-z]\d*$/, "");
+    if (shorter === current || shorter === "") {
+      return chain;
+    }
+    current = shorter;
+    chain.push(current);
+  }
+}
+
 /** Which phase a row sits under, by its number, or null. */
 function phaseOf(roadmapText, id) {
   for (const section of phaseSections(roadmapText)) {
@@ -299,7 +327,10 @@ export function gatedStartables(roadmapText) {
   for (const id of startableClaims(roadmapText)) {
     const phase = phaseOf(roadmapText, id);
     const gate = gates.find((one) => one.phase === phase);
-    if (gate === undefined || gate.exemptRows.includes(id)) {
+    const exempt = rowAncestry(id).some((ancestor) =>
+      gate === undefined ? false : gate.exemptRows.includes(ancestor),
+    );
+    if (gate === undefined || exempt) {
       continue;
     }
     const waiting = gate.prerequisites.find(
