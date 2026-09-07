@@ -311,3 +311,97 @@ export function gatedStartables(roadmapText) {
   }
   return blocked;
 }
+
+// Roadmap 10.0b9. Amendment 20 left three rows with a caveat: each was
+// started while the Phase 12 gate was shut, each is unwired so nothing
+// published depends on it, and each has constants — two band edges,
+// two floors, a midpoint — chosen against an instrument that 13.8b
+// will re-time and 12.0a will re-rule. The caveat says re-look when
+// those land.
+//
+// That is prose, and a sentence kept true by somebody remembering is
+// the one thing this repository has watched fail over and over: a
+// count in a changelog, a list in the ladder, a header nobody
+// re-reads. So the caveat NAMES the rows it waits on and the build
+// goes red the moment one is ticked. Same self-retiring shape as
+// drozyGuard and the detector ratchet: the reminder arrives when the
+// instrument moves, rather than when a person happens to look.
+
+/** The phrase a gate caveat opens with, and what a test can find it by. */
+export const GATE_CAVEAT = "Started while the Phase 12 gate was shut";
+
+// Terminated on the caveat's closing "**" rather than on a dot,
+// because every row number contains one. The first draft of this line
+// used a "not a dot" class and captured "13" out of "13.8b, 12.0a" —
+// the same mistake row 10.0b8 was written about, made again inside the
+// row that cites it, twenty minutes later. Twice in an hour is not a
+// lapse of attention, it is a shape: a sentence-ending dot and a
+// version-numbering dot look identical to a regular expression, and
+// this project's identifiers are full of the second kind.
+const WAITS_ON = /Re-look when the gate lifts:\s*([^*]+?)\.\*\*/;
+
+/**
+ * Every row carrying a gate caveat, with the rows it waits on.
+ *
+ * Throws on a caveat naming nothing to wait for, the same refusal
+ * `blockedRows` makes for the same reason: a caveat that says to
+ * re-look one day, without saying at what, retires whenever somebody
+ * feels like it, which is the state it was written to end.
+ */
+export function gateCaveats(roadmapText) {
+  const caveats = [];
+  for (const line of roadmapText.split("\n")) {
+    const row = line.match(ROW);
+    if (row === null || !line.includes(GATE_CAVEAT)) {
+      continue;
+    }
+    const waits = line.match(WAITS_ON);
+    const named =
+      waits === null
+        ? []
+        : waits[1]
+            .split(/,\s*|\s+and\s+/)
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0);
+    if (named.length === 0) {
+      throw new Error(
+        `ROADMAP.md row ${row[2]}: a gate caveat that names nothing to ` +
+          'wait for. The form is "Re-look when the gate lifts: <a>, <b>.", ' +
+          "and it is held to those rows, so a caveat without them is one " +
+          "that retires whenever somebody feels like it",
+      );
+    }
+    caveats.push({ id: row[2], waitsOn: named });
+  }
+  return caveats;
+}
+
+/**
+ * The caveats whose moment has come: at least one row they wait on is
+ * ticked, so the constants underneath them are due a re-read.
+ *
+ * The FIRST such row fires it, not the last. Waiting for all of them
+ * would let the earliest change pass unexamined, and the earliest
+ * change is the one that moves the instrument under a constant nobody
+ * has looked at since it was chosen.
+ *
+ * Retiring one means editing the caveat to say the re-read happened,
+ * which is how the ratchet's own caveats retire: the sentence becomes
+ * history instead of being deleted.
+ */
+export function ripeCaveats(roadmapText) {
+  const ripe = [];
+  for (const caveat of gateCaveats(roadmapText)) {
+    const landed = caveat.waitsOn.find((id) => {
+      const box = roadmapRow(roadmapText, id).match(ROW);
+      return box !== null && box[1] !== " ";
+    });
+    if (landed !== undefined) {
+      ripe.push({
+        id: caveat.id,
+        why: `${landed} has landed, so its constants need re-reading`,
+      });
+    }
+  }
+  return ripe;
+}
