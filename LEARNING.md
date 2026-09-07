@@ -1703,3 +1703,39 @@ lines — the same trap an increment three days earlier had documented in
 this very repository. Knowing about a trap and walking into it are
 compatible. Checking that your mutation actually mutated something is
 one line of work and it is not optional.
+
+## A boundary fixed on one side is a boundary half fixed
+
+Three weeks ago this project found a real disagreement between its two
+implementations. The exported file records a frame rate to one decimal
+place. The page compared the unrounded number against a threshold, the
+analysis compared the rounded one, and at the value where rounding
+crosses the threshold they reached opposite verdicts about the same
+session. The researcher tool treats such a disagreement as a broken
+instrument and stops the whole run, so this was not cosmetic.
+
+It was fixed properly: the page now compares the number as the file has
+it, and a fixture sits exactly on that value so the fix cannot be
+undone quietly.
+
+There were two thresholds. Only one got a fixture.
+
+The rate scale has a floor below which blink timing is refused and, a
+step above it, a band below which blinks are merely at risk of being
+missed. The same rounding crosses the second boundary in exactly the
+same way, produces two different sentences about one session in exactly
+the same way, and would stop a run in exactly the same way. It had
+nothing holding it.
+
+Nothing had gone wrong yet, which is the only reason it was still
+there. A defect that has fired once gets attention; the identical
+defect one step along the same scale gets none, because the story is
+already about the first one. The fix is not cleverness, it is asking
+what else has this shape before closing the file.
+
+The second thing this increment did was stop a list from being a list.
+The Python side of the pin named its four fixtures in four tests. The
+other side now generates fixtures from the exporter, so somebody adding
+one there would have got a green suite here while nothing re-derived
+it. It reads the directory now, with a floor under the count, because
+an empty list and a full agreement look identical from the outside.

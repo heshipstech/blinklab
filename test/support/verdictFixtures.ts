@@ -333,6 +333,18 @@ export const FIXTURES: FixtureSession[] = [
     poseFrames: { gated: 1000, valid: 620 },
   },
   {
+    // The other rounding boundary, roadmap 10.1f6. The refusal floor
+    // below has been pinned since 10.15; the risk threshold at 60 had
+    // not been, and it is the same defect one step up. A measured
+    // 59.96 reaches the file as 60.0, which reads "above the 60 risk
+    // band"; the raw double reads "quick or shallow blinks can be
+    // missed below 60". Two different sentences about one session,
+    // and the pilot halts a cohort on that disagreement.
+    ...GOOD,
+    name: "risk-edge",
+    delivery: { deliveredFps: 60, sampledFps: 59.96, readFraction: 0.999 },
+  },
+  {
     // The rounding boundary, roadmap 10.15 (audit G-export/l-1). A
     // measured 24.96 reaches the file as 25.0, and the page must hand
     // its verdict the same 25.0 rather than the raw double, or the two
