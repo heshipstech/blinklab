@@ -1307,6 +1307,30 @@ confirmed/medium + downgraded · M`
       device at zero privacy cost; C1's 30-vs-60 comparison and A7's
       phone check run on it.
       **Findings:** F-071.
+      **Half done:** 7 September 2026, roadmap 11.0a. The pure half is
+      in: `src/core/cueSchedule.ts` fixes the schedule before any
+      camera runs and `scoreCues` turns a session into caught / missed
+      / latency with three refusals. The two-marks protocol is retired
+      at the top of `docs/participant-instructions.md`, with the
+      reason and with sessions already recorded left valid for what
+      they measured.
+      Two corrections to this item's own framing. "Per-event caught /
+      missed / latency" is right for the blink cues and wrong for the
+      look-away: nothing in the blink or closure path can see a person
+      turning away from the screen, so it is excluded from the tally
+      rather than scored as a miss, and a gaze-scored version is a
+      later row's if it is wanted. And a cued closure is better served
+      by a signed duration error than by a caught / missed verdict — a
+      20 second closure measured at 18 is a 2 second error, and a pass
+      mark would throw that number away.
+      One thing this item cannot deliver and should not claim: the
+      scorer cannot tell a person following the cues from a person
+      blinking continuously, because the second one does respond to
+      every cue. No window arrangement fixes that. What the score
+      carries instead is `eventsSeen`, so the rate that gives it away
+      is beside the tally rather than absent from it.
+      Still open: 11.0b, the overlay and the export rows, and the
+      re-pointing of 10.9, 11.6, 13.3 and 14.5.
 
 - [ ] **C5. Droop-then-blink and re-crossing blinks: time the closed
       phase from the arm line, report fragmented durations honestly.**
