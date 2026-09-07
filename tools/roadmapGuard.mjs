@@ -405,3 +405,32 @@ export function ripeCaveats(roadmapText) {
   }
   return ripe;
 }
+
+/**
+ * Rows that are retired and blocked at the same time.
+ *
+ * Roadmap 10.2c. Row 12.1 was marked BLOCKED by amendment 18 and
+ * RETIRED on the owner's ruling the next day, and for a moment it
+ * carried both: a line saying the work is waiting on something, and a
+ * line saying there is nothing to wait for.
+ *
+ * The two are different verdicts and the difference is the whole use
+ * of the marker. BLOCKED says a row is ready the moment its blocker
+ * lifts, which is what amendment 18 exists to promise. RETIRED says
+ * the row should not be picked up at all. A reader looking for work
+ * needs to be able to tell those apart at a glance, and a row
+ * claiming both tells them nothing twice.
+ */
+export function retiredWithBlocker(roadmapText) {
+  const both = [];
+  for (const line of roadmapText.split("\n")) {
+    const row = line.match(ROW);
+    if (row === null || row[1] !== "~") {
+      continue;
+    }
+    if (BLOCKED.test(line)) {
+      both.push(row[2]);
+    }
+  }
+  return both;
+}

@@ -2959,3 +2959,45 @@ answer chosen is that the result gets recorded and the method does not
 get shipped. A priority with no stated behaviour at the point of
 conflict is a preference, and a preference is what people abandon
 exactly when it would have cost something.
+
+## Blocked and retired are different verdicts
+
+A row on this ladder can be stuck in two quite different ways, and for
+one day a row was marked as both.
+
+Blocked means the work is ready and something outside it is in the
+way. That is a promise: lift the blocker and the row can be picked up
+unchanged. It is the promise the whole blocked-marker convention was
+introduced to make, after five rows were tried and put down for
+unrecorded reasons.
+
+Retired means the row should not be picked up at all. Not now, not
+when something lands. The shared slope module was retired because both
+of the consumers it existed to serve had been demoted, and a module
+built for nobody is speculative infrastructure. Nothing is going to
+arrive that unblocks it, because it is not waiting.
+
+A row carrying both markers tells a reader nothing twice, so a test
+now refuses the combination. Retiring a row removes its blocker.
+
+The second half of this increment is the same distinction one level
+down, inside a blocker's reason. One marker said only that no WebKit
+is installed here or in the CI workflow. True, and it reads like an
+accident: something nobody got around to. It was not. The test
+configuration carries a WebKit project deliberately excluded from
+continuous integration, with the reason written out at length,
+including the three platform-level failures a previous attempt
+produced and the conclusion that a test failing for unrelated reasons
+teaches people to ignore red.
+
+The cost of stating the surface fact instead of the decision is
+specific and was paid the same day: the next reader proposed adding
+WebKit to CI, which is precisely the thing that had already been tried
+and rejected. A blocker that names a symptom invites somebody to treat
+the symptom.
+
+So the rule underneath both halves is one rule. When you record that
+something cannot be done, record which KIND of cannot it is, and if a
+decision is behind it, name the decision and say where it is written.
+Otherwise the record reads as an obstacle, and obstacles look like
+things to remove.

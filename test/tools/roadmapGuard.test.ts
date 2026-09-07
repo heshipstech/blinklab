@@ -8,6 +8,7 @@ import {
   gatedStartables,
   phaseGates,
   roadmapRow,
+  retiredWithBlocker,
   ripeCaveats,
   staleStartables,
   startableClaims,
@@ -404,5 +405,47 @@ describe("the caveats amendment 20 left on three rows", () => {
         .map((one) => one.id)
         .sort(),
     ).toEqual(["12.14", "12.6", "12.9"]);
+  });
+});
+
+// Roadmap 10.2c. Row 12.1 was marked BLOCKED by amendment 18 and
+// RETIRED on the owner's ruling the next day, and for a moment it was
+// both: a row saying it is waiting on something and a row saying there
+// is nothing to wait for. BLOCKED was the right reading of a row that
+// could not proceed and the wrong verdict on one that should not
+// exist, and the difference matters to whoever reads the ladder
+// looking for work.
+describe("a retired row is not also a blocked one", () => {
+  it("reports a row claiming both at once", () => {
+    const text = "- [~] 9.9 RETIRED today. **BLOCKED: on something.**";
+    expect(retiredWithBlocker(text)).toEqual(["9.9"]);
+  });
+
+  it("says nothing about a retired row with no marker", () => {
+    expect(retiredWithBlocker("- [~] 9.9 RETIRED today, for reasons.")).toEqual(
+      [],
+    );
+  });
+
+  it("says nothing about an open row that is blocked", () => {
+    // The ordinary case, and the one the marker is for.
+    const text = "- [ ] 9.9 A row. **BLOCKED: on something named.**";
+    expect(retiredWithBlocker(text)).toEqual([]);
+  });
+
+  it("says nothing about a ticked row carrying a caveat", () => {
+    // The gate caveats of amendment 20 sit on TICKED rows and are not
+    // blockers, so they must not be swept up by this.
+    const text =
+      "- [x] 9.9 Done. **Started while the Phase 12 gate was shut: reasons. Re-look when the gate lifts: 8.1.**";
+    expect(retiredWithBlocker(text)).toEqual([]);
+  });
+
+  it("holds the ladder to it", () => {
+    const both = retiredWithBlocker(roadmap);
+    expect(
+      both,
+      `these rows are retired and blocked at once: ${both.join(", ")}`,
+    ).toEqual([]);
   });
 });
