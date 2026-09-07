@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   STALE_MARKER,
+  caveatBlock,
   builtFromSha,
   commitsTouchingSince,
   missingSources,
@@ -188,5 +189,58 @@ describe("the repository itself", () => {
     if (runningInCi()) {
       expect(isShallowRepo(root)).toBe(false);
     }
+  });
+});
+
+describe("the declaration must sit inside the caveat block", () => {
+  // Roadmap 10.1g4. The sha search read the WHOLE file, and the whole
+  // file is mostly a table of clip names, counts and percentages. A
+  // seven-character hexadecimal run anywhere in it counted as naming a
+  // commit, so a detector change could be declared by a coincidence in
+  // data nobody wrote as a declaration. The subject search had the same
+  // reach. A declaration is a thing somebody writes on purpose, in the
+  // block that exists to hold declarations.
+
+  it("takes the block from the marker to the end of the file", () => {
+    const text = [
+      "prelude",
+      `${STALE_MARKER}, 1 January 2026:`,
+      "  entry",
+    ].join("\n");
+    const block = caveatBlock(text);
+    expect(block).toContain("entry");
+    expect(block).not.toContain("prelude");
+  });
+
+  it("is empty when there is no caveat at all", () => {
+    expect(caveatBlock("Recall 83.6%\nno caveat here")).toBe("");
+  });
+
+  it("refuses a short sha that appears only above the caveat", () => {
+    // The exact defect: "1234567" sits in the table, and the caveat
+    // block names a different commit entirely.
+    const text = [
+      "  27122013_151644_cam  1234567  30  26  4  86.7%",
+      "Built from commit " + "a".repeat(40),
+      `${STALE_MARKER}, 5 September 2026:`,
+      "  0000000 feat: something else",
+    ].join("\n");
+    const verdict = ratchetVerdict(text, TOUCHING);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.why).toContain("does not name");
+  });
+
+  it("refuses a subject that appears only above the caveat", () => {
+    const text = [
+      "feat: the detector reads a person's own guided blink line",
+      "Built from commit " + "a".repeat(40),
+      `${STALE_MARKER}, 5 September 2026:`,
+      "  0000000 feat: something else",
+    ].join("\n");
+    expect(ratchetVerdict(text, TOUCHING).ok).toBe(false);
+  });
+
+  it("still accepts a declaration written inside the block", () => {
+    expect(ratchetVerdict(STALE_TEXT, TOUCHING).ok).toBe(true);
   });
 });
