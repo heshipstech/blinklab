@@ -1,4 +1,5 @@
-import type { LuminanceField } from "./pupil";
+import type { Point2 } from "./geometry";
+import type { LuminanceField, PixelBox } from "./pupil";
 
 // Roadmap 12.16a. How much light the camera thinks it is seeing, as a
 // number, with no adjective attached to it.
@@ -78,4 +79,88 @@ export function meanLuminance(field: LuminanceField | null): number | null {
     sum += sample;
   }
   return sum / samples.length;
+}
+
+// Roadmap 12.16b, the pure half of the wiring.
+//
+// ONE THUMBNAIL SERVES BOTH NUMBERS, and that is the design rather
+// than an optimisation. Landmarks arrive normalised, so a face
+// spanning x from 0.3 to 0.7 covers the same FRACTION of any raster it
+// is drawn into, whatever the camera's resolution. So the browser
+// downscales the whole frame once, the scene mean is taken over all of
+// it, and the face mean is taken over a box inside it.
+//
+// The alternative was two full-resolution reads. On a 1080p camera
+// that is about eight megabytes a second through `getImageData`, into
+// a loop the September audit already flagged for drawing more than it
+// needs. This is about nine kilobytes, and it buys a second property
+// worth more than the bytes: both numbers come from the SAME frame at
+// the SAME exposure through the SAME scaling, so the difference
+// between them is a fact about the light and not about how they were
+// read.
+
+/**
+ * The raster the scene is downscaled into before it is read.
+ *
+ * 64 by 36 is 2304 pixels, about nine kilobytes of RGBA, and the
+ * aspect is the common one; a camera of another shape is stretched
+ * into it, which does not move a mean. Chosen, not derived: small
+ * enough that reading it every second is unnoticeable, and big enough
+ * that a face covering a quarter of the frame still lands on 16 by 9
+ * pixels rather than on a handful that one bright one could swing.
+ */
+export const LUMINANCE_THUMBNAIL_WIDTH = 64;
+export const LUMINANCE_THUMBNAIL_HEIGHT = 36;
+
+/**
+ * Where the face falls inside a raster of this size, from normalised
+ * landmarks, or null when it does not fall inside it usefully.
+ *
+ * Rounds OUTWARD. Rounding in would crop the rim the face was measured
+ * by, and on a raster this small that rim is a whole pixel of a face
+ * only a few pixels across.
+ *
+ * Clamps to the raster, because a face at the edge of frame is
+ * ordinary rather than an error, and the box simply becomes what is
+ * actually there. Refuses a face wholly outside it, a face that rounds
+ * away to no area at all — reporting a zero-width box would hand
+ * `luminanceField` an empty crop, where null says the true thing, that
+ * this raster cannot see the face — and any landmark that is not a
+ * finite number.
+ */
+export function faceBox(
+  face: readonly Point2[],
+  rasterWidth: number,
+  rasterHeight: number,
+): PixelBox | null {
+  if (
+    face.length === 0 ||
+    !Number.isFinite(rasterWidth) ||
+    !Number.isFinite(rasterHeight) ||
+    rasterWidth <= 0 ||
+    rasterHeight <= 0
+  ) {
+    return null;
+  }
+  let left = Number.POSITIVE_INFINITY;
+  let top = Number.POSITIVE_INFINITY;
+  let right = Number.NEGATIVE_INFINITY;
+  let bottom = Number.NEGATIVE_INFINITY;
+  for (const point of face) {
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+      return null;
+    }
+    left = Math.min(left, point.x);
+    top = Math.min(top, point.y);
+    right = Math.max(right, point.x);
+    bottom = Math.max(bottom, point.y);
+  }
+  const x0 = Math.max(0, Math.floor(left * rasterWidth));
+  const y0 = Math.max(0, Math.floor(top * rasterHeight));
+  const x1 = Math.min(rasterWidth, Math.ceil(right * rasterWidth));
+  const y1 = Math.min(rasterHeight, Math.ceil(bottom * rasterHeight));
+  if (x1 <= x0 || y1 <= y0) {
+    return null;
+  }
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }

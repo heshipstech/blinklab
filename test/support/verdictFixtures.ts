@@ -132,6 +132,8 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     shutLineSource: "none",
     sampledFps: null,
     inferenceMs: null,
+    sceneLum: null,
+    faceLum: null,
   }));
 }
 

@@ -52,6 +52,11 @@ export const CSV_COLUMNS = [
   // existed once per session in a comment line, or not at all.
   "sampledFps",
   "inferenceMs",
+  // Roadmap 12.16, appended trailing for the same reason as the four
+  // above: every older header stays an exact prefix of this one, so a
+  // file written last month still loads.
+  "sceneLum",
+  "faceLum",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

@@ -45,6 +45,8 @@ EXPECTED_COLUMNS = [
     "shutLineSource",
     "sampledFps",
     "inferenceMs",
+    "sceneLum",
+    "faceLum",
 ]
 
 

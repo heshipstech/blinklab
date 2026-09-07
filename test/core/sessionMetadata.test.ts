@@ -85,6 +85,8 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     shutLineSource: "none",
     sampledFps: null,
     inferenceMs: null,
+    sceneLum: null,
+    faceLum: null,
   };
 }
 

@@ -3033,3 +3033,42 @@ explicitly rather than trusting that nobody will reach for zero as a
 convenient default.
 
 That test is short and it is the most valuable one in the file.
+
+## One raster, read once, tells you two things about the light
+
+The wired half of the light measurement had an obvious shape and a
+better one, and the difference is worth writing down because it is not
+about performance.
+
+The obvious shape: read the pixels of the whole frame for a scene
+number, read the pixels of the face region for a face number. Two
+crops, two reads, two answers. On a 1080p camera that moves about
+eight megabytes a second across the boundary between the browser's
+canvas and this code, into a loop an audit had already flagged for
+drawing more than it needs.
+
+The better shape starts from a fact about the data rather than from
+the cost. Face landmarks arrive NORMALISED, as fractions of the frame.
+A face spanning 0.3 to 0.7 covers the same fraction of any raster it
+is drawn into, whatever the camera's resolution. So the frame can be
+downscaled once, by the browser, into a raster of sixty-four by
+thirty-six, and both numbers read out of that: the scene is the whole
+thing, the face is a box inside it. About nine kilobytes.
+
+The speed is the smaller half of the win. The larger half is that the
+two numbers now come from the same frame, at the same exposure,
+through the same scaling. Two separate reads could not promise any of
+that, and the entire point of having both numbers is the DIFFERENCE
+between them — a lamp on the face against a dark room. A difference
+computed from two reads taken under two conditions is a difference
+about the reading, not about the light.
+
+Downscaling also does the averaging in the right place. Asking the
+browser to scale 1920 by 1080 into 64 by 36 IS an average over
+blocks of pixels, computed where that work is fast, and an average is
+exactly the number wanted at the other end.
+
+The generalisable bit: when two measurements are only meaningful
+compared to each other, take them from one observation. Anything else
+leaves a gap for the conditions to change in, and that gap will
+eventually be larger than the effect being measured.
