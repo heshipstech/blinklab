@@ -2551,3 +2551,39 @@ that tells them apart is a test. There is one now: every accepted
 generation must be an exact prefix of the current header, which is the
 property all those slices quietly depend on and nothing had ever
 checked.
+
+## A plan that offers work it cannot deliver
+
+Five rows were picked off this ladder in one session and put back
+down. One wanted a browser engine nothing here installs. One asked for
+a test about two consumers a previous amendment had already demoted,
+so there was nothing to write the test against. One wanted a model
+output the app does not ask the library for. One wanted recordings
+this repository deliberately does not keep. One waited on a decision
+about intent that is not anybody's to make from the record.
+
+Every one of those took the same shape: read the row, believe it, work
+out what it needs, discover the thing is not there, put it back. And
+because nothing was written down, the next reader would pay the same
+cost again. That is not a planning failure. Plans go stale in exactly
+this way, quietly, as the world around them changes — a browser that
+never got installed, an amendment that demoted a consumer three
+hundred lines away, a dataset rule that was always going to forbid
+keeping the files.
+
+So a row that cannot be started now says so, and the marker has to
+name what would unblock it. "BLOCKED" on its own is the same silence
+in a louder font: the reader still has to work out what is missing,
+which is the entire cost the marker exists to save.
+
+The part worth keeping is what happens to a marker when its blocker
+lifts. One of these five is checkable against the code: a row wants a
+model output that a source file either asks for or does not. So the
+test reads that file, asserts the option is off, and asserts the row
+is marked as waiting on the increment that turns it on. When that
+increment lands, the test goes red first and the marker has to come
+off with it.
+
+A blocker that outlives its blocker is the next stale sentence, and
+this repository has spent a day finding stale sentences. A marker with
+no way to expire would have been one more.
