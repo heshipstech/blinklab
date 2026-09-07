@@ -103,4 +103,72 @@ correcting it is worth the dependency.
 
 THE RESULT
 ----------
-Not yet run. The next commit fills this section in.
+Run 7 September 2026 by src/core/poseBias.ts, feeding a synthetic eye
+through the real apertureMm with the real index sets. Ratio is the
+published aperture over the same eye's aperture at zero pose.
+
+  pose                              ratio     error
+  pitch 20 alone                   0.9397    -6.03%
+  yaw 25 alone                     1.1034   +10.34%
+  roll 25 alone                    1.0000     0.00%
+  pitch 20, yaw 25, roll 25        1.0490    +4.90%
+
+  Searched over every axis at plus and minus its limit, half its limit
+  and zero: the published aperture inside the accepted pose region runs
+  from 0.9397 to 1.1034, a span of 16.4 points.
+
+PREDICTION vs OUTCOME
+---------------------
+1. CORRECT, to six decimals. A nod reads cos(pitch) of the truth.
+
+2. CORRECT, to six decimals. A turn reads 1/cos(yaw) of the truth.
+
+3. CORRECT. Roll is free to nine decimals, so the simulation is
+   rotating in the image plane as intended.
+
+4. WRONG, and the missing term is geometry rather than noise. The
+   prediction was cos(pitch)/cos(yaw) = 1.0368; the measurement is
+   1.0490.
+
+   Under pitch alone the lid chord shrinks by cos(pitch) and stays
+   vertical. Under pitch AND yaw it does not stay vertical: pitch
+   pushes the chord's endpoints apart in z, and yaw then turns some of
+   that z into x, so the chord acquires a horizontal component in the
+   image and is longer than cos(pitch) leaves it. The chord factor is
+   sqrt(cos^2(pitch) + sin^2(pitch) sin^2(yaw)) = 0.9507, not 0.9397,
+   and over cos(yaw) that is 1.0490 exactly.
+
+   So the two axes cancel LESS than predicted. The half of the
+   prediction that held is the useful half: the corner is still milder
+   than yaw alone, so the worst cases inside the gate are the
+   single-axis ones.
+
+5. CORRECT. The span is 16.4 points, on a quantity whose baseline
+   ceiling refuses a session for a 25 percent disagreement.
+
+6. CORRECT as a prediction of disagreement, which is a strange thing
+   to be right about. The audit's "up to +12%" for yaw is NOT
+   reproduced: this projection gives +10.34% at the gate's limit, and
+   12 percent needs 26.8 degrees, which the gate refuses. Recorded as
+   not reproduced rather than adopted. The likeliest home for the
+   difference is the perspective term this orthographic projection
+   does not model, and a measurement that wants to settle it needs a
+   stated camera distance.
+
+WHAT IT MEANS FOR A PUBLISHED NUMBER
+------------------------------------
+Two people whose eyes are identical, one looking straight ahead and one
+turned 25 degrees, differ by 10 percent in every millimetre this page
+prints, and both frames pass the gate. One person nodding through a
+session sweeps their own aperture by 6 percent with no change in their
+eye at all.
+
+The baseline is learned from the first thirty seconds, so a session
+begun at an angle and continued straight ahead carries a ruler that
+does not fit the rest of it. That is the same failure the ruler-fit
+check watches for, arriving through pose rather than through squinting.
+
+Not corrected here. Dividing the chord by cos(pitch) needs a
+frame-level pose estimate trustworthy enough to divide by, and this
+row's job was to say how large the uncorrected error is so a later row
+can decide whether that dependency is worth taking on.
