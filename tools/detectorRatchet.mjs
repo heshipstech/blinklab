@@ -57,6 +57,27 @@ export const DETECTOR_SOURCES = [
   // (12.2) arrives through exactly these two files.
   "public/models/face_landmarker.task",
   "src/io/landmarker.ts",
+  // The chain does not stop at the browser (roadmap 10.1g, ladder D4).
+  // A published recall is produced by four things in series: the
+  // detector decides where blinks are, the STEPPER decides which
+  // frames the detector ever sees, the RUNNER drives the clips, and
+  // the PYTHON SCORER turns detections and annotations into the
+  // percentage. A change to any of them moves the number, and until
+  // now three of the four were unwatched: the stepper could be
+  // rewritten, the scorer's arithmetic changed, and the ratchet stayed
+  // green on a result file describing neither.
+  "src/io/videoStepper.ts",
+  "src/core/stepCalibration.ts",
+  "tools/measure_corpus.mjs",
+  "analysis/blinklab/blink_match.py",
+  "analysis/blinklab/blink_log.py",
+  "analysis/blinklab/eyeblink8.py",
+  "analysis/tools/evaluate_eyeblink8.py",
+  // The versions the run was produced under, as a single file. A
+  // browser or Playwright bump can move a stepped measurement without
+  // one line of this repository's own code changing, which is the
+  // whole reason a corpus result records its engine.
+  "package-lock.json",
 ];
 
 /**
@@ -75,6 +96,28 @@ export function missingSources(root) {
 export const STALE_MARKER = "DETECTOR CHANGED, not yet re-measured";
 
 const BUILT_FROM = /Built from commit ([0-9a-f]{40})\b/;
+
+/**
+ * The part of the result file that holds declarations: from the stale
+ * marker to the end.
+ *
+ * Roadmap 10.1g4. The sha search used to read the WHOLE file, and the
+ * whole file is mostly a table of clip names, counts and percentages.
+ * Any seven-character hexadecimal run anywhere in it counted as naming
+ * a commit, so a detector change could be declared by a coincidence in
+ * data nobody wrote as a declaration, and the subject search had the
+ * same reach. A declaration is something a person writes on purpose,
+ * so it is only looked for where declarations are kept.
+ *
+ * The block runs to the end of the file because that is where the
+ * caveat sits and because a caveat is appended, never interleaved.
+ * Empty when there is no caveat, which the caller has already handled
+ * as its own outcome.
+ */
+export function caveatBlock(resultText) {
+  const at = resultText.indexOf(STALE_MARKER);
+  return at === -1 ? "" : resultText.slice(at);
+}
 
 /** The ratchet's anchor: the full sha the result file names, or null. */
 export function builtFromSha(resultText) {
@@ -168,14 +211,19 @@ export function ratchetVerdict(resultText, touching) {
   // The consequence is that a subject written into a caveat must sit
   // on one line, unwrapped. The sha still covers the older entries
   // whose subjects wrap.
-  const lines = resultText.split("\n").map((line) => line.trim());
+  //
+  // Both searches are scoped to the caveat block (roadmap 10.1g4): the
+  // table above it is full of hexadecimal-looking runs and of prose
+  // that can repeat a subject, and neither was written as a
+  // declaration.
+  const block = caveatBlock(resultText);
+  const lines = block.split("\n").map((line) => line.trim());
   const namesSubject = (subject) =>
     subject.length > 0 &&
     lines.some((line) => line === subject || line.endsWith(` ${subject}`));
   const missing = touching.filter(
     (commit) =>
-      !resultText.includes(commit.sha.slice(0, 7)) &&
-      !namesSubject(commit.subject),
+      !block.includes(commit.sha.slice(0, 7)) && !namesSubject(commit.subject),
   );
   if (missing.length > 0) {
     const named = missing

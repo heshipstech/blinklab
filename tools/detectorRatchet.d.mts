@@ -30,3 +30,6 @@ export function ratchetVerdict(
   resultText: string,
   touching: TouchingCommit[],
 ): { ok: boolean; why: string };
+
+/** The part of the result file that holds declarations. */
+export function caveatBlock(resultText: string): string;
