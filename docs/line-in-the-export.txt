@@ -1,0 +1,106 @@
+THE LINE IN THE EXPORT, AND A PREDICTION
+========================================
+
+Written 7 September 2026 (roadmap 10.13a, ladder A8, audit F-007 and
+G-Guided b-11), before the columns exist, in the predict-then-verify
+discipline.
+
+WHY IT EXISTS
+-------------
+The blink line is the parameter that most directly controls every
+blink number this project publishes. A blink is counted when the
+aperture crosses it; the duration, the amplitude and the peak velocity
+are all measured from that crossing. Until now no export said what the
+line was, or where it came from.
+
+Three different lines can be in force. The passive baseline's half
+(4.2), a stored guided line the person measured on themselves, and a
+fixed fallback constant when the reducer is handed neither. They can
+differ by millimetres on the same face, and two exports of one session
+can disagree about every blink number while agreeing about every
+column that explains them. The Python side is worse off than the
+reader: plot.py redraws a threshold the detector did not use.
+
+This row appends the line and its provenance to the record, so a
+session says which ruler measured it.
+
+WHAT THIS PREDICTS, AND WHY IT MATTERS THAT IT IS WRITTEN NOW
+-------------------------------------------------------------
+The corpus regression at HEAD (roadmap 10.8a) is the owner's to run,
+and it happens after this lands. The claim this row must not quietly
+break is that adding provenance changes no measurement. That claim is
+worth nothing if it is asserted after the numbers come back, so it is
+committed here, before the code exists, to be scored there.
+
+THE PREDICTION
+--------------
+On the Eyeblink8 corpus, re-measured at the commit that carries this
+row:
+
+  (i)   Every per-clip figure in docs/eyeblink8-result.txt's table is
+        UNCHANGED: true, found, miss, false, recall and precision, on
+        all eight clips. Not "within a point". Identical.
+
+  (ii)  Both split-by-glasses lines are unchanged, and so is the
+        coverage block.
+
+  (iii) Every exported CSV from a corpus clip is byte-identical to the
+        one the previous commit would have written, up to the header
+        and each row gaining the new trailing fields and nothing else.
+        The existing header remains an exact prefix of the new one,
+        which is the trailing-append discipline csv.ts already keeps
+        for baselineOverResting and pupilDiameterMm.
+
+  (iv)  On every corpus clip, `blinkLineSource` reads `none` for the
+        rows before the passive baseline is ready and `passive`
+        afterwards. It never reads `guided` and never reads `fixed`.
+
+  (v)   `shutLineSource` reads `none` until the shut baseline freezes
+        and `passive` afterwards, and never anything else, on every
+        clip.
+
+GROUNDS. A corpus clip runs in a fresh browser with no stored
+calibration, so `effectiveBlinkLineMm` already collapses to the
+passive baseline there — the same argument docs/blink-line-adoption.txt
+made when the guided line was adopted, and the reason that change was
+neutral by construction. This row adds no decision to that path. It
+reads the line the reducer was handed and writes it down.
+
+The `fixed` case in (iv) deserves its own sentence, because it is the
+one that could surprise. The wiring passes `blinkLineMm ?? THRESHOLD`
+to the reducer, so a fixed line IS reachable in principle. It is not
+reachable on a corpus clip while the aperture series is being fed,
+because the reducer is handed a null aperture on exactly the frames
+where the line would be null, and a frame that measured nothing
+records no line. If (iv) fails, that reasoning is wrong somewhere and
+the row stops to find out where rather than publishing either number.
+
+WHAT WOULD MAKE THIS PREDICTION WRONG IN AN INTERESTING WAY
+-----------------------------------------------------------
+(i) or (ii) moving would mean the provenance work changed a
+measurement, which is a bug in this row and not a finding about the
+corpus.
+
+(iii) failing on the prefix property would mean the append discipline
+was broken, and every previously exported file would stop loading.
+
+(iv) reading `fixed` anywhere would mean blinks are being counted
+against the fallback constant on clips, which would be a real finding
+about the detector and would predate this row: the column would have
+found it rather than caused it.
+
+WHAT THIS ROW DOES NOT DO
+-------------------------
+It does not decide whether a guided line should serve the shut
+baseline. That is an ADR the ladder names separately, and answering it
+by wiring rather than by argument is how an undecided question becomes
+a default.
+
+It does not re-run the corpus. Nothing here can: the run needs the
+owner's machine, the corpus, and 10.8a's replay tool. This document is
+the half that can be written without them, and it is written first so
+that the half that needs them has something to score.
+
+THE RESULT
+----------
+Not yet run. Scored in roadmap 10.8a, in a dated section below.
