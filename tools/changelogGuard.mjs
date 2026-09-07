@@ -63,3 +63,35 @@ export function statedEyeblink8(sectionText) {
   }
   return { recall: recall[1], precision: precision[1], f1: f1[1] };
 }
+
+/**
+ * The number of rule-carrying modules the section claims.
+ *
+ * Roadmap 10.0b7. The same section carried a second number nobody was
+ * holding: "Six checks that read the truth off disk" was written on
+ * 15 August, was wrong within a fortnight, and stayed wrong for three
+ * weeks while the real count reached twenty-six. A headline and a
+ * count are the same kind of sentence, and this file already learned
+ * once that a number in the section describing what is about to ship
+ * has to be read back from the thing it describes.
+ *
+ * Throws rather than returning null when the sentence is gone. A
+ * missing claim is exactly the rot this guard is for, and reporting
+ * "nothing claimed" would make the check satisfiable with a delete —
+ * which is the same shape as the guard that could not fail.
+ *
+ * Prose here hard-wraps, so the number and its noun may sit on either
+ * side of a line break.
+ */
+export function statedGuardCount(sectionText) {
+  const match = sectionText.match(/(\d+)\s+modules under/);
+  if (match === null) {
+    throw new Error(
+      "CHANGELOG.md: the Unreleased section states no guard count. The " +
+        'sentence reads "<n> modules under `tools/`", and it is read back ' +
+        "from the declarations on disk, so deleting it is not a way to " +
+        "make it true",
+    );
+  }
+  return Number(match[1]);
+}

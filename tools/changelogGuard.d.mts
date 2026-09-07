@@ -11,3 +11,6 @@ export function statedEyeblink8(sectionText: string): {
   precision: string;
   f1: string;
 } | null;
+
+/** The number of rule-carrying modules the section claims. */
+export function statedGuardCount(sectionText: string): number;

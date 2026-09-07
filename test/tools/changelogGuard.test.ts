@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   statedEyeblink8,
+  statedGuardCount,
   unreleasedSection,
 } from "../../tools/changelogGuard.mjs";
+import { declaredModules } from "../../tools/guardsArmed.mjs";
 import {
   parseResultFile,
   readRepoFile,
@@ -83,5 +85,41 @@ describe("the repository holds its own changelog", () => {
 
   it("points at the record rather than restating the counts", () => {
     expect(unreleasedSection(changelog)).toContain("docs/eyeblink8-result.txt");
+  });
+});
+
+// Roadmap 10.0b7. The same section carried a second number nobody was
+// holding. "Six checks that read the truth off disk" was written on
+// 15 August, was wrong within a fortnight, and stayed wrong for three
+// weeks while the count reached twenty-six — in the section that says
+// what is about to ship, which is the same fault the headline had.
+describe("the guard count the section states", () => {
+  it("reads the number out of the sentence", () => {
+    expect(
+      statedGuardCount("Words. 12 modules under `tools/` carry rules."),
+    ).toBe(12);
+  });
+
+  it("survives the line break prose wrapping puts in the middle", () => {
+    expect(
+      statedGuardCount(
+        "Words and words and words and words, 12\nmodules under",
+      ),
+    ).toBe(12);
+  });
+
+  it("refuses a section that states no count", () => {
+    // Not null. A missing sentence is exactly the rot this guard is
+    // for, and a guard that reports "nothing claimed" for a deleted
+    // claim is a guard somebody can satisfy with a delete.
+    expect(() => statedGuardCount("Words with no count in them")).toThrow(
+      /modules under/,
+    );
+  });
+
+  it("matches the modules on disk", () => {
+    expect(statedGuardCount(unreleasedSection(changelog))).toBe(
+      declaredModules(root).length,
+    );
   });
 });

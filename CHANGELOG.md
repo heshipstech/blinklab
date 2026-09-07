@@ -78,11 +78,21 @@ over shipping a version.
 
 ### Guards, which are the through-line
 
-Six checks that read the truth off disk and fail loudly when a document stops
-agreeing with it: published numbers, retired claims, the DROZY measuring
-commit, the UI documentation against the page's own boxes, a coverage floor on
-`src/core`, and a bundle size ceiling. Plus a Definition of Done that fails a
-pull request changing `src/` without a learning entry or a stated reason.
+26 modules under `tools/` carry the rules and the readers these checks are
+built from, and every one is reached by a test that runs it: published numbers,
+retired claims, the DROZY measuring commit, the UI documentation against the
+page's own boxes, a coverage floor on `src/core`, a bundle size ceiling, the
+detector-change ratchet, the model's provenance, the corpus rules, the
+continuous-integration gate list, this file's own headline, the generated
+status block, the read-in-full stamps and the ladder's blocked rows. Plus a
+Definition of Done that fails a pull request changing `src/` without a learning
+entry or a stated reason.
+
+That number is read back from the declarations on disk rather than typed here,
+which it had to be. The sentence this replaces said six, was written on
+15 August, and was wrong within a fortnight — in the section that describes
+what is about to ship, which is the same fault the Eyeblink8 headline above had
+and the same fix.
 
 ## v0.7.0 — 8 August 2026, Phase 6: the rolling state
 

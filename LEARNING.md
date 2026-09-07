@@ -2682,3 +2682,51 @@ whose absence made the vocabulary cap necessary in the first place.
 They are stated as choices, with the reasoning in the comment where
 somebody can disagree with it, and pinned from both sides by tests
 written as literal numbers.
+
+## The guard on the guards was reading name tags
+
+Every guard in this repository is a plain script that reads the disk,
+and nothing runs one except a test file. So a guard whose test is
+deleted, renamed, or never written is a file that looks like a control
+and enforces nothing, and no build anywhere goes red. There is a guard
+for exactly that, and this increment found it answering its question
+by reading name tags.
+
+It asked two things and got both from filenames. Is this module a
+guard? Yes, if it is CALLED one: the pattern was
+`*(Guard|Block|Ratchet).mjs`. Is it armed? Yes, if a test file is
+NAMED after it. Nowhere in either question is there a fact about what
+the files contain.
+
+Both halves leaked. Six modules carrying rules escaped the name
+pattern, including the guard on the guards itself. And because tests
+are sometimes named for what they check rather than for the module
+they load, a hand-kept map of exceptions had grown up beside the
+pattern — and one of its entries pointed at the wrong file. It sent
+`bundleGuard` to `bundleBudget.test.ts`, which loads `bundleBudget.mjs`
+and nothing else. `bundleGuard` had a real test of its own that
+nothing was watching. Moving that test out of the tree left the suite
+green.
+
+The fix is not a longer map. It is to ask questions whose answers are
+facts about the files. A module carries rules when somebody
+type-checked imports it, and the mark of that here is the hand-written
+`.d.mts` next door; the regeneration commands, which carry no rules,
+have none. A module is armed when a test IMPORTS it, which is a
+relationship between two files rather than a coincidence of their
+names. With both questions asked that way the map has nothing left to
+do and is deleted.
+
+One detail in the reading is worth the sentence. The import search is
+anchored on `from "…"` rather than on the path appearing anywhere in
+the text, because `claimGuard.test.ts` lists `tools/claimGuard.mjs`
+among its exemptions. A looser reader would have counted an exemption
+list as an import list, which is this guard committing its own
+mistake one layer down.
+
+And there is a residue, which is stated rather than hidden. A reader
+that never runs anything can prove a test imports a module. It cannot
+prove the test reaches one. An import with no call under it is still a
+guard nothing runs, and the only thing standing between this project
+and that is the stated count: bumping it is a deliberate act, and the
+moment to ask the question a machine here cannot.
