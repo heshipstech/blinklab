@@ -6,7 +6,9 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.** This is a learning project. The sentence above is quoted from `src/core/notice.ts`, the one place the page's own notice lives, and a test holds this copy to it word for word.
 
-> Revised 6 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 7 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+
+Read in full on 7 September 2026, claims `35b8d270`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -271,8 +273,12 @@ long freezes of half a second or more. Those twelve sit in three clips
 and hold 611 of the 787 lost frames. Very few gaps land inside a blink.
 At the very most the lost frames explain 4 of the 70 remaining misses —
 **that is the second run's figure, and it has not been recomputed for
-this one.** The current run has 50 misses, not 70, so the "4 of 70" pair
-belongs to the run before it. Recomputing needs the corpus, which is not
+this one.** The current run has 67 misses, not 70, so the "4 of 70" pair
+belongs to the run before it. (That sentence said 50 until 7 September 2026. 50 is the 9 August run's miss count, three runs back — a
+correction that had itself gone stale, found by the first full read
+under this file's stamp. The current figure is in
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt) and agrees with
+the "47 of the 67" below.) Recomputing needs the corpus, which is not
 in this repository. The script that counts all of this is
 [analysis/tools/audit_frame_loss.py](analysis/tools/audit_frame_loss.py),
 so you do not have to take the number on trust. Three more checks came
@@ -629,7 +635,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1347 unit tests, 35 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 498 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
+Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1358 unit tests, 35 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 498 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
@@ -672,7 +678,7 @@ The project grows one small increment per session, each one branch, one pull req
 - [ARCHITECTURE.md](ARCHITECTURE.md), how the pieces fit, written so a newcomer understands it in five minutes.
 - [MODEL_CARD.md](MODEL_CARD.md), what the measurement does, who it has been tested on, and what it does not do.
 - [decisions/](decisions/), architecture decision records.
-- [AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md), the August 2026 audit, and [REMEDIATION.md](REMEDIATION.md), what has been fixed since.
+- [AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md) and [docs/audit/2026-09-06-audit-report.md](docs/audit/2026-09-06-audit-report.md), the two audits, and [REMEDIATION-2026-09.md](REMEDIATION-2026-09.md), the live fix ladder. `REMEDIATION.md` is the retired August one and says so at its own first line.
 
 ## License
 

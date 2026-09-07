@@ -1,6 +1,8 @@
 # Contributing
 
-Written 15 August 2026, against the state of `main` on that date.
+Written 15 August 2026, revised 7 September 2026.
+
+Read in full on 7 September 2026, claims `ba04d655`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 blinklab is a solo learning project built in public. It is not looking for
 feature contributions, and there is no roadmap row for this file: it exists
@@ -81,18 +83,27 @@ Three rules hold, and each was learned by breaking:
 
 ## Where the documents are
 
-| File              | What it is                                                |
-| ----------------- | --------------------------------------------------------- |
-| `README.md`       | what this measures, and the results with their history    |
-| `STATE.md`        | the save state: where things stand right now              |
-| `ROADMAP.md`      | the numbered increments and their amendments              |
-| `SPEC.md`         | the contracts between modules                             |
-| `ARCHITECTURE.md` | why `src/core` is pure and what that buys                 |
-| `LEARNING.md`     | one concept per increment, the reason this project exists |
-| `docs/log.md`     | one dated line per increment                              |
-| `docs/UI.md`      | every element the page can show, and every string         |
-| `REMEDIATION.md`  | the fix ladder after the August 2026 audit                |
-| `NEEDS-REVIEW.md` | decisions the audit parked for the owner                  |
+| File                     | What it is                                                     |
+| ------------------------ | -------------------------------------------------------------- |
+| `README.md`              | what this measures, and the results with their history         |
+| `STATE.md`               | the save state: a generated status block, then one entry a row |
+| `ROADMAP.md`             | the numbered increments and their amendments                   |
+| `SPEC.md`                | the contracts between modules                                  |
+| `ARCHITECTURE.md`        | why `src/core` is pure and what that buys                      |
+| `LEARNING.md`            | one concept per increment, the reason this project exists      |
+| `MODEL_CARD.md`          | what it measures, where it fails, and on which instrument      |
+| `PROJECT.md`             | the product intent, changed only when the intent changes       |
+| `CHANGELOG.md`           | the shape of the thing at each release                         |
+| `DATASETS.md`            | every public dataset assessed, and why none cleared the bar    |
+| `docs/UI.md`             | every element the page can show, and every string              |
+| `REMEDIATION-2026-09.md` | **the live fix ladder**, after the September 2026 audit        |
+
+Three documents in earlier versions of this table are retired and say so at
+their own first line: `REMEDIATION.md` and `NEEDS-REVIEW.md`, the August
+trackers, and `docs/log.md`, which promised one dated line per increment and
+stopped getting them. They are kept rather than deleted, which is the rule
+this project applies to a superseded measurement. This table listed all three
+as current until 7 September 2026, one row after they were retired.
 
 ## Security
 

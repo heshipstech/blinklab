@@ -2451,3 +2451,57 @@ which the test enforces rather than assumes. A notice further down is
 a notice the reader reaches after believing the page. One of these
 files already demonstrated the problem: it carried a correction of its
 own opening sentence, several lines below that sentence.
+
+## A stamp for reading is not the same as a stamp for editing
+
+Three documents here already carried a stamp saying when they were
+written or revised, and a test turned the build red when a stamped file
+changed without the date moving. That is a good rule and it catches a
+real thing: a document edited and left dated wrongly.
+
+It cannot catch what the audit actually found. The findings were
+sentences that were true when somebody wrote them and false by the time
+somebody read them, sitting in files that had been edited many times
+since. Every one of those edits bumped the revised stamp. The stamp was
+working perfectly and was blind to the problem, because the missing act
+was never editing. It was READING the whole thing and confirming it
+still holds.
+
+So this stamp is held to a different thing: the document's claim text,
+which is the prose with its generated blocks, its count figures and its
+own revised date normalised away. A number the machine updated is not
+something a human read would have caught, and a gate that fires every
+time a test count moves becomes a formality inside a week. A changed
+sentence is a different matter, and that is what goes stale.
+
+Two documents are deliberately not on the list. STATE.md and LEARNING.md
+are append-only logs: an old entry does not become false when a new one
+lands, so demanding a full re-read on every append would make the stamp
+meaningless for exactly the reason above.
+
+The first read found nine things. A security policy claiming a
+Content-Security-Policy was something this repository could not fix,
+which is wrong — a policy can go in a meta tag. Three documents pointing
+at a tracker retired an hour earlier by the previous increment, which
+had retired it without updating anything that pointed at it. A third,
+unpinned copy of the gate list, missing four gates and crediting them to
+a file that never held them. A README sentence correcting a stale
+number, itself three runs out of date. A card saying a figure had been
+wrong twice when it has been corrected four times.
+
+Not one of those was written carelessly. Every one was accurate on the
+day it was typed. That is the whole argument for the stamp: in a
+repository that corrects itself often, the corrections go stale too, and
+nothing but a read catches that.
+
+The mechanism cannot be stronger than the read behind it, which is why
+the stamp says who made it. This first pass was automated, and that is
+weaker evidence than the maintainer's own read. Writing "read in full"
+without having read in full would be the worst defect in this
+repository, because it would certify.
+
+One thing was caught by a guard rather than by care: the new tool was
+first named outside the project's own convention for guard filenames, so
+the check that demands every guard have a sibling test could not see it.
+The count that has to be bumped by hand is what surfaced it. A pin whose
+only job is to make you look is worth having.

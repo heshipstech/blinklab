@@ -2,6 +2,8 @@
 
 The product requirements document (PRD). Short on purpose. Updated only when the product intent changes.
 
+Read in full on 7 September 2026, claims `5af2f7ac`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+
 ## Problem statement
 
 Eye signals such as blinks, eyelid aperture and gaze carry real information, but most tools that measure them are closed, complex, or both.
@@ -44,6 +46,24 @@ d. A stranger can clone and run it in under 5 minutes.
   this page intercepts that request before it leaves the browser.
   Measured and recorded in ADR-0004.
 - Explainability beats accuracy whenever the two compete.
+
+> **Two lines in this file are under an open decision, and until it is
+> made this file should be read with that in mind.** The line above and
+> "Not optimised for accuracy over teachability" under Non goals both
+> say explainability wins; roadmap amendment 16, accepted 5 September
+> 2026, sets the era's goal as raising accuracy to the most this class
+> of hardware can deliver. Those may not conflict — pursuing accuracy
+> hard while refusing an unexplainable method is a coherent position —
+> but nothing here says so. Separately, "Mobile support, until an ADR
+> argues for it" under Out of scope is contradicted by shipped work: the
+> phone surface of roadmap row 14.0b is merged, a phone viewport runs in
+> the end-to-end suite, and MODEL_CARD records that sessions behind the
+> published numbers came from phones. The ADR that this file's own
+> wording requires was never written. Resolving both is ADR-0005,
+> remediation D13, and it is a decision about intent rather than a fact
+> in the record, so it waits for the owner rather than being settled by
+> whoever noticed. Noted 7 September 2026 by the first full read under
+> the stamp at the foot of this file.
 
 ## Out of scope
 
