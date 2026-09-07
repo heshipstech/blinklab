@@ -1,0 +1,87 @@
+WHAT THE FIXTURE'S ROUNDING IS WORTH, AND A PREDICTION
+======================================================
+
+Written 7 September 2026 (roadmap 10.10c4e, ladder B12, audit F-094),
+before any number below is computed, in the predict-then-verify
+discipline.
+
+WHY IT EXISTS
+-------------
+docs/aperture-noise-floor.txt publishes this instrument's stillness
+figure: the median absolute frame-to-frame change in aperture, 0.020
+mm per eye, measured over the 300 committed frames of
+test/fixtures/session-01.json. Every millimetre-scale judgement in this
+project is read against that floor. The shallow-blink work talks in 0.4
+mm bands; the validation round chased 0.1 mm disagreements.
+
+That fixture does not store what the landmarker produced. It stores
+each coordinate rounded to four decimal places of normalised image
+coordinate, to keep the file to a fifth of its full-precision size
+(src/core/fixtureRecording.ts). So part of the measured wobble is the
+eye, and part of it is the grid the numbers were written onto, and the
+published floor does not say how much is which.
+
+If the grid is coarse relative to the floor, then the floor is partly a
+measurement of the file format, and a reader comparing a 0.1 mm claim
+against it deserves to know that.
+
+THE METHOD, FIXED NOW
+---------------------
+Arithmetic over the committed fixture, using the real functions.
+
+One rounding step is 1e-4 of a normalised coordinate. In pixels at the
+fixture's own 1280 by 720 that is 0.128 horizontally and 0.072
+vertically. The aperture is the MEAN of two near-vertical chords, so
+moving one chord endpoint by one step moves the mean by about half a
+step, and the millimetre conversion is that pixel amount times
+IRIS_DIAMETER_MM over the fixture's own median iris width in pixels,
+which is measured rather than assumed.
+
+The iris width is measured with irisWidthPx, the same function the
+instrument uses, over the same frames and index sets the noise floor
+row used. No new pipeline, no new convention.
+
+THE PREDICTION
+--------------
+Written before running it.
+
+1. The vertical step is the one that matters, 0.072 px, because the
+   chords the aperture averages are near vertical. The horizontal step
+   is larger in pixels, 0.128, and irrelevant to the numerator.
+
+2. The fixture's median iris width lands between 25 and 40 pixels: it
+   is a webcam close-up at 1280 by 720, and an iris much outside that
+   range would mean the frames are not what the noise floor row
+   described.
+
+3. One quantum of stored precision is therefore worth between 0.010
+   and 0.017 mm of aperture, taking the half-step for the mean of two
+   chords and converting with the measured iris width.
+
+4. The published floor of 0.020 mm is therefore between about ONE and
+   TWO quanta. That is the finding this row exists to state, and the
+   consequence follows either way: the stillness floor is the same
+   order as the grid the fixture is written on, so it bounds the
+   instrument and the storage together and cannot separate them.
+
+5. The audit's phrasing is "two rounding quanta". If the measurement
+   lands nearer one than two, the audit's figure is recorded as
+   approximate rather than adopted, the same as the yaw figure in the
+   row before this one.
+
+WHAT THIS ROW DOES NOT DO
+-------------------------
+It does not re-record the fixture at full precision. That is the
+separate row the ladder names, and it needs a recording session rather
+than arithmetic. This row states what the existing floor is worth so
+that a reader is not misled by it in the meantime, and so that whoever
+re-records knows what improvement to expect.
+
+It also does not claim the floor is WRONG. A bound that includes the
+storage grid is still an upper bound on the instrument's own wobble,
+which is the direction that matters: the eye is at least as still as
+the floor says, possibly stiller.
+
+THE RESULT
+----------
+Not yet run. The next commit fills this section in.
