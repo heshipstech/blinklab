@@ -2229,3 +2229,54 @@ Sweeping the rate with clip length held constant found the real boundary. Everyt
 Three things are worth keeping from that. A roadmap row is a hypothesis with a shelf life, and one written against a version of the code that has since been fixed can be describing a defect that no longer exists. The prediction is what turns that from a silent wrong fix into a recorded correction, because a fix aimed at a mechanism that is not there is a change to the instrument justified by nothing. And holding one variable still, clip length here, is what separates "fast clips break" from "short clips break" for the cost of one extra run.
 
 The shipped rule also deviates from the shape the prediction pre-registered, and that is stated in the same file rather than left to be noticed. A half of the smallest gap fixes every rate too and costs half the probe attempts, but half of a gap that is itself two periods is exactly one period, which is the pathology being escaped. A quarter is under one period even when the estimate it comes from is four times too large. The price is attempts at ordinary rates, from 38 to 45 of a 60 budget at 30 frames per second, and that price now has a row of its own rather than a note nobody will read again.
+
+## The cheaper fix was the one that switched off a refusal
+
+A calibration rule was costing more probes than it needed. The stepper
+finds a clip's frame rate by seeking forward in small steps and
+recording where it lands, and it was stepping by a quarter of the
+smallest gap it had seen. A quarter is safe and slow: three probes in
+four land on the frame already showing, cost an attempt, and teach
+nothing.
+
+Measuring the cost against rate produced a surprise and then a
+correction. The prediction, written first, said the cost would be flat
+across rate. It falls, from 51 seeks of a 60 budget at 24 frames per
+second to 20 at 300, because the quarter is taken from a raw gap that
+at slow rates already is one period, while at fast rates a floor binds
+instead. Three of the five predictions failed together, which is worth
+more than three that held: the reason they failed is the mechanism.
+
+The finding none of them anticipated was at the bottom of the table.
+At 20 frames per second and below the budget ran out. Calibration
+gathered eleven frames at 20 and eight at 15, where the design asks
+for twelve, and then calibrated on what it had. Twelve rather than the
+original six is what makes one short gap a minority the rules can
+recognise, and that number came out of an audit finding about a 20
+frames per second clip reported as 40. So the protection was quietly
+thinnest at exactly the rate the protection was written for. Nothing
+was wrong on any clip that had been run; the guard was simply not as
+strong as its own comment claimed, in a place the comment did not
+think to look.
+
+The part worth keeping is what happened next. The obvious fix, letting
+the probe step past its cap once a period is known, halves the cost at
+the slow end and solves the whole problem. It was measured against the
+rest of the suite rather than against the sweep it was written for,
+and it turned a refusal off. A clip of 201 frames carrying one frame
+25 ms out of place had been refused by name as variable rate; with the
+larger step the probe strides over the odd frame, calibration never
+lands on it, the remaining gaps look perfectly regular, and the run
+reports 200 frames at a confident 25 frames per second with nothing
+flagged. A cheaper instrument that cannot see a bad clip is not a
+saving.
+
+The cap was there for a reason its own comment did not give. It said
+the probe must not leap further than the constant chosen to be safe
+for ordinary rates. What it was actually doing was keeping the probe
+small enough to land on anomalies, which is what makes the
+variable-rate refusal reachable at all. That reason is now written
+where the cap is. The general shape: a bound whose stated reason is
+weaker than its real job will eventually be relaxed by someone who
+reads the stated reason, and the test that catches it is the one for a
+different feature entirely.
