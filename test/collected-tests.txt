@@ -1,0 +1,17 @@
+# How many tests `npx vitest list` collects in this repository.
+#
+# Roadmap 10.0b1, ladder B15, and the twin of what 10.1g2 fixed one
+# language over. The published figure used to come from a grep for
+# "it(" and "test(" in tools/resultGuard.mjs, and a grep counts
+# CALLS. vitest runs cases: a table written as a loop around one call
+# is one call and many cases, so the grep read 1213 where the runner
+# collected 1238, and every document saying "1213 unit tests ... all
+# green" described a run that never had 1213 tests in it.
+#
+# Counting cases means loading every test file, which a guard cannot
+# do from inside the run it would be counting. So the number lives
+# here: tools/resultGuard.mjs reads this file, and
+# `npm run counts:check` asks vitest for its own listing and holds
+# this file to it. Neither side can drift alone, and the one number
+# below is the one the documents publish.
+1240
