@@ -196,6 +196,22 @@ export const BASELINE_MEDIAN_PERCENTILE = 50;
 // Beyond these head angles, eye landmarks foreshorten and occlude
 // enough that measurements would be guesses. Symmetric on purpose,
 // so axis sign conventions never matter to the gate.
+//
+// INSIDE them the measurement is not pose-invariant either, and the
+// gate does not claim it is. Roadmap 10.10c4c, ladder B12, measured in
+// docs/pose-aperture-bias.txt: apertureMm is a VERTICAL lid opening
+// divided by a HORIZONTAL iris width, so a nod foreshortens the
+// numerator and a turn foreshortens the denominator, and neither
+// cancels. At these limits the published millimetre reads 6.03 percent
+// LOW at 20 degrees of pitch and 10.34 percent HIGH at 25 of yaw, a
+// span of 16.4 points across the accepted region. Roll is free to nine
+// decimals, which is why it can be the loosest limit here.
+//
+// The gate is a refusal, not a correction: a frame inside these
+// numbers is measured as though the head were straight, and the error
+// above is the price. Dividing the chord by cos(pitch) needs a
+// frame-level pose estimate trustworthy enough to divide by, which is
+// a later row's decision.
 export const POSE_LIMITS = {
   maxPitchDeg: 20,
   maxYawDeg: 25,

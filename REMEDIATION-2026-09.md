@@ -996,6 +996,18 @@ enabled false`.
       12 to 28 percent this item quotes is a subset of the real spread
       rather than its edges, which run 5.4 to 36.8 across ordinary
       blink durations.
+      **Four of six done:** 7 September 2026, roadmap 10.10c4c adds
+      F-086. `src/core/poseBias.ts` feeds a synthetic rotated eye
+      through the real `apertureMm`: 6.03 percent low at the gate's 20
+      degrees of pitch, 10.34 percent high at its 25 of yaw, a 16.4
+      point span across the accepted region, roll free to nine
+      decimals. Stated where the gate is defined, where the aperture is
+      computed, and in SPEC.md. A correction to this item's own text:
+      the yaw figure is 10.34 percent at the gate's limit, not 12 —
+      twelve needs 26.8 degrees, which the gate refuses — and the
+      likeliest home for the difference is the perspective term an
+      orthographic projection does not model. The fixture's storage
+      precision, F-094, is roadmap 10.10c4e.
 
 - [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2

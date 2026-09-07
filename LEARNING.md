@@ -1904,3 +1904,45 @@ file rather than on the diff, and it should: one that could be talked
 out of firing by an argument about the diff would eventually be talked
 out of firing by a wrong one. So the caveat is written anyway, with the
 one command a reader can run to see that the movement was words.
+
+## The ruler and the thing it measures do not turn together
+
+Every millimetre this project publishes is a vertical distance divided
+by a horizontal one: how far the eyelid is open, in pixels, over how
+wide the iris is, in pixels. Dividing by the iris is what makes the
+number mean something across sessions, because it cancels how far away
+the face is. Move closer and both grow together.
+
+Turn your head and they do not. A nod foreshortens the vertical
+opening and leaves the horizontal ruler alone. A turn foreshortens the
+ruler and leaves the opening alone. So the two shrink on different
+axes, in opposite directions for the ratio, and nothing cancels.
+
+The instrument already refuses a frame beyond twenty degrees of nod or
+twenty-five of turn. Inside those limits it publishes every frame as
+though the head were straight. Measured through the real function with
+a synthetic eye of known geometry, that costs six per cent low at the
+nod limit and ten per cent high at the turn limit: a spread of sixteen
+points on a quantity whose own calibration check refuses a session for
+a twenty-five per cent disagreement. Tilting your head sideways, the
+loosest limit of the three, costs exactly nothing, and now it is clear
+why it can afford to be the loosest.
+
+Two of six predictions moved this time, and both are the kind that only
+turn up because the prediction was written first.
+
+The smaller one: I expected the nod and the turn to cancel neatly when
+they happen together, cos over cos. They cancel less than that, because
+a nod pushes the eyelid chord's ends apart in depth and a turn then
+swings some of that depth into width, so the chord picks up a sideways
+component and is longer than the nod alone leaves it. The exact factor
+is a square root with two terms in it rather than one cosine, and it is
+in the test where anyone can check it by hand.
+
+The larger one: the audit this row came from says a turn costs up to
+twelve per cent, and the measurement says ten point three. Twelve would
+need nearly twenty-seven degrees, which the gate refuses. That is
+recorded as not reproduced rather than quietly adopted, with the
+likeliest explanation named — this projection has no camera distance in
+it, and a real lens does. Somebody who wants to settle it will have to
+state one.
