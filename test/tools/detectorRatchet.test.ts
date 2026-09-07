@@ -114,6 +114,61 @@ describe("the source list is real", () => {
   });
 });
 
+describe("a caveat survives the rebase merge that rewrites its sha", () => {
+  // Roadmap 10.10c4c. The trap this closes cost a red main.
+  //
+  // This repository merges by rebase, so a commit's sha on a branch is
+  // not its sha on main. A caveat written in a pull request can only
+  // name the branch sha, which stops existing the moment the pull
+  // request lands — so the ratchet went green on the branch and red on
+  // main, for every change that touches a detector source. The result
+  // file had already noticed this in prose: "a rebase merge does not
+  // let this pull request know in advance".
+  //
+  // The subject survives the rebase. Matching on EITHER the sha prefix
+  // or the exact subject keeps the guard's whole purpose — a detector
+  // change must be declared in writing — while letting the declaration
+  // be written before the sha it will end up with is known.
+
+  const caveat = (body: string): string =>
+    `Built from commit ${"a".repeat(40)}\n\n${STALE_MARKER}, 1 January:\n${body}`;
+
+  it("accepts a caveat naming the sha, as it always did", () => {
+    const verdict = ratchetVerdict(caveat("  1234567 feat: something"), [
+      { sha: "1234567890abcdef", subject: "feat: something" },
+    ]);
+    expect(verdict.ok, verdict.why).toBe(true);
+  });
+
+  it("accepts a caveat naming the subject when the sha has moved", () => {
+    // The rebase case: the caveat was written against the branch sha
+    // and the commit now has another.
+    const verdict = ratchetVerdict(caveat("  feat: something"), [
+      { sha: "fedcba0987654321", subject: "feat: something" },
+    ]);
+    expect(verdict.ok, verdict.why).toBe(true);
+  });
+
+  it("still refuses a caveat that names neither", () => {
+    // The guard is not weakened: an undeclared detector change is
+    // still red, and a caveat about some other commit does not count.
+    const verdict = ratchetVerdict(caveat("  feat: something else"), [
+      { sha: "fedcba0987654321", subject: "feat: something" },
+    ]);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.why).toContain("does not name");
+  });
+
+  it("does not accept an empty subject as naming anything", () => {
+    // A commit with no subject would otherwise match every caveat,
+    // because every string contains the empty string.
+    const verdict = ratchetVerdict(caveat("  nothing to do with it"), [
+      { sha: "fedcba0987654321", subject: "" },
+    ]);
+    expect(verdict.ok).toBe(false);
+  });
+});
+
 describe("the repository itself", () => {
   it("holds a coherent ratchet right now", () => {
     if (isShallowRepo(root)) {
