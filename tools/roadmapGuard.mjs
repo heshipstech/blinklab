@@ -146,3 +146,168 @@ export function staleStartables(roadmapText) {
   }
   return stale;
 }
+
+// Roadmap 10.0b8, from amendment 20. The guard above holds a
+// claimed-startable row to its own LINE: the row is open, the row is
+// unmarked. A row can pass both while the header of its PHASE forbids
+// it from beginning at all, and three rows did exactly that on the day
+// that guard shipped.
+//
+// The Check is what a row must prove. The gate is whether it may
+// begin. Reading one has never told anybody the other, which is why
+// judging startable clause by clause — the fix amendment 19 was proud
+// of — still named three rows that could not start.
+//
+// The gate is prose, so this reads prose, and it is written to fail
+// loudly wherever it cannot: a gate parsed to an empty list is a gate
+// that permits everything, and it looks exactly like a gate that
+// permits nothing to be wrong.
+
+// Both patterns allow a dot inside the capture, which is the whole
+// difficulty: every row number has one, so a "not a dot" class stops
+// at "10." and reads no gate at all — which is the failure mode this
+// row exists to prevent, arriving inside the fix for it. The lists
+// terminate on their sentence instead: "are ticked" for one, and a
+// period followed by whitespace for the other, which "12.0a-b" and
+// "12.17's tool" cannot fake. Both spans wrap across lines, so both
+// patterns are dot-all.
+const GATE =
+  /GATE[^:]*:\s*no signal row here starts before ([\s\S]+?)\s+are\s+ticked/;
+const EXEMPT = /The instrument rows are exempt[^:]*:\s*([\s\S]+?)\.(?:\s|$)/;
+
+/**
+ * The ladder split at its phase headings.
+ *
+ * Split on a regex rather than on the literal "\n## Phase " because a
+ * document can begin with one, and a reader that quietly saw no
+ * phases would report no gates, which reads exactly like a ladder
+ * with nothing to enforce.
+ */
+function phaseSections(roadmapText) {
+  return roadmapText.split(/(?:^|\n)## Phase /).slice(1);
+}
+
+/**
+ * The rows one item of a gate's prose names.
+ *
+ * The ladder writes runs as `10.12a-c`, so an item is either a row or
+ * a lettered range of them. Anything else THROWS. The alternative is
+ * to skip what cannot be read, and a gate that skips is a gate with
+ * holes exactly where somebody wrote something unusual, which is
+ * where the interesting rows live.
+ */
+export function expandRowRange(item) {
+  const plain = item.match(/^(\d+(?:\.\d+)*[a-z]?\d*)$/);
+  if (plain !== null) {
+    return [plain[1]];
+  }
+  const range = item.match(/^(\d+(?:\.\d+)*)([a-z])-([a-z])$/);
+  if (range !== null) {
+    const [, base, from, to] = range;
+    const start = from.charCodeAt(0);
+    const end = to.charCodeAt(0);
+    if (end >= start) {
+      const rows = [];
+      for (let code = start; code <= end; code += 1) {
+        rows.push(`${base}${String.fromCharCode(code)}`);
+      }
+      return rows;
+    }
+  }
+  throw new Error(
+    `ROADMAP.md: a gate names "${item}", which this reader cannot read as ` +
+      "a row or a lettered range. A gate parsed to nothing is a gate that " +
+      "permits everything, so it refuses rather than skipping",
+  );
+}
+
+/** Split a prose list — "a, b and c" — into its items. */
+function listItems(text) {
+  return text
+    .split(/,\s*|\s+and\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+/**
+ * Every phase whose header carries a gate, with what it waits on and
+ * what it lets through.
+ *
+ * `exemptOther` holds the items of the exemption list that are not
+ * whole rows — Phase 12 exempts "12.17's tool", which is a tool and
+ * not the row, so reading it as row 12.17 would open the gate for a
+ * row nobody exempted. Reported rather than dropped, so a test can
+ * pin what the ladder is getting away with.
+ */
+export function phaseGates(roadmapText) {
+  const gates = [];
+  for (const section of phaseSections(roadmapText)) {
+    const phase = (section.split("\n")[0] ?? "").trim();
+    const header = section.split("\n- [")[0] ?? "";
+    const gate = header.match(GATE);
+    if (gate === null) {
+      continue;
+    }
+    const prerequisites = listItems(gate[1]).flatMap(expandRowRange);
+    const exempt = header.match(EXEMPT);
+    const exemptRows = [];
+    const exemptOther = [];
+    for (const item of exempt === null ? [] : listItems(exempt[1])) {
+      try {
+        exemptRows.push(...expandRowRange(item));
+      } catch {
+        exemptOther.push(item);
+      }
+    }
+    gates.push({ phase, prerequisites, exemptRows, exemptOther });
+  }
+  return gates;
+}
+
+/** Which phase a row sits under, by its number, or null. */
+function phaseOf(roadmapText, id) {
+  for (const section of phaseSections(roadmapText)) {
+    for (const line of section.split("\n")) {
+      const row = line.match(ROW);
+      if (row !== null && row[2] === id) {
+        return (section.split("\n")[0] ?? "").trim();
+      }
+    }
+  }
+  return null;
+}
+
+/** Whether a row is ticked in the ladder. */
+function ticked(roadmapText, id) {
+  const box = roadmapRow(roadmapText, id).match(ROW);
+  return box !== null && box[1] !== " ";
+}
+
+/**
+ * The claimed-startable rows whose phase will not let them start,
+ * each with the prerequisite that is missing.
+ *
+ * A row is let through when its phase carries no gate, when the
+ * header exempts it by name, or when every row the gate names is
+ * ticked. Otherwise the FIRST unticked prerequisite is reported,
+ * because naming one thing to go and do is more use than naming
+ * seven.
+ */
+export function gatedStartables(roadmapText) {
+  const gates = phaseGates(roadmapText);
+  const blocked = [];
+  for (const id of startableClaims(roadmapText)) {
+    const phase = phaseOf(roadmapText, id);
+    const gate = gates.find((one) => one.phase === phase);
+    if (gate === undefined || gate.exemptRows.includes(id)) {
+      continue;
+    }
+    const waiting = gate.prerequisites.find(
+      (need) => !ticked(roadmapText, need),
+    );
+    if (waiting !== undefined) {
+      blocked.push({ id, why: `its phase gate waits on ${waiting}` });
+    }
+  }
+  return blocked;
+}

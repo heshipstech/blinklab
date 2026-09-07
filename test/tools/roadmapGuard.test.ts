@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   blendshapesEnabled,
   blockedRows,
+  expandRowRange,
+  gatedStartables,
+  phaseGates,
   roadmapRow,
   staleStartables,
   startableClaims,
@@ -168,5 +171,146 @@ describe("the ladder's own claim about where work can start", () => {
         .map((row) => `${row.id} ${row.why}`)
         .join("; ")}`,
     ).toEqual([]);
+  });
+});
+
+// Roadmap 10.0b8, from amendment 20. Amendment 19's guard holds a
+// claimed-startable row to its own LINE: open, unmarked. A row can
+// pass that while the header of its PHASE forbids it from beginning at
+// all, and three rows did exactly that on the day the guard shipped.
+//
+// The Check is what a row must prove. The gate is whether it may
+// begin. Reading one has never told anybody the other.
+
+describe("reading a row range out of the ladder's prose", () => {
+  it("expands a lettered range", () => {
+    expect(expandRowRange("10.12a-c")).toEqual(["10.12a", "10.12b", "10.12c"]);
+    expect(expandRowRange("10.13a-b")).toEqual(["10.13a", "10.13b"]);
+  });
+
+  it("passes a plain row through unchanged", () => {
+    expect(expandRowRange("13.8b")).toEqual(["13.8b"]);
+    expect(expandRowRange("10.11")).toEqual(["10.11"]);
+  });
+
+  it("refuses something it cannot read rather than returning nothing", () => {
+    // A gate parsed to an empty list is a gate that permits
+    // everything, which is worse than no gate at all because it looks
+    // like one. Roadmap 10.0b3 learned this about a different guard.
+    expect(() => expandRowRange("12.17's tool")).toThrow(/cannot read/);
+    expect(() => expandRowRange("10.12c-a")).toThrow(/cannot read/);
+  });
+});
+
+describe("the gate at the head of a phase", () => {
+  const gates = phaseGates(roadmap);
+
+  it("finds the one Phase 12 carries", () => {
+    const twelve = gates.find((gate) => gate.phase.startsWith("12."));
+    expect(twelve).toBeDefined();
+    expect(twelve?.prerequisites).toEqual([
+      "10.11",
+      "10.12a",
+      "10.12b",
+      "10.12c",
+      "10.13a",
+      "10.13b",
+      "10.14",
+      "13.2",
+      "13.8b",
+    ]);
+  });
+
+  it("reads the exemptions the header names", () => {
+    const twelve = gates.find((gate) => gate.phase.startsWith("12."));
+    expect(twelve?.exemptRows).toEqual([
+      "12.0a",
+      "12.0b",
+      "12.1",
+      "12.2",
+      "12.3",
+      "12.15",
+      "12.16",
+    ]);
+  });
+
+  it("keeps the exemption that is not a whole row, rather than dropping it", () => {
+    // "12.17's tool" exempts a TOOL and not the row, so it must not
+    // become an exemption for 12.17. Reported rather than silently
+    // discarded, because a guard that quietly drops what it cannot
+    // parse is a guard nobody can audit.
+    const twelve = gates.find((gate) => gate.phase.startsWith("12."));
+    expect(twelve?.exemptOther).toEqual(["12.17's tool"]);
+    expect(twelve?.exemptRows).not.toContain("12.17");
+  });
+
+  it("finds no gate on a phase that carries none", () => {
+    expect(gates.find((gate) => gate.phase.startsWith("0."))).toBeUndefined();
+  });
+});
+
+describe("a claimed row its phase will not let start", () => {
+  const LADDER = [
+    "## Phase 9. A phase with a gate",
+    "",
+    "GATE, from amendment 1: no signal row here starts before 8.1 and 8.2 are",
+    "ticked. The instrument rows are exempt and are the gate's other half: 9.5.",
+    "",
+    "- [x] 8.1 Done.",
+    "- [ ] 8.2 Not done.",
+    "- [ ] 9.4 A gated row.",
+    "- [ ] 9.5 An exempt row.",
+    "",
+  ].join("\n");
+
+  it("is reported, with the prerequisite that is missing", () => {
+    const text = `${LADDER}Rows 9.4 remain startable and are not marked.`;
+    expect(gatedStartables(text)).toEqual([
+      { id: "9.4", why: "its phase gate waits on 8.2" },
+    ]);
+  });
+
+  it("says nothing about a row the header exempts by name", () => {
+    const text = `${LADDER}Rows 9.5 remain startable and are not marked.`;
+    expect(gatedStartables(text)).toEqual([]);
+  });
+
+  it("says nothing once every prerequisite is ticked", () => {
+    const text = `${LADDER.replace("- [ ] 8.2", "- [x] 8.2")}Rows 9.4 remain startable and are not marked.`;
+    expect(gatedStartables(text)).toEqual([]);
+  });
+
+  it("says nothing about a row in a phase with no gate", () => {
+    const text = [
+      "## Phase 7. No gate here",
+      "",
+      "- [ ] 7.1 A row.",
+      "",
+      "Rows 7.1 remain startable and are not marked.",
+    ].join("\n");
+    expect(gatedStartables(text)).toEqual([]);
+  });
+
+  it("holds the ladder to its own gates", () => {
+    const gated = gatedStartables(roadmap);
+    expect(
+      gated,
+      `the startable sentence names rows their phase will not let start: ${gated
+        .map((row) => `${row.id} ${row.why}`)
+        .join("; ")}`,
+    ).toEqual([]);
+  });
+
+  it("would have caught the three rows amendment 20 records", () => {
+    // The whole point, stated against the real ladder. Claiming 12.7,
+    // whose every Check clause is satisfiable here, is refused by the
+    // gate — which is what amendment 19's guard could not see and
+    // what cost three rows on the day it shipped.
+    const claimed = roadmap.replace(
+      "Row 12.16 remains startable and is not marked",
+      "Rows 12.7 and 12.16 remain startable and are not marked",
+    );
+    expect(staleStartables(claimed)).toEqual([]);
+    expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
   });
 });

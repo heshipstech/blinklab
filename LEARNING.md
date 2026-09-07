@@ -2848,3 +2848,41 @@ is the one people read, because it is next to the work. The ordering
 rule is in a header nobody re-reads after the first week. Any process
 that relies on remembering the header will fail, and the failure will
 look exactly like competence: correct work, green tests, wrong order.
+
+## A guard that reads nothing reports a clean bill of health
+
+The previous entry describes a rule that lives in a phase header
+rather than in a row, and three rows that broke it because nobody
+re-reads a header. This entry is about building the machine that
+reads it, and about the mistake made while building it.
+
+The gate is prose. It names the rows that must land first, and it
+writes runs of them the way people write runs: `10.12a-c`, `10.13a-b`.
+So the reader has to expand those, and the first decision is what to
+do with an item it cannot parse. The tempting answer is to skip it,
+because skipping keeps the guard running. It is the wrong answer.
+A gate parsed to an empty list is a gate that permits everything, and
+it looks exactly like a gate nothing is violating. So an unreadable
+item throws.
+
+That decision paid immediately, because the reader was itself written
+wrong. Both patterns captured with a "not a dot" character class, the
+usual way to stop a regular expression at the end of a sentence. Every
+row number in this project contains a dot. The patterns matched
+nothing, the guard found no gates, and it reported a ladder with
+nothing to enforce — the precise failure the row exists to prevent,
+arriving inside the fix for it.
+
+What caught it was not the verdict. The verdict was green, and would
+have stayed green. It was caught because the tests pin the parsed
+prerequisite list itself: nine specific row numbers, in order. A test
+that had only asserted "no violations" would have passed on a reader
+that read nothing.
+
+That is the transferable part. When a guard's job is to find
+violations, testing that it finds none is nearly free of information,
+because a broken guard also finds none. Test what it PARSED, not only
+what it concluded, and give it a case where it must find something.
+This one has both: the real ladder must come back clean, and a
+deliberately doctored copy claiming a gated row must come back naming
+that row.

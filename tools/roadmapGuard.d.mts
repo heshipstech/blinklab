@@ -20,3 +20,22 @@ export function startableClaims(roadmapText: string): string[];
 export function staleStartables(
   roadmapText: string,
 ): { id: string; why: string }[];
+
+/** One phase header's gate: what it waits on and what it lets through. */
+export type PhaseGate = {
+  phase: string;
+  prerequisites: string[];
+  exemptRows: string[];
+  exemptOther: string[];
+};
+
+/** The rows one item of a gate's prose names. Throws on an unreadable item. */
+export function expandRowRange(item: string): string[];
+
+/** Every phase whose header carries a gate. */
+export function phaseGates(roadmapText: string): PhaseGate[];
+
+/** Claimed-startable rows whose phase will not let them start. */
+export function gatedStartables(
+  roadmapText: string,
+): { id: string; why: string }[];
