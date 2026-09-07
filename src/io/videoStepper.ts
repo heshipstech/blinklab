@@ -1,5 +1,9 @@
 import { findFirstFrame } from "../core/frameSearch";
-import { calibrateStep, type StepCalibration } from "../core/stepCalibration";
+import {
+  calibrateStep,
+  probeStep,
+  type StepCalibration,
+} from "../core/stepCalibration";
 import type { VideoWithFrameCallback } from "./frameLoop";
 
 // Stepping a clip, rather than watching it.
@@ -66,10 +70,13 @@ const CALIBRATION_FRAMES = 12;
 // four of them to cross one frame of a 30 fps clip.
 const CALIBRATION_ATTEMPTS = 60;
 
-// How far each probe moves. Under half a frame even at 60 fps, so it
-// cannot step over one, but four times the old 4 ms so the budget
-// actually reaches several distinct frames.
-const CALIBRATION_STEP_S = 0.01;
+// How far the FIRST probes move, before any landing has been seen.
+// Ten milliseconds reaches several distinct frames at ordinary rates
+// without spending the budget. It is not safe on its own: it is two
+// whole periods at 200 frames per second, which is roadmap 10.14c's
+// finding, so once two landings exist the step is derived from them
+// by probeStep() rather than staying at this value.
+const CALIBRATION_BOOTSTRAP_STEP_S = 0.01;
 
 // How long to let the frame callback answer after `seeked` has
 // already fired, before settling for the less precise reading.
@@ -206,7 +213,7 @@ async function measureFrameInterval(
     // rather than the clip's frame interval. That is exactly how a 60
     // frame clip was once measured as 180.
     if (!landing.exact) {
-      probe += CALIBRATION_STEP_S;
+      probe += probeStep(times, CALIBRATION_BOOTSTRAP_STEP_S);
       continue;
     }
     const mediaTime = landing.mediaTimeSeconds;
@@ -220,9 +227,18 @@ async function measureFrameInterval(
     // the middle of frame zero returns mediaTime zero, so the next
     // probe is computed from zero again and the loop asks for the same
     // instant until it gives up. That is why the first real clip
-    // reported "unknown rate". 4 ms is under half a frame even at 120
-    // frames per second, so this cannot step over one.
-    probe = Math.max(probe, mediaTime) + CALIBRATION_STEP_S;
+    // reported "unknown rate".
+    //
+    // The distance comes from the landings rather than from a
+    // constant. A fixed 10 ms is two whole periods at 200 frames per
+    // second, and a probe that advances by a whole number of periods
+    // lands on every other frame, calibrates at half the rate, and
+    // leaves nothing for the inexact-landing rule to catch, because
+    // every target still falls exactly on a real frame (roadmap
+    // 10.14c, docs/stepper-probe-rate.txt).
+    probe =
+      Math.max(probe, mediaTime) +
+      probeStep(times, CALIBRATION_BOOTSTRAP_STEP_S);
   }
 
   // The rule lives in core so it can be pinned. Its history matters:

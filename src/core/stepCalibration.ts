@@ -194,3 +194,60 @@ export function steppingMetadataRows(
     `# inexact_landings: ${String(witness.inexactLandings)}`,
   ];
 }
+
+/**
+ * The smallest a calibration probe may step, whatever the clip says.
+ *
+ * A clip whose first two landings sit at the same instant would drive
+ * the step to zero, and a loop asking for one moment forever is how
+ * calibration used to hang before it had an origin rule.
+ */
+export const PROBE_STEP_FLOOR_S = 0.002;
+
+/**
+ * How far the next calibration probe should move, given the landings
+ * so far and the bootstrap step to start from.
+ *
+ * Roadmap 10.14c. The step used to be the constant 10 ms throughout,
+ * with a comment claiming it was "under half a frame even at 120
+ * frames per second". That was true of the 4 ms it had been; at 10 ms
+ * it is TWO whole periods at 200 frames per second. A probe advancing
+ * by exactly two periods lands on every other frame, so every gap
+ * calibration sees is two periods, the whole-multiple rule is
+ * satisfied perfectly by that, and the step comes out at twice the
+ * truth. Because two periods is a whole number of frames, every
+ * scheduled target then lands exactly on a real frame and the
+ * inexact-landing refusal cannot see it. Measured before the fix: 200
+ * frames per second calibrated as 100, 240 as 120, 300 as 100.
+ *
+ * A QUARTER of the smallest gap, not a half. The first gap a fast clip
+ * offers may itself be two or three periods, and half of an inflated
+ * gap can land back on exactly one period, which is the pathology
+ * being escaped. A quarter is under one period even when the estimate
+ * it is taken from is four times too large.
+ *
+ * Never larger than the bootstrap step, so a slow clip cannot make the
+ * probe leap further than the constant chosen to be safe for ordinary
+ * rates, and never smaller than the floor.
+ */
+export function probeStep(
+  landingsSeconds: readonly number[],
+  bootstrapSeconds: number,
+): number {
+  // Walked with a running previous rather than by index, so there is
+  // no index that might be missing and no fallback standing in for a
+  // case that cannot happen. Fewer than two landings leaves smallest
+  // infinite, which is the one honest "nothing to learn from yet".
+  let smallest = Number.POSITIVE_INFINITY;
+  let previous: number | null = null;
+  for (const time of landingsSeconds) {
+    if (previous !== null) {
+      smallest = Math.min(smallest, time - previous);
+    }
+    previous = time;
+  }
+  if (!Number.isFinite(smallest)) {
+    return bootstrapSeconds;
+  }
+  return Math.min(bootstrapSeconds, Math.max(smallest / 4, PROBE_STEP_FLOOR_S));
+}

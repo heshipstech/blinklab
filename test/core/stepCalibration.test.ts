@@ -6,6 +6,7 @@ import {
   calibrateStep,
   checkLandings,
   landingRefusal,
+  probeStep,
   steppingMetadataRows,
   variableRateRefusal,
 } from "../../src/core/stepCalibration";
@@ -166,5 +167,44 @@ describe("steppingMetadataRows, the file says what it is", () => {
         inexactLandings: 0,
       })[0],
     ).toBe("# frame_interval_s: unknown");
+  });
+});
+
+describe("how far the next calibration probe moves", () => {
+  // Roadmap 10.14c, predicted in docs/stepper-probe-rate.txt. The step
+  // was a constant 10 ms, which is TWO whole frame periods at 200
+  // frames per second. Every gap the probe then observes is two
+  // periods, the whole-multiple rule is satisfied perfectly by that,
+  // and calibration returns exactly half the rate with zero inexact
+  // landings, so nothing refuses it. Measured before the fix: 200 fps
+  // calibrated as 100, 240 as 120, 300 as 100.
+
+  it("uses the bootstrap step until it has two landings to learn from", () => {
+    expect(probeStep([], 0.01)).toBe(0.01);
+    expect(probeStep([0], 0.01)).toBe(0.01);
+  });
+
+  it("takes a quarter of the smallest gap once it can see one", () => {
+    // A quarter, not a half: the first gap a fast clip shows may
+    // itself be two or three periods, and half of an inflated gap can
+    // land back on exactly one period, which is the pathology.
+    expect(probeStep([0, 0.01, 0.02], 0.01)).toBeCloseTo(0.0025, 9);
+  });
+
+  it("reads the smallest gap, not the first or the last", () => {
+    expect(probeStep([0, 0.04, 0.05, 0.09], 0.01)).toBeCloseTo(0.0025, 9);
+  });
+
+  it("never grows beyond the bootstrap step", () => {
+    // A slow clip must not make the probe leap further than the
+    // constant chosen to be safe for ordinary rates.
+    expect(probeStep([0, 1, 2], 0.01)).toBe(0.01);
+  });
+
+  it("never shrinks below the floor, however strange the clip", () => {
+    // Two frames at the same instant would otherwise drive the step to
+    // zero and the loop would ask for one moment forever.
+    expect(probeStep([0, 0.000001], 0.01)).toBe(0.002);
+    expect(probeStep([0, 0], 0.01)).toBe(0.002);
   });
 });
