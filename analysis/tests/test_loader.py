@@ -13,6 +13,7 @@ import pytest
 from blinklab.loader import (
     COLUMNS,
     LEGACY_COLUMNS,
+    PRE_LINE_COLUMNS,
     PRE_PUPIL_COLUMNS,
     SessionError,
     cohort_commit_line,
@@ -24,6 +25,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "session-fixture.csv"
 HEADER = ",".join(COLUMNS)
 LEGACY_HEADER = ",".join(LEGACY_COLUMNS)
 PRE_PUPIL_HEADER = ",".join(PRE_PUPIL_COLUMNS)
+PRE_LINE_HEADER = ",".join(PRE_LINE_COLUMNS)
 
 
 def write(tmp_path: Path, text: str) -> Path:
@@ -32,11 +34,27 @@ def write(tmp_path: Path, text: str) -> Path:
     return path
 
 
-def a_row(timestamp: int = 1000) -> str:
-    """One valid row: a face, an aperture, and nothing else measured."""
-    cells = [str(timestamp), "true", "60", "7.0"] + [""] * 7
-    cells += ["0", "", "", "", "", "", ""]
-    return ",".join(cells)
+def a_row(timestamp: int = 1000, columns: list[str] | None = None) -> str:
+    """One valid row: a face, an aperture, and nothing else measured.
+
+    Written for a named generation of the header rather than for the
+    current one and then trimmed. Trimming meant every older-generation
+    test carried a literal count of how many columns to drop, and those
+    counts all went stale together the first time four columns were
+    appended.
+    """
+    # Built by column NAME and padded to the header's own width, so a
+    # column appended to the contract widens this row instead of
+    # breaking it. The hand-counted version this replaces did break,
+    # the first time four columns were appended.
+    values = {
+        "timestampMs": str(timestamp),
+        "faceDetected": "true",
+        "fps": "60",
+        "apertureMm": "7.0",
+        "longClosureCount": "0",
+    }
+    return ",".join(values.get(name, "") for name in columns or COLUMNS)
 
 
 class TestARealRecording:
@@ -82,7 +100,7 @@ class TestThePreviousGenerationOfTheHeader:
     """
 
     def test_a_legacy_header_loads(self, tmp_path: Path) -> None:
-        legacy_row = a_row().rsplit(",", 2)[0]
+        legacy_row = a_row(columns=LEGACY_COLUMNS)
         text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
         session = load_session(write(tmp_path, text))
         assert list(session.frame.columns) == COLUMNS
@@ -90,7 +108,7 @@ class TestThePreviousGenerationOfTheHeader:
     def test_the_unmeasured_column_arrives_as_nan_not_zero(
         self, tmp_path: Path
     ) -> None:
-        legacy_row = a_row().rsplit(",", 2)[0]
+        legacy_row = a_row(columns=LEGACY_COLUMNS)
         text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
         session = load_session(write(tmp_path, text))
         assert session.frame["baselineOverResting"].isna().all()
@@ -98,10 +116,13 @@ class TestThePreviousGenerationOfTheHeader:
     def test_a_legacy_row_count_is_judged_by_its_own_header(
         self, tmp_path: Path
     ) -> None:
-        # An 18-field row under a 16-column header is a broken file,
-        # not a file from the future.
+        # A current-generation row under the 16-column legacy header is
+        # a broken file, not a file from the future. The width is taken
+        # from the contract rather than typed, so appending a column
+        # does not turn this into a test of a stale number.
         text = f"{LEGACY_HEADER}\r\n{a_row()}\r\n"
-        with pytest.raises(SessionError, match="row 2 has 18 fields"):
+        width = len(COLUMNS)
+        with pytest.raises(SessionError, match=f"row 2 has {width} fields"):
             load_session(write(tmp_path, text))
 
     def test_a_pre_pupil_header_loads_with_the_pupil_column_nan(
@@ -110,11 +131,26 @@ class TestThePreviousGenerationOfTheHeader:
         # The generation after baselineOverResting but before the pupil
         # column (4 September 2026): it loads, and pupilDiameterMm arrives
         # as NaN because that column was not written.
-        pre_pupil_row = a_row().rsplit(",", 1)[0]
+        pre_pupil_row = a_row(columns=PRE_PUPIL_COLUMNS)
         text = f"{PRE_PUPIL_HEADER}\r\n{pre_pupil_row}\r\n"
         session = load_session(write(tmp_path, text))
         assert list(session.frame.columns) == COLUMNS
         assert session.frame["pupilDiameterMm"].isna().all()
+
+    def test_a_pre_line_header_loads_with_the_provenance_unknown(
+        self, tmp_path: Path
+    ) -> None:
+        # The generation before the four line columns (7 September
+        # 2026). It loads, and the provenance arrives as missing rather
+        # than as "none": a file written before the column existed did
+        # not measure no line, it did not say.
+        pre_line_row = a_row(columns=PRE_LINE_COLUMNS)
+        text = f"{PRE_LINE_HEADER}\r\n{pre_line_row}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert list(session.frame.columns) == COLUMNS
+        assert session.frame["blinkLineMm"].isna().all()
+        assert session.frame["blinkLineSource"].isna().all()
+        assert session.frame["shutLineSource"].isna().all()
 
 
 class TestWhatItRefuses:
@@ -319,7 +355,11 @@ class TestTheHonestyRowsNothingRead:
         path.write_text(
             header_lines
             + HEADER
-            + "\r\n1,true,60,7,,,,,,,,0,,,false,true,,\r\n",
+            + "\r\n"
+            # Built against the contract rather than typed out, so the
+            # row stays the header's width when a column is appended.
+            + a_row_with(1, apertureMm="7", fixating="false", onScreen="true")
+            + "\r\n",
             encoding="utf-8",
         )
         return load_session(path)
@@ -409,7 +449,13 @@ class TestTheCohortsBuild:
             path = tmp_path / f"{commit or 'none'}.csv"
             stamp = f"# app_commit: {commit}\r\n" if commit else ""
             path.write_text(
-                stamp + HEADER + "\r\n1,true,60,7,,,,,,,,0,,,false,true,,\r\n",
+                stamp
+                + HEADER
+                + "\r\n"
+                + a_row_with(
+                    1, apertureMm="7", fixating="false", onScreen="true"
+                )
+                + "\r\n",
                 encoding="utf-8",
             )
             return load_session(path)

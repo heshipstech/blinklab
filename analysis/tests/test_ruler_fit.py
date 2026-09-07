@@ -22,10 +22,23 @@ def a_row(
     aperture: str = "7.0",
     baseline: str = "",
     over_resting: str = "",
+    columns: list[str] | None = None,
 ) -> str:
-    cells = [str(timestamp), "true", "60", aperture, baseline] + [""] * 6
-    cells += ["0", "", "", "", "true", over_resting, ""]
-    return ",".join(cells)
+    # Built by column NAME and padded to the header's own width, so a
+    # column appended to the contract widens this row instead of
+    # breaking it. The hand-counted version this replaces did break,
+    # the first time four columns were appended.
+    values = {
+        "timestampMs": str(timestamp),
+        "faceDetected": "true",
+        "fps": "60",
+        "apertureMm": aperture,
+        "baselineMm": baseline,
+        "longClosureCount": "0",
+        "onScreen": "true",
+        "baselineOverResting": over_resting,
+    }
+    return ",".join(values.get(name, "") for name in columns or COLUMNS)
 
 
 def write_session(folder: Path, rows: list[str], header: str = "") -> Path:
@@ -116,11 +129,12 @@ class TestTheComparison:
         # False that would read as a finding against a session that
         # predates the feature.
         legacy = [
-            # Drop pupilDiameterMm and baselineOverResting, the two
-            # columns appended after the legacy generation, to land back
-            # on the 16-column LEGACY_COLUMNS header.
-            row.rsplit(",", 2)[0]
-            for row in [a_row(1000, "6.0"), a_row(2000, "6.0", "7.44")]
+            # Written for the legacy generation rather than written for
+            # the current one and trimmed: a trim carries a count of how
+            # many columns to drop, and that count goes stale silently
+            # every time a column is appended.
+            a_row(1000, "6.0", columns=LEGACY_COLUMNS),
+            a_row(2000, "6.0", "7.44", columns=LEGACY_COLUMNS),
         ]
         frame = load_session(
             write_session(tmp_path, legacy, header=",".join(LEGACY_COLUMNS))
@@ -188,11 +202,12 @@ class TestTheReportSection:
         from tools.validation_report import report
 
         legacy = [
-            # Drop pupilDiameterMm and baselineOverResting, the two
-            # columns appended after the legacy generation, to land back
-            # on the 16-column LEGACY_COLUMNS header.
-            row.rsplit(",", 2)[0]
-            for row in [a_row(1000, "6.0"), a_row(2000, "6.0", "7.44")]
+            # Written for the legacy generation rather than written for
+            # the current one and trimmed: a trim carries a count of how
+            # many columns to drop, and that count goes stale silently
+            # every time a column is appended.
+            a_row(1000, "6.0", columns=LEGACY_COLUMNS),
+            a_row(2000, "6.0", "7.44", columns=LEGACY_COLUMNS),
         ]
         write_session(tmp_path, legacy, header=",".join(LEGACY_COLUMNS))
         text = "\n".join(report(tmp_path)[0])

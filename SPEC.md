@@ -37,8 +37,14 @@ export type FeatureRecord = {
   onScreen: boolean | null;
   baselineOverResting: number | null; // the frozen ruler over the running median aperture (roadmap 10.1f1: this landed on 2026-08-23 and this block did not record it until 6 September)
   pupilDiameterMm: number | null; // millimetres, or null when the estimator refuses
+  blinkLineMm: number | null; // the line the blink detector actually read this frame (roadmap 10.13a)
+  blinkLineSource: LineSource; // "none" | "fixed" | "passive" | "guided": where that line came from
+  shutLineMm: number | null; // the line PERCLOS and the long-closure detector read this frame
+  shutLineSource: LineSource; // "none" or "passive" today; no guided line serves the shut baseline yet
 };
 ```
+
+`LineSource` is `src/core/lineProvenance.ts`'s `LINE_SOURCES`, and `none` there is a measured fact rather than a missing value: the frame compared nothing. A blink is counted when the aperture crosses `blinkLineMm`, and the duration, amplitude and velocity above are all measured from that crossing, so a row that carried them without the line carried an answer without its question (roadmap 10.13a, ladder A8).
 
 Null always means a gate refused, never zero. A row with `faceDetected: false` carries nulls: measured absence. Durations are computed from `timestampMs` spans, never from row counts, because the cadence is about one row per second, not exactly.
 

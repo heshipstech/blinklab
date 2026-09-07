@@ -26,6 +26,10 @@ const FULL: FeatureRecord = {
   fixating: true,
   onScreen: true,
   pupilDiameterMm: 4.1,
+  blinkLineMm: 3.9,
+  blinkLineSource: "passive",
+  shutLineMm: 2.8,
+  shutLineSource: "passive",
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -48,6 +52,10 @@ const ALL_NULL: FeatureRecord = {
   fixating: null,
   onScreen: null,
   pupilDiameterMm: null,
+  blinkLineMm: null,
+  blinkLineSource: "none",
+  shutLineMm: null,
+  shutLineSource: "none",
 };
 
 const NUMBER_KEYS = [

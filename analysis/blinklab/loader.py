@@ -39,12 +39,33 @@ COLUMNS: list[str] = [
     "onScreen",
     "baselineOverResting",
     "pupilDiameterMm",
+    "blinkLineMm",
+    "blinkLineSource",
+    "shutLineMm",
+    "shutLineSource",
 ]
 
+# The two columns that hold a word rather than a number, and the only
+# words they may hold (src/core/lineProvenance.ts LINE_SOURCES). A
+# source outside this list is refused rather than carried: a reader
+# who meets an unknown provenance cannot know whether to trust the
+# blink numbers beside it, which is the whole reason the column
+# exists.
+STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
+LINE_SOURCES = ("none", "fixed", "passive", "guided")
+
+# The header before the four line-provenance columns were appended
+# (7 September 2026, roadmap 10.13a). Every session recorded before
+# then carries it, and loads with the line and its source unknown,
+# which is the truth: those files never wrote down which line the
+# detector read.
+PRE_LINE_COLUMNS: list[str] = COLUMNS[:-4]
+
 # The header before pupilDiameterMm was appended (4 September 2026):
-# every column but the last. Files exported between 23 August and then
-# carry it, and load with the pupil column filled with NaN.
-PRE_PUPIL_COLUMNS: list[str] = COLUMNS[:-1]
+# every column but the last of ITS generation. Defined against the
+# generation after it rather than by an absolute slice of COLUMNS, so
+# that appending a column never silently re-cuts an older header.
+PRE_PUPIL_COLUMNS: list[str] = PRE_LINE_COLUMNS[:-1]
 
 # What the exporter wrote before 23 August 2026, when the browser
 # started writing its own account of the validation round's fifth
@@ -55,7 +76,7 @@ PRE_PUPIL_COLUMNS: list[str] = COLUMNS[:-1]
 # too — not "any subset", this one known generation — and fills the
 # newer columns with NaN, which is the truth: those sessions did not
 # measure them.
-LEGACY_COLUMNS: list[str] = COLUMNS[:-2]
+LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 
 # The header generations this loader accepts, newest first. Each is an
 # exact known list, never a pattern; a file matching none is refused
@@ -64,6 +85,7 @@ LEGACY_COLUMNS: list[str] = COLUMNS[:-2]
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_LINE_COLUMNS,
     PRE_PUPIL_COLUMNS,
     LEGACY_COLUMNS,
 ]
@@ -306,7 +328,20 @@ def load_session(path: str | Path) -> Session:
     # are different claims.
     for name in COLUMNS:
         if name not in generation:
-            frame[name] = float("nan")
+            frame[name] = pd.NA if name in STRING_COLUMNS else float("nan")
+    for name in STRING_COLUMNS:
+        # Read as text, never coerced. A provenance is a word, and the
+        # only thing a number could mean here is that the file is not
+        # what it says it is.
+        frame[name] = frame[name].astype("string")
+        unknown = sorted(
+            set(frame[name].dropna().unique()) - set(LINE_SOURCES)
+        )
+        if unknown:
+            raise SessionError(
+                f"column {name} holds a source this loader does not "
+                f"know: {', '.join(unknown)}"
+            )
     for name in BOOLEAN_COLUMNS:
         try:
             frame[name] = frame[name].astype("boolean")
@@ -321,7 +356,7 @@ def load_session(path: str | Path) -> Session:
     # corrupt cell costs one participant a refusal row instead of
     # costing everybody the table.
     for name in COLUMNS:
-        if name in BOOLEAN_COLUMNS:
+        if name in BOOLEAN_COLUMNS or name in STRING_COLUMNS:
             continue
         if not pd.api.types.is_numeric_dtype(
             frame[name]

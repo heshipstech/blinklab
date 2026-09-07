@@ -39,6 +39,10 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     fixating: true,
     onScreen: true,
     pupilDiameterMm: null,
+    blinkLineMm: null,
+    blinkLineSource: "none",
+    shutLineMm: null,
+    shutLineSource: "none",
     ...over,
   }));
 }

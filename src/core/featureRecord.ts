@@ -1,3 +1,5 @@
+import { LINE_SOURCES, type LineSource } from "./lineProvenance";
+
 // The feature vector: everything the lab measures, assembled into
 // one typed row per second. Displays forget; records can be scored
 // (6.5), exported (6.7), and audited (Phase 7). Every field is
@@ -53,6 +55,17 @@ export type FeatureRecord = {
   // null the moment the estimator cannot resolve a pupil this frame,
   // which on a webcam is often: null-never-zero, like every field here.
   pupilDiameterMm: number | null;
+  // The two lines the detectors actually read this frame, and where
+  // each came from (10.13a, ladder A8). A blink is counted when the
+  // aperture crosses blinkLineMm, and the duration, amplitude and
+  // velocity above are all measured from that crossing, so a row that
+  // carries them without the line carries an answer without its
+  // question. `source` is `none` on a frame where nothing was
+  // compared, which is a measured fact and not a missing value.
+  blinkLineMm: number | null;
+  blinkLineSource: LineSource;
+  shutLineMm: number | null;
+  shutLineSource: LineSource;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -82,6 +95,16 @@ function nonNegativeOrNull(value: unknown): boolean {
 
 function booleanOrNull(value: unknown): boolean {
   return value === null || typeof value === "boolean";
+}
+
+// A provenance string, checked against the committed vocabulary rather
+// than against `typeof === "string"`. A row claiming a source nobody
+// defined would load, plot and mean nothing.
+function isLineSource(value: unknown): value is LineSource {
+  return (
+    typeof value === "string" &&
+    (LINE_SOURCES as readonly string[]).includes(value)
+  );
 }
 
 // The runtime schema behind the 6.7 serializer and the 7.2 loader.
@@ -117,6 +140,10 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     nonNegativeOrNull(record.fixationMedianMs) &&
     booleanOrNull(record.fixating) &&
     booleanOrNull(record.onScreen) &&
-    nonNegativeOrNull(record.pupilDiameterMm)
+    nonNegativeOrNull(record.pupilDiameterMm) &&
+    numberOrNull(record.blinkLineMm) &&
+    isLineSource(record.blinkLineSource) &&
+    numberOrNull(record.shutLineMm) &&
+    isLineSource(record.shutLineSource)
   );
 }

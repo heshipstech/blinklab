@@ -34,6 +34,15 @@ export const CSV_COLUMNS = [
   // baselineOverResting: older headers stay an exact prefix, so files
   // exported before the pupil column existed remain loadable.
   "pupilDiameterMm",
+  // Appended 7 September 2026 (roadmap 10.13a, ladder A8), same
+  // trailing-append discipline again. These four say which line the
+  // detectors read, and every blink number to their left is measured
+  // from a crossing of the first of them: a file that carried the
+  // numbers without the line could not be checked against anything.
+  "blinkLineMm",
+  "blinkLineSource",
+  "shutLineMm",
+  "shutLineSource",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

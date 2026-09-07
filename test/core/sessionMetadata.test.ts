@@ -79,6 +79,10 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     fixating: false,
     onScreen: null,
     pupilDiameterMm: null,
+    blinkLineMm: null,
+    blinkLineSource: "none",
+    shutLineMm: null,
+    shutLineSource: "none",
   };
 }
 
