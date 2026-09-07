@@ -74,3 +74,75 @@ export function blendshapesEnabled(root) {
   const source = readFileSync(join(root, LANDMARKER), "utf8");
   return landmarkerOptions(source).outputFaceBlendshapes;
 }
+
+// The sentence the ladder ends an amendment with, naming the rows that
+// can still be picked up. Amendment 19.
+//
+// Amendment 18 wrote one and it was wrong twice inside a day: once
+// about a row whose Check waits on a corpus rule, corrected inside the
+// amendment itself, and again when three of the four it left standing
+// turned out to have a clause this container cannot meet. Both times
+// the mistake was the same: startable was judged from the row's
+// headline instead of from every clause of its Check.
+//
+// The judgement stays a person's. What is mechanical is that the
+// sentence cannot go quietly out of date: a row it names must be open
+// and unmarked, and the moment one of them is ticked or blocked the
+// build says so.
+const STARTABLE =
+  /Rows? ([\d.a-z]+(?:,\s*[\d.a-z]+)*(?:,?\s*and\s+[\d.a-z]+)?) remains? startable and (?:are|is) not marked/g;
+
+/**
+ * The rows the ladder claims can still be started.
+ *
+ * Throws when the ladder makes no such claim. Not an empty list: a
+ * ladder saying nothing about where work can begin is the state
+ * amendment 18 was written to end, and a guard reporting "nothing
+ * claimed" would make this satisfiable with a delete, which is the
+ * shape of guard this repository keeps finding.
+ */
+export function startableClaims(roadmapText) {
+  const found = [...roadmapText.matchAll(STARTABLE)].flatMap((match) =>
+    match[1]
+      .split(/,\s*|\s+and\s+/)
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0),
+  );
+  if (found.length === 0) {
+    throw new Error(
+      "ROADMAP.md: no sentence naming which rows remain startable. The " +
+        'form is "Rows <a>, <b> and <c> remain startable and are not ' +
+        'marked", and it is held to the rows themselves, so deleting it ' +
+        "is not a way to make it true",
+    );
+  }
+  return found;
+}
+
+/**
+ * The claimed-startable rows the ladder has since overtaken, with why.
+ *
+ * Two ways to go stale and they cost the same. A row that has picked
+ * up a blocked marker is not startable, and a row that is ticked has
+ * nothing left to start: both send the next reader to a row with no
+ * work in it, which is the whole expense amendment 18 exists to stop.
+ *
+ * A claim naming a row that is not in the ladder throws, through
+ * `roadmapRow`, because a sentence about a row that does not exist
+ * passes on nothing.
+ */
+export function staleStartables(roadmapText) {
+  const stale = [];
+  for (const id of startableClaims(roadmapText)) {
+    const line = roadmapRow(roadmapText, id);
+    const box = line.match(ROW);
+    if (box !== null && box[1] !== " ") {
+      stale.push({ id, why: "is already ticked" });
+      continue;
+    }
+    if (BLOCKED.test(line)) {
+      stale.push({ id, why: "carries a BLOCKED marker" });
+    }
+  }
+  return stale;
+}

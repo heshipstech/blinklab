@@ -2730,3 +2730,42 @@ prove the test reaches one. An import with no call under it is still a
 guard nothing runs, and the only thing standing between this project
 and that is the stated count: bumping it is a deliberate act, and the
 moment to ask the question a machine here cannot.
+
+## Startable was judged from the headline, not from the last clause
+
+A ladder that offers work it cannot deliver costs whoever picks the row
+exactly the time it takes to find that out, and then costs the next
+reader the same again. An earlier amendment was written to end that,
+and it ended by naming the rows that could still be picked up.
+
+That sentence was wrong twice inside a day. It was wrong once inside
+the amendment itself, which caught and recorded the error while being
+written. And it was wrong again the next time somebody went looking
+for work: of the four rows it left standing, one had since landed and
+the other three each turned out to have a clause this working
+environment cannot meet. One wants a distribution reproduced from
+per-frame traces the project deliberately does not commit. One wants a
+refit from files that live only on the owner's machine. One ends with
+a live session under load, on a machine with no camera.
+
+The mistake was the same all three times, and it is the useful part.
+Startable was decided by reading what the row is FOR. A row is
+startable only when its last clause is, and the last clause is
+routinely the one that needs a device, a dataset or a person. Reading
+the headline gives you a confident answer to a question you have not
+asked.
+
+The judgement is not automatable. Whether a clause can be met here is
+a question about the world, and no test knows what is plugged in. What
+is automatable is that the sentence cannot quietly go out of date, and
+that is where the mechanism went: the guard reads the rows a startable
+claim names and holds each one to the ladder, so the moment one is
+ticked or picks up a blocked marker the build says so. A ladder with
+no such sentence at all is refused rather than passed, because a check
+that can be satisfied by deleting the claim is not a check.
+
+This is the second time in two days that the same shape has appeared:
+a sentence a person keeps true by remembering, in a repository whose
+whole discipline is that nobody has to. The first was a count. This
+was a list. Neither survived a fortnight unattended, and the fix both
+times was to read the claim back from the thing it describes.

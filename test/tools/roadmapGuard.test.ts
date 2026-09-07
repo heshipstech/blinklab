@@ -4,6 +4,8 @@ import {
   blendshapesEnabled,
   blockedRows,
   roadmapRow,
+  staleStartables,
+  startableClaims,
 } from "../../tools/roadmapGuard.mjs";
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
 
@@ -85,5 +87,86 @@ describe("every blocked row in this repository names its blocker", () => {
         `${row.id} says almost nothing`,
       ).toBeGreaterThan(20);
     }
+  });
+});
+
+// Roadmap amendment 19. Amendment 18 ended by naming the rows that
+// were still startable, and that sentence was wrong twice inside a
+// day: once when it named a row whose Check waits on a corpus rule,
+// which the amendment corrected inside itself, and again when three of
+// the four it left standing turned out to have a clause this container
+// cannot meet. The ladder's statement about where work can begin is
+// exactly the kind of sentence this project has learned not to leave
+// unattended.
+describe("the ladder's own claim about where work can start", () => {
+  it("reads the rows a startable sentence names", () => {
+    expect(
+      startableClaims(
+        "Rows 1.1, 2.2 and 3.3 remain startable and are not marked.",
+      ),
+    ).toEqual(["1.1", "2.2", "3.3"]);
+  });
+
+  it("reads a claim about a single row", () => {
+    expect(
+      startableClaims("Row 4.4b remains startable and is not marked."),
+    ).toEqual(["4.4b"]);
+  });
+
+  it("refuses a ladder that makes no such claim", () => {
+    // Not an empty list. A ladder with nothing to say about where work
+    // can start is the state amendment 18 was written to end, and a
+    // guard reporting "nothing claimed" would make this satisfiable
+    // with a delete.
+    expect(() => startableClaims("A ladder with no such sentence")).toThrow(
+      /startable/,
+    );
+  });
+
+  it("catches a claimed row that is blocked", () => {
+    const text = [
+      "- [ ] 9.9 A row **BLOCKED: on something named.**",
+      "Rows 9.9 remain startable and are not marked.",
+    ].join("\n");
+    expect(staleStartables(text)).toEqual([
+      { id: "9.9", why: "carries a BLOCKED marker" },
+    ]);
+  });
+
+  it("catches a claimed row that is already done", () => {
+    // A different staleness with the same cost. "Startable" said of
+    // finished work sends the next reader to a row with nothing left
+    // in it.
+    const text = [
+      "- [x] 9.9 A row, DONE.",
+      "Rows 9.9 remain startable and are not marked.",
+    ].join("\n");
+    expect(staleStartables(text)).toEqual([
+      { id: "9.9", why: "is already ticked" },
+    ]);
+  });
+
+  it("says nothing about a claimed row that is open and unmarked", () => {
+    const text = [
+      "- [ ] 9.9 A row with work left in it.",
+      "Rows 9.9 remain startable and are not marked.",
+    ].join("\n");
+    expect(staleStartables(text)).toEqual([]);
+  });
+
+  it("refuses a claim naming a row that does not exist", () => {
+    expect(() =>
+      staleStartables("Rows 9.9 remain startable and are not marked."),
+    ).toThrow(/no row 9\.9/);
+  });
+
+  it("holds the ladder to its own sentence", () => {
+    const stale = staleStartables(roadmap);
+    expect(
+      stale,
+      `the startable sentence is out of date: ${stale
+        .map((row) => `${row.id} ${row.why}`)
+        .join("; ")}`,
+    ).toEqual([]);
   });
 });
