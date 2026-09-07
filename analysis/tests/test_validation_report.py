@@ -15,7 +15,7 @@ would have been published as one number with no note.
 import re
 from pathlib import Path
 
-from tools.validation_report import report
+from tools.validation_report import criterion_one, report
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOOD_SESSION = REPO_ROOT / "test" / "fixtures" / "verdict" / "good-session.csv"
@@ -138,3 +138,59 @@ class TestARefusalIsNeverASkip:
         # And the readable session's build is still named, because a
         # refusal must not take the cohort's provenance with it.
         assert "All sessions were recorded by build abc1234." in lines
+
+
+class TestACountedCriterionCarriesItsInterval:
+    """Roadmap 10.10c1, ladder B8.
+
+    Criterion 1 is a count over a count: how many of the sound sessions
+    the detector missed. The round published "0 missed of 3" and
+    stopped there, which invites the reader to take 0% as the measured
+    failure rate. Three sessions cannot support that. The honest
+    statement is that the rate is somewhere below 56%, and it is the
+    56 that says how little this round settled.
+    """
+
+    def row(self, label: str) -> object:
+        from blinklab.validation_checks import ParticipantRow
+
+        return ParticipantRow(
+            label=label,
+            session=f"{label}.csv",
+            window=None,
+            closures=None,
+            baseline=None,
+            face_detected_fraction=None,
+            median_iris_width_px=None,
+            measurement_frame=None,
+            camera=None,
+            camera_declared_fps=None,
+            processing_fps_median=None,
+            visibility_changes=None,
+            records=None,
+            observed_duration_seconds=None,
+            markers_found=0,
+            blinks_lost=0,
+            no_blinks_detected=False,
+        )
+
+    def test_none_missed_of_three_states_its_upper_bound(self) -> None:
+        sound = [self.row("P1"), self.row("P2"), self.row("P3")]
+        line = criterion_one(sound, sound, [], [])
+        assert "0 missed" in line
+        assert "0.0 to 56.1" in line
+
+    def test_the_bound_shrinks_as_the_round_grows(self) -> None:
+        # The point of printing it: the same zero over more sessions is
+        # a different statement, and a reader can see which.
+        three = [self.row(f"P{index}") for index in range(3)]
+        thirty = [self.row(f"P{index}") for index in range(30)]
+        assert "56.1" in criterion_one(three, three, [], [])
+        assert "11.4" in criterion_one(thirty, thirty, [], [])
+
+    def test_no_sound_sessions_states_no_interval(self) -> None:
+        # Zero trials support no interval at all, and a printed "0 to
+        # 100" would read as a measurement of total ignorance rather
+        # than as the absence of a measurement.
+        line = criterion_one([], [], [], [])
+        assert "interval" not in line

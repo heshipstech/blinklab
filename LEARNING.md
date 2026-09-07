@@ -1739,3 +1739,38 @@ other side now generates fixtures from the exporter, so somebody adding
 one there would have got a green suite here while nothing re-derived
 it. It reads the directory now, with a floor under the count, because
 an empty list and a full agreement look identical from the outside.
+
+## A percentage with no interval is a number pretending to be an answer
+
+Every headline this project publishes is a count over a count. The
+detector found 341 of the 408 blinks a human had marked. Nought of
+three sessions cleared the first failure criterion. Both were published
+as a bare percentage, and a bare percentage invites a reader to treat
+it as the answer rather than as what the evidence happens to support.
+
+The fix is an interval beside each one, and which interval matters. The
+textbook formula, the one everybody learns, is the estimate plus or
+minus a multiple of its standard error. Feed it nought of three and it
+returns exactly nought to nought. Three observations, reported as
+certainty. It does the same thing at the top: three of three comes back
+as a hundred to a hundred.
+
+Wilson's interval does not have that failure, because it asks a
+different question — not "how far can I step from this estimate" but
+"which true rates would have made this count unsurprising". Nought of
+three becomes nought to fifty-six per cent, which is an honest
+description of how little three sessions settle. Three of three becomes
+forty-four to a hundred.
+
+Two implementations were needed, one for the tools that measure and one
+for the page that publishes, so both read a committed table of cases
+and recompute it. They are not identical arithmetic and are not asked
+to be: one takes a normal quantile from its standard library, the other
+computes it from a published series. The table pins them to a millionth,
+which is four orders finer than the single decimal any sentence shows.
+
+One number deliberately has no interval. F1 is a harmonic mean of two
+proportions, not a count over a count, so a Wilson interval on it would
+be arithmetic borrowed from a distribution it does not have. The
+tempting thing, once you have a new tool, is to use it on everything in
+the block. That temptation is now a test.

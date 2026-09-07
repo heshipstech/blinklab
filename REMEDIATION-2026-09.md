@@ -894,6 +894,22 @@ enabled false`.
       three tools, printed beside the points; extend `resultsBlock` /
       `resultGuard` to carry them.
       **Findings:** F-046.
+      **Half done:** 7 September 2026, roadmap 10.10c1. The Wilson half
+      is in: `wilson_interval` in `analysis/blinklab/stats.py` and
+      `wilsonInterval` in `tools/wilson.mjs`, held to one another by a
+      committed table of cases both suites recompute. Recall and
+      precision carry their intervals in the README and in
+      `evaluate_eyeblink8.py`, and validation criterion 1 carries the
+      bound its three sound sessions support. Two corrections to this
+      item's own fix text. `resultGuard` needs no extension: the README
+      block is generated from the result file's own counts and byte
+      compared, so the published interval already cannot disagree with
+      the counts beside it, and a second check through another door is
+      the kind of restatement this ladder keeps removing. And F1 gets
+      no interval: it is a harmonic mean of two proportions rather than
+      a count over a count, so Wilson there would be arithmetic
+      borrowed from a distribution it does not have. The bootstrap half
+      is roadmap 10.10c2.
 
 - [ ] **B11. Two statistical verdicts read stronger than their n.**
       `low · downgraded ×2 · S` - DROZY's within-subject bar (`analyse_drozy.py:66-94`,

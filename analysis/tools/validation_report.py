@@ -28,6 +28,7 @@ from blinklab.round2 import (
     round2_rules,
 )
 from blinklab.ruler_fit import RulerFitCrossCheck, ruler_fit_cross_check
+from blinklab.stats import wilson_interval
 from blinklab.validation import (
     PairPaths,
     ValidationError,
@@ -195,12 +196,33 @@ def criterion_one(
             f"worse finding than the one this criterion looked for."
             f"{excluded}"
         )
+    # Roadmap 10.10c1, ladder B8. The criterion is a count over a
+    # count, and the round published "0 missed of 3" and stopped there.
+    # That invites the reader to take 0% as the measured failure rate,
+    # which three sessions cannot support. The interval is what says
+    # how little this round settled: below 56%, not zero.
+    #
+    # Absent rather than "0 to 100" when no session was sound, because
+    # zero observations support no interval and printing one would read
+    # as a measurement of total ignorance rather than as the absence of
+    # a measurement.
+    interval = (
+        ""
+        if not sound
+        else ". 95% interval on that rate: "
+        + " to ".join(
+            f"{bound * 100:.1f}"
+            for bound in wilson_interval(len(missed), len(sound))
+        )
+        + " percent."
+    )
     return (
         f"1. The detector does not generalise, at "
         f"{DETECTOR_FAILS_AT} or more missed among the "
         f"{len(sound)} sound sessions: "
         f"{len(missed)} missed ({', '.join(missed) or 'none'})."
         f" {'FAILED' if len(missed) >= DETECTOR_FAILS_AT else 'not met'}"
+        f"{interval}"
         f"{excluded}"
     )
 
