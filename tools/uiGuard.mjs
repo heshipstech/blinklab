@@ -21,6 +21,9 @@
 // resultGuard and drozyGuard: plain .mjs that reads the disk,
 // hand-written types next door, callers type checked.
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 /**
  * Every heading passed to the box() helper in main.ts, in source
  * order.
@@ -134,4 +137,41 @@ export function overlayHandles(mainSource) {
 export function hiddenAssignments(source) {
   const found = [...source.matchAll(/\b(\w+)\.hidden = /g)].map((m) => m[1]);
   return [...new Set(found)];
+}
+
+/**
+ * What the page builds each of its chrome links from, as the source
+ * spells it: a quoted URL, or the name of the constant holding one.
+ *
+ * Roadmap 14.0f2. The nav bar held a profile and a mailbox and not the
+ * source, on a page whose whole argument is that its numbers can be
+ * audited. The reader is deliberately about `iconLink(` rather than
+ * about anchors in general: those are the links a person chose to put
+ * in the chrome, which is what the row's Check is about, and a
+ * citation link built inside a loop is held by its own check instead.
+ *
+ * BOTH forms, because reading only quoted strings made this guard stop
+ * seeing a link the moment its URL moved into a shared constant, which
+ * is the direction this repository keeps moving things. A reader that
+ * goes quiet when the code improves is a reader that will be quiet on
+ * the day something is missing.
+ */
+export function linkHrefs(mainSource) {
+  const found = [
+    ...mainSource.matchAll(/\biconLink\(\s*(?:"([^"]+)"|([A-Za-z_$][\w$]*))/g),
+  ].map((m) => m[1] ?? m[2]);
+  return [...new Set(found)];
+}
+
+/**
+ * Which of `paths` name no file in the repository.
+ *
+ * Roadmap 14.0f2. The parsing that finds a citation lives in
+ * `src/core/docCitations.ts`, because the page needs it too; the disk
+ * lives here, because a test file in this repository compiles without
+ * node types and cannot read one. Same split as every other guard: the
+ * .mjs touches the disk, the typed caller decides what it means.
+ */
+export function missingRepoFiles(paths, root) {
+  return paths.filter((path) => !existsSync(join(root, path)));
 }

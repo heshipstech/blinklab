@@ -3,6 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Roadmap 14.0f2. This head was bare: no description, so a shared
+      link previewed as the single word "blinklab", and no icon, so the
+      tab showed a blank sheet. Both are held to
+      src/core/pageIdentity.ts by test/tools/pageIdentity.test.ts, and
+      the description is walked by tools/claimGuard.mjs like every other
+      sentence this project publishes.
+    -->
+    <meta
+      name="description"
+      content="A browser-based eye signal laboratory. It reads a webcam locally and turns blinks, eyelid aperture in millimetres, gaze and PERCLOS into numbers you can audit. A demo, not a medical device."
+    />
+    <link rel="icon" href="/blinklab/favicon.svg" type="image/svg+xml" />
     <title>blinklab</title>
   </head>
   <body>
