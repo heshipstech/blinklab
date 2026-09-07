@@ -2809,3 +2809,42 @@ validated against no outcome. Blink parameters lengthening over a
 sitting is something this instrument can see. That it means fatigue is
 something this project has never measured, and saying so is a
 different row entirely.
+
+## The Check says what a row must prove; the gate says whether it may begin
+
+Two documents in this project answer questions about a row, and it took
+three mistakes in one day to notice they answer different ones.
+
+A row's Check lists what the work must demonstrate. Reading it tells
+you whether the demonstration is possible here: whether the dataset is
+on disk, whether the camera exists, whether the second browser is
+installed. That reading was learned the hard way and then learned
+again, and by the third amendment of the day it was being done clause
+by clause, which is the right way to do it.
+
+The gate is somewhere else entirely. It sits in the PHASE header, and
+it says whether a row of this kind may be begun at all yet, regardless
+of what its Check asks for. Phase 12's gate names seven rows that must
+land first, and gives its reason: a signal built before them inherits
+a tick rate and a shut line that those rows are going to change.
+
+Three rows were started with that gate shut. Every clause of every
+Check was satisfiable, the work was watched failing first, mutation
+covered and merged green, and none of that was the question. The
+question was whether to begin, and it was never asked, because the
+answer is not written in the row.
+
+Nothing published depends on them, which is luck shaped like
+discipline: each was deliberately shipped as a measurement with no
+consumer, so there is no number to withdraw. What was really lost is
+smaller and more specific. Their constants — two band edges, two
+floors, a midpoint — were chosen against an instrument that is going
+to be re-timed and re-ruled, and until this was noticed nothing said
+so. Now each row says it.
+
+The lesson generalises past this ladder. When a project has both a
+per-item contract and a phase-level ordering rule, the item contract
+is the one people read, because it is next to the work. The ordering
+rule is in a header nobody re-reads after the first week. Any process
+that relies on remembering the header will fail, and the failure will
+look exactly like competence: correct work, green tests, wrong order.
