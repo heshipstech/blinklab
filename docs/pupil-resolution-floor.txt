@@ -1,0 +1,56 @@
+HOW MANY IRIS PIXELS DOES THE PUPIL ESTIMATOR NEED?
+Roadmap 13.11. Prediction committed before the sweep was written or run.
+
+WHY THE QUESTION EXISTS
+  The light-response experiment (9.4, docs/pupil-light-result.txt) resolved
+  the pupil in 1 of 239 in-window seconds, 0.4 percent, against a 50 percent
+  gate. Face and pose tracking were flawless throughout, which localised the
+  failure to the eye region rather than to the face model. The result page
+  named the small webcam iris, a 43 px median, as the suspected limit, and
+  named eyeglass reflections as a likely aggravator.
+
+  "Suspected" is the operative word. Nobody has measured what the estimator
+  needs. Row 13.12 stays dormant until optics that clear this floor become
+  accessible, and it cannot be armed against a floor nobody has established.
+
+THE PREDICTION, one line as the row asks:
+  The model-derived floor will land BELOW 43 px of iris width, and I expect
+  it between 12 and 30 px at a blur of about one pixel.
+
+WHY I EXPECT THAT, so the reasoning can be wrong in public
+  The estimator casts 16 rays from the iris centre and walks each in 40
+  steps to the iris radius, sampling luminance bilinearly, so the crossing
+  it reports is located to about one fortieth of the iris radius: at 43 px
+  that is a step of roughly half a pixel, which is finer than the pixel
+  grid. Sampling resolution is therefore not what should bind.
+
+  What should bind is CONTRAST after blur. The estimator refuses below a
+  centre-to-rim contrast of 0.12, and blur flattens exactly that. A pupil
+  at a physiologically ordinary 0.4 of the iris diameter has a radius of
+  about 0.2 of the iris width, so at 43 px the pupil radius is around 9 px.
+  A Gaussian blur of one pixel leaves a 9 px feature substantially intact.
+  For the contrast gate to bite, the pupil radius has to fall to roughly
+  two or three times the blur, which at a one pixel blur means an iris of
+  something like 15 to 30 px.
+
+WHAT IT WOULD MEAN EITHER WAY
+  If the floor lands below 43 px, then iris pixel count ALONE does not
+  explain the 0.4 percent yield, and the real-world failure has another
+  cause: reflections, exposure, motion, the eyelid, or the estimator
+  meeting a real eye rather than a synthetic disc. That would make the
+  result page's "43 px webcam iris" line an incomplete explanation, and
+  correcting it would be this row's most useful output.
+
+  If the floor lands at or above 43 px, the suspicion is confirmed, 13.12's
+  arming condition gets its number, and the reasoning above is wrong in a
+  way worth understanding.
+
+WHAT THIS NUMBER IS NOT
+  Model-derived, on synthetic fields, until real optics clear it. A
+  synthetic dark disc on a bright annulus is not an eye: it has no lashes,
+  no lid, no specular highlight, no sensor noise and no motion. The floor
+  measured here is a LOWER BOUND on what a real eye needs, and the gap
+  between it and reality is the whole reason 13.12 waits for optics rather
+  than for arithmetic.
+
+Written 7 September 2026, before the generator existed.
