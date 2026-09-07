@@ -2367,3 +2367,44 @@ anything, and a guard that reads prose is a guard an author can talk
 their way past without noticing they are doing it. This project has
 now found four guards that could not fail, and this is the first one
 it wrote and broke in the same afternoon.
+
+## The changelog was the one document nobody thought to guard
+
+This project keeps five figures for the same benchmark. Each was
+wrong for a reason inside the app, each is published rather than
+deleted, and the road between them is treated as part of the result.
+README carries all five in a table and marks which is current. The
+result file keeps the superseded runs below an explicit boundary line
+so a parser cannot mistake one for another. Every place a number
+appears is read back from the record by a test.
+
+Except the changelog. It said "87.7% recall, 83.3% precision, 85.4%
+F1", in the present tense, in the section headed Unreleased, which is
+the section that describes what is about to ship. Those are the third
+of the five. They had been superseded twice. Nothing anywhere said so,
+and the file had been in that state for three weeks.
+
+The reason it was missed is worth naming, because it is not
+carelessness. A changelog reads like history, and history is exactly
+the kind of document this project deliberately does not update: the
+superseded runs stay, the failed predictions stay, the retracted
+claims stay. So a habit that is right everywhere else — do not rewrite
+what was true when it was written — was applied to the one section of
+the one file where it is wrong. Unreleased is not history. It is a
+claim about the present that happens to live in a historical document.
+
+The fix is small. The three numbers are read back from the current run
+through the same parser README uses, so the changelog now follows the
+measurement rather than sitting beside it. The mutation that proves it
+is not the obvious one. Putting the old headline back reddens, which
+only shows the pin exists. Moving the RESULT FILE and watching the
+changelog test go red is the one that shows the direction of the
+dependency: the document now has to follow the record, not merely
+agree with a copy of it that was true once.
+
+One rule fell out of it. A headline is all three of its numbers or
+none. A sentence that gives recall and precision and drops F1 is a
+sentence somebody edited, and a parser that reports two thirds of a
+headline leaves the third drifting with nothing watching it, which is
+the same shape as a guard that searches a whole document for a short
+token: it cannot fail in the case it exists for.
