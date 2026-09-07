@@ -1810,3 +1810,41 @@ Absence of evidence stated as evidence of absence is the same mistake
 as a percentage published without its interval, one increment earlier,
 and both come from the same place — reporting what the arithmetic
 returned instead of what it could have detected.
+
+## A bound with no scope is a bound about nothing in particular
+
+The page publishes a percentage for how much of the last minute the
+eyes spent closed, and beside it a line saying the frame rate barely
+affects that number: at most two thousandths of the share, even at
+fifteen frames a second. That claim came from a real simulation over a
+committed table, which is more than most such claims have.
+
+The simulation drew closures between half a second and six seconds. An
+ordinary blink is a fifth of a second, and this instrument's closed line
+counts every full blink as closed time, so most of the published share
+at rest is made of closures the simulation never drew — and short
+closures are exactly the ones a slow frame rate gets wrong, because
+there are fewer frames inside them to get wrong.
+
+The number was not wrong. The sentence was: it claimed for the whole
+share a bound measured on part of it. The fix is not to redo the
+simulation, which measured what it measured, but to say which closures
+the bound covers and to name the ones it does not.
+
+The same increment states something the model card had almost said.
+It already explained that this PERCLOS uses an adjusted closed line and
+is not comparable to another system's figure. It did not say the larger
+reason: the literature's PERCLOS excludes blink frames on purpose, and
+this one cannot exclude them, because the line it uses is the line every
+blink crosses. So at rest the figure is mostly blink time, and someone
+who blinks twice as often reads twice as high with eyelids no droopier
+than anyone else's. A number that means something different from the
+number it is named after has to say so where it is defined, not only
+where it is published.
+
+One thing was left undone on purpose. The same list asks for a citation
+and a population spread for the iris width every millimetre on this page
+is divided by. The spread is easy to write and the citation is not: it
+has to come from a paper somebody has actually read. Writing a
+plausible-looking reference would be worse than the silence it replaced,
+because a reader would stop checking.

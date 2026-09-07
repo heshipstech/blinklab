@@ -32,6 +32,15 @@ MEASURING COMMIT, read this before the correlations
   DATASETS.md requires destroyed. Read those three rows as
   produced by code this repository has since corrected.
 
+WHAT PERCLOS MEANS HERE (added 7 September 2026, roadmap 10.10c4a,
+ladder B12). The PERCLOS row below is not the literature's PERCLOS. It
+includes blink time, because the shut line it uses is the same line the
+long-closure detector uses and every full blink crosses it. At rest the
+figure is mostly blink time and inherits blink-rate variance, so the
+correlation tested below is between KSS and a quantity that is part
+droop and part blink rate. That does not change the result — it is a
+null either way — but it changes what the null is about.
+
 HOW HARD THE WITHIN-SUBJECT BAR IS (added 7 September 2026, roadmap
 10.10c2, ladder B11). The "k/5 agree" column below asks that at least
 3 of the 5 multi-session subjects agree on the sign of an effect. Under

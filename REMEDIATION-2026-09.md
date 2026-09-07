@@ -965,6 +965,23 @@ enabled false`.
       `docs/aperture-noise-floor.txt:49-50`, `:66-67`). Add the
       precision to the conditions block; record an unrounded fixture
       for 10.7b. (F-094)
+      **Two of six done:** 7 September 2026, roadmap 10.10c4a. F-029 is
+      stated in `perclos.ts` where the number is defined, in MODEL_CARD
+      beside the threshold caveat it is larger than, and in
+      `drozy-result.txt` where the null is read: this PERCLOS includes
+      blink time, so at rest it is mostly blink time and inherits
+      blink-rate variance. F-090 is scoped rather than recomputed: the
+      simulation drew closures of half a second and longer, so the
+      sentence now says so and names the blinks the share also counts,
+      and the table is untouched because it measured what it measured.
+      One correction to this item's own text: the scope is half a
+      second, not 0.3, because `MIN_CLOSURE_S` is 0.5 and the honest
+      statement is the range that was simulated. The velocity bound is
+      roadmap 10.10c4b, the pose and precision bounds 10.10c4c, and the
+      iris citation 10.10c4d, which needs the owner: a reference for
+      the constant every millimetre on the page divides by must come
+      from a source they have read, and inventing one would be worse
+      than the silence it replaces.
 
 - [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2
