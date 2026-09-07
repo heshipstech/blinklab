@@ -91,3 +91,32 @@ class TestTheAlertnessReadingIsNotAnEquivalence:
         # null's 97.5th percentile, now named as what it means.
         assert "about 0.14" in text
         assert "+0.141" in text
+
+
+class TestPerclosSaysWhatItIncludes:
+    """Ladder B12 (audit F-029), the same bound as `src/core/perclos.ts`.
+
+    The row this file's table calls "PERCLOS, share of the minute" is
+    not the literature's PERCLOS: it counts blink time, because the
+    shut line it uses is the one the long-closure detector uses. The
+    table's label cannot be changed without regenerating a result whose
+    source data DATASETS.md required destroyed, so the bound is stated
+    beside it instead.
+    """
+
+    def test_the_result_file_names_the_difference(self) -> None:
+        text = " ".join(RESULT.read_text(encoding="utf-8").split())
+        assert "not the literature's PERCLOS" in text
+        assert "includes blink time" in text
+
+    def test_it_says_what_the_null_is_about(self) -> None:
+        # The point of stating it at all: a null between KSS and a
+        # quantity that is part droop and part blink rate is a
+        # different null from one about droop.
+        #
+        # Whitespace is collapsed before matching because the file is
+        # wrapped prose: a phrase that happens to straddle a line break
+        # is the same phrase, and a test that reddened on a reflow
+        # would be testing the wrapping.
+        text = " ".join(RESULT.read_text(encoding="utf-8").split())
+        assert "part droop and part blink rate" in text

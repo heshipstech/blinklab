@@ -5,6 +5,19 @@ import { EYES_SHUT_FRACTION } from "./longClosure";
 // measures a duty cycle, and it is the most validated drowsiness
 // proxy in the eye tracking literature. A tired eyelid does not only
 // blink differently, it sags, and sagging shows up as closed time.
+//
+// THIS NUMBER INCLUDES BLINK TIME. The literature's PERCLOS excludes
+// blink frames and measures only the slow closures drowsiness brings;
+// this one cannot, because the shut line below is the same line the
+// long-closure detector uses and every full blink crosses it. So at
+// rest this figure IS mostly blink time, and it inherits blink-rate
+// variance along with it — a person who blinks twice as often reads
+// twice as high with no change in how droopy their eyes are.
+//
+// Roadmap 10.10c4a, ladder B12 (audit F-029): a number that means
+// something different from the number it is named after has to say so
+// where it is defined, not only where it is published. Exporting a
+// blink-excluded figure beside this one is a separate row.
 
 export const PERCLOS_WINDOW_MS = 60000;
 

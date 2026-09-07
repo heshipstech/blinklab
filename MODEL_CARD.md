@@ -184,6 +184,15 @@ report 0.0% through a witnessed twelve second closure. The line used
 here is measured against this instrument and documented as such. It is
 not comparable to a PERCLOS figure from another system.
 
+**PERCLOS here also includes blink time.** The literature's PERCLOS
+excludes blink frames and measures only the slow closures drowsiness
+brings. This one cannot: the shut line it uses is the same line the
+long-closure detector uses, and every full blink crosses it. At rest the
+figure is therefore mostly blink time and inherits blink-rate variance,
+so a person who blinks twice as often reads twice as high with no change
+in how droopy their eyes are. That is the second reason it is not
+comparable to another system's figure, and it is the larger of the two.
+
 **Strong prescription lenses degrade gaze**, though on the one glasses
 clip in Eyeblink8 they did not degrade blink detection. One clip of 43
 blinks settles nothing either way.
