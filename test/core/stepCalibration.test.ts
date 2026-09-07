@@ -176,8 +176,13 @@ describe("how far the next calibration probe moves", () => {
   // frames per second. Every gap the probe then observes is two
   // periods, the whole-multiple rule is satisfied perfectly by that,
   // and calibration returns exactly half the rate with zero inexact
-  // landings, so nothing refuses it. Measured before the fix: 200 fps
-  // calibrated as 100, 240 as 120, 300 as 100.
+  // landings, so nothing refuses it.
+  //
+  // That is the mechanism. What was MEASURED is milder, and is
+  // recorded as measured: with the constant step every rate up to 200
+  // frames per second came out right, and 240 and 300 measured ZERO
+  // frames, because the constant is more than two periods by then and
+  // calibration cannot gather enough distinct landings at all.
 
   it("uses the bootstrap step until it has two landings to learn from", () => {
     expect(probeStep([], 0.01)).toBe(0.01);
