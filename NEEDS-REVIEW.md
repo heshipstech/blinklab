@@ -1,5 +1,7 @@
 # NEEDS-REVIEW — blinklab, 2026-08-14
 
+**RETIRED 7 September 2026.** This is the August 2026 parked-items list and it is no longer maintained. It already carried a correction of its own opening sentence, which is the shape of a document being read more often than it is updated. It is kept rather than deleted. **The live tracker is [REMEDIATION-2026-09.md](REMEDIATION-2026-09.md)**, and where this file and that one disagree, that one is right. Where the project stands overall is the generated block at the top of [STATE.md](STATE.md).
+
 Items from the close-out audit that are **not mine to act on**. Each is parked
 with the evidence needed to decide. ~~Nothing here has been changed.~~
 
