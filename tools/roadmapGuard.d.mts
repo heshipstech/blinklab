@@ -50,3 +50,6 @@ export function gateCaveats(
 
 /** The caveats whose constants are now due a re-read. */
 export function ripeCaveats(roadmapText: string): { id: string; why: string }[];
+
+/** Rows that are retired and blocked at the same time. */
+export function retiredWithBlocker(roadmapText: string): string[];
