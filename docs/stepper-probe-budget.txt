@@ -1,0 +1,95 @@
+THE PROBE BUDGET AT ORDINARY RATES
+Roadmap 10.14d. Written 7 September 2026, BEFORE the measurement, as
+this repository requires of anything it measures.
+
+
+WHAT 10.14c LEFT BEHIND
+
+Calibration may spend CALIBRATION_ATTEMPTS seeks, which is 60, to
+gather CALIBRATION_FRAMES distinct frames, which is 12. Row 10.14c
+replaced a constant 10 ms probe with a quarter of the smallest gap
+seen so far, floored at 2 ms, because a constant probe could not
+measure a clip above 200 frames per second at all.
+
+A quarter of a period is safe and slow. Three of every four probes
+land on the frame already showing, cost an attempt and teach nothing.
+That row measured the price at one rate: 30 frames per second went
+from 38 attempts to 45 of the 60 available. It recorded the number and
+handed the question here rather than pretending the budget was fine.
+
+The budget has to cover more than the arithmetic. Every imprecise
+landing, one where the browser answered `seeked` but no frame callback
+arrived, also costs an attempt and adds no frame. On a real clip in a
+real browser those are not rare. So the question is not only how many
+attempts the rule needs on a perfect clip; it is how much room is left
+over for the clip that does not answer cleanly.
+
+
+WHAT IS PREDICTED, AND HOW IT IS SCORED
+
+All predictions are about the fake-video harness in
+test/io/videoStepper.test.ts, which records every seek the stepper
+asks for, on a clip whose frame times are exact. There are no
+imprecise landings in that harness, so what it measures is the
+arithmetic floor: the fewest attempts the rule can possibly spend.
+
+P1. Attempts to gather 12 frames are roughly FLAT across rate, not
+    rising with it. The rule is proportional to the period it just
+    measured, so 30, 60, 120 and 240 frames per second should all cost
+    about the same number of probes, within 5 of each other.
+
+P2. That flat cost is between 40 and 50 of the 60 budget at every rate
+    from 30 to 300.
+
+P3. The margin left for imprecise landings is therefore under 20
+    attempts, or under a third of the budget, at every rate.
+
+P4. Raising the step from a quarter to a half of the smallest gap
+    would cost about half as many attempts, and would still measure
+    every rate from 30 to 300 correctly ONCE the smallest gap is a
+    true single period. It is the early gaps, before that is true,
+    where a half is unsafe.
+
+P5. The 60 frames per second end-to-end fixture and the 30 frames per
+    second case measure the same count and the same interval after
+    whatever change this row makes as before it.
+
+
+THE DECISION RULE, FIXED NOW
+
+If P1 fails, and attempts rise with rate, then the rule is not
+proportional in the way it was designed to be and this row rewrites
+the rule rather than the budget.
+
+If P2 and P3 hold, the margin is too thin and something changes. The
+row does NOT get to pick the change after seeing the numbers: the
+order of preference is fixed here, cheapest and least behavioural
+first.
+
+  1. Adapt the step. Once the whole-multiple rule can be run over the
+     landings gathered so far and returns a period, use half of THAT
+     period rather than a quarter of the smallest raw gap. The
+     quarter exists to survive a smallest gap that is up to four
+     times the true period; a reduced period is not that, so the
+     safety it buys is already bought.
+  2. Raise the budget. A seek is cheap in the harness and not free in
+     a browser, so this is second, and if it is taken the new number
+     is justified by the measured margin rather than rounded up.
+  3. Change the floor. Last, because 2 ms is what stops a pathological
+     clip driving the step to zero and it is not what costs attempts
+     at ordinary rates.
+
+If P5 fails at any point, the change is REVERTED rather than shipped
+with a caveat, on the same grounds as 10.14c: a fix for the budget
+that moves the behaviour of ordinary clips is not this row.
+
+If P4 fails, option 1 above is off the table and the row takes option
+2, because a rule that measures a rate wrongly is not a saving.
+
+
+WHAT WILL BE COMMITTED EITHER WAY
+
+A table of attempts against rate, measured, in this file. Not a
+sentence saying the budget is comfortable. The margin left for
+imprecise landings stated as a number of attempts, so a later row that
+makes landings less reliable can see what it is spending.
