@@ -1,0 +1,16 @@
+# How many tests `uv run pytest` collects in this folder.
+#
+# Roadmap 10.1g2. The published figure used to come from a grep for
+# "def test_" in tools/resultGuard.mjs, and a grep counts test
+# FUNCTIONS. pytest expands one parametrised function into one test
+# per case, so the grep read 446 where the runner collected 488, and
+# every document saying "446 Python tests ... all green" described a
+# run that never had 446 tests in it.
+#
+# A grep cannot know the expansion without evaluating Python, and the
+# CI job that reads this number has no Python in it at all. So the
+# number lives here: tools/resultGuard.mjs reads this file, and
+# tests/test_collected_count.py holds this file to what pytest itself
+# collects. Neither job can drift alone, and the one number below is
+# the one the documents publish.
+495

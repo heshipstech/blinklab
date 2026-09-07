@@ -2103,3 +2103,15 @@ anything. Appending four columns broke every one. They build rows by
 column name now, and take the header generation they are writing for
 rather than writing the current one and trimming it — a trim carries a
 count of how many columns to drop, and that count goes stale silently.
+
+## A count of the functions is not a count of the tests
+
+Every document in this repository ends its status paragraph the same way: so many unit tests, so many end to end tests, so many Python tests, all green. The Python figure was produced by a grep for `def test_` across the analysis folder. A grep counts functions. pytest expands one parametrised function into one test per case, so the grep said 451 where the runner collected 493. The sentence described a run that had never happened, and it had been drifting further from the truth with every parametrised table added.
+
+The fix could not be a better grep. Knowing how many cases a parametrised function expands to means evaluating Python, and the continuous integration job that reads this number has no Python in it at all: the checks job is Node, the analysis job is uv. Two jobs that never meet, and the number belongs to one of them and is published by the other.
+
+So the number lives in a committed file between them. The Node guard reads that file; a test in the Python job holds the file to what pytest itself collects, by asking pytest in a subprocess rather than trusting the current run, which may have been filtered down to one file. Neither side can drift alone: change the tests and the analysis job fails until the file is updated, edit the file and the same test fails until the runner agrees.
+
+The old grep is kept, renamed for what it actually counts, and a test asserts the two numbers differ. That is the part worth remembering. A defect that has been fixed leaves no trace unless something keeps failing when it comes back, and the natural way to reintroduce this one is for somebody to look at a file holding a single integer, think it is a stale artifact, and replace it with a computation. The test that says the collected count exceeds the function count is what stops that from going quietly green.
+
+The same defect is still live one language over. The unit figure counts `it(` calls in the source, and vitest runs more cases than there are calls, because a table-driven test written in a loop is one call and many cases. That is ladder B15 under row 10.0b, and README now says so rather than leaving the reader to assume the number means what it appears to mean.

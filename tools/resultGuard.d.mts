@@ -41,6 +41,12 @@ export function actualUnitTestCount(root: string): number;
 /** Count def test_ functions across analysis/tests. */
 export function actualPythonTestCount(root: string): number;
 
+/** How many `def test_` functions live in analysis/tests. */
+export function pythonTestFunctionCount(root: string): number;
+
+/** The one number `analysis/collected-tests.txt` states. */
+export function parsePythonTestCount(text: string): number;
+
 /** The newest stamp date in a document, "YYYY-MM-DD", or null if unstamped. */
 export function newestStampDate(docText: string): string | null;
 

@@ -129,8 +129,16 @@ export function actualUnitTestCount(root) {
   return count;
 }
 
-/** Count `def test_` functions across analysis/tests. */
-export function actualPythonTestCount(root) {
+/**
+ * How many `def test_` functions live in analysis/tests.
+ *
+ * This is what the published Python figure used to be, and it is kept
+ * because the difference between it and the collected count IS the
+ * defect roadmap 10.1g2 fixed: a test asserts the two differ, so the
+ * day someone reverts the file-based count to a grep, the suite says
+ * which number went missing rather than going quietly green.
+ */
+export function pythonTestFunctionCount(root) {
   let count = 0;
   for (const entry of readdirSync(join(root, "analysis/tests"))) {
     if (entry.endsWith(".py")) {
@@ -139,6 +147,47 @@ export function actualPythonTestCount(root) {
     }
   }
   return count;
+}
+
+/**
+ * The one number `analysis/collected-tests.txt` states.
+ *
+ * A file rather than a computation, because the number it carries
+ * cannot be computed here. The file explains itself; this refuses
+ * anything but a single number, because the file is the contract
+ * between two CI jobs that never meet and a quiet win for either
+ * side would put a wrong figure into every published sentence.
+ */
+export function parsePythonTestCount(text) {
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#"));
+  if (lines.length !== 1) {
+    throw new Error(
+      `analysis/collected-tests.txt must hold exactly one number, found ${String(lines.length)}`,
+    );
+  }
+  return Number(lines[0]);
+}
+
+/**
+ * How many tests `uv run pytest` collects in analysis/.
+ *
+ * NOT a count of `def test_` functions, which is what this was until
+ * roadmap 10.1g2. pytest expands a parametrised function into one
+ * test per case, so the grep read 446 where the runner collected 488,
+ * and every document saying "446 Python tests ... all green" was
+ * describing a run that never had 446 tests in it. A grep cannot know
+ * the expansion without evaluating Python, and the CI job that calls
+ * this has no Python at all, so the number is read from a committed
+ * file that analysis/tests/test_collected_count.py holds to pytest's
+ * own collection.
+ */
+export function actualPythonTestCount(root) {
+  return parsePythonTestCount(
+    readFileSync(join(root, "analysis/collected-tests.txt"), "utf8"),
+  );
 }
 
 // The dated stamp. During the audit, MODEL_CARD.md's "written 9 August
