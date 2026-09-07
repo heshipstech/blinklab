@@ -105,3 +105,25 @@ RUNNING A BETTER RE-RUN, IN PRACTICE
       the run will be inconclusive again -- adjust first.
   Even done well, a ~43 px webcam iris may simply be too coarse, which is
   itself the finding this experiment exists to establish.
+
+CORRECTED 7 September 2026 by roadmap 13.11, which measured what this
+page could only suspect.
+  The line above, and the "median iris width 43 px" note under THE DATA,
+  read as though iris resolution were the likely cause. It is not, or at
+  least not on its own. A synthetic sweep of the estimator
+  (docs/pupil-resolution-floor.txt, table in
+  docs/evidence/2026-09-07-pupil-floor/) puts its resolution floor at 4 px
+  of iris with no blur, 5 px at a one pixel blur, and 18 px at a heavily
+  softened four pixels. A 43 px iris clears the floor at every blur
+  swept, with room to spare.
+
+  So this session's 0.4% yield is NOT explained by pixel count. What
+  remains on the list: eyeglass reflections and exposure, which the plan
+  already named, plus lashes, the lid, motion and sensor noise, none of
+  which a synthetic disc has and none of which this sweep can speak to.
+  The re-run advice above stands unchanged and is if anything more
+  worthwhile, because the thing to vary is no longer "get closer".
+
+  The floor is MODEL-DERIVED and stays so until real optics clear it. The
+  distance between a dark disc on a bright annulus and a real eye is
+  exactly the gap this session's failure is sitting in.

@@ -3072,3 +3072,50 @@ The generalisable bit: when two measurements are only meaningful
 compared to each other, take them from one observation. Anything else
 leaves a gap for the conditions to change in, and that gap will
 eventually be larger than the effect being measured.
+
+## A sweep whose smallest entry is its answer has measured its own grid
+
+The question was how many iris pixels the pupil estimator needs. The
+project had a suspicion on the record — a light-response experiment
+resolved the pupil in 1 of 239 seconds, and the result page blamed the
+small forty-three pixel webcam iris — and no measurement behind it.
+
+The prediction went in first, in its own commit, before the generator
+existed: the floor would land below forty-three pixels, expected
+between twelve and thirty at a modest blur.
+
+The first sweep ran from eight pixels upward and reported a floor of
+eight at almost every blur. That is not a floor. Eight was the
+smallest thing tried, so the sweep had measured the edge of its own
+grid and dressed the result as a property of the estimator. Extending
+downward found the real answer: four pixels sharp, five at a one pixel
+blur, eighteen at a heavy four.
+
+Two things came out of that, and the second is bigger than the first.
+
+The small one: the prediction was half right. The direction held, and
+held by a wide margin. The magnitude did not — five pixels is well
+under the twelve-to-thirty band — because the reasoning over-estimated
+how much contrast the estimator needs. The band stays in the document
+uncorrected, next to the measurement that beat it.
+
+The large one: if the floor is five pixels and the camera delivered
+forty-three, then iris resolution never explained the failure. A
+sentence this project had been carrying for three days, in a published
+result page, was an incomplete explanation, and the row's most useful
+output turned out to be correcting it rather than producing the number
+it was asked for.
+
+There is also a tail worth keeping. Below four pixels the sweep is not
+monotone: two resolves, three does not, four does. At three pixels the
+pupil is barely one pixel across, so the answer turns on where the
+raster's centre happens to land. That is geometry, not the estimator.
+It would have been easy to start the sweep at four and never mention
+it. Instead the minimum is declared, the monotonicity claim is scoped
+to above it, and a separate test pins the two-three-four flip — so
+that nobody can later raise the minimum quietly to bury a genuine
+island in the estimator's behaviour.
+
+The habit worth taking: when a measurement returns the boundary of the
+range you searched, you have not measured the thing. You have measured
+your search.

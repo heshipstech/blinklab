@@ -54,3 +54,73 @@ WHAT THIS NUMBER IS NOT
   than for arithmetic.
 
 Written 7 September 2026, before the generator existed.
+
+
+================================================================
+SCORED, 7 September 2026. The sweep was written and run after the
+prediction above was committed and pushed.
+
+THE TABLE
+  docs/evidence/2026-09-07-pupil-floor/resolution-sweep.csv, one row per
+  iris width and one column per blur, 1 where the estimator resolved a
+  pupil and 0 where it refused. Regenerated and compared digit for digit
+  by test/core/pupilFloor.test.ts, so the file cannot drift from the
+  generator that made it.
+
+THE FLOOR, the smallest iris width that resolves at each blur:
+
+  blur 0.0 px    4 px      blur 2.0 px     8 px
+  blur 0.5 px    4 px      blur 2.5 px    12 px
+  blur 1.0 px    5 px      blur 3.0 px    13 px
+  blur 1.5 px    8 px      blur 4.0 px    18 px
+
+THE PREDICTION, scored honestly in both halves
+
+  DIRECTION: correct, and not marginally. The prediction said the floor
+  would land below 43 px. At every blur tested it does, and at the
+  softest blur in the sweep it is 18 px, less than half the iris the
+  light-response run actually had. A 43 px iris resolves at every blur
+  this sweep covers.
+
+  MAGNITUDE: wrong. The prediction expected 12 to 30 px at a blur of
+  about one pixel. The measured floor at one pixel is 5 px, well under
+  the low end of that band. The reasoning that produced it — that the
+  contrast gate bites once the pupil radius falls to two or three times
+  the blur — over-estimated how much contrast the estimator needs. At
+  a 5 px iris the pupil radius is 1 px against a 1 px blur, and it
+  still clears the 0.12 gate. The band was too cautious by a factor of
+  two to six, and it is left standing above rather than corrected.
+
+WHAT THIS MEANS, which is the useful part
+
+  Iris pixel count alone does NOT explain the 0.4 percent yield of the
+  light-response run. The owner's camera delivered a 43 px median iris,
+  and 43 px is above the floor at every blur measured here, by a wide
+  margin. So the sentence in docs/pupil-light-result.txt that localises
+  the limit to the small webcam iris is INCOMPLETE. Something else did
+  most of the work of that failure: the candidates the plan already
+  named are eyeglass reflections and exposure, and the candidates this
+  sweep cannot speak to are lashes, the lid, motion and sensor noise,
+  none of which a synthetic disc has.
+
+  Row 13.12 stays dormant. Its arming condition now has a number, but
+  the number says the arming condition was never really about pixels.
+
+A NON-MONOTONE TAIL, recorded rather than trimmed
+  Below 4 px of iris the sweep is not monotone: 2 px resolves, 3 px does
+  not, 4 px does. At 3 px the pupil is 1.2 px across, so there is no
+  disc to find and the answer turns on where the raster's centre lands.
+  That is the geometry talking and not the estimator. The sweep declares
+  4 px as the smallest meaningful width, the monotonicity test runs
+  above it, and a separate test pins the 2/3/4 flip so the minimum
+  cannot be quietly raised to hide a real island later.
+
+  The first version of this sweep started at 8 px and reported a floor
+  of 8 px at most blurs, which was the edge of the grid rather than the
+  floor. It was extended downward before anything was written here.
+
+WHAT THIS NUMBER IS NOT, restated because it matters more after a result
+  Model-derived. A dark disc on a bright annulus is not an eye. The
+  floors above are a LOWER BOUND on what a real eye needs, and the
+  distance between them and reality is exactly the gap the 0.4 percent
+  yield is sitting in.
