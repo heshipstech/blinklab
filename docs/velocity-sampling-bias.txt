@@ -97,5 +97,73 @@ defined and published.
 
 THE RESULT
 ----------
-Not yet run. The next commit fills this section in, from the
-simulation named above.
+Run 7 September 2026 by src/core/velocityBias.ts, over 40 evenly
+spaced sampling phases per cell. Underestimate of the true peak
+velocity, as a percentage of it. "Ratio" is what the published
+amplitude-over-velocity time constant is multiplied by at the median
+phase.
+
+  fps    ms    worst   median     best    ratio
+   25    50     60.2     36.8     24.3    1.583
+   25    80     36.3     16.8     10.0    1.202
+   25   120     17.3      7.8      4.5    1.084
+   30    50     52.3     28.4     17.3    1.396
+   30    80     26.2     11.9      7.0    1.135
+   30   120     12.2      5.4      3.1    1.058
+   60    50     17.3      7.8      4.5    1.084
+   60    80      7.0      3.1      1.8    1.032
+   60   120      3.1      1.4      0.8    1.014
+  240    50      1.1      0.5      0.3    1.005
+  240    80      0.4      0.2      0.1    1.002
+  240   120      0.2      0.1      0.0    1.001
+
+PREDICTION vs OUTCOME
+---------------------
+1. CORRECT. No cell at any phase read faster than the truth.
+
+2. HALF WRONG, and the wrong half is mine. The band predicted was 10
+   to 40 percent at 25 and 30 frames per second over 50 to 120 ms
+   descents. The measured band is 5.4 to 36.8. The ceiling held and
+   the floor did not.
+
+   The reason: I estimated the loss as if one sampling interval fell
+   wherever it fell. analyzeClosing takes the LARGEST drop among all
+   adjacent pairs on the descent, so at any phase it already picks the
+   best-placed interval available, and the loss is smaller than a
+   fixed-interval estimate suggests. The effect is largest where there
+   are most intervals to choose between, which is why the two 120 ms
+   cells are the ones that fell out of the predicted band.
+
+   The audit's reproduced 12 to 28 percent does sit inside the
+   measured spread, so the second half of prediction 2 held and the
+   two measurements do not disagree.
+
+3. CORRECT. The bias falls monotonically as the descent lengthens and
+   as the interval shortens, in every row and every column.
+
+4. CORRECT. At 240 frames per second every median is at or below 0.5
+   percent, well inside the 2 percent predicted.
+
+5. CORRECT, and exactly. At 25 frames per second over an 80 ms
+   descent the ratio is multiplied by 1.202 while the velocity loses
+   16.8 percent, and 1 / (1 - 0.168) = 1.202 to three figures.
+   Amplitude's own loss to sampling is second order, as predicted.
+
+WHAT THIS MEANS FOR A PUBLISHED NUMBER
+--------------------------------------
+A blink's closing phase near the short end of the human range, on a
+machine running at 25 frames per second, can have its peak velocity
+published at under half its true value: 60.2 percent low at the worst
+sampling phase, 36.8 percent at the median. The same session's
+amplitude-over-velocity reads up to 1.58 times longer than the truth.
+
+That last direction is the one to watch. Drowsiness lengthens the
+ratio, and so does a slow computer, by an amount of the same order.
+Two people on different machines are not comparable on this figure,
+and one person compared against themselves is only comparable while
+their frame rate holds.
+
+None of this is corrected here. A correction needs a descent model
+fitted to real lids rather than a raised cosine chosen for its
+analytic peak, and that is roadmap C6. What this row does is measure
+the bound and state it where the numbers are defined and published.

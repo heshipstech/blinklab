@@ -1848,3 +1848,40 @@ is divided by. The spread is easy to write and the citation is not: it
 has to come from a paper somebody has actually read. Writing a
 plausible-looking reference would be worse than the silence it replaced,
 because a reader would stop checking.
+
+## The prediction was wrong, which is what predictions are for
+
+This repository requires that anything it measures be predicted first,
+in its own commit, before the code that measures it exists. The point
+is to make it impossible to discover a result and then remember having
+expected it.
+
+This increment measured how much of a blink's peak closing speed the
+frame rate quietly takes away. The prediction had five parts. Four held
+and one did not, and the one that failed is the most useful thing here.
+
+I predicted the loss would be between ten and forty per cent at the
+rates this project runs. It came in between five and thirty-seven. The
+ceiling was right and the floor was wrong, because I had estimated the
+loss as if one sampling interval landed wherever it happened to land.
+The real code does not take one interval: it takes the largest drop
+among every adjacent pair on the descent, so at any moment it is
+already choosing the best-placed interval available to it. Where there
+are more intervals to choose between — a long closure at a slow rate —
+that choice recovers more of the truth than a fixed-interval estimate
+allows for.
+
+Had the prediction not been committed first, that sentence would never
+have been written. The measurement would simply have produced a band,
+the band would have looked reasonable, and nobody would have learned
+that the max-over-pairs step matters. A prediction that survives
+teaches nothing; a prediction that fails by a knowable amount teaches
+exactly where the model of the thing was wrong.
+
+The finding itself is worth stating plainly too. On a slow machine a
+short blink's published speed can be under half its true value, and the
+time constant derived from it reads up to one and a half times longer
+than the truth. Drowsiness lengthens that same constant. So a tired
+person on a fast laptop and an alert person on a slow one move the
+published number in the same direction, and nothing on the page said
+so until now.

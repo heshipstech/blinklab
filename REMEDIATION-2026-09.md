@@ -982,6 +982,20 @@ enabled false`.
       the constant every millimetre on the page divides by must come
       from a source they have read, and inventing one would be worse
       than the silence it replaces.
+      **Three of six done:** 7 September 2026, roadmap 10.10c4b adds
+      F-033. `src/core/velocityBias.ts` samples a raised-cosine descent
+      with a known analytic peak through `analyzeClosing` itself, over
+      40 phases per cell: at 25 frames per second a 50 ms closure reads
+      36.8 percent low at the median phase and 60.2 at the worst, and
+      the ratio reads up to 1.58 times longer than the truth, which is
+      the direction drowsiness moves it. The prediction was committed
+      first and one of its five parts was wrong, recorded as wrong. Two
+      corrections to this item's own text: the sampling interval is
+      already attached to every row as the `fps` column, so nothing
+      needed adding there and what was missing was the bound; and the
+      12 to 28 percent this item quotes is a subset of the real spread
+      rather than its edges, which run 5.4 to 36.8 across ordinary
+      blink durations.
 
 - [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2
