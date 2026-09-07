@@ -3119,3 +3119,78 @@ island in the estimator's behaviour.
 The habit worth taking: when a measurement returns the boundary of the
 range you searched, you have not measured the thing. You have measured
 your search.
+
+## A guarantee measured once is a guarantee about the first time
+
+Row 14.0f1 was meant to be an accessibility chore: let the Escape key
+close the screens the page throws over itself, and turn the sleepiness
+question into a real `<dialog>` instead of a div wearing the word.
+
+Three things it found were not in the plan.
+
+**The page was not keyboard-dead.** It already had an Escape handler.
+Row 14.0b wrote one for the light stimulus, right next to the light
+stimulus, because a fullscreen flash somebody cannot dismiss is
+frightening. That reasoning applies word for word to the other three
+overlays, and nothing carried it there. So a visitor working by
+keyboard who opened the gaze calibration was behind a black sheet with
+no way out: the overlay takes no focus, Tab walks through a page nobody
+can see, and the only exit was a mouse click they were not making.
+
+The escape hatch existed. What was missing was anything that made the
+next overlay inherit it. That is the same shape as the stale changelog
+count, the startable sentence that went wrong three times in a day, and
+the phase gate nobody re-read: a correct thing kept correct by somebody
+remembering it. The fix is the one this project keeps arriving at. One
+list in `core` naming every screen and whether Escape may close it,
+read by both the handler and the refusal, and held to the page in both
+directions so a screen added tomorrow without an entry turns the build
+red.
+
+**A native dialog will not refuse Escape twice.** The plan was the
+documented approach: listen for the dialog's `cancel` event and call
+`preventDefault()`, because this particular dialog must not be
+dismissible — every way out of it records an answer, Skip included, and
+a dismissal recording nothing would leave a file that cannot say
+whether the question was declined or never asked.
+
+A probe in the same browser the tests drive confirmed it: press Escape,
+`cancel` fires, prevented, dialog stays. It confirmed a false thing.
+Press Escape a second time and Chromium fires `cancel` again, sees it
+prevented again, and closes the dialog anyway. Without a user
+activation in between, the platform gives you one refusal and then
+overrules you.
+
+The end-to-end test caught it because the draft pressed the key twice,
+and it pressed twice for a reason worth writing down: one press proves
+nothing about an interceptor, since the press might have landed
+somewhere else entirely. That instinct was worth more here than the
+probe was.
+
+The working refusal is to stop the key before a close request exists at
+all — a capture-phase `preventDefault()` on the keydown while the
+question is up. Nothing to overrule if nothing is ever asked.
+
+**Hiding an open modal leaves the page dead.** Setting `hidden` on a
+`<dialog>` that is open gives it `display: none` while the element
+still matches `:modal`. The question disappears; the page behind it
+stays inert. That is a page which looks completely fine and accepts
+nothing, and it is the worst kind of broken because there is nothing
+on screen to blame for it.
+
+Every reset path in the page spelled the close exactly that way while
+the dialog was a div, and all of them were correct then. Converting the
+element without converting them would have shipped it. A check now
+reads the page's source and refuses that spelling on that element.
+
+**The small decision.** Focus opens on Skip rather than on the first
+rating. A modal focuses its first focusable element by default, which
+here reads `1 Extremely alert`, so somebody who presses Enter to make
+the box go away has just written a sleepiness label nobody meant into
+an exported file. Skip records a declining, which is true, and every
+rating is one Tab away. Focused first, offered last.
+
+The habit worth taking: a guarantee you measured once is a guarantee
+about the first time. Both platform surprises in this row were hiding
+behind a single press, and one of them was hiding behind a probe I had
+written specifically to be careful.
