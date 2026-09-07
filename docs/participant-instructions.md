@@ -48,6 +48,29 @@ when it asks.
   your eyebrows during the first thirty seconds, because that is when it
   is learning what your eyes look like open.
 
+> **RETIRED, 7 September 2026 (roadmap 11.0a, ladder C4).** The
+> two-Marks protocol below is being replaced, and these instructions
+> stay here only until the cued session replaces them. It asked a
+> person to press a button twice, at the right moments, while doing
+> the very thing being measured, and then treated those two presses as
+> ground truth. `docs/validation-round.txt` records the cost: markers
+> stamped up to about a second early, two of the first three people
+> pressing Mark three or four times instead of twice, and one verdict
+> the table had to refuse to call because a detection sat 0.46 seconds
+> inside the marker slack and a shift could have changed the count.
+>
+> None of that is a fault in the people. It is a protocol that made
+> the participant part of the instrument. The cued session moves the
+> ground truth into the app: the screen says what to do and when, on a
+> schedule fixed in `src/core/cueSchedule.ts` before any camera runs,
+> so what was asked and when it was asked is known to the millisecond
+> and nobody has to press anything or count out loud. The overlay that
+> delivers it is roadmap 11.0b.
+>
+> Do NOT design a new study on the protocol below. Sessions already
+> recorded with it stay valid for what they measured, with the marker
+> slack they came with.
+
 **Then do exactly this, in this order. The order matters more than
 anything else here.**
 

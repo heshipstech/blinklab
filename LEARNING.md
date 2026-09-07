@@ -2143,3 +2143,63 @@ So the stepper could be rewritten, the scorer's arithmetic changed, and the runn
 Widening it retroactively is the interesting part. Every commit since the anchor that touched a newly watched file has to be named in the caveat and argued, and the arguments come at three strengths: comments only, provable from the diff; argued from reach, where the executable change exists but every path from it to a published figure is enumerated and shown inert; and can move the numbers, which is not a failure to argue but a fact to record and hand to the pending regression run. Four commits needed entries. Three were inert, one of them a docstring. The fourth was the stepper rewrite, and it says plainly that it can move the numbers and points at the run that will score it. An argument that cannot reach one of the first two strengths must take the third rather than dress itself as the second.
 
 The same pass found a defect in how declarations were read. The search for a commit's short sha ran over the whole result file, and the whole result file is mostly a table of clip names, counts and percentages. Any seven-character hexadecimal run anywhere in that data counted as naming a commit. A detector change could therefore be declared by a coincidence in numbers nobody wrote as a declaration, and the subject search had the same reach. A declaration is something a person writes on purpose, so it is now only looked for in the block that exists to hold declarations. The general form of that mistake: a guard that searches a whole document for a short token cannot fail, and this project has now made it three times.
+
+## The participant was part of the instrument
+
+Every claim this project makes about catching blinks on a live camera
+comes from one protocol. A person presses a button called Mark, blinks
+ten times while counting out loud, presses Mark again. The blinks
+between the two presses are the ground truth.
+
+The record of what that cost is already in the repository. Markers get
+stamped up to about a second early. Two of the first three people
+pressed Mark three or four times instead of twice. One session's
+verdict had to be refused outright, because the eleventh detection sat
+0.46 seconds inside the marker slack and a shift of the marker could
+have changed the count.
+
+None of that is a fault in the people. It is a protocol that made the
+participant part of the instrument: they were operating the timing
+reference with their hand while doing, with their eyes, the very thing
+being measured. Then the timing reference was treated as truth.
+
+The cued schedule moves the ground truth into the app. The screen says
+what to do and when, on a schedule fixed in code before any camera
+runs, so what was asked and when it was asked is known to the
+millisecond and nobody presses anything or counts out loud. The only
+thing left to measure is whether the detector saw it.
+
+Writing the tests first caught two design mistakes before any of it
+ran, and both were the same shape: a scorer that would have produced a
+confident number about the wrong thing.
+
+The first was conflation. The scorer took a plain list of detected
+events, so a 120-millisecond blink could be counted as answering
+"close your eyes for twenty seconds". The tally came out three too
+high and the test said so. Events carry which detector produced them
+now, and a cue is only ever answered by the detector that could have
+seen it.
+
+The second was scoring something invisible. The schedule includes a
+"look away from the screen" cue, and nothing in the blink or closure
+path can see a person turning away — gaze can, and this scorer does
+not read gaze. Scored the obvious way, a look-away that produced no
+blink would have read as a detector miss and quietly lowered every
+catch rate. It is excluded from the tally, with the reason written
+where the exclusion happens.
+
+A third decision was about what NOT to reduce. The obvious thing to do
+with a closure cued at twenty seconds is decide whether the instrument
+caught it. But a closure measured at eighteen seconds is not a miss,
+it is a two-second error, and a pass mark throws away the only number
+worth having. The score reports the signed error and lets the reader
+judge.
+
+The last one is worth keeping because it is a limit rather than a
+feature. This scorer cannot tell somebody following the cues from
+somebody blinking continuously without watching, because the second
+person genuinely does respond to every cue, and no arrangement of
+windows separates them. That is stated in the module and the count
+that gives it away travels beside the tally. A measurement that names
+what it cannot see is worth more than one that quietly scores it
+anyway.
