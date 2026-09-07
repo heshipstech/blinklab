@@ -4,6 +4,7 @@ import { POSE_LIMITS } from "../../src/core/constants";
 import {
   POSE_BIAS_CASES,
   apertureRatioAt,
+  measuredApertureMm,
   poseBiasSpan,
 } from "../../src/core/poseBias";
 
@@ -120,5 +121,28 @@ describe("the prediction, held to the simulation", () => {
     for (const entry of POSE_BIAS_CASES) {
       expect(Number.isFinite(apertureRatioAt(entry.pose))).toBe(true);
     }
+  });
+});
+
+describe("a head with no ruler left", () => {
+  it("refuses rather than dividing by a vanished iris", () => {
+    // Side-on, far outside anything the gate accepts. The iris ring's
+    // horizontal diameter projects to nothing, so there is no ruler to
+    // divide by and `apertureMm` returns null. Worth a test because it
+    // is the boundary the whole method rests on: the number means
+    // something only while the iris is measurable, and the instrument
+    // says so rather than returning a large finite guess.
+    expect(() =>
+      measuredApertureMm({ pitchDeg: 0, yawDeg: 90, rollDeg: 0 }),
+    ).toThrow(/no aperture/);
+  });
+
+  it("still measures at an angle the gate would refuse but geometry allows", () => {
+    // Between the gate's limit and the vanishing point the arithmetic
+    // keeps working and keeps getting worse, which is what makes the
+    // gate a judgement rather than a fact about the maths.
+    const ratio = apertureRatioAt({ pitchDeg: 0, yawDeg: 45, rollDeg: 0 });
+    expect(ratio).toBeCloseTo(1 / Math.cos(45 * (Math.PI / 180)), 6);
+    expect(ratio).toBeGreaterThan(1.4);
   });
 });
