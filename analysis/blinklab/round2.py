@@ -85,6 +85,26 @@ def _flag(pair: SessionPair, key: str) -> bool | None:
 
 
 def _number(pair: SessionPair, key: str) -> float | None:
+    """A metadata number, or None where there is none to be had.
+
+    This defaults and `verdict._finite` refuses, on the same kinds of
+    cell, and the divergence is deliberate rather than an oversight
+    either side has yet to notice (roadmap 10.1f4).
+
+    The two answer different questions. `_finite` reads the inputs a
+    VERDICT is derived from, and a verdict is a claim about one
+    session: an unreadable cell there means the claim cannot be made,
+    and making it anyway would publish a sentence about a file nobody
+    could check. This reads the columns of a round-2 TABLE, where a
+    missing cell is one blank in a row of many and the rest of the row
+    is still worth printing. Refusing here would throw away a
+    participant over one absent rate; defaulting in `_finite` would
+    give a session a verdict its file does not support.
+
+    The one thing both must do is refuse a non-finite value. NaN parses
+    as a float and compares below every floor, so a damaged rate sailed
+    through as sound evidence until probe B caught it.
+    """
     raw = pair.session.metadata.get(key)
     if raw is None or raw == "unknown":
         return None

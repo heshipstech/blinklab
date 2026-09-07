@@ -1614,3 +1614,47 @@ compared against it. A builder added to the export and not to the test
 would otherwise leave its keys unclassified with every assertion still
 passing, which is the failure this whole run of increments keeps
 finding in different costumes.
+
+## A reader that defaults where it should refuse is a calm wrong answer
+
+Every reader that looks up a key in a file has to decide what to do
+when the key is not there, and there are only three honest answers.
+Take a default, when the absence means the thing did not happen and the
+work is still sound without it. Say unknown, when the absence means
+this one question cannot be answered and the others still can. Refuse,
+when the absence means the file is not what it claims to be.
+
+The danger is the first one taken by accident. A refusal that becomes a
+default does not look like a bug. Nothing crashes, no error appears,
+and the plot still draws. What comes out is a number that reads exactly
+like a measurement and describes a file nobody could check.
+
+Until this increment those decisions were scattered: stated in a
+comment where somebody thought to state one, and otherwise a property
+of whichever line happened to be typed. Nineteen of them are now
+written down in one place with the reasoning in words, and each is
+exercised — the reader is called with a block it can read, and then
+with the same block minus one key, and the answer is held to the stated
+one. A comment saying "None when absent" beside a function that raises
+is a comment. This is a test.
+
+One of the nineteen was stated backwards, and it is the interesting
+one. A reader said a certain row appeared in every file, so a missing
+one meant an old build. The increment before this one had exercised the
+writer and established the opposite: the row is written only when there
+is something to report, so a missing one means nothing was lost. The
+reader and the writer had each described the same key and disagreed,
+and both descriptions had been written the same week.
+
+Two of the nineteen merge an absent row with an unreadable one. Both
+are now named as choices rather than left silent, which is the least
+that can be done about a distinction you are not yet ready to draw.
+
+One thing in the ladder could not be done as written, and finding out
+why was worth the hour. The plan said the loader should refuse a file
+missing a key that every export writes. This repository's own test
+fixture carries two such keys out of fifty-seven, and two test modules
+load it. So would that refusal reject the project's own past. Which
+generations of file an analysis still accepts is a decision about the
+data, not about the code, and it belongs to the person whose recordings
+they are.

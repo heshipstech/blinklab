@@ -96,18 +96,35 @@ class Session:
 
     @property
     def protocol(self) -> str | None:
-        """Which protocol this session was recorded under, or None."""
+        """Which protocol this session was recorded under, or None.
+
+        None is age rather than damage, the same as `app_commit`: the
+        row shipped with the pilot contract and files older than it
+        carry none. A caller that needs to know a session followed a
+        given protocol must therefore treat None as "not stated" and
+        not as "some other protocol".
+        """
         return self.metadata.get("protocol")
 
     @property
     def records_dropped(self) -> int | None:
         """Per-second rows that fell out of the buffer, or None if unstated.
 
-        Zero is a measurement, not an absence: the exporter writes this
-        key on every session, so a zero means nothing was lost and a
-        MISSING key means an older build. An unreadable value is
-        refused rather than defaulted, because "lots" quietly becoming
-        zero is how a truncated session passes for a complete one.
+        None means nothing was dropped. The exporter writes this row
+        ONLY when the buffer overran, and refuses to write a zero on
+        purpose: a key that is always there and almost always zero
+        teaches a reader to skip it, and the one session where it is
+        not zero is the session that most needs reading.
+
+        This docstring said the opposite until roadmap 10.1f4 — that
+        the row was on every export, so a missing key meant an older
+        build. The presence rules were exercised against the writers in
+        10.1f3 and it was not, which is a reader stating a policy the
+        writer never agreed to.
+
+        An unreadable value is refused rather than defaulted, because
+        "lots" quietly becoming zero is how a truncated session passes
+        for a complete one.
         """
         return _records_dropped(self.metadata)
 

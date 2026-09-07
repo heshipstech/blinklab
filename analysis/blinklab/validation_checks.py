@@ -299,6 +299,16 @@ def _number(session: Session, key: str) -> float | None:
 
 
 def _text(session: Session, key: str) -> str | None:
+    """A metadata string, or None where the file has nothing to say.
+
+    An absent row and the word `unknown` give the same answer here on
+    purpose, because the table this feeds prints one blank cell for
+    both and a reader of that table cannot act on the difference. The
+    exporter writes `unknown` where a value could not be determined
+    and drops the row where the thing did not happen (SPEC.md's
+    when-written column), so a caller that DOES need to tell them
+    apart must read the metadata directly rather than through here.
+    """
     raw = session.metadata.get(key)
     return None if raw is None or raw == "unknown" else raw
 
