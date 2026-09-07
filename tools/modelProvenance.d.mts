@@ -35,3 +35,37 @@ export function cardProvenance(cardText: string): {
   outputFacialTransformationMatrixes: boolean;
   outputFaceBlendshapes: boolean;
 } | null;
+
+export const RUNNER: string;
+export const DEPENDABOT: string;
+export const BROWSERS_JSON: string;
+
+/**
+ * The one Playwright engine the corpus runner launches. Throws rather
+ * than guessing when the source launches none, two, or one it never
+ * imported.
+ */
+export function runnerEngine(sourceText: string): string;
+
+/** The Playwright driver as the lockfile pins it. */
+export function lockfilePlaywright(root: string): {
+  version: string;
+  integrity: string;
+};
+
+/** The browser versions the pinned Playwright ships with. */
+export function bundledBrowsers(root: string): {
+  chromium: string;
+  webkit: string;
+};
+
+/** What MODEL_CARD's instrument section states, or null when absent. */
+export function cardInstrument(cardText: string): {
+  engine: string | null;
+  playwrightVersion: string | null;
+  webkitVersion: string | null;
+  chromiumVersion: string | null;
+} | null;
+
+/** Dependency names Dependabot's grouped updates leave out. */
+export function groupedExclusions(dependabotText: string): string[];
