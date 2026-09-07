@@ -337,3 +337,30 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   this paragraph is the only record that the schedule moved: ladder
   item D4 adds them and names the merged commit, which a rebase merge
   does not let this pull request know in advance.
+
+  7 September 2026, the velocity sampling bound (roadmap 10.10c4b,
+  ladder B12, docs/velocity-sampling-bias.txt):
+
+    adbfcb0 feat: how much of a blink's speed the frame rate takes
+
+  NOT argued neutral, PROVED neutral, which is a different and much
+  cheaper claim. That commit's whole diff to a detector source is 26
+  added lines in src/core/blinkShape.ts and every one of them is a
+  comment: `git show adbfcb0 -- src/core/blinkShape.ts` shows no
+  executable line added, changed or removed. The instrument that
+  measured the corpus and the instrument in the tree are the same
+  bytes once comments are stripped, so no corpus number can have
+  moved.
+
+  The bound itself lives in a new module, src/core/velocityBias.ts,
+  which nothing in the detection path imports: it reads blinkShape
+  rather than being read by it. That module is deliberately NOT on the
+  watch list, because a simulation that measures the detector is not
+  part of it, and putting it there would make every future refinement
+  of the bound look like a detector change.
+
+  This caveat exists anyway, because the ratchet keys on the file and
+  not on the diff, and a guard that can be talked out of firing is not
+  a guard. The record is the point: a reader in six months sees that
+  blinkShape moved on this date and can check in one command that the
+  movement was words.

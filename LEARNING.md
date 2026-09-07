@@ -1885,3 +1885,22 @@ than the truth. Drowsiness lengthens that same constant. So a tired
 person on a fast laptop and an alert person on a slow one move the
 published number in the same direction, and nothing on the page said
 so until now.
+
+A postscript about the guards, learned the hard way in the same hour.
+Every local check passed before this was committed, and the build went
+red anyway. One of this repository's guards watches whether any file in
+the detection path has changed since the corpus was last measured, and
+it identifies those changes by commit. A commit that does not exist yet
+cannot be found, so that particular guard cannot fire until after the
+commit is made — which means the local checklist has to be run twice,
+once before committing and once after, and only then pushed. That is
+not the guard being awkward. A check that can be satisfied before the
+thing it checks exists would be checking nothing.
+
+The guard was also right in an interesting way. The change it caught
+adds twenty-six lines to a detector file and every one of them is a
+comment, so nothing it measures could have moved. The guard keys on the
+file rather than on the diff, and it should: one that could be talked
+out of firing by an argument about the diff would eventually be talked
+out of firing by a wrong one. So the caveat is written anyway, with the
+one command a reader can run to see that the movement was words.
