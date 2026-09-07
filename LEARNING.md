@@ -2587,3 +2587,42 @@ off with it.
 A blocker that outlives its blocker is the next stale sentence, and
 this repository has spent a day finding stale sentences. A marker with
 no way to expire would have been one more.
+
+## A ratio, because the obvious number would have measured the rate twice
+
+Blink rate cannot tell two people apart when one blinks like a
+metronome and the other goes quiet and then flurries. Both report
+fifteen a minute. What separates them is how RAGGED the gaps are, and
+the obvious way to put a number on that is the standard deviation of
+the gaps.
+
+The obvious way is wrong here, and the reason is worth keeping. Two
+hundred milliseconds of spread means something quite different to
+somebody blinking every second and somebody blinking every ten. So a
+spread in milliseconds rises and falls with the blink rate, and a
+column that moves with blink rate is measuring blink rate a second
+time under another name — while looking like a new signal.
+
+Dividing by the mean removes that. The coefficient of variation is
+scale-free by construction: stretch every timestamp by the same factor
+and it does not move. That property is the whole argument for the
+shape, so it is a test rather than a sentence in a comment, and the
+mutation that swaps the ratio back to a raw spread reddens exactly
+that test and the known-value one.
+
+Two smaller things.
+
+The floor is a refusal, and null is not zero. Zero is what a metronome
+scores. A session with three blinks in it has not been measured as
+regular, and a column that answered zero for it would be inventing a
+finding out of a shortage of data.
+
+And the boundary tests were wrong on the first pass in a way this
+repository has met before. They built their probes from the constant
+they were meant to hold, so moving the floor moved the probes with it
+and every test kept passing at the new position. A floor tested only
+through its own constant is a floor nothing holds in place. The fix is
+two literal numbers, fourteen and fifteen, which is what an earlier
+row learned when the mutation runner was repaired. Learning it once
+was not enough; the shape has to be looked for every time a constant
+gets a test.
