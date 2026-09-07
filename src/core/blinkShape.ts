@@ -4,6 +4,32 @@
 // frame rate cannot silently rescale it. Their ratio, amplitude over
 // velocity, is a time constant that grows with drowsiness: tired
 // lids lose speed before they lose travel.
+//
+// THE FRAME RATE STILL RESCALES BOTH, and the unit does not save it.
+// Roadmap 10.10c4b, ladder B12, measured in
+// docs/velocity-sampling-bias.txt. "Fastest adjacent-sample drop" is
+// one forward finite difference, which measures the average speed
+// over an interval containing the fastest instant rather than the
+// instant itself. A blink's closing phase is 50 to 120 milliseconds
+// and the interval at 25 frames per second is 40, so the interval is
+// the same order as the descent.
+//
+// Simulated over a raised-cosine descent with a known peak: at 25
+// frames per second a 50 ms closure reads 36.8 percent low at the
+// median sampling phase and 60.2 percent low at the worst; at 30 fps,
+// 28.4 and 52.3. Longer closures fare better and 60 fps fares much
+// better. The published velocity is therefore a FLOOR on the true
+// one, never a ceiling, at every rate and every phase.
+//
+// The ratio inherits it inverted. Amplitude survives sampling almost
+// intact while velocity is divided into it, so amplitude over
+// velocity reads LONGER than the truth by about 1/(1 - bias): up to
+// 1.58 times at 25 fps on a short blink. Drowsiness lengthens that
+// ratio and so does a slow computer, by a comparable amount, which is
+// why two people on different machines cannot be compared on it.
+//
+// Not corrected here. A correction needs a descent model fitted to
+// real lids rather than one chosen for its analytic peak.
 export type BlinkShape = {
   amplitudeMm: number;
   peakClosingVelocityMmPerS: number;

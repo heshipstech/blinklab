@@ -184,6 +184,24 @@ report 0.0% through a witnessed twelve second closure. The line used
 here is measured against this instrument and documented as such. It is
 not comparable to a PERCLOS figure from another system.
 
+**Peak closing velocity is a floor, not a measurement, below about 60
+frames per second.** It is computed as the fastest drop between two
+adjacent samples, which measures the average speed over one sampling
+interval rather than the fastest instant inside it. A blink's closing
+phase is 50 to 120 ms and the interval at 25 frames per second is 40,
+so the two are the same order. Simulated against a descent with a known
+peak (`docs/velocity-sampling-bias.txt`): at 25 frames per second a
+short blink reads 36.8% low at the median sampling phase and 60.2% low
+at the worst. The published figure is always at or below the truth,
+never above it.
+
+Amplitude over velocity inherits that inverted, because amplitude
+survives sampling and velocity does not: the time constant reads up to
+1.58 times LONGER than the truth on a slow machine. Drowsiness moves it
+the same way and by a comparable amount, so two people on different
+machines are not comparable on that figure, and one person is
+comparable with themselves only while their frame rate holds.
+
 **PERCLOS here also includes blink time.** The literature's PERCLOS
 excludes blink frames and measures only the slow closures drowsiness
 brings. This one cannot: the shut line it uses is the same line the
