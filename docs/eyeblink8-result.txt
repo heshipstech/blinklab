@@ -574,3 +574,21 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   expected to leave the numbers above untouched, and only 10.8a's
   regression run can say so. That run now scores TWO stepper changes:
   this one and ladder A1's whole-multiple rule.
+
+  7 September 2026, the same row's comment (roadmap 10.14c):
+
+  docs: the probe comment states what was measured, not what was assumed (roadmap 10.14c)
+
+  ARGUED NEUTRAL, and the argument is short because the diff is. One
+  block comment inside src/core/stepCalibration.ts is rewritten. No
+  executable line is added, changed or removed, no constant moves, and
+  the module exports exactly what it exported. The detector reads the
+  same bytes it read one commit earlier.
+
+  What changed is a claim. The comment said "Measured before the fix:
+  200 frames per second calibrated as 100, 240 as 120, 300 as 100".
+  None of those three numbers was ever measured; they are what the
+  mechanism predicts, written in the grammar of a reading. The sweep
+  in docs/stepper-probe-rate.txt says something milder: every rate up
+  to 200 came out right with the constant step, and 240 and 300
+  measured zero frames. The comment now says that.
