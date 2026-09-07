@@ -83,6 +83,8 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     blinkLineSource: "none",
     shutLineMm: null,
     shutLineSource: "none",
+    sampledFps: null,
+    inferenceMs: null,
   };
 }
 

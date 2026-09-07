@@ -22,3 +22,6 @@ export function specPresenceRules(root: string): Record<string, string>;
 
 /** The row builders `exportSession` spreads into the session CSV, in order. */
 export function exportRowBuilders(root: string): string[];
+
+/** The field names SPEC.md's FeatureRecord block declares. */
+export function specRecordFields(root: string): string[];

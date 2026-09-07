@@ -43,6 +43,15 @@ export const CSV_COLUMNS = [
   "blinkLineSource",
   "shutLineMm",
   "shutLineSource",
+  // Appended 7 September 2026, same trailing-append discipline as
+  // baselineOverResting and pupilDiameterMm before them: older
+  // headers stay an exact prefix, so every file exported before
+  // today remains loadable by the Python side without a special
+  // case. Roadmap 12.15. These two say HOW a row was measured —
+  // the evidence rate and what the model cost — which until now
+  // existed once per session in a comment line, or not at all.
+  "sampledFps",
+  "inferenceMs",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it
