@@ -31,6 +31,28 @@ Coverage
   27122013_153916_cam    measured    9077, annotated    9077
   27122013_154548_cam    measured    4895, annotated    4895
 
+--- END OF THE CURRENT RUN ---
+
+Everything above this line is the block tools/evaluate_eyeblink8.py
+generates, and it is the only part of this file tools/resultGuard.mjs
+reads the published figures from. Everything below is history: how to
+reproduce the run, a second machine's, superseded runs kept for the
+record, and the measurement ratchet.
+
+The line exists because four blocks in this file carry a headline in
+the same shape, and the parser used to take the first one that
+matched. That is correct only while the current block keeps matching:
+roadmap 10.10c1 adds a confidence interval inside the parentheses of
+the recall and precision lines, and at the next regeneration the old
+pattern would have skipped the block above and read the 20 August one
+instead, publishing precision 81.4% and 78 invented in place of 84.0%
+and 65 while recall stayed right, because that superseded block
+carries an identical recall line. Roadmap 10.0b2, found by widening
+the detector ratchet in 10.1g4.
+
+When a corpus run regenerates the block above, paste it in above this
+line and leave the line where it is.
+
 HOW TO REPRODUCE THIS EXACTLY
 
     cd analysis

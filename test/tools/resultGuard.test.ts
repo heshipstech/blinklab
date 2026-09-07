@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CURRENT_RUN_END,
   actualPythonTestCount,
+  currentRun,
   parsePythonTestCount,
   pythonTestFunctionCount,
   actualUnitTestCount,
@@ -49,8 +51,15 @@ describe("parseResultFile", () => {
   });
 
   it("refuses a result file it cannot parse, rather than skipping", () => {
+    // With the boundary present but nothing else, the parser gets past
+    // the marker check and fails on the first field it needs. Roadmap
+    // 10.0b2 put the marker check first, so a file missing BOTH says
+    // so by the marker, which is the more useful of the two messages.
+    expect(() =>
+      parseResultFile(`not a result file\n${CURRENT_RUN_END}\n`),
+    ).toThrow(/could not find/);
     expect(() => parseResultFile("not a result file")).toThrow(
-      /could not find/,
+      /END OF THE CURRENT RUN/,
     );
   });
 });
@@ -292,5 +301,97 @@ describe("the dated stamps", () => {
         `${name} changed on ${committed} but is stamped ${stamp}`,
       ).toBe(true);
     }
+  });
+});
+
+describe("the published figures come from the current run, not the first match", () => {
+  // Roadmap 10.0b2, found while widening the detector ratchet.
+  //
+  // docs/eyeblink8-result.txt deliberately keeps superseded runs below
+  // the current one, and four blocks in it carry a "Recall ... (N of M
+  // found)" line in the same shape. The parser took the FIRST match
+  // anywhere in the file, which is right only for as long as the
+  // current block keeps matching. Roadmap 10.10c1 changed the scorer
+  // to print a confidence interval inside those parentheses, so at the
+  // next regeneration the pattern stops matching the block at the top
+  // and finds the 20 August one instead: precision 81.4% and 78
+  // invented in place of 84.0% and 65, while recall stays right
+  // because that superseded block carries an identical recall line.
+  // The README would publish a current recall beside a superseded
+  // precision, and every byte comparison would stay green with both
+  // sides reading the same wrong line.
+
+  const superseded = [
+    "",
+    "Ruler frozen, before the re-arm gate (2026-08-20):",
+    "",
+    "  Recall     83.6%   (341 of 408 found)",
+    "  Precision  81.4%   (78 invented)",
+    "  F1         82.5%",
+    "",
+    "Split by glasses",
+    "  with glasses    1 clip(s), recall 88.4%, precision 88.4%",
+    "  without         7 clip(s), recall 87.7%, precision 82.7%",
+  ].join("\n");
+
+  const current = (recallTail: string, precisionTail: string) =>
+    [
+      "BLINK DETECTION vs Eyeblink8 ground truth",
+      "",
+      "8 clips, 408 annotated blinks, 406 detected",
+      "",
+      `  Recall     83.6%   (341 of 408 found${recallTail})`,
+      `  Precision  84.0%   (65 invented${precisionTail})`,
+      "  F1         83.8%",
+      "",
+      "Split by glasses",
+      "  with glasses    1 clip(s), recall 88.4%, precision 90.5%",
+      "  without         7 clip(s), recall 83.0%, precision 83.2%",
+      "",
+      CURRENT_RUN_END,
+      "",
+      '        "$DATASETS/eyeblink8-measured-rearm"',
+      "",
+      "67 misses, of which 47 carry at least one frame",
+      "the human marked fully closed, 70.1%",
+      superseded,
+    ].join("\n");
+
+  it("reads the current block when the scorer adds an interval", () => {
+    // The exact regression. Before this fix the precision here came
+    // back as 81.4 with 78 invented, from the block below the marker.
+    const parsed = parseResultFile(
+      current(", 95% interval 79.7 to 86.9", ", 95% interval 80.1 to 87.2"),
+    );
+    expect(parsed.precisionPercent).toBe("84.0");
+    expect(parsed.invented).toBe(65);
+    expect(parsed.recallPercent).toBe("83.6");
+    expect(parsed.found).toBe(341);
+  });
+
+  it("still reads a block written in the old format", () => {
+    const parsed = parseResultFile(current("", ""));
+    expect(parsed.precisionPercent).toBe("84.0");
+    expect(parsed.invented).toBe(65);
+  });
+
+  it("takes the glasses splits from the current run too", () => {
+    const parsed = parseResultFile(current("", ""));
+    expect(parsed.glasses.precision).toBe("90.5");
+    expect(parsed.noGlasses.precision).toBe("83.2");
+  });
+
+  it("refuses a file with no end-of-current-run marker", () => {
+    // Without the marker the parser cannot know where the current run
+    // stops, and silently reading on is the defect itself. It says so
+    // rather than guessing.
+    const noMarker = current("", "").replace(CURRENT_RUN_END, "");
+    expect(() => parseResultFile(noMarker)).toThrow(/END OF THE CURRENT RUN/);
+  });
+
+  it("bounds the current run at the marker", () => {
+    const text = ["above", CURRENT_RUN_END, "below"].join("\n");
+    expect(currentRun(text)).toContain("above");
+    expect(currentRun(text)).not.toContain("below");
   });
 });
