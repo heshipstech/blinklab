@@ -217,8 +217,17 @@ export const PROBE_STEP_FLOOR_S = 0.002;
  * satisfied perfectly by that, and the step comes out at twice the
  * truth. Because two periods is a whole number of frames, every
  * scheduled target then lands exactly on a real frame and the
- * inexact-landing refusal cannot see it. Measured before the fix: 200
- * frames per second calibrated as 100, 240 as 120, 300 as 100.
+ * inexact-landing refusal cannot see it.
+ *
+ * That is the mechanism. What was MEASURED is a different and milder
+ * thing, and the difference is recorded rather than smoothed over,
+ * because docs/stepper-probe-rate.txt scores this row's prediction as
+ * failed. With the constant step, every rate up to 200 frames per
+ * second measured correctly. 240 and 300 measured ZERO frames and
+ * returned no interval at all: by then the constant is more than two
+ * periods and calibration cannot gather enough distinct landings to
+ * calibrate from. The instrument was not publishing a confident wrong
+ * rate for a fast clip; it was visibly failing to measure one.
  *
  * A QUARTER of the smallest gap, not a half. The first gap a fast clip
  * offers may itself be two or three periods, and half of an inflated
