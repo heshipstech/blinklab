@@ -1,0 +1,106 @@
+APERTURE IS NOT POSE INVARIANT, AND A PREDICTION
+================================================
+
+Written 7 September 2026 (roadmap 10.10c4c, ladder B12, audit F-086),
+before any number below is computed, in the predict-then-verify
+discipline.
+
+WHY IT EXISTS
+-------------
+Every millimetre this project publishes comes from one expression in
+src/core/aperture.ts:
+
+  apertureMm = aperturePx * (IRIS_DIAMETER_MM / irisWidthPx)
+
+The lid opening is measured in pixels and divided by the iris width in
+pixels, so the iris is the ruler. That division is what makes the
+number independent of how far away the face is, and it is the reason
+the figure can be compared across sessions at all.
+
+It does not make the number independent of which way the head is
+turned, and the head is allowed to turn. The validity gate refuses a
+frame beyond 20 degrees of pitch, 25 of yaw or 25 of roll
+(POSE_LIMITS, src/core/constants.ts). Inside those limits every frame
+is accepted and every millimetre published as though pose did not
+matter.
+
+Pose does matter, and the reason is that the numerator and the
+denominator foreshorten on different axes. The lid opening is a
+VERTICAL distance; the iris width is a HORIZONTAL one. A nod
+foreshortens the first and leaves the second alone. A turn
+foreshortens the second and leaves the first alone. So the ratio moves
+in opposite directions for the two, and neither cancels.
+
+THE METHOD, FIXED NOW
+---------------------
+A synthetic eye whose true geometry is known: eyelid and iris ring
+landmarks placed on a plane in three dimensions, rotated by a stated
+pitch, yaw and roll, projected to the image plane, converted to the
+normalised coordinates a landmarker emits, and fed to the REAL
+apertureMm with the real index sets. The measured millimetres are
+compared against the same eye at zero pose.
+
+The projection is orthographic. A real camera is perspective, and a
+perspective term depends on how far the face is from the lens, which
+is a parameter this simulation does not have and would have to invent.
+Orthographic is the clean floor: whatever perspective adds, it adds on
+top of what is measured here. That limitation is stated rather than
+hidden, and it is the first place to look if this disagrees with
+another measurement.
+
+Roll is rotated in the IMAGE PLANE, in pixels, because that is what a
+tilted head does to a camera. Rotating in normalised coordinates
+instead would be rotating in a space the pixel conversion stretches
+unevenly, which no head does.
+
+THE PREDICTION
+--------------
+Written before running it. The algebra is stated too, because a
+prediction that cannot be checked by hand is a guess with a decimal
+point.
+
+1. PITCH foreshortens the lid opening and leaves the ruler alone, so
+   the published aperture reads cos(pitch) of the truth. At the gate's
+   limit of 20 degrees that is 0.9397, an UNDERSTATEMENT of 6.03
+   percent.
+
+2. YAW foreshortens the ruler and leaves the lid opening alone, so the
+   published aperture reads 1/cos(yaw) of the truth. At the gate's
+   limit of 25 degrees that is 1.1034, an OVERSTATEMENT of 10.34
+   percent.
+
+3. ROLL is free. A rotation in the image plane preserves every
+   distance in it, so both the numerator and the denominator are
+   unchanged and the ratio is exactly invariant. If the simulation
+   shows roll costing anything beyond floating-point noise, the
+   simulation is rotating in the wrong space.
+
+4. The two that are not free partly CANCEL when they happen together,
+   because one is a numerator and the other a denominator: pitch 20
+   with yaw 25 gives cos(20)/cos(25) = 1.0368, an overstatement of
+   3.68 percent. The worst cases inside the gate are therefore the
+   single-axis ones, not the corner.
+
+5. The full span of published aperture inside the accepted pose
+   region runs from 6.03 percent low to 10.34 percent high: a spread
+   of about 16 percent, on a quantity whose baseline ceiling refuses a
+   session for a 25 percent disagreement.
+
+6. The audit's figure for yaw is "up to +12%". This simulation
+   predicts +10.34% at the gate's limit and I do not expect to
+   reproduce 12 without either a larger angle (12 percent needs 26.8
+   degrees, outside the gate) or a perspective term this projection
+   does not model. If the measurement lands at 10.3, the audit's 12 is
+   recorded as not reproduced rather than quietly adopted.
+
+WHAT THIS ROW DOES NOT DO
+-------------------------
+It does not divide the chord by cos(pitch), which is the correction
+the ladder offers as optional. A correction needs a pose estimate
+trustworthy at the frame level, and this row's job is to say how large
+the uncorrected error is so that a later row can decide whether
+correcting it is worth the dependency.
+
+THE RESULT
+----------
+Not yet run. The next commit fills this section in.
