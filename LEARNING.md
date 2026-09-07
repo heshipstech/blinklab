@@ -3194,3 +3194,55 @@ The habit worth taking: a guarantee you measured once is a guarantee
 about the first time. Both platform surprises in this row were hiding
 behind a single press, and one of them was hiding behind a probe I had
 written specifically to be careful.
+
+## A guard that goes quiet when the code improves
+
+Row 14.0f2 gave the page three things it was missing: a link to its own
+source, links on the documents it cites, and a description and icon in
+a head that had neither.
+
+The citations are the part that mattered. The sentence beside the blink
+count ends `(docs/blink-sample-rate.txt)`. On a page served from a
+website, that is a path to nowhere. Every measurement this project
+argues from was one click away and the click did not exist.
+
+They are links now, and they point at the commit the page was built
+from rather than at `main`. A link to a branch would show somebody
+today's document beside a number measured last week, which is the same
+defect as a stale figure wearing a different hat.
+
+**The interesting failure was in the guard, not the page.** The row's
+check is that `uiGuard` sees the repository link. It did, until the
+URL moved out of the call and into a shared constant — which is the
+right change, and is the direction this repository keeps moving
+things, since a URL written twice is a URL that is eventually wrong
+once. The reader matched quoted strings, so it saw nothing and the
+test went red.
+
+The red was luck. If the constant had been introduced a week later, by
+someone not looking at this guard, the guard would have quietly stopped
+checking anything and no build would have gone red anywhere. That is
+the same shape as the guard that could not fail, and it has a specific
+smell: **a check that reads one spelling of a thing rather than the
+thing.** It works, it passes, and it stops working the day the code
+gets tidier.
+
+Two smaller ones from the same hour.
+
+The reader that finds a citation needed a test for a path that ENDS a
+sentence, because `docs/foo.txt.` has two dots doing different jobs and
+they look identical. This repository shipped that mistake twice in one
+hour on a different guard. Writing the test down is cheaper than
+learning it a third time.
+
+And the end-to-end assertion on the link's address was written as
+`/^https:...blob\/[0-9a-f]{7,40}|main\/docs\/...$/`. Alternation binds
+loosest of all, so that pattern says "starts with a blob URL, OR ends
+with the path" — and would have passed on almost anything. It was found
+by re-reading it, not by a failure, because a test that is too weak
+never fails. The grouping is now a comment as well as parentheses.
+
+The habit worth taking: after writing a check, ask what would have to
+change in the code, innocently, for this check to stop checking. If the
+answer is "someone tidies a string into a constant", the check is
+reading a spelling.

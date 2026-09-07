@@ -338,9 +338,11 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
+    // The ladder now DECLARES nothing startable (amendment 21), so the
+    // sentence this replaces is that declaration rather than a list.
     const claimed = roadmap.replace(
-      "Row 14.0f2 remains startable and is not marked",
-      "Rows 12.7 and 14.0f2 remain startable and are not marked",
+      "NOTHING outside Phase 12 remains startable",
+      "Rows 12.7 remain startable and are not marked, and nothing else",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
@@ -476,5 +478,48 @@ describe("a retired row is not also a blocked one", () => {
       both,
       `these rows are retired and blocked at once: ${both.join(", ")}`,
     ).toEqual([]);
+  });
+});
+
+// Roadmap 10.0b11, amendment 21. The ladder ran out of rows this
+// working environment can start, which is the state amendment 19
+// predicted in writing and left unhandled: it said to say so in the
+// sentence rather than to name a row that is not startable, and it
+// said the sentence could never simply be deleted, but nothing let a
+// reader express "none" at all.
+//
+// So emptiness gets a form. A declaration of nothing is a claim
+// somebody made and can be disagreed with; a missing sentence is a
+// file nobody finished. They must not look alike.
+describe("the ladder that has nothing left to start", () => {
+  it("accepts a declaration of nothing as the claim it is", () => {
+    expect(
+      startableClaims("NOTHING outside Phase 12 remains startable, because"),
+    ).toEqual([]);
+  });
+
+  it("still refuses a ladder that simply says nothing", () => {
+    expect(() => startableClaims("a ladder with no such sentence")).toThrow(
+      /no sentence naming which rows remain startable/,
+    );
+  });
+
+  it("tells a reader the form to use when nothing is startable", () => {
+    // The refusal has to teach, or the next person deletes the
+    // sentence again and this guard passes for the wrong reason.
+    expect(() => startableClaims("nothing here")).toThrow(/NOTHING outside/);
+  });
+
+  it("prefers a real list when the ladder carries one", () => {
+    const both =
+      "NOTHING outside Phase 12 remains startable. Rows 9.4 remain " +
+      "startable and are not marked.";
+    expect(startableClaims(both)).toEqual(["9.4"]);
+  });
+
+  it("reads the real ladder as declaring nothing startable today", () => {
+    // The state of this repository on 7 September 2026, pinned so that
+    // picking a row up again is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual([]);
   });
 });
