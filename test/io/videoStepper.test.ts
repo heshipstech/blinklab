@@ -186,6 +186,83 @@ describe("stepping a clip whose timeline does not start at zero", () => {
     expect(seen[0]).toBeCloseTo(1.7, 3);
   }, 30_000);
 
+  it("measures every frame of a 240 frames per second clip", async () => {
+    // Roadmap 10.14c. THE case the row exists for, and it is not the
+    // case the row predicted. Measured on the old stepper, holding
+    // clip length constant to rule it out: 100, 120, 150 and 200
+    // frames per second were all measured correctly, and 240 and 300
+    // measured ZERO frames with no interval at all, at one second of
+    // clip and at three. The probe was a constant 10 ms, and by 240
+    // that is more than two frame periods, so it could not gather
+    // enough distinct landings to calibrate from.
+    //
+    // So the instrument did not publish a wrong rate for a fast clip.
+    // It failed to measure one, visibly. That is a better failure than
+    // the row assumed, and it is still a failure: a phone's
+    // slow-motion recording could not be stepped at all.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 240, 240) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(240);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 240, 6);
+    expect(summary.inexactLandings).toBe(0);
+    expect(summary.stoppedEarly).toBe(false);
+  }, 30_000);
+
+  it("measures every frame of a 300 frames per second clip", async () => {
+    // The other rate that measured nothing before.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 300, 300) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(300);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 300, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("measures every frame of a 200 frames per second clip", async () => {
+    // Correct BEFORE this row as well as after. Kept as the boundary
+    // marker: 200 worked, 240 measured nothing.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 200, 200) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(200);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 200, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("measures every frame of a 120 frames per second clip", async () => {
+    // NOT broken before this row, and the prediction in
+    // docs/stepper-probe-rate.txt said it was. Recorded as a failed
+    // prediction rather than quietly corrected: at 120 the 10 ms step
+    // gives a MIXTURE of one and two period gaps, and ladder A1's
+    // whole-multiple rule recovers the true period from that exactly.
+    // A regression guard on the rate the prediction named.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 120, 120) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(120);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 120, 6);
+    expect(summary.inexactLandings).toBe(0);
+    expect(summary.stoppedEarly).toBe(false);
+  }, 30_000);
+
+  it("measures every frame of a 100 frames per second clip", async () => {
+    // At 100 the old step was exactly ONE period, which lands on
+    // consecutive frames and calibrates correctly. Also not broken
+    // before, also kept as a regression guard.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 100, 100) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(100);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 100, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("leaves a 60 frames per second clip exactly as it was", async () => {
+    // P3 of the prediction. A fix for fast clips that moves an
+    // ordinary one is reverted rather than caveated.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 60, 60) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(60);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 60, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
   it("still measures a clip that starts at zero, in the ordinary way", async () => {
     const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 30, 20) });
     const summary = await stepThroughVideo(video, () => {});

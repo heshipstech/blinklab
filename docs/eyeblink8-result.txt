@@ -546,3 +546,31 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   docstring on the `frames_measured` property. No executable line is
   added, changed or removed. The scorer reads the same bytes it read
   at the anchor.
+
+  7 September 2026, the probe step (roadmap 10.14c,
+  docs/stepper-probe-rate.txt):
+
+  feat: the probe step comes from the clip, not from a constant (roadmap 10.14c)
+
+  NOT argued neutral. The stepper's calibration probe stops being a
+  constant 10 ms and becomes a quarter of the smallest gap it has
+  seen, floored at 2 ms and never above the old constant. That changes
+  which instants calibration asks for on EVERY clip, including a 30
+  frames per second one, so the cheap proof is unavailable.
+
+  What it cannot change is the answer at 30 frames per second, and
+  that is measured rather than argued: the fake-video harness drives
+  the real stepThroughVideo over clips with explicit frame times, and
+  the 30 and 60 frames per second cases measure the same counts and
+  calibrate to the same intervals before and after. The schedule the
+  run then walks is derived from the calibrated interval and the
+  origin alone; the origin is the first landing, which is frame zero
+  either way. So identical calibration means an identical schedule
+  means identical frames measured.
+
+  The change is visible only above 200 frames per second, where the
+  old constant could not gather enough distinct landings and the run
+  measured nothing at all. Eyeblink8's clips are 30, so this is
+  expected to leave the numbers above untouched, and only 10.8a's
+  regression run can say so. That run now scores TWO stepper changes:
+  this one and ladder A1's whole-multiple rule.
