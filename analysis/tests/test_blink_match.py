@@ -1,6 +1,11 @@
 import pytest
 
-from blinklab.blink_match import Interval, combine, match_blinks
+from blinklab.blink_match import (
+    DEFAULT_TOLERANCE_FRAMES,
+    Interval,
+    combine,
+    match_blinks,
+)
 
 
 def i(start: int, end: int) -> Interval:
@@ -25,6 +30,34 @@ class TestTheMatchingRule:
         assert match_blinks([i(20, 21)], [i(14, 17)]).true_positives == 1
         # Far enough away and it is a different event.
         assert match_blinks([i(40, 41)], [i(14, 17)]).true_positives == 0
+
+    def test_the_default_tolerance_matches_at_four_frames(self) -> None:
+        """Roadmap 10.1g. The default decides every published recall.
+
+        A pair rather than an equality check. `assert
+        DEFAULT_TOLERANCE_FRAMES == 4` would pass on a constant nobody
+        reads; these two say what the number DOES, so lowering it to 3
+        reddens the first and raising it to 5 or 6 reddens the second.
+        Both call match_blinks without a tolerance argument, so it is
+        the shipped default under test and not a literal repeated here.
+        """
+        four_frames_apart = match_blinks([i(10, 10)], [i(14, 14)])
+        assert four_frames_apart.true_positives == 1
+
+    def test_the_default_tolerance_refuses_at_five_frames(self) -> None:
+        five_frames_apart = match_blinks([i(10, 10)], [i(15, 15)])
+        assert five_frames_apart.true_positives == 0
+        assert five_frames_apart.false_positives == 1
+        assert five_frames_apart.false_negatives == 1
+
+    def test_the_default_tolerance_is_the_documented_duration(self) -> None:
+        """The module says four frames is about 130 ms at 30 fps.
+
+        Held to arithmetic rather than to the prose, so a change to the
+        constant that leaves the sentence behind is caught here.
+        """
+        milliseconds = DEFAULT_TOLERANCE_FRAMES * 1000 / 30
+        assert 125 <= milliseconds <= 140
 
     def test_tolerance_of_zero_demands_real_overlap(self) -> None:
         assert (
