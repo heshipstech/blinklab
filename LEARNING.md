@@ -2626,3 +2626,59 @@ two literal numbers, fourteen and fifteen, which is what an earlier
 row learned when the mutation runner was repaired. Learning it once
 was not enough; the shape has to be looked for every time a constant
 gets a test.
+
+## A word the instrument may not use, and a guard that still lets it be discussed
+
+A closure that outstays a blink has been one thing in this project
+since Phase 4: a count. Fifteen points on the score and one column in
+the export, charged the same whether the eyes were shut for six
+hundred milliseconds or six minutes. Those are not the same event, and
+a reader given only the count cannot tell them apart. This increment
+gives the durations bands: prolonged, microsleep-range, sustained.
+
+The arithmetic is four comparisons. The naming took the rest of the
+row.
+
+A microsleep is defined on the electroencephalogram. This instrument
+watches eyelids through a webcam, and no data this project may use,
+now or in this era, could tell it whether a brain went briefly
+offline. So the middle band is named for a RANGE OF DURATIONS and
+never for the thing itself: a closure can be reported as lasting as
+long as the ones that literature describes, which is a claim about a
+stopwatch, and cannot be reported as being one.
+
+The obvious way to hold that is to ban the word. It would have been a
+mistake. "The microsleep shape the drowsiness literature watches for"
+is the honest sentence that explains why the band exists at all, and a
+guard that removed it would have left the project unable to explain
+its own restraint — which is the kind of tidiness that reads as
+caution and functions as amnesia. What is banned is the CLAIM, not the
+word: the pairing that says the thing was found. In both directions,
+because putting the verb first says the same thing, and in the plural,
+because a claim is a family of wordings rather than a spelling.
+
+The guard proved that on this very entry. The paragraph above
+originally quoted the verb-first form as an example, the suite went
+red, and the file it named was this one. Nothing had to be exempted:
+the sentence was rewritten to describe the shape rather than spell it,
+which is the rule the guard has carried since it was written, now
+applied to the person writing about it.
+
+Then the guard met a problem it had built for itself. The ladder is
+where the refusal is declared, and declaring a refusal means naming
+it, so ROADMAP.md quotes the banned phrase twice on purpose. The
+existing exemption list was one list for all the retired claims, so
+letting the ladder through would also have let it claim that the page
+sends nothing anywhere — a sentence measured false a month ago. One
+document's licence to quote one phrase is not a licence to say
+everything. So the exemption now travels with the claim rather than
+with the caller, and a test pins that the ladder is exempt from this
+one and from no other.
+
+The edges themselves are two seconds and fifteen. Neither was measured
+and neither pretends to be. Placing them by measurement would need
+closures whose causes are known, which is exactly the ground truth
+whose absence made the vocabulary cap necessary in the first place.
+They are stated as choices, with the reasoning in the comment where
+somebody can disagree with it, and pinned from both sides by tests
+written as literal numbers.

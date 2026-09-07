@@ -16,6 +16,12 @@ export type RetiredClaim = {
   says: string;
   /** Why it is false, so a failure explains itself. */
   because: string;
+  /**
+   * Files allowed to carry THIS phrase, because naming it is their
+   * job. Scoped to the one claim: a document that must quote a
+   * retired wording does not thereby get to make the other claims.
+   */
+  exempt?: string[];
 };
 
 /** A retired claim that has come back, and where. */
@@ -32,6 +38,13 @@ export function repoRoot(): string;
 
 /** Every file matching the pattern, tracked or newly added, case insensitive. */
 export function trackedFilesMatching(pattern: string, root: string): string[];
+
+/** The files left after the caller's exemptions and the claim's own. */
+export function unexempted(
+  claim: RetiredClaim,
+  files: string[],
+  exempt?: string[],
+): string[];
 
 /** Every retired claim that has come back, with the files it came back in. */
 export function relapses(root: string, exempt?: string[]): Relapse[];
