@@ -30,14 +30,24 @@ number.
 ## If you do open a pull request
 
 The gates below run on every pull request, and a gate you skip locally fails
-there instead. From the repository root:
+there instead. A test holds this line to the `checks` job in
+`.github/workflows/ci.yml`, so a gate added to one and not the other is a red
+build rather than a surprise on somebody's first pull request. That is not
+hypothetical: `npm run counts:check` went into continuous integration on
+7 September 2026 and this line did not follow it until the pin was written.
+From the repository root:
 
 ```bash
-npm run lint && npm run typecheck && npm test && npm run coverage && npm run build && npm run bundle:budget && npm run format:check && npm run e2e
+npm run lint && npm run typecheck && npm test && npm run coverage && npm run counts:check && npm run build && npm run bundle:budget && npm run format:check && npm run e2e
 ```
 
-Install with `npm ci --ignore-scripts`, which is what both workflows run since
-6 September 2026. A dependency's own install hook runs arbitrary code out of
+Install with the same command both workflows have run since 6 September 2026:
+
+```bash
+npm ci --ignore-scripts
+```
+
+A dependency's own install hook runs arbitrary code out of
 the npm tree, and only `fsevents` ships one today, a no-op away from macOS.
 The flag is per invocation, so the project's own steps are unaffected:
 `npm run build` still runs `prepare-assets` and the MediaPipe wasm files still
