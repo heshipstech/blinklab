@@ -82,6 +82,72 @@ storage grid is still an upper bound on the instrument's own wobble,
 which is the direction that matters: the eye is at least as still as
 the floor says, possibly stiller.
 
-THE RESULT
-----------
-Not yet run. The next commit fills this section in.
+THE RESULT, MEASURED, 7 September 2026
+======================================
+
+Computed by the committed arithmetic (src/core/storageQuantum.ts) over
+the fixture's 270 still frames, both eyes, and recomputed by
+test/core/storageQuantum.test.ts on every run, so these numbers cannot
+drift from the code:
+
+  stored step, horizontal: 0.128 px    vertical: 0.072 px
+  median lid-chord tilt from vertical: 13.2 degrees
+  median iris width: 43.3 px (37.5 to 50.0 across kept frames)
+  one quantum of aperture: 0.0097 mm
+
+  left median frame-to-frame change:  0.0198 mm = 2.03 quanta
+  right median frame-to-frame change: 0.0194 mm = 1.99 quanta
+
+THE PREDICTION, SCORED
+----------------------
+Part 1 HELD. The lid chords run 13.2 degrees off vertical at the
+median, and the horizontal grid would only take over past 29.4, which
+is arctan of the two steps' ratio. So the finer vertical grid is what
+the aperture rides, even though the horizontal grid is nearly twice as
+coarse in pixels. This was the part most worth checking rather than
+assuming, because it is the one the whole conversion rests on.
+
+Part 2 WAS WRONG. The median iris width is 43.3 px, outside the
+predicted 25 to 40. The band was reasoned from the framing — "a webcam
+close-up at 1280 by 720" — when the file was sitting there to be
+measured. The frames are a closer close-up than that phrase implies.
+
+Part 3 WAS WRONG, by three percent, and for part 2's reason alone. One
+quantum is worth 0.0097 mm, just under the predicted floor of 0.010.
+The predicted band and the measurement are the same arithmetic with a
+different ruler: 0.036 px buys fewer millimetres through a 43.3 px
+iris than through the 40 px the band's floor assumed. Counting this as
+a second independent miss would be counting one mistake twice.
+
+Part 4 landed on the top edge. The published floor is TWO quanta, 2.03
+on the left eye and 1.99 on the right. The prediction bracketed "about
+one to two" and the answer turned out to have one value rather than a
+range. The order was right, which is the finding the row exists for.
+
+Part 5 does not trigger. It said that if the ratio landed nearer one
+than two, the audit's phrase "two rounding quanta" would be recorded
+as approximate rather than adopted. It landed on two, so the audit's
+figure is adopted as measured.
+
+WHAT IT MEANS, AND WHAT IT DOES NOT
+-----------------------------------
+The trap here is worth stating plainly, because the ratio invites the
+wrong conclusion. Two quanta of measured wobble does NOT mean the
+floor is made of storage. Rounding is deterministic: a perfectly still
+eye rounds to the same stored value every frame, and the measured
+frame-to-frame change would be zero, not two quanta. The grid only
+becomes visible once the true value is already moving across it.
+
+What the ratio does establish is that the floor and the grid are the
+same size. That is enough to settle the question this row asked: from
+this fixture, no part of the 0.020 mm can be attributed to the
+instrument rather than to the file, in either direction. The floor
+remains an upper bound on the instrument's own wobble — the eye is at
+least as still as it says, possibly stiller — and a reader comparing a
+0.1 mm claim against it now knows the bound is ten times the claim's
+resolution and cannot be sharpened without re-recording at full
+precision.
+
+That re-recording is the ladder's separate row. This row says what to
+expect from it: the floor can fall by at most the grid's contribution,
+and nothing here can say how much of it that is.

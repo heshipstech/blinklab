@@ -32,10 +32,22 @@ export function isComplete(state: RecordingState): boolean {
   return state.frames.length >= state.targetFrames;
 }
 
-// Four decimals keep about a tenth of a pixel of precision and cut
-// the fixture file to a fifth of its full precision size.
+/**
+ * The stored grid every landmark is rounded onto.
+ *
+ * Four decimals keep about a tenth of a pixel of precision and cut the
+ * fixture file to a fifth of its full precision size. Exported because
+ * what that rounding is worth in millimetres is a published figure
+ * (docs/fixture-storage-quantum.txt, roadmap 10.10c4e), and a figure
+ * derived from a number typed beside this one could drift away from
+ * the rounding it claims to describe.
+ */
+export const FIXTURE_COORDINATE_QUANTUM = 1e-4;
+
+const STEPS_PER_UNIT = 1 / FIXTURE_COORDINATE_QUANTUM;
+
 function round4(value: number): number {
-  return Math.round(value * 10000) / 10000;
+  return Math.round(value * STEPS_PER_UNIT) / STEPS_PER_UNIT;
 }
 
 export function serializeFixture(state: RecordingState): string {

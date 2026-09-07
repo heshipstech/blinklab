@@ -1989,3 +1989,51 @@ The general lesson is about identifiers rather than about git. A check
 that keys on a name must key on a name that outlives the thing it
 identifies. If the name can be rewritten between writing the check and
 running it, the check is testing the rewriting.
+
+## Two quanta of wobble is not two quanta of rounding
+
+The fixture this project measures its own stillness against does not
+store what the camera saw. Every landmark coordinate is rounded to four
+decimal places before it is written, which cuts the file to a fifth of
+its size and is a perfectly sensible thing to do. The question nobody
+had asked is what that rounding is worth in the units the floor is
+published in.
+
+The arithmetic is short. One rounding step at this frame size is 0.072
+of a pixel vertically. The aperture is the average of two lid chords,
+so a step on one chord's end moves the average by half of that. A
+pixel is worth 11.7 millimetres divided by however many pixels the iris
+spans, and in this fixture the iris spans 43.3 pixels at the median. So
+one step of stored precision is 0.0097 mm, and the published floor of
+about 0.020 mm is two of them.
+
+That number invites a conclusion it does not support, and the invitation
+is the thing worth remembering. Two quanta of measured wobble sounds
+like the floor might be nothing but the file format. It cannot be.
+Rounding is deterministic: a perfectly still eye produces the same
+coordinate every frame, that coordinate rounds to the same stored value
+every frame, and the frame-to-frame change would be exactly zero. A grid
+does not add noise to something that is not already moving. It only
+becomes visible once the true value is crossing it.
+
+What the ratio does establish is smaller and more useful. The floor and
+the grid are the same size, so from this file no part of the 0.020 mm
+can be assigned to the instrument rather than to the storage, in either
+direction. The floor stays an upper bound on how much the instrument
+wobbles, which is the direction that matters, and a reader comparing a
+0.1 mm claim against it now knows why it cannot be sharpened without
+recording a fixture at full precision.
+
+The prediction missed twice, and the two misses were one mistake. I
+predicted the fixture's iris would be 25 to 40 pixels wide because the
+frames are "a webcam close-up", and it is 43.3, because I reasoned from
+a description of the file instead of measuring the file that was sitting
+in the repository. Everything downstream inherited that: the quantum
+came out just under the predicted band, for that reason and no other.
+Scoring it as two independent failures would have counted one error
+twice, and saying so is part of scoring honestly.
+
+The constant is now exported from the recorder rather than typed into
+the calculation. A published figure derived from a copy of a number can
+drift away from the number it claims to describe, silently, the first
+time somebody changes one of them.
