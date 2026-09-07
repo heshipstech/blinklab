@@ -1,0 +1,101 @@
+THE VELOCITY SAMPLING BIAS, AND A PREDICTION
+============================================
+
+Written 7 September 2026 (roadmap 10.10c4b, ladder B12, audit F-033),
+before any number below is computed, in the predict-then-verify
+discipline this repository requires of anything it measures.
+
+WHY IT EXISTS
+-------------
+The page publishes a peak closing velocity in millimetres per second
+and an amplitude-over-velocity time constant derived from it, and the
+plan for both says the ratio "grows with drowsiness: tired lids lose
+speed before they lose travel". Neither figure carries a bound on how
+much the frame rate alone moves it.
+
+It moves it, and the reason is in the arithmetic rather than in the
+eye. src/core/blinkShape.ts computes the peak as the largest drop
+between two ADJACENT samples divided by their interval: one forward
+finite difference. A finite difference does not measure the fastest
+instant of a descent, it measures the average speed over one sampling
+interval that happens to contain it. The faster the lid and the longer
+the interval, the more of the peak is averaged away.
+
+A human blink's closing phase is roughly 50 to 120 milliseconds. At 25
+frames per second the interval is 40 ms and at 30 it is 33 ms, so a
+single interval covers a third to most of the whole descent. That is
+not a correction term, it is the same order as the thing being
+measured, and every velocity this project has published was measured
+that way.
+
+THE METHOD, FIXED NOW
+---------------------
+A pure simulation in src/core, in the shape samplingBounds.ts already
+uses for the PERCLOS bound: a synthetic descent with a known true peak
+velocity, sampled at a stated rate, run through the SAME arithmetic
+blinkShape.ts uses, and the underestimate reported as a fraction of
+the truth.
+
+The descent is a raised-cosine fall from open to shut over a stated
+closing duration: aperture(t) = open - amplitude * (1 - cos(pi t / T))
+/ 2 for t in [0, T]. It is chosen because it is smooth, has a single
+interior velocity peak, and has an analytic peak of pi * amplitude /
+(2T), so the truth needs no second simulation to establish. A real lid
+is not a raised cosine; what carries over is the shape of the bias,
+not a per-person correction, and this document may not be read as one.
+
+Sampling phase matters and is not averaged away by luck: a sampler
+that happens to straddle the peak reads higher than one that does not.
+So each rate is evaluated at many evenly spaced starting offsets
+across one interval, and the WORST, BEST and MEDIAN underestimate are
+all reported. A single phase would understate the spread a real
+recording sees.
+
+Rates: 25, 30, 60 and 240 frames per second. Closing durations: 50,
+80 and 120 ms. The last rate is far above anything this project runs
+and is there as the control: if the bias does not go to nearly zero
+at 240, the simulation is wrong rather than the instrument.
+
+THE PREDICTION
+--------------
+Written before running it.
+
+1. The bias is a systematic UNDERESTIMATE of peak velocity at every
+   rate and every phase. There is no sampling of a smooth descent that
+   reads faster than its true peak, so a positive bias anywhere would
+   mean the simulation or the arithmetic is wrong.
+
+2. At 25 to 30 frames per second, over the 50 to 120 ms descents, the
+   median underestimate lands between 10 and 40 percent, and the
+   audit's reproduced figure of 12 to 28 percent sits inside that
+   band. If the measured band excludes 12 to 28 percent, the audit and
+   this simulation disagree and the row stops to find out why rather
+   than publishing either.
+
+3. The bias grows as the descent shortens and as the interval
+   lengthens, monotonically in both. A 50 ms descent at 25 fps is the
+   worst cell in the table; a 120 ms descent at 240 fps is the best.
+
+4. At 240 frames per second the median underestimate is below 2
+   percent for every duration.
+
+5. Amplitude-over-velocity is biased the opposite way and by
+   essentially the same factor, because amplitude is barely touched by
+   sampling while velocity is divided into it. A ratio published as a
+   drowsiness time constant therefore reads LONGER than the truth on a
+   slow machine, which is the same direction drowsiness itself moves
+   it. That is the finding this row exists for, and it is stated as a
+   prediction here so it cannot be discovered after the fact.
+
+WHAT THIS ROW DOES NOT DO
+-------------------------
+It does not correct the published numbers. A correction needs a
+descent model fitted to real lids, and this simulation is a raised
+cosine chosen for its analytic peak. The correction is roadmap C6.
+This row measures the bound and states it where the numbers are
+defined and published.
+
+THE RESULT
+----------
+Not yet run. The next commit fills this section in, from the
+simulation named above.
