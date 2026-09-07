@@ -17,7 +17,7 @@ Everything that decides anything lives in `core` as a function from
 values to values. Everything that talks to the world lives in `io`.
 `main.ts` is the wiring between them.
 
-That is why 1457 unit tests run in about three seconds with no browser. A
+That is why 1464 unit tests run in about three seconds with no browser. A
 blink detector that takes numbers and returns numbers can be tested on a
 hand written series where you know the answer, and most of this project's
 real defects were found that way.

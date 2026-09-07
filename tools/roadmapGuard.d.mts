@@ -39,3 +39,14 @@ export function phaseGates(roadmapText: string): PhaseGate[];
 export function gatedStartables(
   roadmapText: string,
 ): { id: string; why: string }[];
+
+/** The phrase a gate caveat opens with. */
+export const GATE_CAVEAT: string;
+
+/** Every row carrying a gate caveat, with the rows it waits on. */
+export function gateCaveats(
+  roadmapText: string,
+): { id: string; waitsOn: string[] }[];
+
+/** The caveats whose constants are now due a re-read. */
+export function ripeCaveats(roadmapText: string): { id: string; why: string }[];

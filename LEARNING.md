@@ -2886,3 +2886,38 @@ what it concluded, and give it a case where it must find something.
 This one has both: the real ladder must come back clean, and a
 deliberately doctored copy claiming a gated row must come back naming
 that row.
+
+## A dot ends a sentence and a dot numbers a version
+
+Two entries ago a guard was written to read a rule out of prose, and
+its patterns stopped at the first dot, which is the ordinary way to
+stop a regular expression at the end of a sentence. Every row number
+in this ladder contains a dot. The patterns read nothing and the guard
+reported a clean ladder.
+
+That was written up carefully as a lesson. Twenty minutes later the
+next guard was written and made the identical mistake, in a pattern
+whose job was to read `13.8b, 12.0a` and which captured `13`.
+
+Twice in an hour is not inattention. It is a shape, and the shape is
+worth naming: in a document about software, the sentence-ending dot
+and the version-numbering dot are the same character, and the second
+kind is everywhere. Any pattern that treats a dot as a terminator will
+work on the prose and truncate every identifier in it. The fix is to
+terminate on something the identifiers cannot contain — the closing
+markers of the phrase, the words that end the clause — and never on
+the punctuation.
+
+The second occurrence is the useful part of this entry. Writing the
+first one up did not prevent it. That is what tells you the write-up
+was a memory rather than a mechanism, and it is the same distinction
+this project keeps arriving at from different directions: a count, a
+list, a header, and now a character class. The difference between a
+convention and a control is whether it can be violated by somebody
+concentrating on something else, which is the state everybody is in
+most of the time.
+
+Both of these were caught by tests that pin what the reader PARSED
+rather than what it concluded. That is the control here, and it is the
+only reason two guards that read nothing did not ship reporting that
+everything was fine.

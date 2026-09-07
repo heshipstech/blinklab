@@ -4,9 +4,11 @@ import {
   blendshapesEnabled,
   blockedRows,
   expandRowRange,
+  gateCaveats,
   gatedStartables,
   phaseGates,
   roadmapRow,
+  ripeCaveats,
   staleStartables,
   startableClaims,
 } from "../../tools/roadmapGuard.mjs";
@@ -312,5 +314,95 @@ describe("a claimed row its phase will not let start", () => {
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
+  });
+});
+
+// Roadmap 10.0b9. Amendment 20 gave three rows a caveat: each was
+// started while the Phase 12 gate was shut, each is unwired so nothing
+// published depends on it, and each has constants chosen against an
+// instrument that 13.8b and 12.0a are going to change. The caveat says
+// re-look when those land.
+//
+// That sentence is prose, and prose kept true by somebody remembering
+// is the one thing this repository has watched fail over and over. So
+// the caveat names the rows it waits on, and the build goes red the
+// moment they are ticked. Same self-retiring shape as drozyGuard and
+// the detector ratchet: the reminder arrives when the instrument
+// moves, not when a person happens to re-read a header.
+
+describe("the caveats amendment 20 left on three rows", () => {
+  it("finds all three, each naming what it waits on", () => {
+    const caveats = gateCaveats(roadmap);
+    expect(caveats.map((one) => one.id).sort()).toEqual([
+      "12.14",
+      "12.6",
+      "12.9",
+    ]);
+    for (const caveat of caveats) {
+      expect(caveat.waitsOn).toEqual(["13.8b", "12.0a"]);
+    }
+  });
+
+  it("refuses a caveat that names nothing to wait for", () => {
+    // The same refusal blockedRows makes. A caveat that says to
+    // re-look one day, without saying at what, retires when somebody
+    // feels like it, which is the state it was written to end.
+    const text = [
+      "- [x] 9.9 A row. **Started while the Phase 12 gate was shut: reasons.",
+      "Re-look when the gate lifts.**",
+    ].join(" ");
+    expect(() => gateCaveats(text)).toThrow(/names nothing/);
+  });
+
+  it("says nothing while everything it waits on is open", () => {
+    const text = [
+      "- [ ] 8.1 Not done.",
+      "- [x] 9.9 A row. **Started while the Phase 12 gate was shut: reasons. Re-look when the gate lifts: 8.1.**",
+    ].join("\n");
+    expect(ripeCaveats(text)).toEqual([]);
+  });
+
+  it("reports a caveat the moment one of its rows is ticked", () => {
+    const text = [
+      "- [x] 8.1 Done now.",
+      "- [x] 9.9 A row. **Started while the Phase 12 gate was shut: reasons. Re-look when the gate lifts: 8.1.**",
+    ].join("\n");
+    expect(ripeCaveats(text)).toEqual([
+      { id: "9.9", why: "8.1 has landed, so its constants need re-reading" },
+    ]);
+  });
+
+  it("reports on the FIRST of several to land, not only on all of them", () => {
+    // Waiting for every trigger would let the first one pass
+    // unexamined, and the first is the one that changes the
+    // instrument under a constant nobody has looked at since.
+    const text = [
+      "- [x] 8.1 Done now.",
+      "- [ ] 8.2 Still open.",
+      "- [x] 9.9 A row. **Started while the Phase 12 gate was shut: reasons. Re-look when the gate lifts: 8.1, 8.2.**",
+    ].join("\n");
+    expect(ripeCaveats(text).map((one) => one.id)).toEqual(["9.9"]);
+  });
+
+  it("is quiet on the ladder today, because neither row has landed", () => {
+    const ripe = ripeCaveats(roadmap);
+    expect(
+      ripe,
+      `these caveats are due a re-read: ${ripe
+        .map((one) => `${one.id} ${one.why}`)
+        .join("; ")}`,
+    ).toEqual([]);
+  });
+
+  it("would fire the moment 13.8b is ticked", () => {
+    // The whole point, against the real ladder. 13.8b re-times the
+    // frame driver, which is what two of the three caveats are about,
+    // and this is the reminder arriving by itself.
+    const landed = roadmap.replace("- [ ] 13.8b ", "- [x] 13.8b ");
+    expect(
+      ripeCaveats(landed)
+        .map((one) => one.id)
+        .sort(),
+    ).toEqual(["12.14", "12.6", "12.9"]);
   });
 });
