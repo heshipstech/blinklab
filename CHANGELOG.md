@@ -21,10 +21,20 @@ over shipping a version.
 ### The evaluation track, Phase 7
 
 - **Measured against somebody else's ground truth for the first time.**
-  Eyeblink8, eight webcam clips, 408 human-marked blinks: 87.7% recall, 83.3%
-  precision, 85.4% F1. Two earlier figures for the same benchmark are published
-  alongside it rather than replaced, because both were wrong for reasons inside
-  this app, and the road there is part of the result.
+  Eyeblink8, eight webcam clips, 408 human-marked blinks: 83.6% recall, 84.0%
+  precision, 83.8% F1. Every earlier figure for the same benchmark is published
+  alongside it rather than replaced, because each was wrong for reasons inside
+  this app, and the road there is part of the result. There have been five, and
+  the table of all five is in [README.md](README.md); the whole record, current
+  run and superseded runs alike, is in
+  [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+
+  This entry itself carried the third of those five from 15 August until
+  7 September 2026, in the present tense, in the section that says what is
+  about to ship. Nothing was watching it. `tools/changelogGuard.mjs` now reads
+  these three numbers back from the current run in the result file, so the next
+  time the headline moves this line moves with it or the build goes red.
+
 - **The measurement repeats.** Measuring one clip three times produces
   identical files, byte for byte, which was not true of any earlier figure.
 - **A null result, published as readily as a positive one would have been.**
