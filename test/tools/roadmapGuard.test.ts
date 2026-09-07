@@ -278,6 +278,35 @@ describe("a claimed row its phase will not let start", () => {
     expect(gatedStartables(text)).toEqual([]);
   });
 
+  it("carries an exemption down to a lettered sub-row", () => {
+    // This ladder splits a row that outgrows one pull request into
+    // lettered halves — 9.3 into 9.3a and 9.3b, 10.0b into nine — and
+    // an era rule tells it to. Splitting for SIZE cannot change
+    // whether the work is exempt: 12.16a and 12.16b are 12.16. So the
+    // exemption follows the parent rather than the spelling, and the
+    // gate is not quietly widened by a rename.
+    const split = [
+      "## Phase 9. A phase with a gate",
+      "",
+      "GATE, from amendment 1: no signal row here starts before 8.1 and 8.2 are",
+      "ticked. The instrument rows are exempt and are the gate's other half: 9.5.",
+      "",
+      "- [x] 8.1 Done.",
+      "- [ ] 8.2 Not done.",
+      "- [ ] 9.5b An exempt row, split in half.",
+      "",
+      "Rows 9.5b remain startable and are not marked.",
+    ].join("\n");
+    expect(gatedStartables(split)).toEqual([]);
+  });
+
+  it("does not carry an exemption sideways to a different row", () => {
+    // 9.4 is not a sub-row of 9.5, and a reader of the gate would not
+    // think it was. Only the parent chain counts.
+    const text = `${LADDER}Rows 9.4 remain startable and are not marked.`;
+    expect(gatedStartables(text).map((row) => row.id)).toEqual(["9.4"]);
+  });
+
   it("says nothing once every prerequisite is ticked", () => {
     const text = `${LADDER.replace("- [ ] 8.2", "- [x] 8.2")}Rows 9.4 remain startable and are not marked.`;
     expect(gatedStartables(text)).toEqual([]);
@@ -310,8 +339,8 @@ describe("a claimed row its phase will not let start", () => {
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
     const claimed = roadmap.replace(
-      "Row 12.16 remains startable and is not marked",
-      "Rows 12.7 and 12.16 remain startable and are not marked",
+      "Rows 12.16b, 13.11 and 14.0f remain startable and are not marked",
+      "Rows 12.7, 12.16b, 13.11 and 14.0f remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);

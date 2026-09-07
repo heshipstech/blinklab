@@ -3001,3 +3001,35 @@ something cannot be done, record which KIND of cannot it is, and if a
 decision is behind it, name the decision and say where it is written.
 Otherwise the record reads as an obstacle, and obstacles look like
 things to remove.
+
+## Measure the light, name the number, refuse the adjective
+
+A webcam decides what the light looks like before this project sees a
+single byte. Automatic exposure and white balance act first, so a
+bright room and a dim room the camera has compensated for can arrive
+looking much alike. Nothing in this codebase knows what a lux is.
+
+That does not make the measurement worthless. The mean brightness of
+the picture is a real, repeatable quantity, and two regions of it are
+more useful than one: a lamp on the face leaves the rest of the frame
+dark, and the disagreement between a face mean and a scene mean is
+exactly the fact worth recording. What is worthless — worse, actively
+misleading — is an adjective on top of it. "Too dark" implies a
+threshold, a threshold implies a validation, and there is none.
+
+So the measurement half ships and the verdict half is parked, with the
+parking written into the label rather than left as an intention. The
+label says what the number is of and what it is not, and a test
+enumerates the words it may not contain.
+
+The other half of this entry is a distinction that shows up in every
+system with optional data: black is a measurement and broken is not.
+A lens cap reads zero. A crop that went wrong reads nothing. If those
+arrive as the same value, no reader can tell a dark room from a
+dropped frame ever again, and no amount of care at the serializer
+recovers it, because the information was destroyed upstream. So the
+refusal is a null at the source, and a test holds the two apart
+explicitly rather than trusting that nobody will reach for zero as a
+convenient default.
+
+That test is short and it is the most valuable one in the file.
