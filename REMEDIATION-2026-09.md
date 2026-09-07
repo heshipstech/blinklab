@@ -1008,6 +1008,24 @@ enabled false`.
       likeliest home for the difference is the perspective term an
       orthographic projection does not model. The fixture's storage
       precision, F-094, is roadmap 10.10c4e.
+      **Five of six done:** 7 September 2026, roadmap 10.10c4e adds
+      F-094. `src/core/storageQuantum.ts` converts one stored rounding
+      step into aperture millimetres through the fixture's own
+      measurements: 0.072 px vertically at 1280x720, lid chords 13.2
+      degrees off vertical, median iris width 43.3 px, so one quantum
+      is 0.0097 mm and the published per-eye medians are 2.03 and 1.99
+      quanta. The precision is now in the conditions block, and so is
+      the thing the ratio does not mean: rounding is deterministic, a
+      perfectly still eye would round to the same value every frame
+      and show no wobble, so two quanta of measured change is not two
+      quanta of storage noise. It establishes that the floor and the
+      grid are the same size and therefore cannot be separated from
+      this file. This item's figure of "two rounding quanta" is
+      confirmed as measured rather than approximate. The unrounded
+      fixture this item also asks for stays out: it needs a recording
+      session rather than arithmetic, and it is the ladder's own
+      separate row. The remaining sixth is F-034, the iris citation,
+      roadmap 10.10c4d, which needs the owner.
 
 - [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2

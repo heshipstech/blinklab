@@ -87,3 +87,24 @@ cross-eye disagreement refusal (row 10.7b) must be derived from that
 distribution, not from the temporal one, or it would refuse every
 frame of an honest face. One face, one camera, one lighting; the
 device-conditioned version is row 11.6's to measure.
+
+WHAT THE FILE'S OWN ROUNDING IS WORTH (roadmap 10.10c4e, added 7
+September 2026). The fixture does not store what the landmarker
+produced. Each coordinate is rounded to 1e-4 of a normalised
+coordinate, which at 1280x720 is 0.072 px vertically, and the lid
+chords the aperture averages run 13.2 degrees off vertical at the
+median, so that is the step they ride. Through the fixture's own
+median iris width the grid is worth:
+
+  median iris width px: 43.3      storage quantum mm: 0.0097
+
+so the per-eye medians above are 2.03 and 1.99 quanta. The floor and
+the grid it was written on are the same size. That does NOT mean the
+floor is made of rounding — rounding is deterministic, and a
+perfectly still eye would round to the same value every frame and show
+no wobble at all. It means the two cannot be separated from this file:
+the 0.020 mm bounds the instrument and the storage together. It stays
+an upper bound on the instrument's own wobble, which is the direction
+that matters, and it cannot be sharpened without re-recording at full
+precision. The arithmetic is src/core/storageQuantum.ts and the
+prediction that preceded it is docs/fixture-storage-quantum.txt.
