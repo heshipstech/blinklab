@@ -201,6 +201,20 @@ const MUTATIONS = [
     "test/core/perclos.test.ts",
   ],
   [
+    "src/core/blinkRhythm.ts",
+    "MIN_BLINKS_FOR_RHYTHM = 15",
+    "MIN_BLINKS_FOR_RHYTHM = 14",
+    "rhythm floor lowered: an irregularity from thirteen gaps would be published beside one from a minute of watching",
+    "test/core/blinkRhythm.test.ts",
+  ],
+  [
+    "src/core/blinkRhythm.ts",
+    "MIN_BLINKS_FOR_RHYTHM = 15",
+    "MIN_BLINKS_FOR_RHYTHM = 16",
+    "rhythm floor raised: a session with exactly fifteen blinks would be refused a number it can support",
+    "test/core/blinkRhythm.test.ts",
+  ],
+  [
     "src/core/constants.ts",
     "MIN_BLINK_FPS = 25",
     "MIN_BLINK_FPS = 24",
