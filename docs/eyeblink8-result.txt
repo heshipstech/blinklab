@@ -341,7 +341,7 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   7 September 2026, the velocity sampling bound (roadmap 10.10c4b,
   ladder B12, docs/velocity-sampling-bias.txt):
 
-    adbfcb0 feat: how much of a blink's speed the frame rate takes
+    1ab04ed feat: how much of a blink's speed the frame rate takes (roadmap 10.10c4b, ladder B12)
 
   NOT argued neutral, PROVED neutral, which is a different and much
   cheaper claim. That commit's whole diff to a detector source is 26
@@ -364,3 +364,30 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   a guard. The record is the point: a reader in six months sees that
   blinkShape moved on this date and can check in one command that the
   movement was words.
+
+  That sha was written twice. The first version of this entry named
+  adbfcb0, the sha the commit had on its branch, and the rebase merge
+  gave it another one — so this file named a commit that does not
+  exist, main went red, and the ratchet was right again. Roadmap
+  10.10c4c widened the match to accept a commit's SUBJECT as well as
+  its sha, which is why the entries below name subjects: a subject
+  survives the rebase and a branch sha does not. The line above keeps
+  the merged sha now that there is one.
+
+  7 September 2026, the pose bound (roadmap 10.10c4c, ladder B12,
+  docs/pose-aperture-bias.txt):
+
+    feat: how much of a published millimetre is head angle (roadmap 10.10c4c, ladder B12)
+
+  Named by subject rather than sha for the reason just given. The
+  commit touches two detector sources, src/core/constants.ts and
+  src/core/aperture.ts, and its diff to both is comments only: the
+  pose limits and the aperture expression are unchanged to the byte,
+  and `git show <that commit> -- src/core/constants.ts
+  src/core/aperture.ts` shows no executable line added, changed or
+  removed. Proved neutral, as above, rather than argued.
+
+  The measurement itself lives in src/core/poseBias.ts, which nothing
+  in the detection path imports and which is deliberately not on the
+  watch list, for the same reason velocityBias.ts is not: a simulation
+  that measures the instrument is not part of it.

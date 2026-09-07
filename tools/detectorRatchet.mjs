@@ -143,8 +143,39 @@ export function ratchetVerdict(resultText, touching) {
         `dated "${STALE_MARKER}" caveat naming every commit.`,
     };
   }
+  // A caveat may name a commit by its short sha OR by its exact
+  // subject, and either counts as a declaration.
+  //
+  // Roadmap 10.10c4c, and the reason cost a red main. This repository
+  // merges by rebase, so a commit's sha on a branch is not its sha on
+  // main: a caveat written in a pull request can only name the branch
+  // sha, which stops existing the moment the pull request lands. The
+  // ratchet was therefore green on every branch and red on main for
+  // any change touching a detector source. The result file had already
+  // noticed it in prose — "a rebase merge does not let this pull
+  // request know in advance" — without anyone connecting that to this
+  // comparison.
+  //
+  // The subject survives the rebase. Nothing is loosened: an
+  // undeclared detector change is still red, and an empty subject
+  // matches nothing rather than everything, because every string
+  // contains the empty string.
+  //
+  // The subject is matched against whole LINES rather than anywhere in
+  // the file, and the first version of this did not: a subject that is
+  // a prefix of some other line would have counted as declaring that
+  // other commit, which is a guard accepting the wrong declaration.
+  // The consequence is that a subject written into a caveat must sit
+  // on one line, unwrapped. The sha still covers the older entries
+  // whose subjects wrap.
+  const lines = resultText.split("\n").map((line) => line.trim());
+  const namesSubject = (subject) =>
+    subject.length > 0 &&
+    lines.some((line) => line === subject || line.endsWith(` ${subject}`));
   const missing = touching.filter(
-    (commit) => !resultText.includes(commit.sha.slice(0, 7)),
+    (commit) =>
+      !resultText.includes(commit.sha.slice(0, 7)) &&
+      !namesSubject(commit.subject),
   );
   if (missing.length > 0) {
     const named = missing
