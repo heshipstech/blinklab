@@ -3,11 +3,13 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 6 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 7 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
+
+Read in full on 7 September 2026, claims `cff70be7`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -285,9 +287,13 @@ between readings to track a face, so machine speed leaked into the
 measurement. Measuring one clip three times now produces identical files,
 byte for byte.
 
-The published figure has been wrong twice, both times through a defect
-in this repository rather than in the data. Both wrong answers remain
-printed in the README beside the current one.
+The published figure has been corrected four times, every time through
+a defect in this repository rather than in the data. All four earlier
+answers remain printed in the README beside the current one, in a table
+of five columns. (This paragraph said "wrong twice" and "both wrong
+answers" until 7 September 2026, when the first full read under the
+stamp at the top of this file caught it. It was accurate when written
+and two corrections had landed since.)
 
 ## Model provenance
 
