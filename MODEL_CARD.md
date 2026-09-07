@@ -317,6 +317,37 @@ row 13.5. The model file and `src/io/landmarker.ts` are watched by the
 detector ratchet (`tools/detectorRatchet.mjs`), so changing either
 without a corpus re-measure or a dated caveat is a red build.
 
+## The instrument that stepped the corpus
+
+Every Eyeblink8 number in this card was produced by stepping real clip
+files in a real browser, not by decoding them in Node. The runner is
+`tools/measure_corpus.mjs`; it launches `webkit`, driven by
+@playwright/test `1.62.1`, which bundles WebKit `26.5` and Chromium
+`151.0.7922.34`.
+
+Those three versions describe the instrument AS IT STANDS, not as it
+stood. The browser binary that produced the 25 and 26 August 2026
+runs was never written down, which is the gap this section closes: the
+reproduction on a second machine is recorded as spanning "a different
+processor generation, operating system and WebKit binary", and nobody
+can now say which WebKit either run used. From here the version is on
+the record before the measurement, not reconstructed after it.
+
+A test reads all three from the committed lockfile and from the
+manifest inside the pinned `playwright-core`, so a Playwright bump that
+leaves this section behind turns the build red. It reddens twice, in
+fact: `package-lock.json` is watched by the detector ratchet
+(`tools/detectorRatchet.mjs`), so the bump also has to be declared
+against the published numbers or re-measured. Dependabot is configured
+to send Playwright as its own pull request rather than inside a
+grouped minor-and-patch title, because a bump that can move a
+published measurement should not arrive with nine others under one
+heading.
+
+Chromium is stated alongside WebKit because the end-to-end suite runs
+there on every pull request, so it is part of what this repository
+checks even though it is not what measured the corpus.
+
 ## Measurement uncertainty
 
 The published numbers carry conditions, and the conditions are part of

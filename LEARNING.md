@@ -2280,3 +2280,46 @@ where the cap is. The general shape: a bound whose stated reason is
 weaker than its real job will eventually be relaxed by someone who
 reads the stated reason, and the test that catches it is the one for a
 different feature entirely.
+
+## The card described everything about the instrument except what ran it
+
+A model card exists so a reader can tell which instrument produced a
+number. This one pinned three things carefully: the face model file by
+its hash, the vision runtime by the lockfile's version and integrity,
+and the five landmarker options by parsing them out of the source. A
+test recomputed all three from the committed artifacts and reddened
+the build on any mismatch.
+
+It said nothing about the browser. Every published Eyeblink8 number
+was produced by stepping real clip files in a real browser, launched
+by Playwright from a runner in this repository, and a Playwright bump
+replaces both the driver and the browser binary underneath it without
+one line of this repository changing.
+
+The gap only became visible from the other side. A separate row
+widened the detector ratchet to watch the whole chain and added
+`package-lock.json` to the watch list, on the reasoning that a browser
+bump can move a stepped measurement. Having decided the lockfile was
+part of the instrument, the question of what the card said about it
+answered itself: nothing.
+
+Writing the section down turned up the part that cannot be fixed. The
+browser that produced the anchor runs was never recorded. The
+reproduction on a second machine is written up as spanning "a
+different processor generation, operating system and WebKit binary",
+which is exactly the sentence of somebody who knew the binary differed
+and did not think to write down either version. So the section states
+the versions as they stand now, says plainly that it cannot state the
+ones that measured, and puts the next run's browser on the record
+before the measurement rather than after it. A pin that starts today
+is worth more than an argument about what today's numbers were made
+on.
+
+Two smaller decisions are worth keeping. The reader of the runner
+refuses rather than guesses: a source that launches nothing, or two
+engines, or one it never imported, throws by name, because a card
+naming a browser that no measurement ran in is worse than a card
+naming none. And the card's patterns tolerate a line break between a
+name and the value it introduces, because the card is hard-wrapped
+prose and a guard that depends on where a paragraph happened to wrap
+fails for the wrong reason.

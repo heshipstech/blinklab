@@ -84,3 +84,123 @@ export function cardProvenance(cardText) {
     outputFaceBlendshapes: options.outputFaceBlendshapes,
   };
 }
+
+// Roadmap 10.1g's provenance half. The card pinned the model, the
+// runtime and the landmarker options, and said nothing about the
+// browser. Every published Eyeblink8 number was produced by stepping
+// real clips in a real browser that Playwright launched, and a
+// Playwright bump moves both the driver and the browser binary
+// underneath it without one line of this repository changing.
+
+const RUNNER = "tools/measure_corpus.mjs";
+const DEPENDABOT = ".github/dependabot.yml";
+const BROWSERS_JSON = "node_modules/playwright-core/browsers.json";
+export { BROWSERS_JSON, DEPENDABOT, RUNNER };
+
+/**
+ * The one Playwright engine the corpus runner launches.
+ *
+ * Refuses rather than guesses. A source that launches nothing, or two
+ * engines, or one it never imported, would put a browser name in the
+ * card that no measurement ever ran in, and a card that names the
+ * wrong browser is worse than one that names none.
+ */
+export function runnerEngine(sourceText) {
+  const imported = new Set();
+  for (const line of sourceText.matchAll(
+    /import\s*\{([^}]*)\}\s*from\s*"@playwright\/test"/g,
+  )) {
+    for (const name of line[1].split(",")) {
+      const trimmed = name.trim();
+      if (trimmed !== "") imported.add(trimmed);
+    }
+  }
+  const launched = new Set();
+  for (const call of sourceText.matchAll(/\b(\w+)\.launch\s*\(/g)) {
+    launched.add(call[1]);
+  }
+  const both = [...launched].filter((name) => imported.has(name));
+  if (both.length !== 1) {
+    throw new Error(
+      `${RUNNER}: launches ${both.length} engines imported from ` +
+        `@playwright/test (imported ${[...imported].join(", ") || "none"}; ` +
+        `launched ${[...launched].join(", ") || "none"}), and the card may ` +
+        "not name a browser this parser had to guess",
+    );
+  }
+  return both[0];
+}
+
+/** The Playwright driver as the lockfile pins it. */
+export function lockfilePlaywright(root) {
+  const lock = JSON.parse(readFileSync(join(root, LOCKFILE), "utf8"));
+  const entry = lock.packages["node_modules/@playwright/test"];
+  return { version: entry.version, integrity: entry.integrity };
+}
+
+/**
+ * The browser versions the pinned Playwright ships with, read from the
+ * manifest inside playwright-core rather than by launching anything.
+ * The lockfile pins playwright-core, so this file is a function of the
+ * lockfile and reads the same on every machine that installed from it.
+ */
+export function bundledBrowsers(root) {
+  const manifest = JSON.parse(readFileSync(join(root, BROWSERS_JSON), "utf8"));
+  const version = (name) => {
+    const entry = manifest.browsers.find((browser) => browser.name === name);
+    if (entry === undefined || typeof entry.browserVersion !== "string") {
+      throw new Error(
+        `${BROWSERS_JSON}: no browserVersion for ${name}, so the card ` +
+          "cannot state which binary stepped the corpus",
+      );
+    }
+    return entry.browserVersion;
+  };
+  return { chromium: version("chromium"), webkit: version("webkit") };
+}
+
+/**
+ * What MODEL_CARD's "## The instrument that stepped the corpus"
+ * section states, or null when the section is missing. As with
+ * cardProvenance, a half-written section surfaces as nulls that the
+ * tests fail on by name rather than passing as a whole one.
+ */
+export function cardInstrument(cardText) {
+  const section = cardText.match(
+    /## The instrument that stepped the corpus\n([\s\S]*?)(?=\n## |$)/,
+  );
+  if (section === null) {
+    return null;
+  }
+  const text = section[1];
+  const one = (pattern) => {
+    const match = text.match(pattern);
+    return match === null ? null : match[1];
+  };
+  // The card is hard-wrapped prose, so a name and the value it
+  // introduces can fall on either side of a line break. Matching only
+  // a space would make the pin depend on where the paragraph happened
+  // to wrap, which is a guard that fails for the wrong reason.
+  return {
+    engine: one(/launches\s+`([a-z]+)`/),
+    playwrightVersion: one(/@playwright\/test\s+`([^`]+)`/),
+    webkitVersion: one(/WebKit\s+`([^`]+)`/),
+    chromiumVersion: one(/Chromium\s+`([^`]+)`/),
+  };
+}
+
+/**
+ * The dependency names Dependabot's grouped minor-and-patch updates
+ * exclude, so a bump that can move a published measurement arrives as
+ * its own pull request rather than under one grouped title with nine
+ * others.
+ */
+export function groupedExclusions(dependabotText) {
+  const group = dependabotText.match(
+    /exclude-patterns:\n((?:\s*-\s*"[^"]+"\n)+)/,
+  );
+  if (group === null) {
+    return [];
+  }
+  return [...group[1].matchAll(/-\s*"([^"]+)"/g)].map((match) => match[1]);
+}

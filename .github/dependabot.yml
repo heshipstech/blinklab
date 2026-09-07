@@ -21,6 +21,17 @@ updates:
     open-pull-requests-limit: 3
     groups:
       minor-and-patch:
+        # Playwright is left out of the group on purpose. It drives the
+        # browser that produced every published Eyeblink8 number, so a
+        # bump changes the instrument, and package-lock.json is watched
+        # by the detector ratchet for that reason (roadmap 10.1g4). A
+        # change that has to be argued against published figures must
+        # arrive as its own pull request, not under a grouped title
+        # with nine unrelated ones. MODEL_CARD's instrument section
+        # states the versions and a test holds it to the lockfile.
+        exclude-patterns:
+          - "@playwright/test"
+          - "playwright"
         update-types:
           - minor
           - patch
