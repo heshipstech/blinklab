@@ -43,6 +43,8 @@ EXPECTED_COLUMNS = [
     "blinkLineSource",
     "shutLineMm",
     "shutLineSource",
+    "sampledFps",
+    "inferenceMs",
 ]
 
 

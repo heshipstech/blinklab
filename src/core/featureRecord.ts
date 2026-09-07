@@ -66,6 +66,23 @@ export type FeatureRecord = {
   blinkLineSource: LineSource;
   shutLineMm: number | null;
   shutLineSource: LineSource;
+  // How measurement happened, per row rather than once per session
+  // (roadmap 12.15). `sampledFps` is the EVIDENCE rate: distinct
+  // camera frames read per second, which is what the 25 fps refusal
+  // and the 60 fps warning both judge, and it is not `fps` above,
+  // which is the processing rate. The session's comment line reports
+  // one number for a recording that may have run at 30 for a minute
+  // and 12 for the next; these columns say which rows are which.
+  // Null on a clip, where there is no camera delivering, and null on
+  // a camera the browser cannot report delivery for: measured absence
+  // either way, never the display's pace.
+  sampledFps: number | null;
+  // How long the face model took on this frame, in milliseconds. The
+  // processing rate is set by that call, so a row reporting a low
+  // `fps` says the machine was slow without saying whether the model
+  // or the rest of the loop was the reason. Null on a frame where no
+  // inference ran.
+  inferenceMs: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -144,6 +161,11 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     numberOrNull(record.blinkLineMm) &&
     isLineSource(record.blinkLineSource) &&
     numberOrNull(record.shutLineMm) &&
-    isLineSource(record.shutLineSource)
+    isLineSource(record.shutLineSource) &&
+    // Both non-negative: a negative rate and a negative duration are
+    // each a defect upstream rather than a measurement, and the
+    // schema is where this project refuses one (roadmap 12.15).
+    nonNegativeOrNull(record.sampledFps) &&
+    nonNegativeOrNull(record.inferenceMs)
   );
 }

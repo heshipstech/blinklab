@@ -3177,6 +3177,11 @@ let modelClock = initialModelClock;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
+// The mean the readout last printed, carried to the record. Null
+// until inference has run at all, which is measured absence: a row
+// written before the first detection is not a row where the model
+// took zero milliseconds.
+let inferenceMeanMs: number | null = null;
 
 // One frame, already accepted by the clock. nowMs is the pipeline's
 // clock: the wall clock live, the clip's own media time for a file.
@@ -3321,10 +3326,15 @@ function processFrame(
         performance.now() - inferenceStartMs,
         60,
       );
-      writeReadout(
-        inferenceLabel,
-        inferenceMessage(meanDurationMs(inferenceSamplesMs)),
-      );
+      // The page has shown the model's mean cost since the timing
+      // readout landed, and the exported file never carried it
+      // (roadmap 12.15). The row now takes the SAME number the
+      // readout prints, from the same call, so the page and the
+      // record cannot say different things about how long inference
+      // took — the rule this project already applies to its notice
+      // and its result figures.
+      inferenceMeanMs = meanDurationMs(inferenceSamplesMs);
+      writeReadout(inferenceLabel, inferenceMessage(inferenceMeanMs));
 
       const present = isFacePresent(result);
       if (present !== lastFacePresent) {
@@ -4161,6 +4171,14 @@ function processFrame(
             timestampMs: nowMs,
             faceDetected: face !== undefined && faceTrusted,
             fps,
+            // The EVIDENCE rate, not the processing rate above: null
+            // on a clip and on a camera whose delivery the browser
+            // cannot report, which is measured absence rather than
+            // the display's pace (roadmap 12.15).
+            sampledFps: observation.observed
+              ? (delivery?.sampledFps ?? null)
+              : null,
+            inferenceMs: inferenceMeanMs,
             apertureMm: stabilityMm,
             baselineMm: readyBaselineMm,
             baselineOverResting: rulerFit?.ratio ?? null,

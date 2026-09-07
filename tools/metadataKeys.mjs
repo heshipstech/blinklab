@@ -142,3 +142,33 @@ export function exportRowBuilders(root) {
     ...stripComments(text.slice(open, close)).matchAll(/\.\.\.([A-Za-z]+)\(/g),
   ].map((match) => match[1]);
 }
+
+/**
+ * The field names SPEC.md's `FeatureRecord` block declares.
+ *
+ * Roadmap 12.15. That block has fallen behind the type twice:
+ * increment 6.4's review found fields that had landed without being
+ * recorded, and `baselineOverResting` landed on 23 August 2026 and was
+ * not written into it until 6 September. Both times the document said
+ * the record was one thing and the export wrote another, and a reader
+ * who opens a CSV opens SPEC.md next.
+ *
+ * Throws rather than reporting none: a SPEC with no block is a
+ * contract documented nowhere, which is not the same as a contract
+ * with no fields.
+ */
+export function specRecordFields(root) {
+  const text = readFileSync(join(root, "SPEC.md"), "utf8");
+  const block = text.match(/export type FeatureRecord = \{\n([\s\S]*?)\n\};/);
+  if (block === null) {
+    throw new Error(
+      "SPEC.md: no FeatureRecord block, so the export contract is " +
+        "documented nowhere a reader would look",
+    );
+  }
+  const names = [];
+  for (const line of block[1].matchAll(/^ {2}(\w+)\??:/gm)) {
+    if (line[1] !== undefined) names.push(line[1]);
+  }
+  return names;
+}

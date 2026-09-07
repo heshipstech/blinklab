@@ -41,6 +41,8 @@ export type FeatureRecord = {
   blinkLineSource: LineSource; // "none" | "fixed" | "passive" | "guided": where that line came from
   shutLineMm: number | null; // the line PERCLOS and the long-closure detector read this frame
   shutLineSource: LineSource; // "none" or "passive" today; no guided line serves the shut baseline yet
+  sampledFps: number | null; // the EVIDENCE rate: distinct camera frames read per second, which is what the 25 fps refusal and the 60 fps warning judge; null on a clip and on a camera whose delivery the browser cannot report (roadmap 12.15)
+  inferenceMs: number | null; // the mean the timing readout prints, from the same samples, so the page and the record cannot disagree about what the model cost (roadmap 12.15)
 };
 ```
 

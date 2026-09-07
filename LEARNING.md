@@ -2505,3 +2505,49 @@ first named outside the project's own convention for guard filenames, so
 the check that demands every guard have a sibling test could not see it.
 The count that has to be bumped by hand is what surfaced it. A pin whose
 only job is to make you look is worth having.
+
+## The number was on the screen and not in the file
+
+A page can show a reader something the exported record does not keep,
+and nobody notices, because the person watching the screen and the
+person reading the file are the same person at different times.
+
+The timing readout here has printed the face model's mean cost for
+several increments. It is on the page while a session runs. It was in
+no column of the file that session writes. So an analyst opening a CSV
+could see that the processing rate was low and could not tell whether
+the model or the rest of the loop was the reason — a question the page
+had been answering out loud the whole time.
+
+The fix is not to compute the number again for the export. It is to
+take the SAME one the readout prints, from the same samples, so the
+page and the record cannot say different things about what inference
+cost. This project already applies that rule to its permanent notice
+and to its published figures; it had not applied it here.
+
+The other column is the same shape one step out. `sampled_fps`, the
+evidence rate the frame-rate refusal actually judges, existed as one
+number in a comment line above the header. A recording that ran at 30
+frames per second for a minute and 12 for the next reported a single
+figure for the whole file, and a reader could not tell which rows were
+measured on which. A per-session summary of a quantity that varies
+within the session is not wrong, exactly. It is just not enough to
+answer the question somebody will ask of it.
+
+The find on the way is worth more than either column. The Python
+loader keeps a list of accepted header generations, and the comment
+beside them states the rule plainly: slice each generation from the
+one after it, "so that appending a column never silently re-cuts an
+older header". Two lines above that comment, one generation was
+sliced as `COLUMNS[:-4]` — an absolute offset from the end of the
+CURRENT list. Appending these two columns would have re-cut it four
+short of the wrong list and refused every file of that vintage whole,
+including the validation round's six.
+
+So the rule was written down, correctly, in the same file, by somebody
+who then did not follow it in the line above. Writing a rule beside
+the code is not the same as the code obeying it, and the only thing
+that tells them apart is a test. There is one now: every accepted
+generation must be an exact prefix of the current header, which is the
+property all those slices quietly depend on and nothing had ever
+checked.

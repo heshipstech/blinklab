@@ -43,6 +43,8 @@ COLUMNS: list[str] = [
     "blinkLineSource",
     "shutLineMm",
     "shutLineSource",
+    "sampledFps",
+    "inferenceMs",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -54,12 +56,28 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before sampledFps and inferenceMs were appended
+# (7 September 2026, roadmap 12.15). Those two say HOW a row was
+# measured — the evidence rate and what the face model cost — and
+# before them the first was session-level and the second was nowhere.
+# Every session recorded until then carries this header and loads with
+# both unknown, which is the truth about those files.
+PRE_MEASUREMENT_COLUMNS: list[str] = COLUMNS[:-2]
+
 # The header before the four line-provenance columns were appended
 # (7 September 2026, roadmap 10.13a). Every session recorded before
 # then carries it, and loads with the line and its source unknown,
 # which is the truth: those files never wrote down which line the
 # detector read.
-PRE_LINE_COLUMNS: list[str] = COLUMNS[:-4]
+#
+# Sliced from the generation AFTER it rather than from COLUMNS. It was
+# written as COLUMNS[:-4] and that was correct only until the next
+# append moved what four-from-the-end meant: roadmap 12.15's two
+# columns would have re-cut this generation four columns short of the
+# wrong list, and every file of that vintage would have been refused
+# whole. The rule the comment below states was already written down;
+# the slice above it was not following it.
+PRE_LINE_COLUMNS: list[str] = PRE_MEASUREMENT_COLUMNS[:-4]
 
 # The header before pupilDiameterMm was appended (4 September 2026):
 # every column but the last of ITS generation. Defined against the
@@ -85,6 +103,7 @@ LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_MEASUREMENT_COLUMNS,
     PRE_LINE_COLUMNS,
     PRE_PUPIL_COLUMNS,
     LEGACY_COLUMNS,
