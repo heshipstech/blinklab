@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   actualPythonTestCount,
+  parsePythonTestCount,
+  pythonTestFunctionCount,
   actualUnitTestCount,
   isShallowRepo,
   lastCommitDateFor,
@@ -165,6 +167,33 @@ describe("published test counts match the suites", () => {
         expect(stated).toBe(actual);
       }
     }
+  });
+
+  it("the Python count is the runner's number, not a count of functions", () => {
+    // Roadmap 10.1g2. The count used to be a grep for `def test_`,
+    // which counts test FUNCTIONS; pytest expands one parametrised
+    // function into one test per case, so the grep read 446 where the
+    // runner collected 488. Every document said "N Python tests ...
+    // all green", which is a claim about a run.
+    //
+    // A grep cannot know the expansion without evaluating Python, and
+    // the job that runs this file has no Python at all, so the number
+    // is read from a committed file that the analysis job holds to
+    // pytest's own collection.
+    expect(actualPythonTestCount(root)).toBeGreaterThan(
+      pythonTestFunctionCount(root),
+    );
+  });
+
+  it("refuses a committed count that is not a single number", () => {
+    // The file is the contract between two CI jobs that never meet.
+    // A file with two numbers in it, or none, has to fail loudly here
+    // rather than let one of them win silently.
+    expect(() => parsePythonTestCount("# only a comment\n")).toThrow(
+      /one number/,
+    );
+    expect(() => parsePythonTestCount("488\n489\n")).toThrow(/one number/);
+    expect(parsePythonTestCount("# why\n488\n")).toBe(488);
   });
 });
 
