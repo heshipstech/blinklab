@@ -24,6 +24,9 @@ import {
   type PoseFrameCounts,
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
+import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
+import { aStoredLine } from "../support/storedLine";
 import {
   steppingMetadataRows,
   type SteppingWitness,
@@ -109,6 +112,8 @@ function record(timestampMs: number): FeatureRecord {
  * keys.
  */
 type Shape = {
+  /** The guided line in force, or null for a passive session. */
+  guidedLine: StoredBlinkCalibration | null;
   source: FrameSource;
   clipName: string | null;
   mode: MeasurementMode;
@@ -144,6 +149,7 @@ type Shape = {
  * still carries is a row every camera export has.
  */
 const MINIMAL_CAMERA: Shape = {
+  guidedLine: null,
   source: "camera",
   clipName: null,
   mode: "live",
@@ -185,6 +191,9 @@ const MINIMAL_CLIP: Shape = {
 
 /** A session where every optional thing happened at least once. */
 const FULL: Shape = {
+  // A calibrated person, so the guided block's keys appear in the
+  // derived sets and SPEC has to account for them.
+  guidedLine: aStoredLine(),
   source: "camera",
   clipName: null,
   mode: "live",
@@ -235,6 +244,7 @@ function metadataRows(shape: Shape): string[] {
       describeCalibrationWindow(shape.calibrationSamples),
       shape.calibrationRefused,
     ),
+    ...guidedCalibrationMetadataRows(shape.guidedLine, null),
     ...deliveryMetadataRows(shape.delivery),
     ...sessionMetadataRows(
       shape.records,
@@ -259,6 +269,7 @@ const CALLED_HERE = [
   "steppingMetadataRows",
   "deviceMetadataRows",
   "calibrationMetadataRows",
+  "guidedCalibrationMetadataRows",
   "deliveryMetadataRows",
   "sessionMetadataRows",
   "featureRecordOverrunRows",

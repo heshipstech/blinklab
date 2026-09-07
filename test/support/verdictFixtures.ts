@@ -27,6 +27,8 @@ import {
   type PoseFrameCounts,
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
+import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
 import type { VerdictInputs } from "../../src/core/sessionVerdict";
 import { steppingMetadataRows } from "../../src/core/stepCalibration";
 
@@ -56,6 +58,13 @@ import { steppingMetadataRows } from "../../src/core/stepCalibration";
 
 /** One synthetic session, described once. */
 export type FixtureSession = {
+  /**
+   * The guided line in force, or null. Every fixture is a passive
+   * session today, so this is null throughout; it is a field rather
+   * than a hardcoded null so a guided fixture can be added without
+   * touching the assembly.
+   */
+  guidedLine: StoredBlinkCalibration | null;
   /** The fixture's name on disk: `<name>-session.csv`. */
   name: string;
   device: DeviceInfo;
@@ -131,6 +140,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "steppingMetadataRows",
   "deviceMetadataRows",
   "calibrationMetadataRows",
+  "guidedCalibrationMetadataRows",
   "deliveryMetadataRows",
   "sessionMetadataRows",
   "featureRecordOverrunRows",
@@ -156,6 +166,11 @@ export function fixtureCsv(session: FixtureSession): string {
     ...steppingMetadataRows(null),
     ...deviceMetadataRows(session.device),
     ...calibrationMetadataRows(session.calibration, session.calibrationRefused),
+    // No fixture session holds a guided line: every one of them is a
+    // passive session, so this builder is called and writes nothing.
+    // Called anyway, because a builder the page calls and the fixtures
+    // skip would put keys in a real export the pin never sees.
+    ...guidedCalibrationMetadataRows(session.guidedLine, null),
     ...deliveryMetadataRows(session.delivery),
     ...sessionMetadataRows(
       records,
@@ -273,6 +288,12 @@ const READY_WINDOW: CalibrationWindow = {
 
 /** A session that went well: the shape every other fixture varies from. */
 const GOOD: FixtureSession = {
+  // Every verdict fixture is a passive session. The verdict pin is
+  // about what the two implementations agree a session MEANS, and a
+  // guided line changes which ruler measured it rather than how the
+  // verdict is derived, so adding one here would widen the pin without
+  // testing it. The field exists so a guided fixture can be added.
+  guidedLine: null,
   name: "good",
   device: CAMERA,
   delivery: { deliveredFps: 60, sampledFps: 60, readFraction: 1 },

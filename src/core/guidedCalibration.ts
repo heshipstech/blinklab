@@ -48,6 +48,12 @@ export type GuidedCalibrationResult =
       openMedianMm: number;
       closedMedianMm: number;
       personalLineMm: number;
+      // How many trusted readings each median stood on. Carried out of
+      // the resolver rather than recounted at the call site, so the
+      // exported counts describe the samples that produced the line
+      // (roadmap 10.13a, ladder A8).
+      openSampleCount: number;
+      closedSampleCount: number;
     }
   | { kind: "refused"; reason: GuidedCalibrationRefusal };
 
@@ -109,16 +115,49 @@ export function resolveGuidedCalibration(
     openMedianMm,
     closedMedianMm,
     personalLineMm: (openMedianMm + closedMedianMm) / 2,
+    openSampleCount: samples.open.length,
+    closedSampleCount: samples.closed.length,
   };
 }
 
-// What a resolved calibration keeps: the line and the two medians it
-// came from, so a stored calibration can show its working, not just a
-// bare number.
+/**
+ * The conditions one stored line was measured under.
+ *
+ * Added 7 September 2026 (roadmap 10.13a, ladder A8). A line that
+ * overrides the passive baseline for as long as it exists was three
+ * bare numbers, with nothing saying which camera measured it, at what
+ * size, how far away, or when. The export carries these now, and the
+ * live camera is checked against them.
+ */
+export type BlinkCalibrationStampFields = {
+  /** The camera's own name, or null when the browser withheld it. */
+  cameraLabel: string | null;
+  frameWidthPx: number;
+  frameHeightPx: number;
+  /**
+   * The iris ruler at the moment of calibration: the working distance.
+   *
+   * Null when it could not be measured on that frame. Null and never
+   * zero, the same rule the rest of the record keeps: a zero ruler is
+   * not a small distance, it is no measurement, and storing one would
+   * make a line that cannot be checked look like one that matches
+   * nothing.
+   */
+  irisWidthPx: number | null;
+  recordedAtIso: string;
+};
+
+// What a resolved calibration keeps: the line, the two medians it came
+// from, how many samples each median stood on, and the conditions of
+// the measurement — so a stored calibration can show its working, not
+// just a bare number.
 export type StoredBlinkCalibration = {
   personalLineMm: number;
   openMedianMm: number;
   closedMedianMm: number;
+  openSampleCount: number;
+  closedSampleCount: number;
+  stamp: BlinkCalibrationStampFields;
 };
 
 export function serializeBlinkCalibration(
@@ -146,6 +185,43 @@ export function effectiveBlinkLineMm(
   baselineLineMm: number | null,
 ): number | null {
   return stored !== null ? stored.personalLineMm : baselineLineMm;
+}
+
+/**
+ * The stamp, or null for anything that is not one.
+ *
+ * As strict as the rest of this parser, which means an entry stored
+ * before 7 September 2026 is refused whole. That is deliberate: a line
+ * whose conditions nobody recorded cannot be checked against the
+ * camera in front of it, and being used anyway is the defect this row
+ * exists to close. The cost is one recalibration, once.
+ */
+function parseStamp(value: unknown): BlinkCalibrationStampFields | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const stamp = value as Record<string, unknown>;
+  const { frameWidthPx, frameHeightPx, irisWidthPx, recordedAtIso } = stamp;
+  if (!finitePositive(frameWidthPx) || !finitePositive(frameHeightPx)) {
+    return null;
+  }
+  if (irisWidthPx !== null && !finitePositive(irisWidthPx)) {
+    return null;
+  }
+  if (typeof recordedAtIso !== "string" || recordedAtIso.length === 0) {
+    return null;
+  }
+  const label = stamp.cameraLabel;
+  if (label !== null && typeof label !== "string") {
+    return null;
+  }
+  return {
+    cameraLabel: label,
+    frameWidthPx,
+    frameHeightPx,
+    irisWidthPx: irisWidthPx as number | null,
+    recordedAtIso,
+  };
 }
 
 function finitePositive(value: unknown): value is number {
@@ -187,7 +263,22 @@ export function parseBlinkCalibration(
   if (!(closedMedianMm < personalLineMm && personalLineMm < openMedianMm)) {
     return null;
   }
-  return { personalLineMm, openMedianMm, closedMedianMm };
+  const { openSampleCount, closedSampleCount } = record;
+  if (!finitePositive(openSampleCount) || !finitePositive(closedSampleCount)) {
+    return null;
+  }
+  const stamp = parseStamp(record.stamp);
+  if (stamp === null) {
+    return null;
+  }
+  return {
+    personalLineMm,
+    openMedianMm,
+    closedMedianMm,
+    openSampleCount,
+    closedSampleCount,
+    stamp,
+  };
 }
 
 // The session sequences the two held phases against the clock, so the

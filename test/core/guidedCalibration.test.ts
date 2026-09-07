@@ -14,6 +14,7 @@ import {
   type GuidedCalibrationSamples,
   type StoredBlinkCalibration,
 } from "../../src/core/guidedCalibration";
+import { aStoredLine } from "../support/storedLine";
 
 // The guided blink-line calibration measures a person's OWN open and
 // closed aperture through two held phases, then places the personal
@@ -199,11 +200,11 @@ describe("the calibration session state machine", () => {
 });
 
 describe("stored blink calibration, serialise and validated parse", () => {
-  const good = {
+  const good = aStoredLine({
     personalLineMm: 5,
     openMedianMm: 8,
     closedMedianMm: 2,
-  };
+  });
 
   it("round-trips a ready calibration", () => {
     const raw = serializeBlinkCalibration(good);
@@ -284,11 +285,11 @@ describe("effectiveBlinkLineMm, which line the detector reads", () => {
   // line. Kept a pure decision so the precedence is pinned and main.ts
   // stays thin. The corpus never has a stored calibration, so this
   // returns the baseline line there and the benchmark is unchanged.
-  const stored: StoredBlinkCalibration = {
+  const stored: StoredBlinkCalibration = aStoredLine({
     personalLineMm: 5,
     openMedianMm: 8,
     closedMedianMm: 2,
-  };
+  });
 
   it("uses the guided line when a calibration is present", () => {
     expect(effectiveBlinkLineMm(stored, 3.9)).toBe(5);

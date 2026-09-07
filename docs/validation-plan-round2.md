@@ -126,6 +126,55 @@ The blink log stays censored (a missed blink writes no row), a
 handful of people stays a smoke test, and one session per person
 cannot separate a face from a room from a day.
 
+## Reading a guided session, added 7 September 2026
+
+Round I could not read one. A person who had run the guided
+calibration carried a stored line that overrode the passive baseline,
+and nothing in the export said so: two sessions with identical
+`calibration_*` rows could have been measured against lines a
+millimetre apart. Roadmap 10.13a fixed that, and this is what a
+reader now does with it.
+
+**Which ruler measured this session.** `blinkLineSource` in the
+per-second rows says it, one value per row: `guided` for a stored
+personal line, `passive` for half the learned baseline, `none` for a
+row where nothing was compared, `fixed` for the fallback constant. A
+session that changed source part way through changed rulers part way
+through, and a table that pools its rows is pooling two instruments.
+`blinkLineMm` beside it is the line itself.
+
+**Whether a guided line is comparable to another person's.**
+`guided_open_median_mm`, `guided_closed_median_mm` and
+`guided_separation_ratio` say how far apart the two phases were, and
+`guided_open_samples` and `guided_closed_samples` say how many trusted
+readings each median stood on. A line resolved from the minimum number
+of samples is a different quality of evidence from one resolved from
+three times that, and the counts are the only place that shows.
+
+**Whether the line still fits the session it measured.**
+`guided_conditions_match` is `true`, or `false (frame-size)` or
+`false (iris-width)` when the camera in front of the person no longer
+matches `guided_frame_size` and `guided_iris_width_px`. It is a flag,
+not a refusal, and the distinction matters to a reader: the millimetre
+is computed through each frame's own iris ruler, so a person who moved
+closer still has a line in the same units. What a `false` says is that
+the working distance drifted by more than the scale error the validity
+gate already tolerates from head angle alone, and that any
+between-session comparison should say so.
+
+**What is refused outright.** A stored line is never used on a clip.
+A guided line is a measurement of a person at a camera and a file has
+neither, so a session with `source: file` reads `blinkLineSource:
+passive` or `none`, never `guided`, whatever is in the visitor's
+storage. A round II session recorded from a clip therefore cannot be
+a guided session, and one claiming to be is a damaged file.
+
+**Sessions from before this date.** Their four line columns are
+missing, and the loader fills them with NA rather than a value. NA
+here means the file did not say, which is not the same as `none`, and
+a round II analysis must not read one as the other. `plot.py` draws a
+reconstructed line for such a file and labels it as reconstructed.
+
 ## Open, and whose
 
 The participant set (the same six, new volunteers, or a mix), the

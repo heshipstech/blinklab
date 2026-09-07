@@ -105,6 +105,27 @@ export function resolveShutLine(
 }
 
 /**
+ * The stored line the detector may actually use, given the source.
+ *
+ * A clip is not this person. The calibrate buttons were enabled for
+ * any running source, so three seconds of a recorded stranger's eye
+ * became the visitor's stored line, and a stored line was then read
+ * back on a clip and used to measure the stranger. Both directions are
+ * the same mistake: a guided line is a measurement OF A PERSON at a
+ * camera, and neither half of that is present in a file.
+ *
+ * A refusal rather than a flag, unlike the conditions check next door.
+ * A drifted working distance still leaves the line in millimetres of
+ * the same face; a clip leaves it measuring somebody else.
+ */
+export function storedLineForSource(
+  stored: StoredBlinkCalibration | null,
+  liveCamera: boolean,
+): StoredBlinkCalibration | null {
+  return liveCamera ? stored : null;
+}
+
+/**
  * Whether this frame's blink numbers are withheld.
  *
  * One decision, in one place, for the four things that used to make it

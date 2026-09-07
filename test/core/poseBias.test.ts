@@ -1,3 +1,4 @@
+import { POSE_APERTURE_SPAN_PERCENT } from "../../src/core/blinkCalibrationStamp";
 import { describe, expect, it } from "vitest";
 
 import { POSE_LIMITS } from "../../src/core/constants";
@@ -144,5 +145,21 @@ describe("a head with no ruler left", () => {
     const ratio = apertureRatioAt({ pitchDeg: 0, yawDeg: 45, rollDeg: 0 });
     expect(ratio).toBeCloseTo(1 / Math.cos(45 * (Math.PI / 180)), 6);
     expect(ratio).toBeGreaterThan(1.4);
+  });
+});
+
+describe("the span other modules quote", () => {
+  it("is the number blinkCalibrationStamp states as its margin", () => {
+    // POSE_APERTURE_SPAN_PERCENT is typed into
+    // src/core/blinkCalibrationStamp.ts rather than computed, because
+    // computing it would drag this 125-pose simulation into the
+    // browser bundle. This is what stops the typed number drifting
+    // from the simulation it claims to come from: change the pose
+    // limits or the projection and the margin goes red here.
+    const span = poseBiasSpan();
+    expect((span.high - span.low) * 100).toBeCloseTo(
+      POSE_APERTURE_SPAN_PERCENT,
+      3,
+    );
   });
 });
