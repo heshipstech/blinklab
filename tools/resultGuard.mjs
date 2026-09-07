@@ -110,7 +110,7 @@ export function statedPythonTestCount(docText) {
 }
 
 /** Count `it(` and `test(` calls across test/**\/*.test.ts, recursively. */
-export function actualUnitTestCount(root) {
+export function unitTestCallCount(root) {
   let count = 0;
   const walk = (dir) => {
     for (const entry of readdirSync(join(root, dir), {
@@ -127,6 +127,26 @@ export function actualUnitTestCount(root) {
   };
   walk("test");
   return count;
+}
+
+/**
+ * How many tests `vitest list` collects across test/.
+ *
+ * NOT a count of `it(` and `test(` calls, which is what this was
+ * until roadmap 10.0b1. vitest runs CASES: a table written as a loop
+ * around one call is one call and many cases, so the grep read 1213
+ * where the runner collected 1238, and every document saying "1213
+ * unit tests ... all green" described a run that never had 1213 tests
+ * in it. Counting cases means loading every test file, which this
+ * guard cannot do from inside the run it would be counting, so the
+ * number is read from a committed file that `npm run counts:check`
+ * holds to the runner's own listing.
+ */
+export function actualUnitTestCount(root) {
+  return parseCollectedCount(
+    readFileSync(join(root, "test/collected-tests.txt"), "utf8"),
+    "test/collected-tests.txt",
+  );
 }
 
 /**
@@ -150,25 +170,42 @@ export function pythonTestFunctionCount(root) {
 }
 
 /**
- * The one number `analysis/collected-tests.txt` states.
+ * The one number a committed count file states, ignoring its comments.
  *
- * A file rather than a computation, because the number it carries
- * cannot be computed here. The file explains itself; this refuses
- * anything but a single number, because the file is the contract
- * between two CI jobs that never meet and a quiet win for either
- * side would put a wrong figure into every published sentence.
+ * A file rather than a computation, because neither number these
+ * files carry can be computed by reading source. Each file explains
+ * itself; this refuses anything but a single number, because a count
+ * file is a contract between a runner and a guard that never share a
+ * process, and a quiet win for either side would put a wrong figure
+ * into every published sentence.
  */
-export function parsePythonTestCount(text) {
+export function parseCollectedCount(text, name) {
   const lines = text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith("#"));
   if (lines.length !== 1) {
     throw new Error(
-      `analysis/collected-tests.txt must hold exactly one number, found ${String(lines.length)}`,
+      `${name} must hold exactly one number, found ${String(lines.length)}`,
     );
   }
   return Number(lines[0]);
+}
+
+/** The one number `analysis/collected-tests.txt` states. */
+export function parsePythonTestCount(text) {
+  return parseCollectedCount(text, "analysis/collected-tests.txt");
+}
+
+/**
+ * How many tests `vitest list` printed, one per line.
+ *
+ * The listing is `file > describe > name` per collected case. A name
+ * may itself contain the separator, so a line counts once however
+ * many separators it holds, and blank lines count for nothing.
+ */
+export function countListedTests(listing) {
+  return listing.split("\n").filter((line) => line.includes(" > ")).length;
 }
 
 /**

@@ -47,6 +47,15 @@ export function pythonTestFunctionCount(root: string): number;
 /** The one number `analysis/collected-tests.txt` states. */
 export function parsePythonTestCount(text: string): number;
 
+/** The one number a committed count file states, ignoring comments. */
+export function parseCollectedCount(text: string, name: string): number;
+
+/** How many tests `vitest list` printed, one per line. */
+export function countListedTests(listing: string): number;
+
+/** How many `it(` and `test(` calls live across test/. */
+export function unitTestCallCount(root: string): number;
+
 /** The newest stamp date in a document, "YYYY-MM-DD", or null if unstamped. */
 export function newestStampDate(docText: string): string | null;
 

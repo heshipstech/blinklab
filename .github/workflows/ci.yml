@@ -97,6 +97,7 @@ jobs:
       # checked. Separate from `npm test` so a coverage failure reads
       # as a coverage failure rather than as a broken suite.
       - run: npm run coverage
+      - run: npm run counts:check
       - run: npm run build
       # Roadmap 8.7. Must follow the build: it measures dist/.
       - run: npm run bundle:budget

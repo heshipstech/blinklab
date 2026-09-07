@@ -25,7 +25,8 @@
     "prepare-assets": "rm -rf public/mediapipe-wasm && cp -R node_modules/@mediapipe/tasks-vision/wasm public/mediapipe-wasm",
     "predev": "npm run prepare-assets",
     "prebuild": "npm run prepare-assets",
-    "fixtures:write": "UPDATE_FIXTURES=1 vitest run test/core/verdictFixtureSource.test.ts"
+    "fixtures:write": "UPDATE_FIXTURES=1 vitest run test/core/verdictFixtureSource.test.ts",
+    "counts:check": "node tools/checkCollectedTests.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
