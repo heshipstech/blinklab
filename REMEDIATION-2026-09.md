@@ -880,6 +880,15 @@ enabled false`.
       way; detectable edge ~0.14 at this n"; pre-register before
       re-reading.
       **Findings:** F-013.
+      **Half done:** 7 September 2026, roadmap 10.10c2. The reading is
+      corrected: "not distinguishable from chance" and "about as good
+      as a fitted one" both claimed a finding of no difference, and a
+      control that can detect only about 0.14 AUC at this n never made
+      one. Both now read as no evidence either way, with the detectable
+      edge named. The paired bootstrap is roadmap 10.10c2b and needs
+      the owner: it resamples by subject, the committed result file
+      carries pooled AUCs only, and `compare_alertness.py` takes a
+      measured corpus directory that is not in this repository.
 
 - [ ] **B10. No headline result carries a confidence interval.**
       `low · confirmed/medium + downgraded/low · M`
@@ -916,7 +925,14 @@ enabled false`.
       `:206-218`, 3 of 5 agreeing) passes by chance with p 0.5 and
       alone grants three "suggestive" verdicts
       (`docs/drozy-result.txt:36-43`, `:55-63`). Append the chance
-      rate; require future bars with chance rate below 0.05. (F-049) - Validation criterion 1 was judged on 3 sound sessions against
+      rate; require future bars with chance rate below 0.05. (F-049)
+      **Done for the DROZY half:** 7 September 2026, roadmap 10.10c2.
+      `binomial_at_least` computes it, the tool prints it beside every
+      row from its next run, and the result file states it in prose
+      with the rule for later bars, because regenerating that table
+      would need a re-extract that recreates the derived video
+      DATASETS.md requires destroyed. A test recomputes the rate from
+      the counts the committed table already publishes. - Validation criterion 1 was judged on 3 sound sessions against
       an absolute bar of 3 misses (`docs/validation-plan.md:238-242`,
       `:420-433`, `docs/validation-round.txt:56-61`); `README.md:47`,
       `:66-68`, `MODEL_CARD.md:74-75` carry no n. Add "0 of 3 sound

@@ -32,6 +32,26 @@ MEASURING COMMIT, read this before the correlations
   DATASETS.md requires destroyed. Read those three rows as
   produced by code this repository has since corrected.
 
+HOW HARD THE WITHIN-SUBJECT BAR IS (added 7 September 2026, roadmap
+10.10c2, ladder B11). The "k/5 agree" column below asks that at least
+3 of the 5 multi-session subjects agree on the sign of an effect. Under
+the null each subject is a coin flip, so that bar is cleared 0.500 of
+the time by nothing at all: 3, 4 or 5 of 5 is (10 + 5 + 1) / 32. A bar
+cleared half the time by chance is not a bar, and it alone granted the
+three "suggestive and unconfirmed" verdicts below. Read that column as
+a description rather than as evidence.
+
+The table itself is NOT regenerated to carry this note. Recomputing it
+needs a re-extract from DROZY.zip and would recreate the derived video
+DATASETS.md requires destroyed, so the arithmetic is stated here and
+recomputed by test from the counts printed below
+(analysis/tests/test_analyse_drozy.py). The tool prints the rate beside
+each row from its next run onward.
+
+Any bar added to this project after this date must state its chance
+rate, and may not grant a verdict on its own unless that rate is below
+0.05.
+
 PRIMARY, Spearman against KSS across sessions
   feature                            n     rho    p raw   p Holm  within-subject
   blink duration, ms                20   0.444   0.0490   0.3427  2/5 agree

@@ -1774,3 +1774,39 @@ proportions, not a count over a count, so a Wilson interval on it would
 be arithmetic borrowed from a distribution it does not have. The
 tempting thing, once you have a new tool, is to use it on everything in
 the block. That temptation is now a test.
+
+## A bar is worth what it is hard to clear
+
+This project fixes its pass marks before it looks at the data, which is
+the right discipline and the reason its null results are believable. One
+of those marks turns out to be no mark at all.
+
+The DROZY analysis asks two things of a feature before it may be said
+to track sleepiness: a corrected p value below a threshold, and at least
+three of the five multi-session subjects agreeing on the direction of
+the effect. The second sounds like a real requirement. Under the null
+each subject is a coin flip on direction, so three or more of five
+happens ten plus five plus one times out of thirty-two — exactly half
+the time, from nothing at all.
+
+Three features in the published table were called "suggestive and
+unconfirmed" on the strength of that half alone.
+
+The fix is not to change the rule after the fact, which would be
+choosing a threshold once the answer is visible. It is to print the
+chance rate beside the bar, so anyone reading the verdicts can see what
+clearing it is worth, and to require any bar added later to state its
+own rate and to clear 0.05 before it may grant a verdict on its own.
+
+The second correction in the same increment is a sentence rather than a
+number. A comparison found the learned model 0.083 AUC above the
+heuristic, inside a control that could only have detected about 0.14 at
+that sample size, and the result file called that "not distinguishable
+from chance" and "about as good as a fitted one". Both read as a
+finding of no difference. No such finding was made: the test could not
+have seen a difference of that size either way. It says so now.
+
+Absence of evidence stated as evidence of absence is the same mistake
+as a percentage published without its interval, one increment earlier,
+and both come from the same place — reporting what the arithmetic
+returned instead of what it could have detected.

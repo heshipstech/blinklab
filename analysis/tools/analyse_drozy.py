@@ -32,7 +32,12 @@ from blinklab.drozy import (
     SessionFeatures,
     load_all,
 )
-from blinklab.stats import holm, permutation_p, spearman
+from blinklab.stats import (
+    binomial_at_least,
+    holm,
+    permutation_p,
+    spearman,
+)
 
 SHUFFLES = 1000
 SHUFFLE_SEED = 20260809
@@ -216,9 +221,16 @@ def main() -> int:
             verdicts[c.name] = "suggestive and unconfirmed"
         else:
             verdicts[c.name] = "no"
+        # Roadmap 10.10c2, ladder B11. The chance rate beside the bar,
+        # because a bar is worth what it is hard to clear. Under the
+        # null each multi-session subject is a coin flip on the sign,
+        # so 3 of 5 agreeing happens half the time by nothing at all —
+        # and this column alone granted three "suggestive" verdicts.
+        by_chance = binomial_at_least(MIN_AGREEING_SUBJECTS, total, 0.5)
         print(
             f"  {FEATURE_LABELS[c.name]:<32}{c.n:>4}{c.rho:>8.3f}"
             f"{c.p_raw:>9.4f}{c.p_holm:>9.4f}  {agree}/{total} agree"
+            f" (bar cleared by chance {by_chance:.3f})"
         )
 
     print()
@@ -236,6 +248,15 @@ def main() -> int:
     print(
         f"  a feature TRACKS KSS only if Holm p < {HOLM_ALPHA} AND at least "
         f"{MIN_AGREEING_SUBJECTS} of the multi-session subjects agree"
+    )
+    # The bar's own weakness, stated where the verdicts are read rather
+    # than left for a reader to work out. Roadmap 10.10c2 fixes the
+    # rule for any bar added after it: state the chance rate, and
+    # require it below 0.05 before the bar may grant a verdict alone.
+    print(
+        f"  the agreement half of that rule is cleared by chance "
+        f"{binomial_at_least(MIN_AGREEING_SUBJECTS, 5, 0.5):.3f} of the "
+        f"time on five subjects, so it confirms nothing on its own"
     )
     for c in corrected:
         print(f"  {FEATURE_LABELS[c.name]:<32}{verdicts[c.name]}")

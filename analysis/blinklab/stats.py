@@ -184,3 +184,40 @@ def wilson_interval(
         )
     )
     return (max(0.0, centre - half), min(1.0, centre + half))
+
+
+def binomial_at_least(
+    successes: int, trials: int, probability: float
+) -> float:
+    """How often at least this many successes happen by chance alone.
+
+    Roadmap 10.10c2, ladder B11. A pre-registered bar is worth what it
+    is hard to clear. DROZY's within-subject bar asks that at least 3
+    of 5 subjects agree on the sign of an effect, and under the null
+    each subject is a coin flip, so the bar is cleared half the time by
+    nothing at all — and it alone granted three "suggestive" verdicts
+    in the published result.
+
+    Printing the rate beside the bar is what lets a reader see that
+    without doing the arithmetic themselves, and it is why any future
+    bar in this project has to state one.
+
+    Summed directly rather than through a survival function: five
+    terms, exactly computable, and a reader checking the arithmetic can
+    read it here.
+    """
+    if trials < 0:
+        raise ValueError("a count of trials cannot be negative")
+    if not 0 <= probability <= 1:
+        raise ValueError("a probability lies between 0 and 1")
+    if successes > trials:
+        # Not an error: asking for more successes than there are trials
+        # is a well-formed question with the answer zero.
+        return 0.0
+    floor = max(successes, 0)
+    return sum(
+        math.comb(trials, count)
+        * probability**count
+        * (1 - probability) ** (trials - count)
+        for count in range(floor, trials + 1)
+    )

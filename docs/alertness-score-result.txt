@@ -20,7 +20,13 @@ PREDICTION vs OUTCOME (predict-then-verify)
   - "Bar 2 to hold modestly" -- the learned model beats it by a small,
     shuffle-surviving margin. WRONG. The model is numerically higher
     (+0.083 AUC) but that edge is inside the shuffled null (97.5th
-    percentile +0.141, p 0.099), so it is not distinguishable from chance.
+    percentile +0.141, p 0.099). Read that as no evidence either way
+    rather than as equivalence: at this n the control can only detect an
+    edge of about 0.14 AUC, so an edge of 0.083 would have been invisible
+    to it whether or not it is real. The earlier wording here said "not
+    distinguishable from chance" and "about as good as", both of which
+    read as a finding of no difference. This test never had the power to
+    make one (corrected 7 September 2026, roadmap 10.10c2, ladder B9).
   Half the prediction held and half did not, and the half that failed is
   recorded here as plainly as the UTA-RLDD reversal was. The discipline is
   the point: I expected the learned model to win, wrote that down, and it did
@@ -90,9 +96,13 @@ VERDICT, by the rule fixed before the data was seen
 WHAT THIS IS, AND WHAT IT IS NOT
   It IS: evidence that blinklab's explainable 100-minus-penalties alertness
   heuristic separates self-reported alert from drowsy across 52 strangers
-  above chance (AUC 0.70), and that a model trained on the label does not
-  reliably out-separate it. The honest, and slightly surprising, reading is
-  that the hand-tuned score is already about as good as a fitted one here.
+  above chance (AUC 0.70), and that a model trained on the label did not
+  out-separate it by a margin this control could see. The honest reading is
+  that nothing here settles which is better: the learned model was 0.083
+  AUC higher and the control can only detect about 0.14 at this n, so no
+  evidence either way. This paragraph said "about as good as a fitted one",
+  which claims a finding of no difference that was never made (corrected
+  7 September 2026, roadmap 10.10c2, ladder B9).
   It is NOT:
   - A live per-person meter. This compares which fixed weighting better
     separates a coarse self-reported label ACROSS STRANGERS. It says nothing
