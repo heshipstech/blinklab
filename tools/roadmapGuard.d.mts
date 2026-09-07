@@ -12,3 +12,11 @@ export function roadmapRow(roadmapText: string, id: string): string;
 
 /** Whether the app asks the landmarker for blendshapes. */
 export function blendshapesEnabled(root: string): boolean;
+
+/** The rows the ladder claims can still be started. */
+export function startableClaims(roadmapText: string): string[];
+
+/** The claimed-startable rows the ladder has since overtaken, with why. */
+export function staleStartables(
+  roadmapText: string,
+): { id: string; why: string }[];
