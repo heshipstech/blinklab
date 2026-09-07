@@ -2203,3 +2203,15 @@ windows separates them. That is stated in the module and the count
 that gives it away travels beside the tally. A measurement that names
 what it cannot see is worth more than one that quietly scores it
 anyway.
+
+## First match is a guess when the file keeps its history
+
+The Eyeblink8 result file holds four blocks with a headline in the same shape: the current run at the top, and below it a second machine's run and two superseded ones, kept deliberately, because this project does not delete numbers it has published. A guard read the headline out of that file with an expression for the recall line and one for the precision line, and took the first match. That is right for exactly as long as the current block keeps matching.
+
+It stopped matching, and nobody had to touch the guard for that to happen. A merged row changed the scorer to print a confidence interval inside the parentheses of both lines. The expressions ended at `found)` and `invented)`, so the regenerated top block would no longer match, and the search would run on and find the 20 August run: precision 81.4% with 78 invented instead of 84.0% with 65. Recall would have stayed correct, because that superseded block happens to carry an identical recall line, so the failure would have published a current recall beside a superseded precision. Every byte-comparison guard downstream would have stayed green, both sides reading the same wrong line.
+
+None of that was live. It was armed, and it would have fired at the exact moment the owner pasted in the regenerated block from the regression run, which is when the file is least likely to be read closely.
+
+Two changes, and the second matters more than the first. The expressions now tolerate extra text inside the parentheses, so this particular break does not happen. And the file now carries an explicit line saying where the current run ends, the parser reads the generated figures only above it, and it refuses a file without that line rather than reading on. The general lesson is that "take the first match" encodes an assumption about document order that nothing was holding, and in a file that keeps its own history that assumption is a guess. A parser that cannot tell which block it is reading should say so, not pick one.
+
+The find is also an argument for the widening it came out of. Nobody was looking for this. It surfaced because a reader checking whether a scorer change could move the published numbers chose to verify by running both versions and diffing their output, rather than by reading the diff, and the output diff showed the two lines whose shape had changed.

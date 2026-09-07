@@ -42,31 +42,76 @@ export function readRepoFile(relativePath, root) {
  * Throws rather than returning a partial object: a result file this
  * cannot parse is itself a finding, not something to skip past.
  */
+/**
+ * The line that separates the current run from everything kept below
+ * it. Written into docs/eyeblink8-result.txt by hand, immediately
+ * under the block the scorer generates, so a regenerated block pasted
+ * above it leaves the boundary intact.
+ */
+export const CURRENT_RUN_END = "--- END OF THE CURRENT RUN ---";
+
+/**
+ * The part of the result file that describes the run being published.
+ *
+ * Roadmap 10.0b2. This file deliberately keeps superseded runs below
+ * the current one, and four of its blocks carry a headline in the same
+ * shape. The parser took the first match anywhere, which is correct
+ * only while the current block keeps matching: roadmap 10.10c1 adds a
+ * confidence interval inside those parentheses, and at the next
+ * regeneration the pattern would stop matching the top block and find
+ * the 20 August one, reading precision 81.4% and 78 invented in place
+ * of 84.0% and 65 while recall stayed right, because that superseded
+ * block carries an identical recall line.
+ *
+ * Refuses rather than guesses when the marker is absent: a parser that
+ * cannot tell where the current run stops and reads on anyway is the
+ * defect itself.
+ */
+export function currentRun(text) {
+  const at = text.indexOf(CURRENT_RUN_END);
+  if (at === -1) {
+    throw new Error(
+      `result file: no "${CURRENT_RUN_END}" line, so the published ` +
+        "figures cannot be told apart from the superseded runs kept below them",
+    );
+  }
+  return text.slice(0, at);
+}
+
 export function parseResultFile(text) {
-  const grab = (pattern, what) => {
-    const match = text.match(pattern);
+  const grab = (pattern, what, within = text) => {
+    const match = within.match(pattern);
     if (match === null) {
       throw new Error(`result file: could not find ${what}`);
     }
     return match;
   };
 
+  // Everything the scorer generates is read from the current run only.
+  // The patterns also tolerate extra text inside the parentheses, so a
+  // clause added beside a figure (10.10c1's intervals) does not stop
+  // them matching in the first place.
+  const run = currentRun(text);
   const recall = grab(
-    /Recall\s+([\d.]+)%\s+\((\d+) of (\d+) found\)/,
+    /Recall\s+([\d.]+)%\s+\((\d+) of (\d+) found[^)]*\)/,
     "the recall line",
+    run,
   );
   const precision = grab(
-    /Precision\s+([\d.]+)%\s+\((\d+) invented\)/,
+    /Precision\s+([\d.]+)%\s+\((\d+) invented[^)]*\)/,
     "the precision line",
+    run,
   );
-  const f1 = grab(/F1\s+([\d.]+)%/, "the F1 line");
+  const f1 = grab(/F1\s+([\d.]+)%/, "the F1 line", run);
   const withGlasses = grab(
     /with glasses\s+1 clip\(s\), recall ([\d.]+)%, precision ([\d.]+)%/,
     "the with-glasses split",
+    run,
   );
   const withoutGlasses = grab(
     /without\s+7 clip\(s\), recall ([\d.]+)%, precision ([\d.]+)%/,
     "the without-glasses split",
+    run,
   );
   const reproDir = grab(
     /"\$DATASETS\/(eyeblink8-measured-[a-z0-9-]+)"/,

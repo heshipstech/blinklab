@@ -85,3 +85,9 @@ export function parseAlertnessResult(text: string): AlertnessResult;
 
 /** The subject count a result file states in its data block. Throws when absent. */
 export function parseSubjectCount(text: string): number;
+
+/** The line separating the current run from the runs kept below it. */
+export const CURRENT_RUN_END: string;
+
+/** The part of the result file describing the run being published. */
+export function currentRun(text: string): string;
