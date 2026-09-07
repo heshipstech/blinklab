@@ -46,6 +46,33 @@ export const RETIRED_CLAIMS = [
     says: "zero runtime third party calls",
     because: "ADR-0002 claimed this as a benefit and it was never measured",
   },
+  // Roadmap 12.6, amendment 16. Not a measured falsehood like the
+  // three above: a vocabulary cap. A microsleep is defined on the
+  // electroencephalogram, and no data this project may use, now or in
+  // this era, could validate one. What the instrument sees is an
+  // eyelid staying down for a span, which is a statement about a
+  // stopwatch. So a closure may be reported as being in the
+  // microsleep RANGE, and the pairing that claims the thing itself
+  // was found is refused, in both directions and in the plural.
+  //
+  // The word alone is untouched. "the microsleep shape the literature
+  // watches for" is honest prose about why the band exists, and a
+  // guard that made the project unable to explain its own restraint
+  // would be worse than the sentence it removed.
+  {
+    pattern:
+      "(microsleeps?[ -]+(is +|are +|been +)?detect|" +
+      "detect[a-z]* +(of +)?(a +|the +|any +)?microsleep)",
+    says: "microsleep detection",
+    because:
+      "a microsleep is EEG-defined and this instrument sees eyelids; " +
+      "the vocabulary is capped at microsleep-RANGE closure",
+    // The ladder declares this refusal, in amendment 16 and in row
+    // 12.6, and declaring a refusal means naming it. Carried by the
+    // claim rather than added to the caller's list, so ROADMAP.md
+    // stays guarded against the other three.
+    exempt: ["ROADMAP.md"],
+  },
 ];
 
 /** The repository root as a real filesystem path, not a percent-encoded one. */
@@ -86,12 +113,31 @@ export function trackedFilesMatching(pattern, root) {
   }
 }
 
+/**
+ * The files a hit list has left once both exemptions are applied: the
+ * caller's, and the claim's own.
+ *
+ * Separate and pure so the scoping is testable without a repository
+ * that happens to contain the right sentences. A claim's exemption
+ * covers THAT claim: a document allowed to quote one retired phrase,
+ * because quoting it is that document's job, does not thereby earn
+ * the right to make the other three claims. The single caller-side
+ * list could not express that, and widening it for one phrase would
+ * have unguarded the file for every phrase.
+ */
+export function unexempted(claim, files, exempt = []) {
+  const allowed = new Set([...exempt, ...(claim.exempt ?? [])]);
+  return files.filter((file) => !allowed.has(file));
+}
+
 /** Every retired claim that has come back, with the files it came back in. */
 export function relapses(root, exempt = []) {
   const found = [];
   for (const claim of RETIRED_CLAIMS) {
-    const files = trackedFilesMatching(claim.pattern, root).filter(
-      (file) => !exempt.includes(file),
+    const files = unexempted(
+      claim,
+      trackedFilesMatching(claim.pattern, root),
+      exempt,
     );
     if (files.length > 0) {
       found.push({ phrase: claim.says, because: claim.because, files });
