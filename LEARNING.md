@@ -2408,3 +2408,46 @@ sentence somebody edited, and a parser that reports two thirds of a
 headline leaves the third drifting with nothing watching it, which is
 the same shape as a guard that searches a whole document for a short
 token: it cannot fail in the case it exists for.
+
+## Eight documents disagreed, and none of them was lying
+
+An audit found this project's own paperwork contradicting itself in
+eight places. One tracker listed "blocking the telemetry" under
+deliberately-not-doing, months after a commit shipped exactly that.
+Another said a set of issues stayed open, which GitHub disagreed with.
+A build log promising one line per increment had stopped weeks
+earlier. The state file's top entry was whatever landed last, which is
+a fine thing to have and is not a summary of anything.
+
+Not one of those sentences was written carelessly. Each was true when
+somebody wrote it. The failure is structural: a fact that lives in
+more than one document has to be maintained in more than one place,
+and the maintenance always lapses in the copy nobody is looking at.
+
+The fix that does not work is a ninth summary written by hand. It
+would be accurate the day it was written and would join the other
+eight within a month.
+
+What went in instead is a block whose every figure is read from the
+file that owns it, rewritten by a script, and compared byte for byte
+by a test. The phase count comes from counting roadmap rows. The
+headline comes from parsing the current run. The suite sizes come from
+the files the runners write. The bundle ceiling is imported from the
+constant rather than parsed out of the source that declares it,
+because a parse would be a second weaker copy of a fact that already
+has a home. Nothing there can be edited into agreement with a document
+that has drifted, because nothing there is typed.
+
+Two smaller things are worth keeping.
+
+The three superseded trackers were retired rather than deleted. That
+is the same rule this project applies to a superseded measurement, for
+the same reason: the road is part of the result, and the early entries
+in a build log are the only account of how the first phases actually
+went.
+
+And a retirement notice has to be the document's FIRST content line,
+which the test enforces rather than assumes. A notice further down is
+a notice the reader reaches after believing the page. One of these
+files already demonstrated the problem: it carried a correction of its
+own opening sentence, several lines below that sentence.
