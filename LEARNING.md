@@ -2769,3 +2769,43 @@ a sentence a person keeps true by remembering, in a repository whose
 whole discipline is that nobody has to. The first was a count. This
 was a list. Neither survived a fortnight unattended, and the fix both
 times was to read the claim back from the thing it describes.
+
+## The buffer that answers "an hour ago" whenever you ask
+
+Does somebody's blinking change over the length of a sitting? The
+project has the data for that question and had no way to ask it, and
+the interesting part turned out to be where NOT to look.
+
+The obvious source is the per-second buffer. It holds one row a second
+with everything the session knows, and it is bounded: three thousand
+six hundred rows, about an hour, oldest dropped. Ask it when the
+session began and in any longer sitting it answers an hour ago. A
+drift computed from it would not be an error message or an obviously
+wrong number. It would be a plausible reading, correctly calculated,
+about a session that did not happen — and the longer somebody sat, the
+smaller the fraction of their sitting it would describe. That is worse
+than a crash, because a crash gets fixed.
+
+The blink log survives the wrap. One event per blink instead of one
+row per second, bounded thirty times higher, which is about
+twenty-seven hours of ordinary blinking. So the measurement reads the
+log, and the session start is passed in as an argument rather than
+inferred from whatever is still in a buffer, because inferring it is
+precisely the mistake.
+
+Two smaller choices, both stated as choices rather than dressed as
+derivations. The halves split by TIME and not by blink count: half the
+blinks is not half the sitting, and somebody who blinks hard for ten
+minutes and then settles would have the boundary drawn inside those
+ten minutes, so the reading would be most of the first stretch against
+itself. And the change is reported as a fraction of where it started,
+for the same reason the rhythm measure is a ratio: a hundred
+milliseconds means something different to a two hundred millisecond
+blink and a six hundred millisecond one, so an absolute difference
+would smuggle blink length back into a measure of change.
+
+What travels with the number is a label saying it is a demonstration
+validated against no outcome. Blink parameters lengthening over a
+sitting is something this instrument can see. That it means fatigue is
+something this project has never measured, and saying so is a
+different row entirely.
