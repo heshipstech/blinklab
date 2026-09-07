@@ -31,10 +31,19 @@ def session_row(
     aperture: str = "7.0",
     baseline: str = "",
 ) -> str:
-    cells = [str(timestamp), "true", fps, aperture, baseline] + [""] * 6
-    cells += ["0", "", "", "", "", "", ""]
-    assert len(cells) == len(COLUMNS)
-    return ",".join(cells)
+    # Built by column NAME and padded to the header's own width, so a
+    # column appended to the contract widens this row instead of
+    # breaking it. The hand-counted version this replaces did break,
+    # the first time four columns were appended.
+    values = {
+        "timestampMs": str(timestamp),
+        "faceDetected": "true",
+        "fps": fps,
+        "apertureMm": aperture,
+        "baselineMm": baseline,
+        "longClosureCount": "0",
+    }
+    return ",".join(values.get(name, "") for name in COLUMNS)
 
 
 def write_pair(

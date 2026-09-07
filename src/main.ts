@@ -242,6 +242,11 @@ import {
   type StoredBlinkCalibration,
 } from "./core/guidedCalibration";
 import {
+  blinksWithheld,
+  resolveBlinkLine,
+  resolveShutLine,
+} from "./core/lineProvenance";
+import {
   STORED_ITEMS,
   eraseButtonLabel,
   eraseOutcomeMessage,
@@ -3792,17 +3797,25 @@ function processFrame(
       const wasOpen = blinkState.eye !== "closed";
       const blinkMeasurable = measurableAtFps(fps);
       if (blinkMeasurable) framesBlinkMeasurable += 1;
+      // One decision for the whole frame (10.13a, ladder A8). The
+      // readout, the record, the report and the log button each used
+      // to work out withholding for themselves, so a session whose
+      // readout withheld while its export did not was possible.
+      const withheld = blinksWithheld(calibrationRefused, hasGuidedLine);
+      // A refused PASSIVE session feeds the blink reducer nothing: the
+      // generic fallback threshold would otherwise keep counting
+      // blinks against a line the instrument just said it cannot vouch
+      // for. A guided line lifts that — it IS a line the instrument
+      // vouches for — so a calibrated person keeps counting.
+      const fedApertureMm = blinkMeasurable && !withheld ? stabilityMm : null;
+      // The fact of what was compared, not a reconstruction of it: the
+      // fallback constant counts as the line only on a frame that
+      // actually compared something against it.
+      const usedFixedFallback = fedApertureMm !== null && blinkLineMm === null;
       blinkState = blinkStep(
         blinkState,
         nowMs,
-        // A refused PASSIVE session feeds the blink reducer nothing: the
-        // generic fallback threshold would otherwise keep counting
-        // blinks against a line the instrument just said it cannot vouch
-        // for. A guided line lifts that — it IS a line the instrument
-        // vouches for — so a calibrated person keeps counting.
-        blinkMeasurable && (hasGuidedLine || !calibrationRefused)
-          ? stabilityMm
-          : null,
+        fedApertureMm,
         blinkLineMm ?? BLINK_APERTURE_THRESHOLD_MM,
       );
       // The per-frame trace, clips only (docs/miss-trace.txt). The
@@ -3815,7 +3828,7 @@ function processFrame(
           mediaTimeSeconds: nowMs / 1000,
           apertureMm: stabilityMm,
           blinkLineMm:
-            blinkMeasurable && (hasGuidedLine || !calibrationRefused)
+            fedApertureMm !== null
               ? (blinkLineMm ?? BLINK_APERTURE_THRESHOLD_MM)
               : null,
           irisAspectRatio: irisAspectRatioMean,
@@ -4053,6 +4066,13 @@ function processFrame(
         if (featureRecords.length >= FEATURE_RECORD_CAP) {
           featureRecordsDropped += 1;
         }
+        const recordedBlinkLine = resolveBlinkLine(
+          storedBlinkCalibration,
+          personalMm,
+          calibrationRefused,
+          usedFixedFallback,
+        );
+        const recordedShutLine = resolveShutLine(frozenShutBaselineMm);
         featureRecords = pushBounded(
           featureRecords,
           assembleFeatureRecord({
@@ -4065,13 +4085,21 @@ function processFrame(
             shutBaselineMm: frozenShutBaselineMm,
             // Withheld under a refusal, and null rather than the
             // zero a never-fed reducer would report: null-never-zero.
-            blinkRatePerMin: calibrationRefused
+            // All four ride the same `withheld` the readout rides:
+            // docs/calibration-refusal.txt promises that the durations
+            // go with the rate, and until 10.13a the record kept them.
+            blinkRatePerMin: withheld
               ? null
               : gatedBlinkRatePerMin(fps, rateState, nowMs),
-            lastBlinkDurationMs: blinkState.lastBlinkDurationMs,
-            lastBlinkAmplitudeMm: lastShape?.amplitudeMm ?? null,
-            lastBlinkPeakVelocityMmPerS:
-              lastShape?.peakClosingVelocityMmPerS ?? null,
+            lastBlinkDurationMs: withheld
+              ? null
+              : blinkState.lastBlinkDurationMs,
+            lastBlinkAmplitudeMm: withheld
+              ? null
+              : (lastShape?.amplitudeMm ?? null),
+            lastBlinkPeakVelocityMmPerS: withheld
+              ? null
+              : (lastShape?.peakClosingVelocityMmPerS ?? null),
             perclos,
             longClosureCount: longClosureState.count,
             fixationCount: frameFixationStats?.count ?? null,
@@ -4079,6 +4107,12 @@ function processFrame(
             fixating: frameFixating,
             onScreen: frameOnScreen,
             pupilDiameterMm: framePupilDiameterMm,
+            // The lines the detectors read this frame, and where each
+            // came from. Resolved by core, not decided here.
+            blinkLineMm: recordedBlinkLine.mm,
+            blinkLineSource: recordedBlinkLine.source,
+            shutLineMm: recordedShutLine.mm,
+            shutLineSource: recordedShutLine.source,
           }),
           FEATURE_RECORD_CAP,
         );

@@ -94,6 +94,10 @@ function record(timestampMs: number): FeatureRecord {
     fixating: false,
     onScreen: null,
     pupilDiameterMm: null,
+    blinkLineMm: null,
+    blinkLineSource: "none",
+    shutLineMm: null,
+    shutLineSource: "none",
   };
 }
 

@@ -39,6 +39,10 @@ EXPECTED_COLUMNS = [
     "onScreen",
     "baselineOverResting",
     "pupilDiameterMm",
+    "blinkLineMm",
+    "blinkLineSource",
+    "shutLineMm",
+    "shutLineSource",
 ]
 
 

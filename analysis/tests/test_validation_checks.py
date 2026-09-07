@@ -50,12 +50,22 @@ def a_row(
     face: str = "true",
     aperture: str = "7.0",
 ) -> str:
-    # timestampMs, faceDetected, fps, apertureMm, baselineMm, then the
-    # rest empty except longClosureCount. The trailing empties cover
-    # baselineOverResting and pupilDiameterMm, neither measured here.
-    cells = [str(timestamp), face, fps, aperture, baseline] + [""] * 6
-    cells += [closures, "", "", "", "true", "", ""]
-    return ",".join(cells)
+    # Built by column NAME and padded to the header's own width, so a
+    # column appended to the contract widens these rows instead of
+    # breaking every test that writes one. The hand-counted version
+    # this replaces did break, the first time four columns were
+    # appended, and it had been counting six trailing empties in a
+    # comment that had to be right for the rows to mean anything.
+    values = {
+        "timestampMs": str(timestamp),
+        "faceDetected": face,
+        "fps": fps,
+        "apertureMm": aperture,
+        "baselineMm": baseline,
+        "longClosureCount": closures,
+        "onScreen": "true",
+    }
+    return ",".join(values.get(name, "") for name in COLUMNS)
 
 
 def write_session(

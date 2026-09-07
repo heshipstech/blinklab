@@ -27,6 +27,10 @@ const FULL: FeatureRecord = {
   fixating: true,
   onScreen: true,
   pupilDiameterMm: 4.1,
+  blinkLineMm: 3.9,
+  blinkLineSource: "passive",
+  shutLineMm: 2.8,
+  shutLineSource: "passive",
 };
 
 const EMPTY_ROW: FeatureRecord = {
@@ -48,6 +52,10 @@ const EMPTY_ROW: FeatureRecord = {
   fixating: null,
   onScreen: null,
   pupilDiameterMm: null,
+  blinkLineMm: null,
+  blinkLineSource: "none",
+  shutLineMm: null,
+  shutLineSource: "none",
 };
 
 describe("csvCell, the edge cases a naive join gets wrong", () => {
@@ -133,7 +141,7 @@ describe("serializeRecords", () => {
     const csv = serializeRecords([FULL]);
     const row = csv?.split("\r\n")[1] ?? "";
     expect(row).toBe(
-      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16,4.1",
+      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16,4.1,3.9,passive,2.8,passive",
     );
   });
 
@@ -142,13 +150,17 @@ describe("serializeRecords", () => {
     // measured: a short row would shift every later column.
     const csv = serializeRecords([EMPTY_ROW]);
     const row = csv?.split("\r\n")[1] ?? "";
-    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,,");
+    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,,,,none,,none");
     expect(row.split(",")).toHaveLength(CSV_COLUMNS.length);
   });
 
   it("round trips a staged session back to the same values", () => {
     // A naive parser, good enough because the schema forbids the
-    // characters that would need a real one in these columns.
+    // characters that would need a real one in these columns. It grew
+    // a string case on 7 September 2026: the two provenance columns
+    // hold words, not numbers, and a parser that ran every cell
+    // through Number would have turned `passive` into NaN and called
+    // the round trip broken.
     const csv = serializeRecords([FULL, EMPTY_ROW]) ?? "";
     const [header, ...rows] = csv.trimEnd().split("\r\n");
     const columns = header?.split(",") ?? [];
@@ -160,7 +172,8 @@ describe("serializeRecords", () => {
           if (cell === "") return [name, null];
           if (cell === "true") return [name, true];
           if (cell === "false") return [name, false];
-          return [name, Number(cell)];
+          const asNumber = Number(cell);
+          return [name, Number.isNaN(asNumber) ? cell : asNumber];
         }),
       );
     });

@@ -117,6 +117,10 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     fixating: false,
     onScreen: true,
     pupilDiameterMm: null,
+    blinkLineMm: null,
+    blinkLineSource: "none",
+    shutLineMm: null,
+    shutLineSource: "none",
   }));
 }
 
