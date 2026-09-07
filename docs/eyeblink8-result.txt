@@ -391,3 +391,39 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   in the detection path imports and which is deliberately not on the
   watch list, for the same reason velocityBias.ts is not: a simulation
   that measures the instrument is not part of it.
+
+  7 September 2026, the line in the export (roadmap 10.13a, ladder A8,
+  docs/line-in-the-export.txt):
+
+    feat: a stored line carries its conditions, and a clip cannot borrow one (roadmap 10.13a, ladder A8)
+
+  Named by subject rather than sha, for the reason two entries up.
+  This one is NOT comments-only, so the cheap proof is unavailable and
+  the argument has to be made on what the executable change reaches.
+
+  Its whole diff to a detector source is in
+  src/core/guidedCalibration.ts, and it is three things: two counts
+  added to what the resolver returns, a stamp type, and a parseStamp
+  the stored-entry parser calls. `effectiveBlinkLineMm`, which is the
+  only function in that file the per-frame detection path calls, is
+  unchanged to the byte.
+
+  A corpus clip cannot reach the other two. The resolver runs only
+  when somebody clicks the calibrate button, and that button is now
+  gated on a live camera, so a clip run cannot start a calibration at
+  all; the added counts change no line value in any case. The parser
+  runs only against something in localStorage, and a corpus clip runs
+  in a fresh browser with nothing there, so a stricter parser has
+  nothing to be stricter about.
+
+  The same commit also refuses a stored line outright when the frame
+  source is a file. That can only move a corpus run further from the
+  guided path, never onto it, so it cannot raise a corpus number
+  either. Every one of those steps is checkable from the diff, which
+  is what separates this from "argued neutral" without quite reaching
+  the comments-only proof above.
+
+  The prediction that the corpus is byte-identical apart from the new
+  trailing columns was committed BEFORE any of this code existed
+  (docs/line-in-the-export.txt), and 10.8a's regression run scores it.
+  That is the measurement this caveat is standing in for.
