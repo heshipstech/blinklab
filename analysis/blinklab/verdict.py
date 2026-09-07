@@ -119,6 +119,14 @@ def _finite(metadata: dict[str, str], key: str) -> float:
     fraction. Crashed and refused must never be the same outcome,
     and neither may nonsense rendered calmly, so every numeric cell
     comes through here and refuses BY KEY.
+
+    `round2._number` reads cells of the same shape and answers None
+    instead, and the divergence is deliberate (roadmap 10.1f4). A
+    verdict is a claim about one session, so an input it cannot read
+    means the claim cannot be made. A round-2 table row survives a
+    blank cell, so refusing there would throw away a participant over
+    one absent rate. Whichever a caller wants, it must pick on that
+    ground rather than on which function came to hand.
     """
     raw = metadata.get(key)
     try:

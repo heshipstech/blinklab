@@ -65,6 +65,15 @@ class BlinkLog:
 
     @property
     def frames_measured(self) -> int | None:
+        """How many frames the instrument looked at, or None.
+
+        None for two different files: one whose export predates the
+        row, and one whose row cannot be read. Roadmap 10.1f4 states
+        the policy rather than changing it, because the caller here is
+        a coverage report that prints "unstated" either way, and
+        splitting the two would change what a corpus run refuses. The
+        merge is named so the next reader knows it is a choice.
+        """
         raw = self.metadata.get("frames_measured")
         if raw is None:
             return None

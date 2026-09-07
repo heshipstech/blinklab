@@ -1510,8 +1510,26 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       REQUIRED and CONDITIONAL as written here but always-written and
       conditional, because a key can be unconditional in the file and
       still say `unknown`, and a loader that refused an `unknown` value
-      would refuse most healthy sessions. The read-site policies are
-      roadmap row 10.1f4 and the verdict fixtures 10.1f5.
+      would refuse most healthy sessions. Then 10.1f4 gave every read
+      site a stated absence policy and exercised it: nineteen readers,
+      each called with a block it can read and then with the same block
+      minus one key, and three kinds of answer named in words — a
+      default where absence means the thing did not happen, an unknown
+      where the analysis cannot answer that one question, a refusal
+      where the file is not what it claims to be. `round2._number` and
+      `verdict._finite` each name the other and say why they diverge.
+      One reader's stated policy was the writer's opposite:
+      `Session.records_dropped` said the row was on every export, so a
+      missing key meant an older build, while the exporter writes it
+      only when rows were dropped. A sixth correction to this item's
+      own text: `loader.py` cannot refuse a missing always-written key
+      without abandoning files this repository still reads. Its own
+      committed session fixture carries two metadata keys of 57 and is
+      loaded by two test modules, and the validation round's six files
+      predate most of the block. Which generations the analysis track
+      still accepts is the owner's decision, and it is roadmap row
+      10.1f4b rather than a choice a test makes on their behalf. The
+      verdict fixtures are 10.1f5.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**
