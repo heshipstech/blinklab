@@ -1540,8 +1540,17 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       tests, which is the mirror refusing to reproduce the committed
       verdict from bytes that lost a key. Two drifts beyond the one
       this item names: the files carried bare newlines where the
-      exporter writes CRLF, and a header two columns behind. The 59.96
-      boundary is roadmap row 10.1f6.
+      exporter writes CRLF, and a header two columns behind. Then
+      10.1f6 added the 59.96 fixture this item asks for and found that
+      the boundary work of 10.15 had been half done: the refusal floor
+      at 25 was pinned, the risk threshold at 60 crosses on the same
+      rounding in the same way and was pinned nowhere. Handing the page
+      the raw rate now reddens both boundary fixtures rather than one.
+      The Python byte pin stopped naming its fixtures in the same
+      increment and reads them off disk, because the other side now
+      generates them and a fixture added there could otherwise be
+      pinned on one side only. This closes D6 apart from the loader's
+      floor, which is 10.1f4b and the owner's to decide.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**

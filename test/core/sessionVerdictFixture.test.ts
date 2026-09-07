@@ -65,6 +65,24 @@ describe("the shared verdict fixture", () => {
     expect(JSON.parse(expected("edge")).headline).not.toBe("refused");
   });
 
+  it("the risk-edge session's raw rate lands on a different word", () => {
+    // Roadmap 10.1f6. The refusal floor at 25 has been pinned since
+    // 10.15; the risk threshold at 60 is the same defect one step up
+    // and was not pinned at all. A measured 59.96 reaches the file as
+    // 60.0 and reads "above the 60 risk band"; the raw double reads
+    // "quick or shallow blinks can be missed below 60". Two sentences
+    // about one session is what pilot.py halts a cohort over.
+    const raw = { ...fixture("risk-edge"), sampledFps: 59.96 };
+    const rate = (json: string): string =>
+      (
+        JSON.parse(json).surfaces.find(
+          (found: { surface: string }) => found.surface === "evidenceRate",
+        ) as { status: string }
+      ).status;
+    expect(rate(canonical(raw))).toBe("warned");
+    expect(rate(expected("risk-edge"))).toBe("ok");
+  });
+
   it("the page hands the verdict the rate as the export writes it", () => {
     // The wiring pin: participantVerdictInputs must round sampledFps
     // through asExported, exactly as it already does for the marker

@@ -53,35 +53,60 @@ def surface(verdict: dict, name: str) -> dict:
     return found[0]
 
 
+def fixture_names() -> list[str]:
+    """Every fixture on disk, found rather than listed.
+
+    Roadmap 10.1f6. This used to be four names typed into four tests,
+    so a fixture added on the TypeScript side — where they are now
+    generated from the exporter — could be pinned on that side alone
+    and never re-derived here. A list nobody has to remember to extend
+    is the whole point of the pin.
+    """
+    return sorted(
+        path.name.removesuffix("-session.csv")
+        for path in FIXTURES.glob("*-session.csv")
+    )
+
+
 class TestTheBytePin:
-    def test_good_fixture_reproduces_the_committed_bytes(self) -> None:
-        verdict = derive_verdict(fixture_session("good"))
-        assert canonical_verdict_json(verdict) == expected_json("good")
+    def test_the_fixtures_are_found_rather_than_assumed(self) -> None:
+        # The floor. An empty list would make every parametrised test
+        # below collect nothing and the suite report success.
+        names = fixture_names()
+        assert len(names) >= 5
+        for required in ("good", "refused", "degraded", "edge", "risk-edge"):
+            assert required in names
 
-    def test_refused_fixture_reproduces_the_committed_bytes(self) -> None:
-        verdict = derive_verdict(fixture_session("refused"))
-        assert canonical_verdict_json(verdict) == expected_json("refused")
+    @pytest.mark.parametrize("name", fixture_names())
+    def test_each_fixture_reproduces_the_committed_bytes(
+        self, name: str
+    ) -> None:
+        verdict = derive_verdict(fixture_session(name))
+        assert canonical_verdict_json(verdict) == expected_json(name)
 
-    def test_degraded_fixture_reproduces_the_committed_bytes(self) -> None:
-        verdict = derive_verdict(fixture_session("degraded"))
-        assert canonical_verdict_json(verdict) == expected_json("degraded")
+    def test_the_rounding_boundaries_read_as_the_file_has_them(self) -> None:
+        """Both sides of the rate scale, from the bytes the file carries.
 
-    def test_edge_fixture_reproduces_the_committed_bytes(self) -> None:
-        # Roadmap 10.15: a sampled rate the file carries as exactly
-        # 25.0 is warned on both sides. Before the page rounded through
-        # the export's own rendering, a measured 24.96 read refused on
-        # the page and warned here, and pilot.py halted the cohort on
-        # the disagreement.
-        verdict = derive_verdict(fixture_session("edge"))
-        assert canonical_verdict_json(verdict) == expected_json("edge")
-        assert surface(verdict, "evidenceRate")["status"] == "warned"
+        Roadmap 10.15 pinned the refusal floor: a measured 24.96
+        reaches the file as 25.0, which is warned, and before the page
+        rounded through the export's own rendering it read refused
+        there while reading warned here. Roadmap 10.1f6 pins the risk
+        threshold the same way: a measured 59.96 reaches the file as
+        60.0, which is ok, while the raw double is warned. One session,
+        two sentences, and pilot.py halts a cohort over the difference.
+        """
+        edge = derive_verdict(fixture_session("edge"))
+        assert surface(edge, "evidenceRate")["status"] == "warned"
+        risk = derive_verdict(fixture_session("risk-edge"))
+        assert surface(risk, "evidenceRate")["status"] == "ok"
+        assert "60.0" in surface(risk, "evidenceRate")["sentence"]
 
     def test_the_fixture_files_carry_no_derived_verdict(self) -> None:
         # Derived, never exported: the CSV holds primary facts only,
         # so no verdict sentence and no verdict vocabulary may appear
         # in it. Checked on the fixtures because they are this repo's
         # canonical examples of what an export looks like.
-        for name in ("good", "refused", "degraded", "edge"):
+        for name in fixture_names():
             csv_text = (FIXTURES / f"{name}-session.csv").read_text(
                 encoding="utf-8"
             )
