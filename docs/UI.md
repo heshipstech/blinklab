@@ -50,6 +50,35 @@ one list of cards, not two that can disagree. The `phone` Playwright project,
 lines.** There is one set of strings at every width, deliberately; the
 alternative was a second set for phones and a second list to document.
 
+**The nav bar carries three icon links**, roadmap 14.0f2: the source
+repository first, then the maintainer's profile and a mailbox. The
+repository link was missing until that row, on a page whose whole
+argument is that its numbers can be audited — a reader could see a
+figure, see the document it cites, and reach neither. `linkHrefs` in
+`tools/uiGuard.mjs` reads what the page builds each chrome link from,
+and a test holds the repository among them.
+
+**The head carries a description and an icon**, from the same row and
+for the same reason. It was twelve lines with neither, so a shared
+link previewed as the single word "blinklab" and a tab showed a blank
+sheet. Both are held to `src/core/pageIdentity.ts` by a test that reads
+`index.html` off disk, and the description is walked by
+`tools/claimGuard.mjs` like every other sentence this project
+publishes: the shortest natural description of this page reaches
+straight for a claim that was measured false.
+
+**Cited documents render as links, pinned to the build's own commit.**
+The conditions sentences beside the blink count and the PERCLOS share
+end in paths like `docs/sampling-bounds.txt`, which on a served page
+are text a reader cannot follow. They are anchors now, built from
+`src/core/docCitations.ts`, and they point at the commit in the page's
+`<meta name="build-commit">` tag rather than at `main` — a link to a
+branch would show today's document beside a number measured last week.
+A local build stamps "dev" and falls back to `main`. The segmenting
+reassembles to exactly the sentence it was given, so linking a
+sentence can never become a way to edit one, and a separate check
+holds every path cited anywhere in `src/` to a file that exists.
+
 **This table is checked, not remembered.** `tools/uiGuard.mjs` reads every
 `box("...")` heading out of `src/main.ts` and a test fails when one of them
 has no section in this file, or when this file documents a box that no

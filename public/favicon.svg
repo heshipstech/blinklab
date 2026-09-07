@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="blinklab">
+  <!--
+    Roadmap 14.0f2. The mark the nav bar already draws, on the page's own
+    ink, so the tab and the header are one drawing rather than two that
+    agree today. The path data and the colour are held to
+    src/core/pageIdentity.ts by test/tools/pageIdentity.test.ts.
+
+    One difference from the header, stated rather than hidden: the stroke
+    is 2.4 where the nav mark uses 1.8, because at 16 pixels the thinner
+    line disappears. The shape is identical.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0f172a" />
+  <g transform="translate(4 4)">
+    <path
+      d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"
+      fill="none"
+      stroke="#ffffff"
+      stroke-width="2.4"
+    />
+    <circle cx="12" cy="12" r="2.6" fill="#ffffff" />
+  </g>
+</svg>

@@ -156,12 +156,14 @@ import {
 } from "./core/exportContents";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
+import { citationSegments, docUrl } from "./core/docCitations";
 import {
   escapeBlocked,
   escapeCloses,
   overlayById,
   type OverlayId,
 } from "./core/overlayEscape";
+import { EYE_OUTLINE_PATH, REPOSITORY_URL } from "./core/pageIdentity";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -434,10 +436,9 @@ eyeSvg.setAttribute("height", "15");
 eyeSvg.setAttribute("fill", "none");
 eyeSvg.setAttribute("aria-hidden", "true");
 const eyeOutline = document.createElementNS(SVG_NS, "path");
-eyeOutline.setAttribute(
-  "d",
-  "M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z",
-);
+// From core, so the nav mark and public/favicon.svg are one drawing
+// rather than two that agree today (roadmap 14.0f2).
+eyeOutline.setAttribute("d", EYE_OUTLINE_PATH);
 eyeOutline.setAttribute("stroke", "#ffffff");
 eyeOutline.setAttribute("stroke-width", "1.8");
 const eyePupil = document.createElementNS(SVG_NS, "circle");
@@ -455,6 +456,14 @@ brand.append(brandMark, title);
 const navLinks = document.createElement("div");
 navLinks.className = "nav-links";
 navLinks.append(
+  // The source, first: this page's whole argument is that its numbers
+  // can be audited, and until roadmap 14.0f2 the nav bar linked a
+  // profile and a mailbox and not the thing a reader would audit.
+  iconLink(
+    REPOSITORY_URL,
+    "Source code on GitHub",
+    "M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3z",
+  ),
   iconLink(
     "https://www.linkedin.com/in/eivinasnorusaitis/",
     "LinkedIn profile",
@@ -2425,10 +2434,56 @@ blinkShapeLabel.hidden = true;
 // them to the documents' numbers; these nodes are only where they
 // stand on the page — the blink one beside the count it bounds, the
 // PERCLOS one beside the share it scopes.
+/**
+ * The commit this page was built from, or null when it says nothing.
+ *
+ * Read from the `<meta name="build-commit">` tag the vite plugin
+ * writes, which is the same thing a reader sees in view-source. That
+ * matters: a citation link pinned to a commit the page does not
+ * publish would be a pin nobody can check.
+ */
+function buildCommit(): string | null {
+  const tag = document.querySelector('meta[name="build-commit"]');
+  return tag === null ? null : tag.getAttribute("content");
+}
+
+/**
+ * Render a conditions sentence with its citations as links.
+ *
+ * The sentence itself comes from core and is pinned there against the
+ * documents it quotes; this only decides which parts of it are
+ * anchors. `citationSegments` reassembles to exactly the string it was
+ * given, so linking a sentence can never be a way to edit one.
+ *
+ * Roadmap 14.0f2: these paths sat on the page as plain text, on a
+ * domain where a repository path means nothing, so the evidence
+ * behind every scoped number was one click away and the click did not
+ * exist.
+ */
+function writeConditionsSentence(node: HTMLElement, sentence: string): void {
+  const commit = buildCommit();
+  node.replaceChildren(
+    ...citationSegments(sentence).map((segment) => {
+      if (segment.kind === "text") {
+        return document.createTextNode(segment.text);
+      }
+      const link = document.createElement("a");
+      link.href = docUrl(segment.path, commit);
+      link.textContent = segment.path;
+      link.target = "_blank";
+      // The same pairing every outbound link on this page uses:
+      // noopener stops the opened page reaching back through
+      // window.opener.
+      link.rel = "noopener noreferrer";
+      return link;
+    }),
+  );
+}
+
 const blinkConditionsNote = document.createElement("p");
-blinkConditionsNote.textContent = blinkCountConditionsSentence();
+writeConditionsSentence(blinkConditionsNote, blinkCountConditionsSentence());
 const perclosConditionsNote = document.createElement("p");
-perclosConditionsNote.textContent = perclosConditionsSentence();
+writeConditionsSentence(perclosConditionsNote, perclosConditionsSentence());
 const perclosLabel = document.createElement("p");
 let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
