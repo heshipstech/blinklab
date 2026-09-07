@@ -36,6 +36,7 @@ from pathlib import Path
 from blinklab.blink_log import BlinkLog, load_blink_log
 from blinklab.blink_match import Interval, MatchResult, combine, match_blinks
 from blinklab.eyeblink8 import Annotation, load_annotation
+from blinklab.stats import wilson_interval
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,20 @@ class ClipResult:
 
 def _percent(value: float | None) -> str:
     return "n/a" if value is None else f"{value * 100:.1f}%"
+
+
+def _interval(successes: int, trials: int) -> str:
+    """The 95% interval a counted proportion supports, as percentages.
+
+    "n/a" for a denominator of zero, matching `_percent` above: a clip
+    with nothing annotated says nothing about whether the instrument
+    finds blinks, and an interval of 0 to 100 there would look like a
+    measurement of total ignorance rather than the absence of one.
+    """
+    if trials <= 0:
+        return "n/a"
+    low, high = wilson_interval(successes, trials)
+    return f"{low * 100:.1f} to {high * 100:.1f}"
 
 
 def evaluate_clip(log: BlinkLog, annotation: Annotation) -> ClipResult:
@@ -112,13 +127,25 @@ def report(results: list[ClipResult]) -> str:
         f"{pooled.detected} detected"
     )
     lines.append("")
+    # Roadmap 10.10c1, ladder B8. Recall and precision are counts over
+    # counts, and both were published as bare percentages. 83.6% from
+    # 408 annotated blinks and 83.6% from 8 read identically, and only
+    # one of them is a measurement worth acting on, so each carries the
+    # interval its own denominator supports.
+    #
+    # F1 does not. It is a harmonic mean of two proportions rather than
+    # a count over a count, so a Wilson interval there would be
+    # arithmetic borrowed from a distribution it does not have. The
+    # tempting thing is to put one on every number in the block.
     lines.append(
         f"  Recall     {_percent(pooled.recall)}   "
-        f"({pooled.true_positives} of {pooled.annotated} found)"
+        f"({pooled.true_positives} of {pooled.annotated} found, "
+        f"95% interval {_interval(pooled.true_positives, pooled.annotated)})"
     )
     lines.append(
         f"  Precision  {_percent(pooled.precision)}   "
-        f"({pooled.false_positives} invented)"
+        f"({pooled.false_positives} invented, "
+        f"95% interval {_interval(pooled.true_positives, pooled.detected)})"
     )
     lines.append(f"  F1         {_percent(pooled.f1)}")
     lines.append("")

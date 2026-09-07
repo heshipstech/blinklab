@@ -15,8 +15,10 @@ See docs/drozy-analysis-plan.md, written before any of this was run.
 
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
+from statistics import NormalDist
 
 
 def ranks(values: list[float]) -> list[float]:
@@ -127,3 +129,58 @@ def holm(results: list[tuple[str, float, float, int]]) -> list[Corrected]:
             Corrected(name=name, rho=rho, p_raw=p_raw, p_holm=running, n=n)
         )
     return out
+
+
+def wilson_interval(
+    successes: int, trials: int, confidence: float = 0.95
+) -> tuple[float, float]:
+    """The confidence interval a counted proportion is entitled to.
+
+    Roadmap 10.10c1, ladder B8. Every headline this project publishes
+    is a count over a count, and every one of them was published as a
+    bare percentage. A percentage with no interval invites a reader to
+    treat 83.6% as the answer rather than as what eight clips support.
+
+    Wilson's score interval rather than the textbook normal
+    approximation, and the reason is the case that made this row: the
+    validation round's first criterion was cleared by 0 sessions of 3.
+    The normal approximation there is p ± z·sqrt(p(1-p)/n), which with
+    p = 0 is exactly [0, 0] — three observations reported as certainty.
+    Wilson gives 0 to 56%, because it inverts the score test rather
+    than assuming the estimate is already normal, so the count enters
+    the width and a boundary count still has an interval. The same
+    holds at the top: 3 of 3 is 44% to 100%, not 100% to 100%.
+
+    Written out rather than imported for the reason the rest of this
+    module is: the environment is pinned and small, it is a dozen
+    lines, and a reader checking the arithmetic can read it here.
+    `NormalDist` is the standard library.
+
+    Returns the pair as fractions, clamped to [0, 1]: the algebra can
+    step a hair outside at extreme counts and a proportion outside
+    those bounds is not a proportion.
+    """
+    if trials <= 0:
+        # Zero observations support no interval. Returning 0 to 1
+        # would look like a measurement of total ignorance rather than
+        # the absence of a measurement, and something downstream would
+        # eventually print it as one.
+        raise ValueError("a proportion needs at least one trial")
+    if successes < 0 or successes > trials:
+        raise ValueError(
+            f"{successes} successes in {trials} trials is not a proportion"
+        )
+    if not 0 < confidence < 1:
+        raise ValueError("confidence is a probability strictly inside 0 and 1")
+    z = NormalDist().inv_cdf(1 - (1 - confidence) / 2)
+    observed = successes / trials
+    denominator = 1 + z * z / trials
+    centre = (observed + z * z / (2 * trials)) / denominator
+    half = (
+        z
+        / denominator
+        * math.sqrt(
+            observed * (1 - observed) / trials + z * z / (4 * trials * trials)
+        )
+    )
+    return (max(0.0, centre - half), min(1.0, centre + half))

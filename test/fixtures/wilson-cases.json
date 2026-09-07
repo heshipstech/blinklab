@@ -1,0 +1,86 @@
+[
+  {
+    "successes": 341,
+    "trials": 408,
+    "confidence": 0.95,
+    "low": 0.796735692,
+    "high": 0.868568867
+  },
+  {
+    "successes": 65,
+    "trials": 406,
+    "confidence": 0.95,
+    "low": 0.127640162,
+    "high": 0.1989287
+  },
+  {
+    "successes": 0,
+    "trials": 3,
+    "confidence": 0.95,
+    "low": 0.0,
+    "high": 0.561497032
+  },
+  {
+    "successes": 3,
+    "trials": 3,
+    "confidence": 0.95,
+    "low": 0.438502968,
+    "high": 1.0
+  },
+  {
+    "successes": 1,
+    "trials": 1,
+    "confidence": 0.95,
+    "low": 0.206549314,
+    "high": 1.0
+  },
+  {
+    "successes": 0,
+    "trials": 1,
+    "confidence": 0.95,
+    "low": 0.0,
+    "high": 0.793450686
+  },
+  {
+    "successes": 800,
+    "trials": 1000,
+    "confidence": 0.95,
+    "low": 0.774081035,
+    "high": 0.82362291
+  },
+  {
+    "successes": 8,
+    "trials": 10,
+    "confidence": 0.95,
+    "low": 0.490162472,
+    "high": 0.943317849
+  },
+  {
+    "successes": 341,
+    "trials": 408,
+    "confidence": 0.9,
+    "low": 0.803422244,
+    "high": 0.863722391
+  },
+  {
+    "successes": 341,
+    "trials": 408,
+    "confidence": 0.99,
+    "low": 0.783240229,
+    "high": 0.877582105
+  },
+  {
+    "successes": 28,
+    "trials": 38,
+    "confidence": 0.95,
+    "low": 0.579911538,
+    "high": 0.850283787
+  },
+  {
+    "successes": 1,
+    "trials": 20,
+    "confidence": 0.95,
+    "low": 0.008881449,
+    "high": 0.236131193
+  }
+]

@@ -15,7 +15,7 @@ P1  2026-08-30T10-00-00-000  Fixture Cam  100.0          30.0       1280x720    
 
 The three failure criteria, fixed in the plan before any file was read:
 
-1. The detector does not generalise, at 3 or more missed among the 1 sound sessions: 1 missed (P1). not met
+1. The detector does not generalise, at 3 or more missed among the 1 sound sessions: 1 missed (P1). not met. 95% interval on that rate: 20.7 to 100.0 percent.
 2. The baseline does not generalise, at 2 or more never ready or drifting past 15%: 0 never ready (none), 0 drifted (none). not met
 3. The frame rate gate lets bad sessions through, at 2 or more: 0 would be refused by a true camera rate (none). not met
 

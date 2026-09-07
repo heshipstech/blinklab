@@ -7,9 +7,19 @@ against themselves.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
-from blinklab.stats import Corrected, holm, permutation_p, ranks, spearman
+from blinklab.stats import (
+    Corrected,
+    holm,
+    permutation_p,
+    ranks,
+    spearman,
+    wilson_interval,
+)
 
 
 class TestRanks:
@@ -121,3 +131,115 @@ class TestHolm:
     def test_returns_the_declared_type(self) -> None:
         out = holm([("a", 0.5, 0.04, 20)])
         assert isinstance(out[0], Corrected)
+
+
+class TestWilsonInterval:
+    """The interval a counted proportion is entitled to.
+
+    Roadmap 10.10c1, ladder B8. Every headline in this project is a
+    count over a count — 341 blinks found of 408 annotated, 0 sound
+    sessions of 3 — and every one of them was published as a single
+    percentage. A percentage with no interval invites the reader to
+    treat 83.6% as the answer rather than as one draw from a corpus
+    of eight clips.
+
+    Wilson rather than the textbook normal approximation, and the
+    reason is the second case above. The normal approximation on 0 of
+    3 gives the interval [0, 0]: it says the detector is certainly
+    perfect at failing, from three observations. Wilson gives 0 to
+    56%, which is what three observations actually support.
+    """
+
+    def test_it_reproduces_the_published_recall_interval(self) -> None:
+        # The number the README publishes beside 341 of 408.
+        low, high = wilson_interval(341, 408)
+        assert round(low * 100, 1) == 79.7
+        assert round(high * 100, 1) == 86.9
+
+    def test_a_zero_count_still_has_an_upper_bound(self) -> None:
+        # Validation criterion 1: 0 of 3 sessions cleared it. The
+        # honest statement is not "0%", it is "somewhere below 56%".
+        low, high = wilson_interval(0, 3)
+        assert low == 0.0
+        assert round(high * 100, 1) == 56.1
+
+    def test_a_perfect_count_still_has_a_lower_bound(self) -> None:
+        # The mirror image, and the other case the normal
+        # approximation gets wrong: 3 of 3 is not certainty.
+        low, high = wilson_interval(3, 3)
+        assert round(low * 100, 1) == 43.9
+        assert high == 1.0
+
+    def test_more_trials_narrow_the_interval(self) -> None:
+        # The property that makes it worth printing at all.
+        narrow = wilson_interval(800, 1000)
+        wide = wilson_interval(8, 10)
+        assert (narrow[1] - narrow[0]) < (wide[1] - wide[0])
+
+    def test_the_interval_contains_the_point(self) -> None:
+        for successes, trials in ((341, 408), (65, 406), (0, 3), (3, 3)):
+            low, high = wilson_interval(successes, trials)
+            assert low <= successes / trials <= high
+
+    def test_a_wider_confidence_gives_a_wider_interval(self) -> None:
+        ninety = wilson_interval(341, 408, confidence=0.90)
+        ninety_nine = wilson_interval(341, 408, confidence=0.99)
+        assert ninety[0] > ninety_nine[0]
+        assert ninety[1] < ninety_nine[1]
+
+    def test_no_trials_is_refused_rather_than_answered(self) -> None:
+        # Zero observations support no interval at all, and returning
+        # 0 to 1 would look like a measurement of total ignorance
+        # rather than the absence of a measurement.
+        with pytest.raises(ValueError):
+            wilson_interval(0, 0)
+
+    def test_more_successes_than_trials_is_refused(self) -> None:
+        with pytest.raises(ValueError):
+            wilson_interval(5, 3)
+
+
+CASES = json.loads(
+    (
+        Path(__file__).resolve().parents[2]
+        / "test"
+        / "fixtures"
+        / "wilson-cases.json"
+    ).read_text(encoding="utf-8")
+)
+
+
+class TestTheIntervalAgreesAcrossTheBorder:
+    """One formula, two implementations, one committed table.
+
+    `tools/wilson.mjs` computes these for the README block, which is
+    generated from the counts this side publishes rather than from a
+    fresh measurement. Two implementations of one formula is what this
+    repository keeps finding fault with, so both suites read this table
+    and recompute it.
+
+    They are not bit-identical and are not asked to be: this side takes
+    the normal quantile from the standard library, the other computes
+    it by bisection over a published series. The comparison is to nine
+    decimals here because this side generated the table; the other side
+    allows 1e-6, five orders finer than the one decimal any published
+    sentence shows.
+    """
+
+    def test_the_table_is_not_empty_and_holds_the_headline(self) -> None:
+        # The floor: an empty table would make the loop below assert
+        # nothing and report success.
+        assert len(CASES) > 8
+        assert any(
+            case["successes"] == 341 and case["trials"] == 408
+            for case in CASES
+        )
+        assert any(case["successes"] == 0 for case in CASES)
+
+    def test_every_case_recomputes(self) -> None:
+        for case in CASES:
+            low, high = wilson_interval(
+                case["successes"], case["trials"], case["confidence"]
+            )
+            assert round(low, 9) == case["low"], case
+            assert round(high, 9) == case["high"], case
