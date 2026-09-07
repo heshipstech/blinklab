@@ -2323,3 +2323,47 @@ naming none. And the card's patterns tolerate a line break between a
 name and the value it introduces, because the card is hard-wrapped
 prose and a guard that depends on where a paragraph happened to wrap
 fails for the wrong reason.
+
+## The explanation satisfied the guard the explanation was about
+
+A summary sentence restates something a machine-readable file already
+knows. CONTRIBUTING gives a contributor one command line and calls it
+the gates; the continuous integration workflow is the file that
+decides what the gates are. A gate added to one and not the other
+means somebody runs a suite that passes and then watches their first
+pull request fail on a step nobody told them about.
+
+That had already happened. A count check went into the workflow and
+the document did not follow, so the pin, on the day it was written,
+found real drift rather than confirming a tidy repository. The second
+pin found drift the other way: the README said fewer phases were
+complete than the roadmap did, because a phase finished and the
+sentence stayed where it was. A summary can be wrong in the modest
+direction too, and nothing notices, because nobody double-checks a
+claim that undersells.
+
+Counting complete phases turned out to mean deciding what this
+repository means by complete. There are three settled markers here,
+done, declined, and a row moved elsewhere and left in place with a
+pointer, and only the first is a tick. A guard that recognised ticks
+alone would have called a finished phase unfinished forever. The moved
+shape is matched narrowly, at the head of the row and in the file's own
+words, so ordinary prose about moving something cannot settle a row
+nobody moved.
+
+The part worth writing down is the hole that got dug and filled inside
+the same change. The first reader took commands from fenced blocks AND
+from inline code spans, on the reasoning that the install command was
+written inline and a reader follows it there. Beside the fix went a
+paragraph explaining the drift, and that paragraph names the missing
+gate in backticks while explaining it. So the pin was satisfied by its
+own explanation: deleting the gate from the command line a contributor
+actually runs left the suite green. The mutation caught it; nothing
+else would have.
+
+The rule that came out of it is small and general. A gate counts as
+documented where it is RUN, not where it is discussed. Prose may say
+anything, and a guard that reads prose is a guard an author can talk
+their way past without noticing they are doing it. This project has
+now found four guards that could not fail, and this is the first one
+it wrote and broke in the same afternoon.
