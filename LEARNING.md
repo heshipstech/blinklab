@@ -1658,3 +1658,48 @@ load it. So would that refusal reject the project's own past. Which
 generations of file an analysis still accepts is a decision about the
 data, not about the code, and it belongs to the person whose recordings
 they are.
+
+## Two descriptions of one thing are one description too many
+
+A test fixture in this project pins two implementations to one file: a
+synthetic session recording, and the verdict both the browser and the
+Python mirror must derive from it. The browser computes from page
+state, the analysis computes from the file, and both have to land on
+the same committed bytes. It is a good design and it has caught real
+disagreements.
+
+It had a hole in the middle. The recording was typed by hand, and the
+page-state values beside it were typed by hand again. So the file the
+two implementations agreed about was not a file the exporter could have
+produced, and nothing in the loop ever called the exporter. A renamed
+metadata key left the whole arrangement green.
+
+The comment above those hand-typed values said so, in as many words:
+if a literal and its file ever drift apart, one side stops matching.
+They had drifted. Every fixture carried a sleepiness rating written as
+a bare number where the writer can only ever emit the number with its
+anchor text beside it. Two more turned up on the way: the files used
+plain newlines where the exporter writes the pair a spreadsheet
+expects, and their column header was two columns behind.
+
+Now each session is described once, and everything else is derived from
+that description. The recording comes out of the same twelve row
+builders the page calls when a person presses Export, in the order read
+out of the page itself. The page-state values come out of the same
+object, through the same rounding the page uses and a replay of the
+real ruler-fit accumulator over the same rows the file carries. There
+is nothing left to keep in step.
+
+The proof is the mutation, run in both directions rather than assumed.
+Rename a metadata key and all four recordings stop matching their
+committed bytes, where before nothing moved. Regenerate them under that
+rename and the Python side stops reproducing the verdict, because the
+key it reads is gone. One rename, two red suites, through one file.
+
+A smaller thing happened while running that mutation and is worth
+keeping. The first attempt used a one-line search and replace and
+silently changed nothing, because that particular call wraps across
+lines — the same trap an increment three days earlier had documented in
+this very repository. Knowing about a trap and walking into it are
+compatible. Checking that your mutation actually mutated something is
+one line of work and it is not optional.

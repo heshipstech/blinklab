@@ -1528,8 +1528,20 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       loaded by two test modules, and the validation round's six files
       predate most of the block. Which generations the analysis track
       still accepts is the owner's decision, and it is roadmap row
-      10.1f4b rather than a choice a test makes on their behalf. The
-      verdict fixtures are 10.1f5.
+      10.1f4b rather than a choice a test makes on their behalf. Then
+      10.1f5 replaced the hand-typed verdict fixtures: each session is
+      described once and both sides of the pin are derived from it, the
+      CSV through the twelve row builders the page calls at export and
+      the page-state inputs through the real rounding and a replay of
+      the real ruler-fit accumulator. The mutation was run both ways.
+      Renaming `pose_valid_fraction` now reddens all four fixture byte
+      comparisons where before it left the whole pin green, and
+      regenerating the fixtures under that rename reddens five Python
+      tests, which is the mirror refusing to reproduce the committed
+      verdict from bytes that lost a key. Two drifts beyond the one
+      this item names: the files carried bare newlines where the
+      exporter writes CRLF, and a header two columns behind. The 59.96
+      boundary is roadmap row 10.1f6.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**

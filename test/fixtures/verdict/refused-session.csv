@@ -1,9 +1,15 @@
 # source: camera
+# clip: none
+# measurement_mode: live
+# frames_measured: 4
+# clip_duration_s: unknown
+# measured_fps: unknown
 # camera: Fixture Cam
 # camera_resolution: 1280x720
 # camera_declared_fps: 60
 # facing_mode: user
-# user_agent: FixtureBrowser/1.0
+# user_agent: Chrome 140 on macOS
+# user_agent_form: reduced
 # hardware_concurrency: 8
 # viewport: 1200x800
 # screen: 1512x982
@@ -18,6 +24,8 @@
 # delivered_frames_read_fraction: 1.000
 # observed_duration_seconds: 59.000
 # records: 4
+# perclos_min_observed_ms: 15000
+# perclos_min_samples: 100
 # face_detected_fraction: 1.000
 # measurement_frame: 1280x720
 # median_iris_width_px: 30.0
@@ -28,12 +36,12 @@
 # marker_1_visibility_changes: 0
 # marker_2_visibility_changes: 0
 # pose_valid_fraction: 0.980
-# kss_before: 3
-# kss_after: 4
+# kss_before: 3 (Alert)
+# kss_after: 4 (Rather alert)
 # protocol: docs/assessment-pilot-plan.md, 29 August 2026
 # app_commit: dev
-timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting
-1000,true,60,7.0,,,,,,,,0,0,,false,true,
-42000,true,60,7.0,,,,,,,,0,0,,false,true,
-55500,true,60,7.0,,,,,,,,0,0,,false,true,
-60000,true,60,7.0,,,,,,,,0,0,,false,true,
+timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm
+1000,true,60,7,,,,,,,,0,0,,false,true,,
+42000,true,60,7,,,,,,,,0,0,,false,true,,
+55500,true,60,7,,,,,,,,0,0,,false,true,,
+60000,true,60,7,,,,,,,,0,0,,false,true,,
