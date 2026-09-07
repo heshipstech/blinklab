@@ -14,6 +14,7 @@ import pytest
 
 from blinklab.stats import (
     Corrected,
+    binomial_at_least,
     holm,
     permutation_p,
     ranks,
@@ -243,3 +244,45 @@ class TestTheIntervalAgreesAcrossTheBorder:
             )
             assert round(low, 9) == case["low"], case
             assert round(high, 9) == case["high"], case
+
+
+class TestBinomialAtLeast:
+    """How often a bar this loose is cleared by chance alone.
+
+    Roadmap 10.10c2, ladder B11. DROZY's within-subject bar asks that
+    at least 3 of 5 subjects agree on the sign of an effect. Each
+    subject is a coin flip under the null, so the bar is cleared half
+    the time by nothing at all, and it alone granted three "suggestive"
+    verdicts in the published result.
+
+    A bar with a chance rate of 0.5 is not a bar. Printing the rate
+    beside it is what lets a reader see that without doing the
+    arithmetic themselves.
+    """
+
+    def test_the_drozy_bar_is_a_coin_flip(self) -> None:
+        # 3, 4 or 5 heads out of 5: (10 + 5 + 1) / 32.
+        assert binomial_at_least(3, 5, 0.5) == pytest.approx(0.5)
+
+    def test_a_stricter_bar_is_rarer(self) -> None:
+        assert binomial_at_least(5, 5, 0.5) == pytest.approx(1 / 32)
+        assert binomial_at_least(4, 5, 0.5) == pytest.approx(6 / 32)
+
+    def test_no_successes_required_is_certain(self) -> None:
+        assert binomial_at_least(0, 5, 0.5) == pytest.approx(1.0)
+
+    def test_more_successes_than_trials_is_impossible(self) -> None:
+        assert binomial_at_least(6, 5, 0.5) == 0.0
+
+    def test_it_matches_a_hand_worked_asymmetric_case(self) -> None:
+        # Two or more of three at p = 1/3: 3(1/3)^2(2/3) + (1/3)^3
+        # = 6/27 + 1/27 = 7/27.
+        assert binomial_at_least(2, 3, 1 / 3) == pytest.approx(7 / 27)
+
+    def test_a_probability_outside_zero_and_one_is_refused(self) -> None:
+        with pytest.raises(ValueError):
+            binomial_at_least(1, 5, 1.5)
+
+    def test_negative_trials_are_refused(self) -> None:
+        with pytest.raises(ValueError):
+            binomial_at_least(1, -1, 0.5)
