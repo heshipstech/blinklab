@@ -592,3 +592,38 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   in docs/stepper-probe-rate.txt says something milder: every rate up
   to 200 came out right with the constant step, and 240 and 300
   measured zero frames. The comment now says that.
+
+  7 September 2026, the probe budget (roadmap 10.14d,
+  docs/stepper-probe-budget.txt):
+
+  feat: the probe step halves a measured period, and the budget covers the slow end (roadmap 10.14d)
+
+  NOT argued neutral by reach, and PROVED neutral by measurement,
+  which is the stronger of the two and is available here because the
+  thing that could move is a number a test can read.
+
+  Two changes to the stepper. The calibration probe, once the landings
+  reduce under the whole-multiple rule, advances by half of that
+  period rather than a quarter of the smallest raw gap. And the
+  attempt budget rises from 60 to 120, because the sweep found the
+  budget was exhausted at 20 frames per second and below: calibration
+  gathered eleven frames at 20 and eight at 15 where the design asks
+  for twelve.
+
+  Both change which instants calibration asks for, on every clip, so
+  no argument from reach is available. What is available is the
+  calibrated interval itself. The fake-video harness drives the real
+  stepThroughVideo over clips with explicit frame times at thirteen
+  rates from 15 to 300 frames per second, and every one of them
+  calibrates to the SAME interval before and after, to the last digit
+  a double carries: 0.03333333333333333 at 30 frames per second on
+  both sides. Only the number of probes spent reaching that answer
+  moved, from 48 to 41 at 30 frames per second.
+
+  Eyeblink8's clips are 30. The schedule a run walks is derived from
+  the calibrated interval and the origin alone, and the origin is the
+  first landing, which is frame zero either way. An identical interval
+  and an identical origin give an identical schedule and identical
+  frames measured. Only 10.8a's regression run can confirm it on the
+  real clips, and that run now scores three stepper changes: ladder
+  A1's whole-multiple rule, 10.14c's probe step, and this one.

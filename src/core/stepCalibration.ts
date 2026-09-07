@@ -229,11 +229,30 @@ export const PROBE_STEP_FLOOR_S = 0.002;
  * calibrate from. The instrument was not publishing a confident wrong
  * rate for a fast clip; it was visibly failing to measure one.
  *
- * A QUARTER of the smallest gap, not a half. The first gap a fast clip
- * offers may itself be two or three periods, and half of an inflated
- * gap can land back on exactly one period, which is the pathology
- * being escaped. A quarter is under one period even when the estimate
- * it is taken from is four times too large.
+ * A QUARTER of the smallest RAW gap, not a half. The first gap a fast
+ * clip offers may itself be two or three periods, and half of an
+ * inflated gap can land back on exactly one period, which is the
+ * pathology being escaped. A quarter is under one period even when the
+ * estimate it is taken from is four times too large.
+ *
+ * A HALF of a REDUCED period, once there is one. Roadmap 10.14d
+ * measured what the quarter rule costs, and it is paid at the slow
+ * end, not the fast one: 51 seeks of a 60 budget at 24 frames per
+ * second against 20 at 300, because the quarter is taken from a gap
+ * that at slow rates already IS one period. That left nine attempts
+ * for every probe a real browser answers without a frame callback,
+ * and calibration that runs out of budget refuses a clip it could
+ * have measured.
+ *
+ * So once the landings support it, the same whole-multiple reduction
+ * that produces the final answer is run over them here, and half of
+ * THAT period is the step. The reduction is what turns a mixture of
+ * one and two period gaps into one period, so half of its answer is
+ * half a frame, which cannot step over a frame. The quarter of a raw
+ * gap is the bootstrap that gets us to a reduction, and it stays for
+ * the landings that do not reduce: too few of them, an implausible
+ * gap, or a variable frame rate, where there is no period to halve
+ * and guessing one would be the mistake this module exists to refuse.
  *
  * Never larger than the bootstrap step, so a slow clip cannot make the
  * probe leap further than the constant chosen to be safe for ordinary
@@ -258,5 +277,8 @@ export function probeStep(
   if (!Number.isFinite(smallest)) {
     return bootstrapSeconds;
   }
-  return Math.min(bootstrapSeconds, Math.max(smallest / 4, PROBE_STEP_FLOOR_S));
+  const reduced = calibrateStep(landingsSeconds);
+  const wanted =
+    reduced.kind === "calibrated" ? reduced.periodSeconds / 2 : smallest / 4;
+  return Math.min(bootstrapSeconds, Math.max(wanted, PROBE_STEP_FLOOR_S));
 }

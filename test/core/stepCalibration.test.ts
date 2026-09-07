@@ -171,17 +171,18 @@ describe("steppingMetadataRows, the file says what it is", () => {
 });
 
 describe("how far the next calibration probe moves", () => {
-  // Roadmap 10.14c, predicted in docs/stepper-probe-rate.txt. The step
-  // was a constant 10 ms, which is TWO whole frame periods at 200
-  // frames per second. Every gap the probe then observes is two
-  // periods, the whole-multiple rule is satisfied perfectly by that,
-  // and calibration returns exactly half the rate with zero inexact
+  // Roadmap 10.14c, predicted in docs/stepper-probe-rate.txt, and
+  // 10.14d, docs/stepper-probe-budget.txt. The step was a constant
+  // 10 ms, which is TWO whole frame periods at 200 frames per second.
+  // Every gap the probe then observes is two periods, the
+  // whole-multiple rule is satisfied perfectly by that, and
+  // calibration returns exactly half the rate with zero inexact
   // landings, so nothing refuses it.
   //
-  // That is the mechanism. What was MEASURED is milder, and is
-  // recorded as measured: with the constant step every rate up to 200
-  // frames per second came out right, and 240 and 300 measured ZERO
-  // frames, because the constant is more than two periods by then and
+  // What was measured is milder than that mechanism and is recorded as
+  // measured: with the constant step every rate up to 200 frames per
+  // second came out right, and 240 and 300 measured ZERO frames,
+  // because the constant is more than two periods by then and
   // calibration cannot gather enough distinct landings at all.
 
   it("uses the bootstrap step until it has two landings to learn from", () => {
@@ -189,20 +190,44 @@ describe("how far the next calibration probe moves", () => {
     expect(probeStep([0], 0.01)).toBe(0.01);
   });
 
-  it("takes a quarter of the smallest gap once it can see one", () => {
-    // A quarter, not a half: the first gap a fast clip shows may
-    // itself be two or three periods, and half of an inflated gap can
-    // land back on exactly one period, which is the pathology.
-    expect(probeStep([0, 0.01, 0.02], 0.01)).toBeCloseTo(0.0025, 9);
+  it("takes half the period the landings reduce to", () => {
+    // Half a period cannot step over a frame. The reduction is what
+    // makes that safe: it turns a mixture of one and two period gaps
+    // into one period, so half of its answer is half a frame however
+    // inflated the raw gaps were.
+    expect(probeStep([0, 0.01, 0.02], 0.01)).toBeCloseTo(0.005, 9);
   });
 
-  it("reads the smallest gap, not the first or the last", () => {
-    expect(probeStep([0, 0.04, 0.05, 0.09], 0.01)).toBeCloseTo(0.0025, 9);
+  it("halves the reduced period, not the smallest raw gap", () => {
+    // Gaps of 40, 10 and 40 ms reduce to a 10 ms period. The smallest
+    // raw gap happens to be that period here, so the two rules would
+    // agree on the number; what this pins is that the answer follows
+    // the reduction, at twice what a quarter of the smallest gap
+    // would give.
+    expect(probeStep([0, 0.04, 0.05, 0.09], 0.01)).toBeCloseTo(0.005, 9);
+  });
+
+  it("falls back to a quarter of the smallest gap when the landings do not reduce", () => {
+    // 40 over 25 is 1.6, no whole multiple, so there is no period to
+    // halve. Guessing one would be the mistake this module exists to
+    // refuse, so the safe bootstrap rule stands: a quarter is under
+    // one period even when the gap it is taken from is four times too
+    // large.
+    expect(probeStep([0, 0.04, 0.065], 0.01)).toBeCloseTo(0.00625, 9);
+  });
+
+  it("reads the smallest gap in that fallback, not the first or the last", () => {
+    expect(probeStep([0, 0.04, 0.065, 0.105], 0.01)).toBeCloseTo(0.00625, 9);
   });
 
   it("never grows beyond the bootstrap step", () => {
-    // A slow clip must not make the probe leap further than the
-    // constant chosen to be safe for ordinary rates.
+    // Not only tidiness. Roadmap 10.14d measured what happens when the
+    // reduced half is allowed past the bootstrap: on a 201 frame clip
+    // carrying one frame 25 ms out of place, the probe strides over
+    // the anomaly, calibration never sees it, and the run reports 200
+    // frames at a confident 25 frames per second instead of refusing
+    // the clip as variable rate. The cap is what keeps that refusal
+    // reachable, and that is why a cheaper calibration was not taken.
     expect(probeStep([0, 1, 2], 0.01)).toBe(0.01);
   });
 
