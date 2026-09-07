@@ -2921,3 +2921,41 @@ Both of these were caught by tests that pin what the reader PARSED
 rather than what it concluded. That is the control here, and it is the
 only reason two guards that read nothing did not ship reporting that
 everything was fine.
+
+## The charter is the one document nothing was holding
+
+Every published figure in this project is bound to a file by a test.
+The recall number, the guard count, the test count, the startable list,
+the caveats on three rows. All of them fail the build when they drift.
+
+PROJECT.md, the file that says what the project is for, had nothing.
+
+It said explainability beats accuracy, while the roadmap's current era
+set its goal as raising accuracy to the hardware's ceiling. It listed
+mobile as out of scope until an architecture decision record argued for
+it, while a phone surface was merged, a phone viewport ran in the
+end-to-end suite on every pull request, and the model card recorded
+phone sessions behind the published numbers. Neither contradiction was
+hidden. Both had simply never been read against the thing they
+described, because the file describing intent is the one nobody thinks
+of as a claim.
+
+It is a claim. It is the most load-bearing one here, because every
+other decision cites it.
+
+Resolving it was not a matter of finding the true answer in the record.
+The record contained both positions, held honestly, arrived at in
+different months. What was missing was a ruling, and a ruling is not
+something a reader can derive: somebody has to decide what the project
+is for. So this one waited for the owner rather than being settled by
+whoever noticed, and it is written as a decision record rather than a
+correction.
+
+The part worth keeping is what the ruling had to add. Both answers were
+already implied by practice. What was missing in each case was the
+TIE-BREAK: not "explainability matters", which nobody disputed, but
+what happens on the day an unexplainable method measures better. The
+answer chosen is that the result gets recorded and the method does not
+get shipped. A priority with no stated behaviour at the point of
+conflict is a preference, and a preference is what people abandon
+exactly when it would have cost something.
