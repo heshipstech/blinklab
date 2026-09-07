@@ -33,6 +33,8 @@ const FULL: FeatureRecord = {
   shutLineSource: "passive",
   sampledFps: 29.9,
   inferenceMs: 12.5,
+  sceneLum: 0.42,
+  faceLum: 0.42,
 };
 
 const EMPTY_ROW: FeatureRecord = {
@@ -60,6 +62,8 @@ const EMPTY_ROW: FeatureRecord = {
   shutLineSource: "none",
   sampledFps: null,
   inferenceMs: null,
+  sceneLum: null,
+  faceLum: null,
 };
 
 describe("csvCell, the edge cases a naive join gets wrong", () => {
@@ -145,7 +149,7 @@ describe("serializeRecords", () => {
     const csv = serializeRecords([FULL]);
     const row = csv?.split("\r\n")[1] ?? "";
     expect(row).toBe(
-      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16,4.1,3.9,passive,2.8,passive,29.9,12.5",
+      "61000,true,60,5.9,7.2,7.2,14,133,3.4,72,0.021,1,12,383,true,true,1.16,4.1,3.9,passive,2.8,passive,29.9,12.5,0.42,0.42",
     );
   });
 
@@ -154,7 +158,7 @@ describe("serializeRecords", () => {
     // measured: a short row would shift every later column.
     const csv = serializeRecords([EMPTY_ROW]);
     const row = csv?.split("\r\n")[1] ?? "";
-    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,,,,none,,none,,");
+    expect(row).toBe("1000,false,,,,,,,,,,0,,,,,,,,none,,none,,,,");
     expect(row.split(",")).toHaveLength(CSV_COLUMNS.length);
   });
 

@@ -43,6 +43,8 @@ export type FeatureRecord = {
   shutLineSource: LineSource; // "none" or "passive" today; no guided line serves the shut baseline yet
   sampledFps: number | null; // the EVIDENCE rate: distinct camera frames read per second, which is what the 25 fps refusal and the 60 fps warning judge; null on a clip and on a camera whose delivery the browser cannot report (roadmap 12.15)
   inferenceMs: number | null; // the mean the timing readout prints, from the same samples, so the page and the record cannot disagree about what the model cost (roadmap 12.15)
+  sceneLum: number | null; // mean luminance of the whole frame in [0,1], from one downscaled raster; the camera's rendering of light and NOT lux, because a webcam's exposure and white balance act before it is read (roadmap 12.16)
+  faceLum: number | null; // the same raster, averaged over the box the face lands in; null with no trusted face or a face too small for the raster to resolve. A lens cap reads 0 and a failed read reads blank, because black is a measurement and broken is not (roadmap 12.16)
 };
 ```
 

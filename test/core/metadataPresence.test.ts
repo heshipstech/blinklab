@@ -103,6 +103,8 @@ function record(timestampMs: number): FeatureRecord {
     shutLineSource: "none",
     sampledFps: null,
     inferenceMs: null,
+    sceneLum: null,
+    faceLum: null,
   };
 }
 

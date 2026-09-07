@@ -83,6 +83,20 @@ export type FeatureRecord = {
   // or the rest of the loop was the reason. Null on a frame where no
   // inference ran.
   inferenceMs: number | null;
+  // How much light the camera thinks it is seeing, in [0,1], from one
+  // downscaled raster of the whole frame (roadmap 12.16). `sceneLum`
+  // is the mean over all of it, `faceLum` the mean over the box the
+  // face lands in. THE CAMERA'S RENDERING OF LIGHT AND NOT LUX: a
+  // webcam's automatic exposure and white balance act before this is
+  // read, so a bright room and a compensated dim one can arrive
+  // looking alike. No threshold and no adjective attach to either
+  // until something has been measured against an outcome, which is
+  // row 13.6b. Both null when the frame cannot be read, and `faceLum`
+  // null with no trusted face or a face too small for the raster to
+  // resolve. Null is a refusal: a fully black frame reads 0, because
+  // a lens cap is a measurement and a failed read is not.
+  sceneLum: number | null;
+  faceLum: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -107,6 +121,21 @@ function nonNegativeOrNull(value: unknown): boolean {
   return (
     value === null ||
     (typeof value === "number" && Number.isFinite(value) && value >= 0)
+  );
+}
+
+// A luminance is a fraction of full scale, so a value outside [0,1]
+// is not a luminance and must not reach a file. Tighter than
+// nonNegativeOrNull on purpose: 1.5 would pass that one, and a reader
+// would have no way to know the column had stopped meaning what its
+// header says.
+function fractionOrNull(value: unknown): boolean {
+  return (
+    value === null ||
+    (typeof value === "number" &&
+      Number.isFinite(value) &&
+      value >= 0 &&
+      value <= 1)
   );
 }
 
@@ -166,6 +195,8 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     // each a defect upstream rather than a measurement, and the
     // schema is where this project refuses one (roadmap 12.15).
     nonNegativeOrNull(record.sampledFps) &&
-    nonNegativeOrNull(record.inferenceMs)
+    nonNegativeOrNull(record.inferenceMs) &&
+    fractionOrNull(record.sceneLum) &&
+    fractionOrNull(record.faceLum)
   );
 }

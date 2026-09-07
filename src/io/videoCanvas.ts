@@ -136,3 +136,44 @@ export function readVideoPixels(
   context.drawImage(video, 0, 0, width, height);
   return context.getImageData(box.x, box.y, box.width, box.height);
 }
+
+// Roadmap 12.16b. The whole frame, downscaled by the browser before it
+// is read, as one small raster.
+//
+// The distinction from `readVideoPixels` above is the whole point.
+// That one draws at the camera's source resolution and reads back a
+// box, which is right for the pupil, where the question is what a
+// few dozen pixels of iris actually look like. This one asks how much
+// light there is, and that survives scaling: drawing 1920 by 1080 into
+// 64 by 36 lets the browser average the pixels, which is the number
+// wanted anyway, and moves about nine kilobytes across the boundary
+// instead of about eight megabytes.
+//
+// Both the scene and the face are then read from this ONE raster, so
+// they come from the same frame at the same exposure through the same
+// scaling. Two separate reads could not promise that, and the
+// difference between the two numbers is the fact the row exists for.
+//
+// Returns null when the video has no frame yet, or the raster asked
+// for has no area.
+export function readVideoThumbnail(
+  context: CanvasRenderingContext2D,
+  video: HTMLVideoElement,
+  rasterWidth: number,
+  rasterHeight: number,
+): ImageData | null {
+  if (video.videoWidth === 0 || video.videoHeight === 0) {
+    return null;
+  }
+  if (rasterWidth <= 0 || rasterHeight <= 0) {
+    return null;
+  }
+  const canvas = context.canvas;
+  if (canvas.width !== rasterWidth || canvas.height !== rasterHeight) {
+    canvas.width = rasterWidth;
+    canvas.height = rasterHeight;
+  }
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.drawImage(video, 0, 0, rasterWidth, rasterHeight);
+  return context.getImageData(0, 0, rasterWidth, rasterHeight);
+}

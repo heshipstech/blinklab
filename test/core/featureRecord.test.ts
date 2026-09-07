@@ -32,6 +32,8 @@ const FULL: FeatureRecord = {
   shutLineSource: "passive",
   sampledFps: 29.9,
   inferenceMs: 12.5,
+  sceneLum: 0.42,
+  faceLum: 0.42,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -60,6 +62,8 @@ const ALL_NULL: FeatureRecord = {
   shutLineSource: "none",
   sampledFps: null,
   inferenceMs: null,
+  sceneLum: null,
+  faceLum: null,
 };
 
 const NUMBER_KEYS = [

@@ -28,6 +28,8 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     baselineMm: 7.2,
     shutBaselineMm: 7.2,
     baselineOverResting: 1.03,
+    sceneLum: 0.42,
+    faceLum: 0.51,
     blinkRatePerMin: 15,
     lastBlinkDurationMs: 120,
     lastBlinkAmplitudeMm: 4,

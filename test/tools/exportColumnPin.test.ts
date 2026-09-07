@@ -59,7 +59,12 @@ describe("the evidence rate and the inference cost travel per second", () => {
     // exact prefix of the current one. Placing a new column beside a
     // related one instead of at the end would break every file
     // exported before today, a cost this project has already declined
-    // twice (baselineOverResting, pupilDiameterMm).
-    expect(CSV_COLUMNS.slice(-2)).toEqual(["sampledFps", "inferenceMs"]);
+    // three times (baselineOverResting, pupilDiameterMm, and the two
+    // luminance columns row 12.16 appended after these).
+    expect(CSV_COLUMNS.slice(-4, -2)).toEqual(["sampledFps", "inferenceMs"]);
+  });
+
+  it("keeps the luminance pair trailing, for the same reason", () => {
+    expect(CSV_COLUMNS.slice(-2)).toEqual(["sceneLum", "faceLum"]);
   });
 });

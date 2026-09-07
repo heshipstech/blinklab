@@ -208,6 +208,12 @@ import {
 } from "./core/landmarkGuard";
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
+import {
+  LUMINANCE_THUMBNAIL_HEIGHT,
+  LUMINANCE_THUMBNAIL_WIDTH,
+  faceBox,
+  meanLuminance,
+} from "./core/sceneLuminance";
 import { pushBounded } from "./core/ringBuffer";
 import {
   sparklineSegments,
@@ -310,6 +316,7 @@ import {
   drawPolyline,
   drawVideoFrame,
   readVideoPixels,
+  readVideoThumbnail,
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
@@ -538,6 +545,76 @@ let canvasContext: CanvasRenderingContext2D | null = null;
 // mirrored, downscaled and may carry the landmark overlays.
 const pupilCanvas = document.createElement("canvas");
 const pupilContext = pupilCanvas.getContext("2d");
+
+// Roadmap 12.16. A second, TINY offscreen canvas for the light reading.
+// Separate from the pupil's on purpose: that one is resized to the
+// camera's full resolution, and sharing it would mean resizing back and
+// forth twice a second, which clears the canvas and costs more than the
+// second element saves.
+const luminanceCanvas = document.createElement("canvas");
+const luminanceContext = luminanceCanvas.getContext("2d");
+
+// How much light the camera thinks it is seeing, for the whole frame and
+// for the face, from ONE downscaled raster. Read only when a row is
+// written (about 1 Hz), the same budget the pupil read is held to: the
+// browser does the averaging as it scales, so about nine kilobytes cross
+// the boundary rather than the eight megabytes a full-resolution read of
+// a 1080p frame would move. Both numbers come from the same raster, so
+// the difference between them is a fact about the light rather than
+// about how they were read.
+function measureLuminance(
+  face: readonly Point2[] | undefined,
+  faceTrusted: boolean,
+): { scene: number | null; face: number | null } {
+  if (luminanceContext === null) {
+    return { scene: null, face: null };
+  }
+  const thumbnail = readVideoThumbnail(
+    luminanceContext,
+    video,
+    LUMINANCE_THUMBNAIL_WIDTH,
+    LUMINANCE_THUMBNAIL_HEIGHT,
+  );
+  if (thumbnail === null) {
+    return { scene: null, face: null };
+  }
+  const whole = {
+    x: 0,
+    y: 0,
+    width: LUMINANCE_THUMBNAIL_WIDTH,
+    height: LUMINANCE_THUMBNAIL_HEIGHT,
+  };
+  const scene = meanLuminance(
+    luminanceField(
+      thumbnail.data,
+      LUMINANCE_THUMBNAIL_WIDTH,
+      LUMINANCE_THUMBNAIL_HEIGHT,
+      whole,
+    ),
+  );
+  if (face === undefined || !faceTrusted) {
+    return { scene, face: null };
+  }
+  const box = faceBox(
+    face,
+    LUMINANCE_THUMBNAIL_WIDTH,
+    LUMINANCE_THUMBNAIL_HEIGHT,
+  );
+  if (box === null) {
+    return { scene, face: null };
+  }
+  return {
+    scene,
+    face: meanLuminance(
+      luminanceField(
+        thumbnail.data,
+        LUMINANCE_THUMBNAIL_WIDTH,
+        LUMINANCE_THUMBNAIL_HEIGHT,
+        box,
+      ),
+    ),
+  };
+}
 
 // The iris ruler in video pixels for one frame, or null when it cannot
 // be measured. This is the working distance: how many pixels the iris
@@ -4149,6 +4226,11 @@ function processFrame(
         // stale.
         const framePupilDiameterMm =
           face !== undefined && faceTrusted ? measurePupilMm(face) : null;
+        // Same once-per-row budget as the pupil above, and read even
+        // with no trusted face: how lit the room is does not depend on
+        // whether the model found somebody in it, and a dark scene with
+        // no face is exactly the row a later reader would want.
+        const luminance = measureLuminance(face, faceTrusted);
         writeReadout(
           pupilLabel,
           framePupilDiameterMm === null
@@ -4171,6 +4253,8 @@ function processFrame(
             timestampMs: nowMs,
             faceDetected: face !== undefined && faceTrusted,
             fps,
+            sceneLum: luminance.scene,
+            faceLum: luminance.face,
             // The EVIDENCE rate, not the processing rate above: null
             // on a clip and on a camera whose delivery the browser
             // cannot report, which is measured absence rather than

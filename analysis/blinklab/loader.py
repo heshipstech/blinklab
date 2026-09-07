@@ -45,6 +45,8 @@ COLUMNS: list[str] = [
     "shutLineSource",
     "sampledFps",
     "inferenceMs",
+    "sceneLum",
+    "faceLum",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -62,7 +64,17 @@ LINE_SOURCES = ("none", "fixed", "passive", "guided")
 # before them the first was session-level and the second was nowhere.
 # Every session recorded until then carries this header and loads with
 # both unknown, which is the truth about those files.
-PRE_MEASUREMENT_COLUMNS: list[str] = COLUMNS[:-2]
+PRE_LUMINANCE_COLUMNS: list[str] = COLUMNS[:-2]
+"""Files from before roadmap 12.16 appended sceneLum and faceLum.
+
+Sliced from COLUMNS because this is the generation immediately
+before the current one; every older generation is sliced from the
+one AFTER it, never by an absolute offset from COLUMNS, so that
+appending a column can never silently re-cut an older header.
+Row 12.15 found a latent defect of exactly that shape.
+"""
+
+PRE_MEASUREMENT_COLUMNS: list[str] = PRE_LUMINANCE_COLUMNS[:-2]
 
 # The header before the four line-provenance columns were appended
 # (7 September 2026, roadmap 10.13a). Every session recorded before
@@ -103,6 +115,7 @@ LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_LUMINANCE_COLUMNS,
     PRE_MEASUREMENT_COLUMNS,
     PRE_LINE_COLUMNS,
     PRE_PUPIL_COLUMNS,
