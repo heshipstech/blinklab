@@ -1,24 +1,28 @@
 import { describe, expect, it } from "vitest";
 
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
-import { asExported } from "../../src/core/participantReport";
 import {
   assessSession,
   type VerdictInputs,
 } from "../../src/core/sessionVerdict";
+import { FIXTURES, fixtureVerdictInputs } from "../support/verdictFixtures";
 
 // The TypeScript half of the verdict pin, increment 5 of the pilot
 // (docs/assessment-pilot-plan.md). The committed fixtures under
 // test/fixtures/verdict/ hold a synthetic session CSV beside the
 // canonical verdict JSON, and BOTH implementations must reproduce
-// the JSON byte for byte: this side from the literal inputs below,
-// the Python side (analysis/blinklab/verdict.py) from the CSV
-// alone. A mutation on either side lands on the same committed
-// bytes — mutations both directions, through one file.
+// the JSON byte for byte: this side from page state, the Python side
+// (analysis/blinklab/verdict.py) from the CSV alone. A mutation on
+// either side lands on the same committed bytes — mutations both
+// directions, through one file.
 //
-// The inputs here are the page-state equivalents of what each CSV
-// says. If a literal and its CSV ever drift apart, one side stops
-// matching the committed JSON, which is the pin doing its job.
+// The page-state inputs are no longer written here. Roadmap 10.1f5:
+// they are derived from the same object the CSV beside them is built
+// from (test/support/verdictFixtures.ts), because the comment this
+// replaces conceded the design — "if a literal and its CSV ever drift
+// apart, one side stops matching" — and they had drifted. Two
+// descriptions of one session kept in step by attention is one
+// description too many.
 
 const root = repoRoot();
 
@@ -30,100 +34,35 @@ function canonical(inputs: VerdictInputs): string {
   return `${JSON.stringify(assessSession(inputs), null, 2)}\n`;
 }
 
-function goodInputs(): VerdictInputs {
-  return {
-    calibration: {
-      kind: "ready",
-      baselineMm: 7.9,
-      window: {
-        sampleCount: 301,
-        medianMm: 7,
-        p90Mm: 7.9,
-        spreadRatio: 1.129,
-        ceilingBound: false,
-        baselineMm: 7.9,
-      },
-    },
-    cameraOutcome: { kind: "running" },
-    sampledFps: 60,
-    processingFps: 60,
-    visibilityChanges: 0,
-    markedWindow: { widthSeconds: 13.5, interruptionsInside: 0 },
-    poseValidFraction: 0.98,
-    rulerFitShown: "fits",
-    modelTrusted: true,
-  };
+function fixture(name: string): VerdictInputs {
+  const session = FIXTURES.find((candidate) => candidate.name === name);
+  if (session === undefined) {
+    throw new Error(`no fixture session called ${name}`);
+  }
+  return fixtureVerdictInputs(session);
 }
 
 describe("the shared verdict fixture", () => {
-  it("the good session reproduces the committed bytes", () => {
-    expect(canonical(goodInputs())).toBe(expected("good"));
-  });
+  for (const session of FIXTURES) {
+    it(`the ${session.name} session reproduces the committed bytes`, () => {
+      expect(canonical(fixtureVerdictInputs(session))).toBe(
+        expected(session.name),
+      );
+    });
+  }
 
-  it("the refused session reproduces the committed bytes", () => {
-    const inputs = goodInputs();
-    inputs.calibration = {
-      kind: "refused",
-      window: {
-        sampleCount: 301,
-        medianMm: 7,
-        p90Mm: 9.65,
-        spreadRatio: 1.378,
-        ceilingBound: true,
-        baselineMm: 9.65,
-      },
-    };
-    // A refused session has no ruler, so the fit check never
-    // settles: the CSV's baselineMm column is empty and this side
-    // says the same thing as null.
-    inputs.rulerFitShown = null;
-    expect(canonical(inputs)).toBe(expected("refused"));
-  });
-
-  it("the degraded session reproduces the committed bytes", () => {
-    const inputs = goodInputs();
-    // Safari's shape: sampling unreported, so the evidence rate
-    // falls back to the processing rate and says whose rate it is.
-    inputs.sampledFps = null;
-    inputs.processingFps = 30;
-    inputs.visibilityChanges = 2;
-    // Both interruptions before marker 1: the window itself is
-    // undisturbed and says so, while the interruptions surface warns.
-    inputs.markedWindow = { widthSeconds: 13.5, interruptionsInside: 0 };
-    inputs.poseValidFraction = 0.62;
-    inputs.rulerFitShown = "tooLong";
-    inputs.calibration = {
-      kind: "ready",
-      baselineMm: 9,
-      window: {
-        sampleCount: 301,
-        medianMm: 7,
-        p90Mm: 9,
-        spreadRatio: 1.18,
-        ceilingBound: false,
-        baselineMm: 9,
-      },
-    };
-    expect(canonical(inputs)).toBe(expected("degraded"));
-  });
-
-  it("the edge session reproduces the committed bytes through the file's own rounding", () => {
+  it("the edge session's raw rate lands on the other side of the floor", () => {
     // Roadmap 10.15 (audit G-export/l-1). The export writes sampled_fps
     // to one decimal, so a measured 24.96 reaches the file as "25.0"
     // and the Python mirror reads 25.0: warned, not refused. The page
-    // used to hand the verdict the raw double and said refused for
-    // the same session, and pilot.py stopped the whole cohort calling
-    // that disagreement an instrument defect. The inputs here are
-    // what the page now hands over: the rate as the file has it.
-    const inputs = goodInputs();
-    inputs.sampledFps = asExported(24.96, 1);
-    expect(canonical(inputs)).toBe(expected("edge"));
-    // The mechanism, stated: the raw double lands on the other side
-    // of the floor. This line is why the rounding must happen on the
-    // page, not only in the file.
-    const raw = goodInputs();
-    raw.sampledFps = 24.96;
+    // used to hand the verdict the raw double and said refused for the
+    // same session, and pilot.py stopped the whole cohort calling that
+    // disagreement an instrument defect. This is the mechanism stated:
+    // it is why the rounding must happen on the page, not only in the
+    // file.
+    const raw = { ...fixture("edge"), sampledFps: 24.96 };
     expect(JSON.parse(canonical(raw)).headline).toBe("refused");
+    expect(JSON.parse(expected("edge")).headline).not.toBe("refused");
   });
 
   it("the page hands the verdict the rate as the export writes it", () => {
