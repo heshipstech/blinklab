@@ -3411,3 +3411,38 @@ attack it before it produces data. Not a review of the code's style — an
 attempt to make it give a wrong answer that looks right. The cost here
 was one workflow. The alternative was publishing an explanation of why
 sixty blinks were missed, built on the wrong sixty closures.
+
+## A fallback nobody can reach is a branch nobody can test
+
+The branch-coverage floor went red, and the six uncovered branches were
+all the same shape: `(cell ?? "")`, `at?.before.rearmed ?? null`,
+`(atCompletion?.nowMs ?? 0)`. TypeScript demands them because indexing
+an array can in principle return undefined. No input can produce that
+here.
+
+There are two ways to make a coverage floor green in this situation and
+only one of them is honest.
+
+The dishonest way is to write a test that reaches the branch. For four
+of the six that was actually fine, because the branch corresponded to a
+real case I had not thought about: a file truncated mid-write leaves a
+row with a frame number and nothing after it, and a miss table can be
+empty. Those tests are worth having on their own merits, and the
+coverage was pointing at a genuine gap.
+
+For the other two it would have been theatre. They came from looking a
+row's state up in a Map keyed by frame number, where every row had been
+put in the Map moments earlier. The lookup cannot miss. To cover the
+fallback I would have had to build a state that the function itself
+makes impossible, purely to make a percentage move.
+
+So those two were removed instead. The state is read by index now,
+which is what it always was, and the branches are gone.
+
+The habit worth taking: when coverage points at a branch, ask first
+whether the branch should exist. Sometimes it is a case you forgot and
+the number has done its job. Sometimes it is a defensive shrug the type
+checker asked for and you granted, and the fix is to make the
+impossible state unrepresentable rather than to write a test that
+pretends it is possible. A coverage number that people satisfy with
+contrived tests stops measuring anything at all.

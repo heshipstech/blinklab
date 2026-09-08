@@ -26,10 +26,50 @@ export type MissFactsRow = MissFacts & { clip: string };
 
 const TRACE_HEADER_START = "frameIndex";
 
-/** A cell the exporter left empty means no measurement, not zero. */
-function numberOrNull(cell: string | undefined): number | null {
+/**
+ * A cell the exporter left empty means no measurement, not zero.
+ *
+ * Anything else that is not a finite number is a DAMAGED file, not a
+ * measurement, and is refused rather than passed on as NaN. NaN is
+ * neither null nor below the line: `blinkStep` would take the OPEN
+ * branch on it and `missFacts` would report the crossing as never
+ * happening, so an unreadable frame would arrive in the table as the
+ * autopsy's above-line story. The Python half of this pipeline,
+ * `miss_autopsy.py`, already refuses the same cell — its `float()`
+ * raises — so absorbing it here would make the two tools disagree
+ * about one file, quietly.
+ */
+function numberOrNull(cell: string | undefined, column: string): number | null {
   const text = (cell ?? "").trim();
-  return text === "" ? null : Number(text);
+  if (text === "") return null;
+  const value = Number(text);
+  if (!Number.isFinite(value)) {
+    throw new Error(
+      `the trace's ${column} cell "${text}" is not a number. An empty ` +
+        "cell means no measurement; anything else unreadable means a " +
+        "damaged file, and reading it as NaN would report the frame as " +
+        "eye-open and the miss as never-crossed",
+    );
+  }
+  return value;
+}
+
+/**
+ * A column every exported row carries: empty is damage too.
+ *
+ * `Number("")` is 0, not NaN, so a finiteness test alone would let a
+ * missing frameIndex through as frame 0 — a row that joins to the
+ * wrong place rather than to nowhere.
+ */
+function requiredNumber(cell: string | undefined, column: string): number {
+  const value = numberOrNull(cell, column);
+  if (value === null) {
+    throw new Error(
+      `the trace has a row with no ${column}. Every exported row carries ` +
+        "one, so a row without it is a damaged or truncated file",
+    );
+  }
+  return value;
 }
 
 function lines(text: string): string[] {
@@ -79,10 +119,10 @@ export function parseTrace(text: string): TraceRow[] {
   return body.map((line) => {
     const cells = line.split(",");
     return {
-      frameIndex: Number(cells[0]),
-      mediaTimeSeconds: Number(cells[1]),
-      apertureMm: numberOrNull(cells[2]),
-      blinkLineMm: numberOrNull(cells[3]),
+      frameIndex: requiredNumber(cells[0], "frameIndex"),
+      mediaTimeSeconds: requiredNumber(cells[1], "mediaTimeSeconds"),
+      apertureMm: numberOrNull(cells[2], "apertureMm"),
+      blinkLineMm: numberOrNull(cells[3], "blinkLineMm"),
     };
   });
 }
