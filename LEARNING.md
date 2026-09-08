@@ -3579,3 +3579,32 @@ because it will change, but because one day somebody will want it GONE,
 and a sentence pasted into four surfaces dies in one of them and
 lingers in three. The project already knew this for numbers; it holds
 for sentences.
+
+## Read the shape of a disagreement before hunting its cause
+
+The 8 September regression run disagreed with its anchor, and the
+useful fact was not the size of the disagreement but its shape: seven
+clips identical to the digit, one clip collapsed from 38 blinks found
+to 6. That shape did three eliminations before any bisection started.
+Identity on seven clips cleared the machine, the prepared files and
+three stepper changes at once, because every one of those causes would
+have moved many clips a little. Only a targeted mechanism moves one
+clip a lot while touching nothing else, and the only targeted thing
+that changed between the runs was the detector's code.
+
+The habit worth taking: when a re-measurement disagrees with its
+anchor, characterise the disagreement's shape first and suspect causes
+second. Noise moves everything a little. An environment change moves
+everything somehow. A code change moves exactly what it touches. The
+shape is a fingerprint, and reading it first meant the whole caveat
+ledger of "argued neutral" entries could be scored in one afternoon —
+held on seven clips, at least one broken on the eighth — without
+running a single bisection.
+
+A second, smaller lesson from the same evening: the one generated
+sentence that could not be mechanically regenerated was the one that
+mixed two provenances — a fresh miss count beside statistics measured
+on the old miss set. Every number in it was true and the sentence was
+false. A generated sentence is only as honest as the sourcing of each
+number in it, so the template now says which set each figure
+describes, and refuses to build when the sets stop nesting.

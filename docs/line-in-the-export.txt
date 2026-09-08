@@ -103,4 +103,35 @@ that the half that needs them has something to score.
 
 THE RESULT
 ----------
-Not yet run. Scored in roadmap 10.8a, in a dated section below.
+Scored 8 September 2026, on the regression run at
+68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 (docs/eyeblink8-result.txt).
+
+(i) FALSIFIED, on one clip. Seven of eight clips are unchanged digit
+for digit — every count, every percentage. The eighth,
+27122013_154548_cam, moved on every figure: found 38 to 6, false 4
+to 1, recall 88.4% to 14.0%, precision 90.5% to 85.7%.
+
+(ii) The without-glasses line and the coverage block are unchanged;
+the with-glasses line moved with its clip.
+
+(iii) Not scored. The byte comparison needs the previous commit's
+exports for the same clips, and no such exports were produced; the
+anchor run's files predate several intervening columns. Recorded as
+unscoreable rather than quietly dropped.
+
+(iv) and (v) Pending: the blinkLineSource and shutLineSource columns
+of the run's per-second exports have not been read yet. This is now
+the sharpest open question, because the answer attributes or clears
+this row and the adoption row at once: `none` and `passive` only, and
+both rows' neutrality arguments stand while the collapse belongs to
+some other entry in the caveat ledger; `guided` or `fixed` anywhere,
+and the line selection reached a path two documents argued
+unreachable. A dated line lands here when the grep is read.
+
+The sentence above that a moved figure "would mean the provenance
+work changed a measurement" was written as if this row were the only
+change between the anchor and the run. It was not — the ledger in
+docs/eyeblink8-result.txt lists them all — so (i)'s failure convicts
+the window, not yet this row. What it does do is void every
+neutrality argument in that window for that clip until the per-miss
+replay says which one broke.

@@ -10,7 +10,7 @@ fails when the committed copy differs by a byte.
 - **Phases 0 through 9 are complete**, counted from ROADMAP.md's own
   rows: a phase is finished when every row in it is done, declined, or
   moved.
-- **Eyeblink8, the regression harness:** recall 83.6% (341 of 408 found), precision 84.0% (65 invented), F1 83.8%.
+- **Eyeblink8, the regression harness:** recall 75.7% (309 of 408 found), precision 83.3% (62 invented), F1 79.3%.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE RE-MEASUREMENT CAME BACK CARRYING ITS OWN CONTROL GROUP, 8 September 2026 (row 10.8a, the regression run at HEAD).** The owner ran the eight prepared clips through `tools/measure_corpus.mjs` at commit 68690bf: all eight stepped, `inexact_landings` 0 on every clip, no refusals, coverage identical to the anchor down to the same two "+1" rows. Seven clips reproduced the committed anchor DIGIT FOR DIGIT — found, miss, false, every row — and the eighth, the one glasses clip, fell from 38 of 43 blinks found to 6. The arithmetic closes exactly: 341 − 32 = 309 found, 65 − 3 = 62 invented, recall 83.6% to 75.7%. **The identity on seven clips is the finding's power:** in one stroke it cleared the machine, the prepared files and three stepper changes for those frames, and convicted the detector's decision on the eighth clip's frames, at some commit between the anchors — every candidate already a dated entry in the result file's caveat ledger, and none of their neutrality arguments predicted this. The anchor moved to the new run and the caveat block retired to "re-measured on 8 September 2026" with the reservation written in: no entry reaching executable detector code is individually cleared for that clip until its 37 misses are replayed. Three prediction documents were scored the day their run arrived: `stepper-honesty` confirmed on its own checks (zero inexact landings everywhere) with its "+1"-as-fabrication candidate REFUTED (an honest stepper measured the same counts, so the "+1" belongs to the clip-annotation pair); `line-in-the-export` prediction (i) FALSIFIED on one clip, with the run's own `blinkLineSource` column named as the read that attributes or clears it; `blink-line-adoption`'s falsifier fired in letter, mechanism check pending on the same column. The headline is published with its defect — README's table grew a sixth column that is not a fix but a finding, MODEL_CARD's card carries it, the changelog follows the record, and the cannot-see claim now splits the 67 characterised misses from the 32 open ones because a sentence mixing two provenances is false in a way no single number in it is. Diagnosis next: `analysis/tools/write_miss_table.py` and `npm run replay:run` over the run's own traces, the tools rows 10.8a1–a5 built for exactly this moment, on the machine that holds the data.
 
 **A GUARD THAT GOES QUIET WHEN THE CODE IMPROVES, 7 September 2026 (rows 14.0f2 and 10.0b11).** The page cited its own evidence and gave no way to reach it: the conditions sentences beside the blink count and the PERCLOS share end in `docs/sampling-bounds.txt` and the like, in plain text, on a domain where a repository path means nothing. The honesty apparatus this project spent phases building sat one click from the visitor and the click did not exist. The citations are anchors now, pinned to the commit in the page's own `<meta name="build-commit">` tag rather than to a branch, because a link to `main` shows a reader today's document beside a number measured last week. The nav bar gains the repository it had never linked, on a page whose whole argument is that its numbers can be audited. The head gains a description and an icon, having been twelve lines with neither. **The favicon decides the held choice by deciding as little as possible:** it is the eye the nav bar already draws, on the page's own ink, and the nav mark now reads its path from the same module, so the header and the tab are one drawing rather than two that agree today. The one difference is a 2.4 stroke where the header uses 1.8, because at 16 px the thinner line disappears, and that is written into the file. **Three defects worth more than the row.** One, `linkHrefs` read only quoted URLs, so the moment the repository URL moved into a shared constant the guard stopped seeing the link — a guard that falls silent when the code improves is a guard that will be silent on the day something is missing, and this repository keeps moving strings into constants. Two, the citation reader needed an explicit test for a path that ENDS a sentence, because the extension dot and the full stop are the same character; the same family that shipped twice in one hour on 10.0b8 and 10.0b9. Three, the first e2e href assertion had an ungrouped alternation, so `|` split the whole pattern and the test would have passed on any string ending in the path — found by re-reading it rather than by a failure, which is the only way that class is ever found. **And the ladder ran out.** Ticking 14.0f2 made the startable sentence false, and the honest replacement had no legal form: `startableClaims` accepted a list or threw, so "nothing is startable" could only be written by deleting the claim, which is the exact silence the throw exists to refuse. Amendment 19 predicted this state in writing and left it unhandled. Emptiness has a form now, and the refusal teaches it, because a message that only says "wrong" gets satisfied by a delete. **What the state is:** every remaining row needs a camera, a corpus, a second engine or a decision. That is a limit of the working environment and not a change of intent, the same record amendments 18 and 20 make.
 
@@ -3468,10 +3470,14 @@ measuring before anything has been built.
 
 ## How the Track A number is produced
 
+    node tools/measure_corpus.mjs \
+      "$DATASETS/eyeblink8-mp4" \
+      "$DATASETS/eyeblink8-measured-2026-09-08"
+
     cd analysis
-    PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
+    PYTHONPATH="$PWD" uv run python tools/evaluate_eyeblink8.py \
       "$DATASETS/eyeblink8/eyeblink8" \
-      "$DATASETS/eyeblink8-measured-rearm"
+      "$DATASETS/eyeblink8-measured-2026-09-08"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table
