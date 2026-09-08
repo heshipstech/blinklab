@@ -18,8 +18,12 @@ import type { MissFacts, MissSpan, TraceRow } from "./blinkReplay";
 // tools already agree on, and the whole point of this pipeline is that
 // its tables join.
 
-/** A miss with the clip it belongs to, as the committed table has it. */
-export type MissTableRow = MissSpan & { clip: string };
+/**
+ * A parsed miss-table row. `MissSpan` already carries the clip its
+ * frame numbers count within, which is exactly what the committed
+ * table's first column holds, so this is that span and nothing added.
+ */
+export type MissTableRow = MissSpan;
 
 /** A per-miss result with the clip it belongs to. */
 export type MissFactsRow = MissFacts & { clip: string };

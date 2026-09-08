@@ -3446,3 +3446,34 @@ checker asked for and you granted, and the fix is to make the
 impossible state unrepresentable rather than to write a test that
 pretends it is possible. A coverage number that people satisfy with
 contrived tests stops measuring anything at all.
+
+## The type let the whole table pass as one clip's misses
+
+`missFacts(trace, spans)` measures each span against the trace it is
+given. The miss table has a clip on every row; the trace is one clip's.
+So the join is correct only when the spans handed in are that clip's,
+and nothing in the types said so.
+
+`MissTableRow` was `MissSpan & { clip }`. Read it and the clip looks
+accounted for. But the extra field sat on the ROW, not on the span the
+function consumes, and a row with an extra field is still assignable to
+the base. So a `MissTableRow[]` — the whole table, every clip's rows —
+typechecked as the one clip's `MissSpan[]` the function takes. A runner
+that read the traces and forgot to group the table by clip would
+compile, run, and print a full result: every clip is numbered from its
+own frame 0, so a foreign span lands on real frames of the wrong video
+and comes back with an ordinary crossing for a closure that never
+happened.
+
+The discriminator moved onto the member. `clip` is on `MissSpan` now,
+and `missFacts` takes the clip it is replaying and refuses a span that
+names another. The types still cannot tell one clip's `MissSpan[]` from
+another's — they are the same shape — so the guard is a runtime refusal,
+where the identity actually lives.
+
+The habit worth taking: when a value carries an identity that says which
+collection it belongs to, put that identity on the thing the consumer
+handles, so the consumer can at least check it. An identity on a wrapper
+one level up from the work is an identity the work never sees, and a
+`&`-extended type that stays assignable to its base is exactly that
+level up.
