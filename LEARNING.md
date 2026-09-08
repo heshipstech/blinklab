@@ -3505,3 +3505,24 @@ believe it emits. A fixture written from the same mental model as the parser
 cannot catch that model being wrong. Pin the shared shape in one place and
 prove the round trip; two hand-copied headers are one assumption, not two
 checks.
+
+## The row order was a fact about the folders, not the clip names
+
+The committed miss table's 67 rows are not in clip-name order. Its
+producer walked the corpus with `sorted(rglob("*.tag"))`, and the clips
+live in subject folders named 1, 2, 3, 4, 8, 9, 10, 11 — which sort as
+STRINGS, so "10" and "11" come before "2". The clip in folder 10 appears
+third, not near the end.
+
+A rewrite of that producer that reached for the obvious
+`sorted(clips, key=name)` would emit the right 67 rows in the wrong
+order, and a digit-for-digit check against the committed file would fail
+for a reason that has nothing to do with which blinks were missed. The
+tool keeps the corpus walk, and the test that guards it is built from
+two clips whose folder order and name order DISAGREE — a fixture where
+they happened to agree would pass under either sort and prove nothing.
+
+The habit worth taking: when a tool reproduces a committed artefact,
+the ordering is part of the artefact, and a test for it needs inputs
+where the right rule and the tempting wrong one give different answers.
+A fixture that both rules pass is not a test of the rule.
