@@ -69,7 +69,12 @@ export function appendFrameTraceRow(
   return [...rows, row];
 }
 
-const FRAME_TRACE_COLUMNS = [
+// Exported so the reader half of the pipeline can hold a trace's header
+// to the exact columns the writer emits, by name and position, rather
+// than by a prefix. `parseTrace` in replayTables.ts reads the first four
+// and drops the fifth; pinning them here means a column inserted or
+// reordered on this side cannot silently move what that reader reads.
+export const FRAME_TRACE_COLUMNS = [
   "frameIndex",
   "mediaTimeSeconds",
   "apertureMm",

@@ -3477,3 +3477,31 @@ handles, so the consumer can at least check it. An identity on a wrapper
 one level up from the work is an identity the work never sees, and a
 `&`-extended type that stays assignable to its base is exactly that
 level up.
+
+## A positional read needs the header pinned to the writer, not to a prefix
+
+`parseTrace` located its header with `startsWith("frameIndex")` and then
+read four columns by index. Both halves were loose.
+
+`startsWith` is a prefix, so `frameIndexSought,...` passed. And the
+positional read trusted an ORDER that nothing enforced: the writer's
+`FRAME_TRACE_COLUMNS` and the reader's `cells[2] is apertureMm` were two
+copies of one fact kept in step by nobody. A column inserted or reordered
+in the writer would move `apertureMm` under the reader — read from the
+`irisAspectRatio` column, every frame reads eye-open and every miss
+never-crossed, with no error anywhere.
+
+The fix exports the writer's column list and holds the header to it
+exactly, by name and position. But the change that actually catches a
+future drift is the round-trip test: build a trace through the real
+`serialiseFrameTrace` and read it back. The hand-written header strings in
+the other tests state the reader's assumption a second time, so a column
+moved on the writer's side sails past them — they and the bug agree. Only
+a test that runs the real writer can disagree with it.
+
+The habit worth taking: when a reader parses a writer's output by position,
+one test must exercise the real writer, not a hand-typed sample of what you
+believe it emits. A fixture written from the same mental model as the parser
+cannot catch that model being wrong. Pin the shared shape in one place and
+prove the round trip; two hand-copied headers are one assumption, not two
+checks.

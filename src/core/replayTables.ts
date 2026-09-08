@@ -1,4 +1,5 @@
 import type { MissFacts, MissSpan, TraceRow } from "./blinkReplay";
+import { FRAME_TRACE_COLUMNS } from "./frameTrace";
 
 // Roadmap 10.8a3a. Reading and writing the two tables the replay
 // runner joins, as pure string work.
@@ -27,8 +28,6 @@ export type MissTableRow = MissSpan;
 
 /** A per-miss result with the clip it belongs to. */
 export type MissFactsRow = MissFacts & { clip: string };
-
-const TRACE_HEADER_START = "frameIndex";
 
 /**
  * A cell the exporter left empty means no measurement, not zero.
@@ -88,9 +87,20 @@ function lines(text: string): string[] {
  *
  * Skips the metadata rows a real export begins with — `# source`,
  * `# clip`, `# measurement_mode` and six more — by finding the header
- * rather than assuming a line number. A reader that took line one as
- * the header would find no columns; one that took the first
+ * as the first line that is not a `#` row. A reader that took line one
+ * as the header would find no columns; one that took the first
  * comma-separated line would read a metadata value as data.
+ *
+ * The header is then held to `FRAME_TRACE_COLUMNS` EXACTLY, by name and
+ * position, not by a prefix. A prefix match — the shape this replaced —
+ * let `frameIndexSought,...` through, and, worse, said nothing about the
+ * ORDER of the columns it then read positionally: a trace whose columns
+ * were reordered on the writer's side would parse without a murmur, with
+ * `apertureMm` taken from wherever `irisAspectRatio` now sat. Every
+ * frame would read as eye-open and every miss as never-crossed. Pinning
+ * the header to the writer's own constant makes the two files one
+ * contract: the round-trip test proves it, and a column moved on either
+ * side breaks the build rather than the numbers.
  *
  * `irisAspectRatio` is read and dropped. It is a second closure witness
  * the miss autopsy uses, and this pipeline is about the detector's
@@ -104,15 +114,19 @@ function lines(text: string): string[] {
  */
 export function parseTrace(text: string): TraceRow[] {
   const all = lines(text);
-  const headerAt = all.findIndex((line) => line.startsWith(TRACE_HEADER_START));
-  if (headerAt === -1) {
+  const expected = FRAME_TRACE_COLUMNS.join(",");
+  const header = all.find((line) => !line.startsWith("#"));
+  if (header !== expected) {
     throw new Error(
-      "this is not a per-frame trace: no header row beginning " +
-        `"${TRACE_HEADER_START}". A trace parsed as empty would report ` +
-        "every miss as never-crossed, which is a confident wrong answer",
+      `this is not a per-frame trace: its header must read exactly ` +
+        `"${expected}". A prefix match let "frameIndexSought,..." through, ` +
+        "and reading a reordered header positionally takes apertureMm from " +
+        "the irisAspectRatio column, so every frame reads as eye-open and " +
+        "every miss as never-crossed — a confident wrong answer. A file of " +
+        "only metadata, with no header at all, is refused here too",
     );
   }
-  const body = all.slice(headerAt + 1);
+  const body = all.slice(all.indexOf(header) + 1);
   if (body.length === 0) {
     throw new Error(
       "the trace has a header and no rows. An empty trace cannot say " +
