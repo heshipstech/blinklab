@@ -14,4 +14,4 @@
 # `npm run counts:check` asks vitest for its own listing and holds
 # this file to it. Neither side can drift alone, and the one number
 # below is the one the documents publish.
-1602
+1607

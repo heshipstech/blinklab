@@ -70,6 +70,51 @@ describe("reading a corpus run's per-frame trace", () => {
     expect(parseTrace(csv)).toHaveLength(1);
   });
 
+  it("refuses a damaged cell rather than passing on NaN", () => {
+    // Found by an adversarial review. An empty cell means "no
+    // measurement"; anything else unreadable means a damaged file. Read
+    // as NaN it would be neither: `NaN < line` is false, so `blinkStep`
+    // takes the OPEN branch and `missFacts` reports the crossing as
+    // never happening — a damaged frame arriving in the table as the
+    // autopsy's above-line story, which is a wrong answer that looks
+    // entirely ordinary.
+    //
+    // The Python half refuses the same cell already: miss_autopsy.py's
+    // `float(value)` raises. Absorbing it here would make the two tools
+    // disagree about one file, quietly.
+    const csv = [
+      "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio",
+      "0,0,not-a-number,3,0.9",
+    ].join("\n");
+    expect(() => parseTrace(csv)).toThrow(/apertureMm/);
+  });
+
+  it("refuses a row missing a column every export writes", () => {
+    // frameIndex and mediaTimeSeconds are written on every row. Absent,
+    // the row is damaged or the file is truncated mid-write, and a
+    // silent NaN frameIndex would put the row nowhere the miss table
+    // can join to.
+    const csv = [
+      "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio",
+      ",0,5,3,0.9",
+    ].join("\n");
+    expect(() => parseTrace(csv)).toThrow(/frameIndex/);
+  });
+
+  it("reads a row cut short mid-write as missing measurements", () => {
+    // A file truncated between two cells. The row has a frame and a
+    // time and nothing after, which is a frame nobody measured rather
+    // than a damaged number.
+    const csv = [
+      "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio",
+      "4,0.1333",
+    ].join("\n");
+    const [row] = parseTrace(csv);
+    expect(row?.frameIndex).toBe(4);
+    expect(row?.apertureMm).toBeNull();
+    expect(row?.blinkLineMm).toBeNull();
+  });
+
   it("refuses a file whose header is not the trace's", () => {
     // The runner takes a directory of files named by convention. A
     // wrong file that parsed to an empty trace would report every miss
@@ -112,6 +157,20 @@ describe("reading the committed miss table", () => {
       "a,007,1,2,2,1",
     ].join("\n");
     expect(parseMissTable(csv)[0]?.blinkId).toBe("007");
+  });
+
+  it("reads a miss row cut short as empty rather than crashing", () => {
+    const csv = [
+      "clip,blink_id,startFrame,endFrame,frameLength,fullyClosedFrames",
+      "a",
+    ].join("\n");
+    const [miss] = parseMissTable(csv);
+    expect(miss?.clip).toBe("a");
+    expect(miss?.blinkId).toBe("");
+  });
+
+  it("refuses an empty table, which has no header to join on", () => {
+    expect(() => parseMissTable("")).toThrow(/clip/);
   });
 
   it("refuses a table missing a column it joins on", () => {

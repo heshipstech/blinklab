@@ -201,7 +201,12 @@ export function missFacts(
   misses: readonly MissSpan[],
 ): MissFacts[] {
   const replayed = replayTrace(rows);
-  const atFrame = new Map(replayed.map((frame) => [frame.frameIndex, frame]));
+  // The replay is one entry per row, in order, so a row's state is at
+  // its own index. Looked up by frame number instead, the lookup could
+  // never miss, and a fallback nobody can reach is a branch nobody can
+  // honestly test.
+  const stateAt = (row: TraceRow): ReplayedFrame =>
+    replayed[rows.indexOf(row)] as ReplayedFrame;
   return misses.map((miss) => {
     const inSpan = rows.filter(
       (row) =>
@@ -230,7 +235,7 @@ export function missFacts(
     // When nothing in the span armed, the first dip is the right
     // anchor and the quantities then describe a closure that never got
     // close enough to count, which is itself the answer.
-    const armed = dips.find((row) => atFrame.get(row.frameIndex)?.after.armed);
+    const armed = dips.find((row) => stateAt(row).after.armed);
     const crossing = armed ?? dips[0];
     if (crossing === undefined) {
       return {
@@ -261,9 +266,8 @@ export function missFacts(
         row.blinkLineMm !== null &&
         row.apertureMm >= row.blinkLineMm,
     );
-    const at = atFrame.get(crossing.frameIndex);
     const atCompletion =
-      completion === undefined ? undefined : atFrame.get(completion.frameIndex);
+      completion === undefined ? undefined : stateAt(completion);
     const lastEnded = atCompletion?.before.lastBlinkEndedAtMs ?? null;
     return {
       blinkId: miss.blinkId,
@@ -277,7 +281,7 @@ export function missFacts(
           : (reopen.mediaTimeSeconds - crossing.mediaTimeSeconds) * 1000,
       msSincePreviousBlink:
         lastEnded === null ? null : (atCompletion?.nowMs ?? 0) - lastEnded,
-      rearmedAtCrossing: at?.before.rearmed ?? null,
+      rearmedAtCrossing: stateAt(crossing).before.rearmed,
     };
   });
 }
