@@ -120,3 +120,37 @@ WHAT WOULD REFUTE THIS
 
 This prediction is not edited after the fact; the outcome becomes a new
 dated section below it.
+
+THE OUTCOME, 8 SEPTEMBER 2026
+-----------------------------
+The regression run at 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5
+(docs/eyeblink8-result.txt) ran as every corpus run does: fresh
+browser, empty storage, no stored calibration. That is the second,
+shipping half of the prediction — "neutral BY CONSTRUCTION" — and its
+own falsifier was stated above: if any committed Eyeblink8 number
+changed at all, the claim is false and the selection is reaching the
+guided path when it must not.
+
+A committed number changed. One clip, 27122013_154548_cam, fell from
+38 of 43 found to 6 of 43; the other seven clips reproduced the
+anchor digit for digit.
+
+What this does and does not establish, kept apart deliberately:
+
+  The letter of the falsifier fired. That is recorded here without
+  qualification, because a prediction whose misses are explained away
+  is not a prediction.
+
+  The falsifier's stated MECHANISM — the selection reaching the
+  guided path — is a separate, directly checkable claim: since
+  roadmap 10.13a every per-second export carries blinkLineSource and
+  shutLineSource, so the run's own files say which line ruled every
+  frame. That read is pending. `none` and `passive` only, and the
+  mechanism is refuted — the number moved for a reason outside this
+  document's experimental assumption that the adoption was the only
+  change in the window, which it was not (the caveat ledger in
+  docs/eyeblink8-result.txt lists the others). `guided` or `fixed`
+  anywhere, and this prediction failed exactly as it feared.
+
+  Either way the per-miss replay of that clip's 37 misses names the
+  broken change. A dated line lands here when both reads exist.
