@@ -1,0 +1,188 @@
+RUNNING THE EYEBLINK8 REGRESSION AT HEAD
+Roadmap 10.8a. Written 8 September 2026, from a run prepared on a
+rebuilt machine.
+
+WHY THIS FILE EXISTS
+  docs/eyeblink8-preparation.txt says how to convert the corpus and
+  docs/eyeblink8-result.txt says how to reproduce a run, and between
+  them three things were missing, un-recorded or contradictory. Each
+  one costs at least a failed start and one of them costs twenty
+  minutes before it announces itself. They are written here rather
+  than remembered.
+
+  No path from anyone's machine is in this file. $DATASETS and
+  $BLINKLAB are the existing convention (STATE.md's "How the Track A
+  number is produced"), and they are set per shell.
+
+
+THE THREE THINGS THAT ARE NOT WRITTEN ANYWHERE ELSE
+===================================================
+
+1. WEBKIT MUST BE INSTALLED, AND NOTHING SAYS SO.
+
+   tools/measure_corpus.mjs imports `webkit` from @playwright/test and
+   calls `webkit.launch()`. There is no flag, no environment variable
+   and no config hook: the engine is hard-wired, deliberately, and
+   README explains why (no other engine has measured this corpus, and
+   row 13.0 is the measurement that would change that).
+
+   But README's setup line says only `npx playwright install
+   chromium`, and .github/workflows/ci.yml installs chromium alone,
+   because continuous integration has no corpus to measure. So a clone
+   prepared by following the documented steps has no WebKit, and the
+   runner dies at the launch call before measuring one frame.
+
+       npx playwright install webkit
+
+   Verify rather than assume. `npx playwright install --dry-run
+   webkit` prints the install LOCATION, not whether anything is there:
+
+       ls -d ~/Library/Caches/ms-playwright/webkit-* && echo INSTALLED
+
+   The revision differs by platform. node_modules/playwright-core/
+   browsers.json carries revisionOverrides pinning older macOS and
+   ubuntu builds, so two machines on one lockfile can hold different
+   WebKit revisions. `browserVersion` is the field that matters and is
+   the same across them; it is what MODEL_CARD's "The instrument that
+   stepped the corpus" section records.
+
+2. THE OUTPUT FOLDER'S NAME IS PARSED BY A GUARD.
+
+   tools/resultGuard.mjs finds the reproduction folder with
+
+       /"\$DATASETS\/(eyeblink8-measured-[a-z0-9-]+)"/
+
+   against the WHOLE result file, first match wins. Lowercase letters,
+   digits and hyphens only.
+
+   A name the pattern cannot match does not fail. The regex walks on,
+   matches an OLDER folder further down the file, and the published
+   reproduction command then names a run that produced different
+   numbers — with every check green, because a guard that found
+   something believes it found the right thing.
+
+       eyeblink8-measured-2026-09-08     safe
+       eyeblink8-measured-10.8a          silently wrong: the dot
+
+3. NOTHING MAY TOUCH A DETECTOR SOURCE DURING THE RUN.
+
+   package-lock.json is on tools/detectorRatchet.mjs's watch list, for
+   the reason the file states: a browser or Playwright bump can move a
+   stepped measurement without one line of this repository's own code
+   changing. So can a dependency update that arrives while the anchor
+   is being set.
+
+   Merge nothing — Dependabot included — between the run and the
+   commit that moves the anchor. An anchor set on a tree that gained a
+   detector-touching commit an hour later is stale on arrival, and the
+   ratchet will say so.
+
+
+THE LAYOUT CONTRADICTION, AND HOW TO SETTLE IT
+==============================================
+
+  Two committed instructions disagree, and both are self-consistent.
+
+  The PREPARATION command in docs/eyeblink8-preparation.txt writes the
+  remuxed clips to a separate folder:
+
+      uv run python tools/prepare_eyeblink8.py \
+          "$DATASETS/eyeblink8/eyeblink8" "$DATASETS/eyeblink8-mp4"
+
+  Every REPRODUCE command in docs/eyeblink8-result.txt and
+  docs/eyeblink8-m5max.txt passes the corpus ROOT to the runner.
+
+  Both work. They are different layouts, not a bug, and which one a
+  machine holds is a fact about that machine rather than a decision to
+  take again. Read it off the disk:
+
+      ls "$DATASETS/eyeblink8-mp4"/*.mp4 | wc -l
+      ls "$DATASETS/eyeblink8/eyeblink8"/*.mp4 | wc -l
+
+  Whichever prints 8 is the clips directory. Pass THAT to
+  measure_corpus.mjs. The evaluator always takes the corpus ROOT
+  instead, because it reads .tag files recursively out of the subject
+  folders, and the two arguments are therefore not interchangeable.
+
+  Getting it wrong fails loudly: tools/corpusGuard.mjs counts the
+  nested .avi files and refuses by name, pointing at the preparation
+  document.
+
+
+THE SEQUENCE
+============
+
+  # 0. Set the two variables. datasets sits beside the clone.
+  export BLINKLAB="..."   # the repository
+  export DATASETS="..."   # the folder holding eyeblink8/
+  ls "$DATASETS"
+
+  # 1. Prepare, ONCE, only if the clips directory has no .mp4 files.
+  #    A REMUX, not a re-encode: the ground truth is indexed by frame
+  #    number, and docs/eyeblink8-m5max.txt records that a re-encode
+  #    collapses one clip's false alarms from 19 to 3.
+  cd "$BLINKLAB/analysis"
+  uv sync --group corpus
+  uv run python tools/prepare_eyeblink8.py <corpus-root> <clips-dir>
+
+  # 2. Install, including the browser nobody documents.
+  cd "$BLINKLAB"
+  npm ci
+  npx playwright install webkit
+
+  # 3. Build on its OWN line. `&` backgrounds the whole chain, so a
+  #    build chained before a backgrounded preview returns before
+  #    anything is built.
+  npm run build
+  npm run preview -- --strictPort &
+
+  # 4. Measure. About 20 minutes for 8 clips and ~71,000 frames, on
+  #    2026 hardware; time it rather than trusting that. The bundle
+  #    check is inside the tool and prints "Serving the build we
+  #    made" before any browser starts.
+  node tools/measure_corpus.mjs <clips-dir> "$DATASETS/eyeblink8-measured-<date>"
+
+  # 5. The two checks, BEFORE the anchor moves.
+  grep -h '^# measurement_mode' "$DATASETS/eyeblink8-measured-<date>"/*.blinks.csv
+  grep -h '^# inexact_landings' "$DATASETS/eyeblink8-measured-<date>"/*.blinks.csv
+
+  #    measurement_mode must read `stepped` on all eight, or the
+  #    evaluator skips the clip and the run is not a regression run.
+  #    inexact_landings is row 10.8a's own Check: 0 on every clip, or
+  #    the stepper design is falsified as written. That is a real
+  #    possible outcome. Rule on it before moving anything.
+
+  # 6. Score.
+  cd "$BLINKLAB/analysis"
+  PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
+      <corpus-root> "$DATASETS/eyeblink8-measured-<date>"
+
+  # 7. The provenance line 10.8a asks for, beside "Built from commit".
+  cd "$BLINKLAB" && npx playwright --version
+
+
+WHAT AN ARCHIVED MACHINE WILL AND WILL NOT HAVE
+===============================================
+
+  Measured folders from earlier runs may survive a machine move; the
+  per-frame traces will not, because the trace export postdates them.
+  Check before planning around either:
+
+      ls "$DATASETS"/eyeblink8-measured-*/*.frames.csv 2>/dev/null | wc -l
+
+  Zero means no archived run carries a trace. Two consequences, both
+  worth stating in the run's own write-up rather than discovering
+  later:
+
+    - The replay tool (10.8a1 to 10.8a5) has no historical data. It
+      runs on the traces the new run produces, and only those.
+
+    - docs/line-in-the-export.txt's byte-identity prediction loses its
+      trace-level comparand. If eyeblink8-measured-rearm survives, the
+      .blinks.csv half is still scoreable; the trace half is not, and
+      the outcome section must say which half was scored rather than
+      claim a comparison nobody made.
+
+  An unscoreable clause is a result. Recording it as one is the whole
+  discipline; quietly dropping it is how a prediction becomes
+  decoration.
