@@ -211,6 +211,47 @@ describe("the three quantities, per miss", () => {
     expect(fact?.msSincePreviousBlink).toBeNull();
   });
 
+  it("anchors on the closure that ARMED, not the first dip in the span", () => {
+    // Found by an adversarial review, and it is the failure this whole
+    // tool exists to avoid: a plausible number attributed to the wrong
+    // event.
+    //
+    // A shallow wobble crosses the line at frame 3 and comes back at
+    // frame 4 without ever reaching arm depth, so the detector treats
+    // it as nothing. The real dip follows at frame 5, arms, and
+    // completes at frame 6 — and THAT is the closure the refractory
+    // window judged, at 133.3 ms from the previous count.
+    //
+    // Anchoring on the first crossing reported 66.7 ms: a real
+    // measurement of a closure the detector never evaluated. Both
+    // numbers look entirely ordinary in a table, and a lid that
+    // wobbles before it blinks is exactly the behaviour the re-arm
+    // gate was added for, so this is not a contrived trace.
+    const rows = [
+      row(0, 5),
+      row(1, 2.0),
+      row(2, 5),
+      // The wobble: below the 3 mm line, never below the 2.7 arm line.
+      row(3, 2.9),
+      row(4, 3.05),
+      // The real closure.
+      row(5, 2.0),
+      row(6, 3.1),
+    ];
+    const [fact] = missFacts(rows, [miss(3, 6)]);
+    expect(fact?.crossingFrame).toBe(5);
+    expect(fact?.msSincePreviousBlink).toBeCloseTo(133.33, 1);
+  });
+
+  it("falls back to the first crossing when nothing in the span armed", () => {
+    // A span whose every dip stayed above arm depth. There is no armed
+    // closure to anchor on, and that IS the answer: the quantities
+    // describe a closure that never got close enough to count.
+    const rows = [row(0, 5), row(1, 2.9), row(2, 2.95), row(3, 5)];
+    const [fact] = missFacts(rows, [miss(1, 2)]);
+    expect(fact?.crossingFrame).toBe(1);
+  });
+
   it("carries the miss's identity through, so tables can be joined", () => {
     const [fact] = missFacts([row(0, 5), row(1, 2.0)], [miss(1, 1)]);
     expect(fact?.blinkId).toBe("b1");

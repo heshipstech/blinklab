@@ -3372,3 +3372,42 @@ The habit worth taking: when a validator refuses something you just
 made, check whether it is enforcing a convention you forgot rather than
 a limitation you should remove. The refusal is evidence about the
 system, not just an obstacle in front of it.
+
+## Every test passed, and the tool was measuring the wrong event
+
+The replay tool answers, for a blink the detector missed, how long since
+the last counted blink. It anchored that measurement on the first frame
+the eyelid dipped below the line inside the human's marked span.
+
+That is wrong, and no test caught it, because every test was written
+from the same understanding that produced the error.
+
+A lid can dip below the line without going deep enough to arm. The
+detector treats such a wobble as nothing at all. If a real closure
+follows inside the same marked span — and a lid that wobbles before it
+blinks is exactly the behaviour the re-arm gate was added for — then the
+real closure is the one the refractory window actually judged. Anchoring
+on the wobble produced a genuine measurement of a closure the detector
+never evaluated: 66.7 milliseconds where the decision used 133.3.
+
+Both are plausible. Neither is flagged. In a table of sixty-odd misses
+nobody would ever look twice.
+
+It was found by an adversarial review: agents told to attack the tool,
+write probes, run them, and report what actually happened rather than
+what should. One built a trace with a wobble before a blink, dumped the
+detector's state frame by frame, and the divergence was visible in the
+dump.
+
+**A test suite written by the author checks the author's
+understanding.** Mine were thorough — boundary cases, refusals, five
+separate bends of the module — and every one of them encoded the same
+wrong idea about which closure mattered. Thoroughness inside a mistaken
+frame does not escape the frame.
+
+The habit worth taking: for anything whose output is a number nobody can
+sanity-check by eye, spend the extra pass having something adversarial
+attack it before it produces data. Not a review of the code's style — an
+attempt to make it give a wrong answer that looks right. The cost here
+was one workflow. The alternative was publishing an explanation of why
+sixty blinks were missed, built on the wrong sixty closures.
