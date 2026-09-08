@@ -3349,3 +3349,26 @@ at all was a decision to split a blocked row rather than judge it whole.
 Walking the row's own Check clause by clause is what surfaced a
 consumer with no producer. Reading a row for whether it is _finishable_
 never would have.
+
+## The ladder refused an identifier it could not parse
+
+Splitting a row twice produced `10.8a3b` — a letter, digits, then another
+letter. Every existing id in this ladder uses one letter group at most:
+`10.0b11`, `12.16b`, `10.8a2`. The pattern that finds a row is
+`[\d.]+[a-z]?\d*`, so `10.8a3b` matched nothing at all, and the guard
+reported the row as absent while it sat plainly in the file.
+
+The tempting fix was to widen the pattern. That would have been wrong.
+
+An identifier is not private to the file that holds it. Roadmap ids are
+quoted in commit messages, in prediction documents, in the remediation
+ladder, in audit findings, and in the amendment that gates a phase.
+Widening one regex would have created ids that this repository's other
+readers, and every human skimming a commit subject, have no convention
+for. The renumber cost one minute; the alternative was a second id
+grammar nobody had agreed to.
+
+The habit worth taking: when a validator refuses something you just
+made, check whether it is enforcing a convention you forgot rather than
+a limitation you should remove. The refusal is evidence about the
+system, not just an obstacle in front of it.

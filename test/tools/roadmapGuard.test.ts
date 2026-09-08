@@ -341,8 +341,8 @@ describe("a claimed row its phase will not let start", () => {
     // The ladder now DECLARES nothing startable (amendment 21), so the
     // sentence this replaces is that declaration rather than a list.
     const claimed = roadmap.replace(
-      "Rows 10.8a3 and 10.8a4 remain startable and are not marked",
-      "Rows 12.7, 10.8a3 and 10.8a4 remain startable and are not marked",
+      "Rows 10.8a4 and 10.8a5 remain startable and are not marked",
+      "Rows 12.7, 10.8a4 and 10.8a5 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
@@ -523,6 +523,6 @@ describe("the ladder that has nothing left to start", () => {
     // 10.8a's first slice needs no corpus. The empty FORM stays
     // supported and tested above; this pins what the ladder actually
     // says today, so changing it is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual(["10.8a3", "10.8a4"]);
+    expect(startableClaims(roadmap)).toEqual(["10.8a4", "10.8a5"]);
   });
 });
