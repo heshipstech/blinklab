@@ -338,11 +338,13 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder now DECLARES nothing startable (amendment 21), so the
-    // sentence this replaces is that declaration rather than a list.
+    // The ladder DECLARES nothing startable again (10.8a4 and 10.8a5
+    // both marked on 8 September), so the fixture swaps that
+    // declaration for a list claiming 12.7 alone — the marked rows
+    // cannot join it without tripping staleStartables instead.
     const claimed = roadmap.replace(
-      "Rows 10.8a4 and 10.8a5 remain startable and are not marked",
-      "Rows 12.7, 10.8a4 and 10.8a5 remain startable and are not marked",
+      "NOTHING outside Phase 12 remains startable",
+      "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
@@ -518,11 +520,11 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 22: the ladder is not empty any more, because
-    // startability was being judged at one increment size and row
-    // 10.8a's first slice needs no corpus. The empty FORM stays
-    // supported and tested above; this pins what the ladder actually
-    // says today, so changing it is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual(["10.8a4", "10.8a5"]);
+    // The slices amendment 22 opened have all landed: 10.8a5 is ticked
+    // and 10.8a4 is marked waiting on the owner's regression run, so
+    // the ladder is back to the NONE form amendment 21 gave it. This
+    // pins what the ladder actually says today, so changing it is a
+    // deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual([]);
   });
 });
