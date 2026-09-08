@@ -1,4 +1,5 @@
 import { blinkStep, initialBlinkState, type BlinkState } from "./blink";
+import { APERTURE_HYSTERESIS_FRACTION } from "./constants";
 
 // Roadmap 10.8a. Drive the REAL detector over a clip's committed
 // per-frame trace, and keep the state it was in at every frame.
@@ -114,4 +115,148 @@ export function replayTrace(rows: readonly TraceRow[]): ReplayedFrame[] {
     state = after;
   }
   return replayed;
+}
+
+/**
+ * A blink a human marked, in the annotators' own frame numbering.
+ *
+ * `startFrame` and `endFrame` are the annotation's closed span, which
+ * is what `analysis/tools/miss_autopsy.py` scopes to. The two tables
+ * are meant to be joined on `blinkId`, so the same span means the same
+ * thing in both.
+ */
+export type MissSpan = {
+  blinkId: string;
+  startFrame: number;
+  endFrame: number;
+};
+
+/**
+ * What the detector was doing while a blink the human marked went
+ * uncounted. Roadmap 10.8a's three quantities, and nothing else.
+ *
+ * NO VERDICT COLUMN, deliberately. `miss_autopsy.py` can already say
+ * that the aperture crossed the line and no blink was logged — its
+ * `crossed_line` case, which names the re-arm gate and the refractory
+ * window together and cannot separate them. These three quantities
+ * separate them. Which one actually accounts for which miss is a
+ * conclusion about data that does not exist yet, and a column asserting
+ * it now would be pre-registering the answer instead of the question.
+ * A later row, scored against the run, draws that line.
+ *
+ * Every state-machine quantity is null when there was no crossing. The
+ * detector was never given a closure to suppress, so the question does
+ * not apply — which is a different thing from a zero, and a zero here
+ * would read as "suppressed by nothing at all".
+ */
+export type MissFacts = {
+  blinkId: string;
+  startFrame: number;
+  endFrame: number;
+  /** The first frame inside the marked span that read below the line. */
+  crossingFrame: number | null;
+  /**
+   * The first frame at or after the crossing where the lid cleared the
+   * line by the hysteresis gap — the re-arm line.
+   *
+   * Searched past `endFrame` on purpose. The span is the human's
+   * judgement of the blink; the lid clearing the re-arm line is the
+   * detector's business and routinely happens after it. Null when the
+   * trace ends first, because reporting the last frame as a reopening
+   * would invent an event.
+   */
+  reopenFrame: number | null;
+  /** Crossing to reopening, on the clip's own clock. */
+  crossingToReopenMs: number | null;
+  /**
+   * From the end of the last COUNTED blink to the moment this closure
+   * COMPLETED — the first frame at or above the line again.
+   *
+   * Measured there and not at the crossing, because that is where
+   * `blinkStep` tests it: the refractory comparison lives in the OPEN
+   * branch, `nowMs - state.lastBlinkEndedAtMs < BLINK_REFRACTORY_MS`,
+   * evaluated on the frame the eye reopens. A distance measured at the
+   * crossing is a different quantity that happens to have the same
+   * units, and comparing it to the 150 ms constant would be comparing
+   * two things that are not the same measurement.
+   *
+   * Null before the first counted blink: nothing has happened to
+   * measure from, and a zero would read as "immediately after a
+   * blink", which is the opposite of the truth.
+   */
+  msSincePreviousBlink: number | null;
+  /** The re-arm gate as the detector held it entering the crossing. */
+  rearmedAtCrossing: boolean | null;
+};
+
+/**
+ * The three quantities for each miss, from one full-clip replay.
+ *
+ * Milliseconds rather than frames throughout, because the thresholds
+ * these are read against are in milliseconds: a clip at another rate
+ * would otherwise report a different quantity under the same name.
+ */
+export function missFacts(
+  rows: readonly TraceRow[],
+  misses: readonly MissSpan[],
+): MissFacts[] {
+  const replayed = replayTrace(rows);
+  const atFrame = new Map(replayed.map((frame) => [frame.frameIndex, frame]));
+  return misses.map((miss) => {
+    const crossing = rows.find(
+      (row) =>
+        row.frameIndex >= miss.startFrame &&
+        row.frameIndex <= miss.endFrame &&
+        row.apertureMm !== null &&
+        row.blinkLineMm !== null &&
+        row.apertureMm < row.blinkLineMm,
+    );
+    if (crossing === undefined) {
+      return {
+        blinkId: miss.blinkId,
+        startFrame: miss.startFrame,
+        endFrame: miss.endFrame,
+        crossingFrame: null,
+        reopenFrame: null,
+        crossingToReopenMs: null,
+        msSincePreviousBlink: null,
+        rearmedAtCrossing: null,
+      };
+    }
+    const reopen = rows.find(
+      (row) =>
+        row.frameIndex > crossing.frameIndex &&
+        row.apertureMm !== null &&
+        row.blinkLineMm !== null &&
+        row.apertureMm >= row.blinkLineMm * (1 + APERTURE_HYSTERESIS_FRACTION),
+    );
+    // Where the closure ENDS, which is a different frame from where the
+    // re-arm gate opens: the eye is back at the line here and has to
+    // rise a further hysteresis gap to clear the gate.
+    const completion = rows.find(
+      (row) =>
+        row.frameIndex > crossing.frameIndex &&
+        row.apertureMm !== null &&
+        row.blinkLineMm !== null &&
+        row.apertureMm >= row.blinkLineMm,
+    );
+    const at = atFrame.get(crossing.frameIndex);
+    const atCompletion =
+      completion === undefined ? undefined : atFrame.get(completion.frameIndex);
+    const lastEnded = atCompletion?.before.lastBlinkEndedAtMs ?? null;
+    return {
+      blinkId: miss.blinkId,
+      startFrame: miss.startFrame,
+      endFrame: miss.endFrame,
+      crossingFrame: crossing.frameIndex,
+      reopenFrame: reopen?.frameIndex ?? null,
+      crossingToReopenMs:
+        reopen === undefined
+          ? null
+          : (reopen.mediaTimeSeconds - crossing.mediaTimeSeconds) * 1000,
+      msSincePreviousBlink:
+        lastEnded === null ? null : (atCompletion?.nowMs ?? 0) - lastEnded,
+      rearmedAtCrossing: at?.before.rearmed ?? null,
+    };
+  });
 }

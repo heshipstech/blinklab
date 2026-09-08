@@ -3302,3 +3302,50 @@ A check in this repository refuses a change to `src/` that writes no
 LEARNING entry and gives no reason in a commit message, and it caught
 exactly that. A pull request description is not the record. The commit
 and the file are.
+
+## Three tools read a file that only an archived script can write
+
+Row 10.8a's replay tool joins each missed blink to a table called
+`eyeblink8_misses.csv`. So does the miss autopsy. So does the overlap
+tool. Three consumers, all naming the same file.
+
+**My first version of this note said nothing writes it. That was
+wrong**, and I am leaving the correction visible because the true
+version is the more interesting one. A producer is committed:
+`docs/evidence/2026-08-09/scripts/tables/autopsy.py` writes the file,
+with exactly the six columns those three consumers read.
+
+It is committed as _evidence_, not as a tool. It carries hardcoded
+`/PATH/TO/...` constants, a `sys.path.insert`, and no test. So the file
+can be regenerated, but only by someone who opens an archived script
+from a month ago and edits paths into it — which is precisely the
+practice this project replaced everywhere else it looked.
+
+That distinction is the whole lesson. A _missing_ producer is a gap:
+obvious the moment anyone goes looking. An _archived_ producer is a
+maintenance decision nobody revisited, and it looks exactly like a
+working pipeline from every angle except the one where you try to run
+it. Only the second explains how three tools could name the same file
+for weeks with nobody noticing.
+
+It could not fail, either. Each consumer is correct in isolation, each
+one's tests pass against a fixture it builds itself, and the archived
+producer only matters on the day somebody re-runs the corpus — which
+had not happened since the tables were written.
+
+**A dependency that only binds at the far end of a workflow is
+invisible to every test that runs at the near end.** Everything about
+this looked healthy. Three tools, all tested, all passing, all reading
+a format they agree on, and a hole where the writer should be.
+
+The check that would have caught it is not a unit test. It is asking,
+of each artefact a tool consumes: what produces this, is that thing
+maintained, and could someone run it from a clean machine and the raw
+dataset without editing it first? For `eyeblink8_misses.csv` the
+answer to the first is yes and to the last two is no.
+
+Related, and the same shape one level up: the reason this went looking
+at all was a decision to split a blocked row rather than judge it whole.
+Walking the row's own Check clause by clause is what surfaced a
+consumer with no producer. Reading a row for whether it is _finishable_
+never would have.
