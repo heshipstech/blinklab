@@ -341,8 +341,8 @@ describe("a claimed row its phase will not let start", () => {
     // The ladder now DECLARES nothing startable (amendment 21), so the
     // sentence this replaces is that declaration rather than a list.
     const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable",
-      "Rows 12.7 remain startable and are not marked, and nothing else",
+      "Rows 10.8a2 and 10.8a3 remain startable and are not marked",
+      "Rows 12.7, 10.8a2 and 10.8a3 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
@@ -517,9 +517,12 @@ describe("the ladder that has nothing left to start", () => {
     expect(startableClaims(both)).toEqual(["9.4"]);
   });
 
-  it("reads the real ladder as declaring nothing startable today", () => {
-    // The state of this repository on 7 September 2026, pinned so that
-    // picking a row up again is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+  it("reads the real ladder's current claim, whatever shape it is in", () => {
+    // Amendment 22: the ladder is not empty any more, because
+    // startability was being judged at one increment size and row
+    // 10.8a's first slice needs no corpus. The empty FORM stays
+    // supported and tested above; this pins what the ladder actually
+    // says today, so changing it is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual(["10.8a2", "10.8a3"]);
   });
 });
