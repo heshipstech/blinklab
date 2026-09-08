@@ -6,6 +6,8 @@ import {
   parseTrace,
   serialiseMissFacts,
 } from "../../src/core/replayTables";
+import { serialiseFrameTrace } from "../../src/core/frameTrace";
+import type { FrameTraceRow } from "../../src/core/frameTrace";
 
 // Roadmap 10.8a3a. The reading and writing half of the replay runner,
 // as pure string work, so the disk half next door stays four lines and
@@ -130,6 +132,68 @@ describe("reading a corpus run's per-frame trace", () => {
         "frameIndex,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio",
       ),
     ).toThrow(/no rows/i);
+  });
+
+  it("refuses a header that merely BEGINS with the first column name", () => {
+    // The prefix match this replaced accepted `frameIndexSought,...`
+    // and then read the rest positionally, so a mislabelled file parsed
+    // to plausible numbers instead of refusing.
+    const csv = [
+      "frameIndexSought,mediaTimeSeconds,apertureMm,blinkLineMm,irisAspectRatio",
+      "0,0,5,3,0.9",
+    ].join("\r\n");
+    expect(() => parseTrace(csv)).toThrow(/header must read exactly/);
+  });
+
+  it("refuses a header whose columns are in a different ORDER", () => {
+    // The failure a prefix match could never catch, and the reason this
+    // row exists. `startsWith("frameIndex")` passed this line, and the
+    // positional read then took apertureMm from the mediaTimeSeconds
+    // column: every frame eye-open, every miss never-crossed, no error.
+    // Held to the writer's own column order now.
+    const csv = [
+      "frameIndex,apertureMm,mediaTimeSeconds,blinkLineMm,irisAspectRatio",
+      "0,5,0,3,0.9",
+    ].join("\r\n");
+    expect(() => parseTrace(csv)).toThrow(/header must read exactly/);
+  });
+
+  it("round-trips a trace serialiseFrameTrace actually wrote", () => {
+    // The two files are one contract. Building the trace through the
+    // REAL writer, metadata rows and all, then reading it back is the
+    // check the hand-written headers above cannot be: they encode the
+    // reader's assumption twice, so a column moved on the writer's side
+    // would slip past them and only this test would go red.
+    const rows: FrameTraceRow[] = [
+      {
+        frameIndex: 0,
+        mediaTimeSeconds: 0,
+        apertureMm: 5,
+        blinkLineMm: 3,
+        irisAspectRatio: 0.9,
+      },
+      {
+        frameIndex: 1,
+        mediaTimeSeconds: 1 / 30,
+        apertureMm: null,
+        blinkLineMm: 3,
+        irisAspectRatio: null,
+      },
+    ];
+    const csv = serialiseFrameTrace(rows, [
+      "# source: file",
+      "# measurement_mode: stepped",
+    ]);
+    expect(csv).not.toBeNull();
+    expect(parseTrace(csv ?? "")).toEqual([
+      { frameIndex: 0, mediaTimeSeconds: 0, apertureMm: 5, blinkLineMm: 3 },
+      {
+        frameIndex: 1,
+        mediaTimeSeconds: 1 / 30,
+        apertureMm: null,
+        blinkLineMm: 3,
+      },
+    ]);
   });
 });
 
