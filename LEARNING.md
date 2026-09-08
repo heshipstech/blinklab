@@ -3553,3 +3553,29 @@ The habit worth taking: when new code is a composition of tested code,
 test that it IS the composition, not that the composition gives some
 answer you typed out. An identity test cannot rot the way a hand-computed
 expectation can.
+
+## Deleting single-sourced prose is one cut; the guards name the rest
+
+The owner ruled that the demo's explanatory notices interfered with the
+experience: the two "Conditions:" caveats and the export-contents
+disclosure came off the page, and the disclosure came out of the
+repository entirely, with README's privacy section regenerated without
+it. A product decision, recorded as one; the sampling limitations and
+their numbers still live in docs/sampling-bounds.txt,
+docs/blink-sample-rate.txt and the committed tables, so nothing was
+lost from the record — only from the page.
+
+The removal itself is the lesson. Every one of those sentences lived in
+ONE place — a core function or constant — and every consumer read it
+from there: the page, the README generator, the tests. So deleting each
+was one cut, and the type checker and the guards then NAMED every
+dependent that had to follow: the imports, the generator's reader, the
+tests that quoted it. Nothing had to be hunted by memory, because
+nothing had been hand-copied anywhere.
+
+The habit worth taking: prose that ships — disclosures, caveats,
+notices — earns the same single-source treatment as a constant, not
+because it will change, but because one day somebody will want it GONE,
+and a sentence pasted into four surfaces dies in one of them and
+lingers in three. The project already knew this for numbers; it holds
+for sentences.

@@ -150,13 +150,8 @@ import {
   lightPhaseMessage,
   type LightPhase,
 } from "./core/lightSchedule";
-import {
-  exportContentsSentence,
-  writtenMetadataKeys,
-} from "./core/exportContents";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
-import { citationSegments, docUrl } from "./core/docCitations";
 import {
   escapeBlocked,
   escapeCloses,
@@ -186,10 +181,6 @@ import {
 } from "./core/longClosure";
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
-import {
-  blinkCountConditionsSentence,
-  perclosConditionsSentence,
-} from "./core/samplingBounds";
 import {
   BLINK_TABLE_HEADERS,
   appendEvent,
@@ -2429,61 +2420,6 @@ let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
-// The 10.10b conditions lines: static, set once, each quoting its own
-// committed document. The sentences live in core so a test can hold
-// them to the documents' numbers; these nodes are only where they
-// stand on the page — the blink one beside the count it bounds, the
-// PERCLOS one beside the share it scopes.
-/**
- * The commit this page was built from, or null when it says nothing.
- *
- * Read from the `<meta name="build-commit">` tag the vite plugin
- * writes, which is the same thing a reader sees in view-source. That
- * matters: a citation link pinned to a commit the page does not
- * publish would be a pin nobody can check.
- */
-function buildCommit(): string | null {
-  const tag = document.querySelector('meta[name="build-commit"]');
-  return tag === null ? null : tag.getAttribute("content");
-}
-
-/**
- * Render a conditions sentence with its citations as links.
- *
- * The sentence itself comes from core and is pinned there against the
- * documents it quotes; this only decides which parts of it are
- * anchors. `citationSegments` reassembles to exactly the string it was
- * given, so linking a sentence can never be a way to edit one.
- *
- * Roadmap 14.0f2: these paths sat on the page as plain text, on a
- * domain where a repository path means nothing, so the evidence
- * behind every scoped number was one click away and the click did not
- * exist.
- */
-function writeConditionsSentence(node: HTMLElement, sentence: string): void {
-  const commit = buildCommit();
-  node.replaceChildren(
-    ...citationSegments(sentence).map((segment) => {
-      if (segment.kind === "text") {
-        return document.createTextNode(segment.text);
-      }
-      const link = document.createElement("a");
-      link.href = docUrl(segment.path, commit);
-      link.textContent = segment.path;
-      link.target = "_blank";
-      // The same pairing every outbound link on this page uses:
-      // noopener stops the opened page reaching back through
-      // window.opener.
-      link.rel = "noopener noreferrer";
-      return link;
-    }),
-  );
-}
-
-const blinkConditionsNote = document.createElement("p");
-writeConditionsSentence(blinkConditionsNote, blinkCountConditionsSentence());
-const perclosConditionsNote = document.createElement("p");
-writeConditionsSentence(perclosConditionsNote, perclosConditionsSentence());
 const perclosLabel = document.createElement("p");
 let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
@@ -4946,11 +4882,6 @@ fullUserAgentLabel.append(
   " Full browser string in exports",
 );
 
-const exportContentsNote = document.createElement("p");
-exportContentsNote.className = "caveat";
-exportContentsNote.setAttribute("data-testid", "export-contents");
-exportContentsNote.textContent = exportContentsSentence(writtenMetadataKeys());
-
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
@@ -5037,7 +4968,6 @@ const sessionBox = box(
   featureLabel,
   exportRow,
   exportStatus,
-  exportContentsNote,
   fullUserAgentLabel,
   markLabel,
   kssAnswerLabel,
@@ -5046,7 +4976,6 @@ const sessionBox = box(
 const blinksBox = box(
   "Blinks",
   blinkLabel,
-  blinkConditionsNote,
   baselineLabel,
   blinkCalibrateButton,
   blinkCalibrationStatus,
@@ -5061,7 +4990,6 @@ const eyesBox = box(
   earLabel,
   stabilityLabel,
   perclosLabel,
-  perclosConditionsNote,
   longClosureLabel,
   pupilLabel,
 );

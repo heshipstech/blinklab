@@ -7,10 +7,8 @@ import {
   SAMPLING_BOUND_SEED,
   SAMPLING_WINDOW_S,
   WORST_PERCLOS_SAMPLING_BOUND,
-  blinkCountConditionsSentence,
   generateClosures,
   lcg,
-  perclosConditionsSentence,
   sampledClosedFraction,
   samplingBoundsTable,
   trueClosedFraction,
@@ -102,32 +100,6 @@ describe("the on-page conditions sentences (roadmap 10.10b)", () => {
     expect(Math.max(...bounds)).toBe(WORST_PERCLOS_SAMPLING_BOUND);
   });
 
-  it("the PERCLOS sentence quotes its document and scopes its claim", () => {
-    const sentence = perclosConditionsSentence();
-    expect(sentence).toContain("sampling term");
-    expect(sentence).toContain("±0.002");
-    expect(sentence).toContain("15 frames per second");
-    expect(sentence).toContain("docs/sampling-bounds.txt");
-    // The number's REAL conditions, named so the negligible term does
-    // not read as "this number is exact".
-    expect(sentence).toContain("shut line");
-    expect(sentence).toContain("docs/aperture-noise-floor.txt");
-  });
-
-  it("the PERCLOS sentence says which closures its bound covers", () => {
-    // Roadmap 10.10c4a, ladder B12 (audit F-090). The simulation draws
-    // closures between MIN_CLOSURE_S and MAX_CLOSURE_S, half a second
-    // and up. An ordinary blink is shorter than that and the
-    // instrument-adjusted shut line counts it as closed time, so the
-    // published share contains a population the bound never sampled —
-    // and shorter closures are exactly the ones a slow frame rate
-    // misjudges most. The sentence claimed the bound for the whole
-    // share.
-    const sentence = perclosConditionsSentence();
-    expect(sentence).toContain("half a second");
-    expect(sentence).toContain("blink");
-  });
-
   it("the stated scope is the range the simulation actually drew", () => {
     // The source pin. Lowering the simulated floor without rewriting
     // the sentence would leave a scope that describes nothing, which
@@ -144,15 +116,6 @@ describe("the on-page conditions sentences (roadmap 10.10b)", () => {
     // named after has to say so where it is defined.
     const source = readRepoFile("src/core/perclos.ts", repoRoot());
     expect(source).toContain("blink time");
-  });
-
-  it("the blink-count sentence says floor, not count, and cites the tables", () => {
-    const sentence = blinkCountConditionsSentence();
-    expect(sentence).toContain("floor, not a count");
-    expect(sentence).toContain("docs/blink-sample-rate.txt");
-    // The loss is real at ordinary webcam rates and the sentence must
-    // say where it bites rather than gesture at "low fps".
-    expect(sentence).toMatch(/25|30/);
   });
 });
 
