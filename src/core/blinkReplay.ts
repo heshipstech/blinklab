@@ -203,14 +203,35 @@ export function missFacts(
   const replayed = replayTrace(rows);
   const atFrame = new Map(replayed.map((frame) => [frame.frameIndex, frame]));
   return misses.map((miss) => {
-    const crossing = rows.find(
+    const inSpan = rows.filter(
       (row) =>
-        row.frameIndex >= miss.startFrame &&
-        row.frameIndex <= miss.endFrame &&
+        row.frameIndex >= miss.startFrame && row.frameIndex <= miss.endFrame,
+    );
+    const dips = inSpan.filter(
+      (row) =>
         row.apertureMm !== null &&
         row.blinkLineMm !== null &&
         row.apertureMm < row.blinkLineMm,
     );
+    // ANCHOR ON THE CLOSURE THAT ARMED, not on the first dip.
+    //
+    // Found by an adversarial review, and it is the failure this tool
+    // exists to avoid: a plausible number attributed to the wrong
+    // event. A shallow wobble can cross the line and come back without
+    // ever reaching arm depth, and the detector treats it as nothing.
+    // If a real closure follows inside the same annotation span, THAT
+    // is the one the refractory window judged. Anchoring on the first
+    // dip reported a real measurement of a closure the detector never
+    // evaluated, and both numbers look entirely ordinary in a table.
+    //
+    // A lid that wobbles before it blinks is exactly the behaviour the
+    // re-arm gate was added for, so this is not a contrived case.
+    //
+    // When nothing in the span armed, the first dip is the right
+    // anchor and the quantities then describe a closure that never got
+    // close enough to count, which is itself the answer.
+    const armed = dips.find((row) => atFrame.get(row.frameIndex)?.after.armed);
+    const crossing = armed ?? dips[0];
     if (crossing === undefined) {
       return {
         blinkId: miss.blinkId,
