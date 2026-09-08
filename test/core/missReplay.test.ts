@@ -44,19 +44,19 @@ function row(
   };
 }
 
-/** A miss the human marked over the given frames. */
-function miss(startFrame: number, endFrame: number): MissSpan {
-  return { blinkId: `b${String(startFrame)}`, startFrame, endFrame };
+/** A miss the human marked over the given frames, in a named clip. */
+function miss(startFrame: number, endFrame: number, clip = "clip"): MissSpan {
+  return { blinkId: `b${String(startFrame)}`, clip, startFrame, endFrame };
 }
 
 describe("the three quantities, per miss", () => {
   it("says nothing when there are no misses", () => {
-    expect(missFacts([row(0, 5)], [])).toEqual([]);
+    expect(missFacts("clip", [row(0, 5)], [])).toEqual([]);
   });
 
   it("finds the frame the aperture crossed the line", () => {
     const rows = [row(0, 5), row(1, 5), row(2, 2.5), row(3, 2.5), row(4, 5)];
-    const [fact] = missFacts(rows, [miss(1, 4)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 4)]);
     expect(fact?.crossingFrame).toBe(2);
   });
 
@@ -65,7 +65,7 @@ describe("the three quantities, per miss", () => {
     // given anything to suppress, so the state-machine quantities are
     // not applicable rather than zero.
     const rows = [row(0, 5), row(1, 4.9), row(2, 4.8), row(3, 5)];
-    const [fact] = missFacts(rows, [miss(1, 3)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 3)]);
     expect(fact?.crossingFrame).toBeNull();
     expect(fact?.rearmedAtCrossing).toBeNull();
     expect(fact?.msSincePreviousBlink).toBeNull();
@@ -77,7 +77,7 @@ describe("the three quantities, per miss", () => {
     // autopsy scopes to the annotation's own frames and this matches
     // it, so the two tables join row for row.
     const rows = [row(0, 2.0), row(1, 5), row(2, 5), row(3, 5)];
-    const [fact] = missFacts(rows, [miss(2, 3)]);
+    const [fact] = missFacts("clip", rows, [miss(2, 3)]);
     expect(fact?.crossingFrame).toBeNull();
   });
 
@@ -94,7 +94,7 @@ describe("the three quantities, per miss", () => {
       row(4, 3.1),
       row(5, 5),
     ];
-    const [fact] = missFacts(rows, [miss(1, 2)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 2)]);
     expect(fact?.reopenFrame).toBe(5);
   });
 
@@ -111,7 +111,7 @@ describe("the three quantities, per miss", () => {
       row(4, 3.1),
       row(5, 5),
     ];
-    const [fact] = missFacts(rows, [miss(1, 2)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 2)]);
     expect(fact?.crossingToReopenMs).toBeCloseTo(133.33, 1);
   });
 
@@ -120,7 +120,7 @@ describe("the three quantities, per miss", () => {
     // the last frame. Reporting the trace's end as a reopening would
     // invent an event.
     const rows = [row(0, 5), row(1, 2.0), row(2, 3.1), row(3, 3.1)];
-    const [fact] = missFacts(rows, [miss(1, 2)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 2)]);
     expect(fact?.reopenFrame).toBeNull();
     expect(fact?.crossingToReopenMs).toBeNull();
   });
@@ -139,7 +139,7 @@ describe("the three quantities, per miss", () => {
       row(5, 2.0),
       row(6, 3.1),
     ];
-    const [fact] = missFacts(rows, [miss(4, 5)]);
+    const [fact] = missFacts("clip", rows, [miss(4, 5)]);
     expect(fact?.crossingFrame).toBe(4);
     expect(fact?.rearmedAtCrossing).toBe(false);
   });
@@ -157,7 +157,7 @@ describe("the three quantities, per miss", () => {
       row(5, 2.0),
       row(6, 5),
     ];
-    const [fact] = missFacts(rows, [miss(4, 5)]);
+    const [fact] = missFacts("clip", rows, [miss(4, 5)]);
     expect(fact?.rearmedAtCrossing).toBe(true);
   });
 
@@ -180,7 +180,7 @@ describe("the three quantities, per miss", () => {
       row(5, 2.0),
       row(6, 5),
     ];
-    const [fact] = missFacts(rows, [miss(4, 5)]);
+    const [fact] = missFacts("clip", rows, [miss(4, 5)]);
     expect(fact?.msSincePreviousBlink).toBeCloseTo(100, 1);
   });
 
@@ -197,7 +197,7 @@ describe("the three quantities, per miss", () => {
       row(5, 2.0),
       row(6, 5),
     ];
-    const [fact] = missFacts(rows, [miss(4, 5)]);
+    const [fact] = missFacts("clip", rows, [miss(4, 5)]);
     // At the crossing this would read 33.3 ms; at completion, 100 ms.
     expect(fact?.msSincePreviousBlink).not.toBeCloseTo(33.33, 1);
   });
@@ -207,7 +207,7 @@ describe("the three quantities, per miss", () => {
     // from, and a zero here would read as "immediately after a blink",
     // which is the opposite of the truth.
     const rows = [row(0, 5), row(1, 2.0), row(2, 2.0), row(3, 5)];
-    const [fact] = missFacts(rows, [miss(1, 2)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 2)]);
     expect(fact?.msSincePreviousBlink).toBeNull();
   });
 
@@ -238,7 +238,7 @@ describe("the three quantities, per miss", () => {
       row(5, 2.0),
       row(6, 3.1),
     ];
-    const [fact] = missFacts(rows, [miss(3, 6)]);
+    const [fact] = missFacts("clip", rows, [miss(3, 6)]);
     expect(fact?.crossingFrame).toBe(5);
     expect(fact?.msSincePreviousBlink).toBeCloseTo(133.33, 1);
   });
@@ -248,12 +248,12 @@ describe("the three quantities, per miss", () => {
     // closure to anchor on, and that IS the answer: the quantities
     // describe a closure that never got close enough to count.
     const rows = [row(0, 5), row(1, 2.9), row(2, 2.95), row(3, 5)];
-    const [fact] = missFacts(rows, [miss(1, 2)]);
+    const [fact] = missFacts("clip", rows, [miss(1, 2)]);
     expect(fact?.crossingFrame).toBe(1);
   });
 
   it("carries the miss's identity through, so tables can be joined", () => {
-    const [fact] = missFacts([row(0, 5), row(1, 2.0)], [miss(1, 1)]);
+    const [fact] = missFacts("clip", [row(0, 5), row(1, 2.0)], [miss(1, 1)]);
     expect(fact?.blinkId).toBe("b1");
     expect(fact?.startFrame).toBe(1);
     expect(fact?.endFrame).toBe(1);
@@ -262,7 +262,7 @@ describe("the three quantities, per miss", () => {
   it("returns a fact per miss, in the order given", () => {
     const rows = [row(0, 5), row(1, 2.0), row(2, 5), row(3, 2.0), row(4, 5)];
     expect(
-      missFacts(rows, [miss(3, 3), miss(1, 1)]).map((f) => f.blinkId),
+      missFacts("clip", rows, [miss(3, 3), miss(1, 1)]).map((f) => f.blinkId),
     ).toEqual(["b3", "b1"]);
   });
 
@@ -270,7 +270,7 @@ describe("the three quantities, per miss", () => {
     // Pinned as a property of the shape rather than left to review. A
     // verdict column added later without a scored prediction behind it
     // turns this table into an answer nobody measured.
-    const [fact] = missFacts([row(0, 5), row(1, 2.0)], [miss(1, 1)]);
+    const [fact] = missFacts("clip", [row(0, 5), row(1, 2.0)], [miss(1, 1)]);
     expect(Object.keys(fact ?? {})).toEqual([
       "blinkId",
       "startFrame",
@@ -281,5 +281,47 @@ describe("the three quantities, per miss", () => {
       "msSincePreviousBlink",
       "rearmedAtCrossing",
     ]);
+  });
+});
+
+describe("the clip a replay is of", () => {
+  // Found by an adversarial review. `MissTableRow` is `MissSpan & {
+  // clip }`, so the WHOLE miss table typechecks as one clip's misses,
+  // and a runner that forgot to group by clip could hand every clip's
+  // spans to one clip's trace. Every clip is numbered from its own
+  // frame 0, so the foreign spans do not fall off the end — they land
+  // on real frames of the wrong video and come back with an
+  // ordinary-looking crossing, span and re-arm flag for a closure that
+  // never happened. No throw, no null, nothing to notice.
+
+  it("refuses a miss that belongs to another clip", () => {
+    const rows = [row(0, 5), row(1, 2.0), row(2, 5)];
+    expect(() => missFacts("clipA", rows, [miss(1, 1, "clipB")])).toThrow(
+      /clipB/,
+    );
+  });
+
+  it("names the offending clip and the one being replayed", () => {
+    const rows = [row(0, 5), row(1, 2.0), row(2, 5)];
+    expect(() => missFacts("clipA", rows, [miss(1, 1, "clipB")])).toThrow(
+      /clipA/,
+    );
+  });
+
+  it("refuses the whole table if any one span is foreign", () => {
+    // The realistic shape: most spans are this clip's, one is not,
+    // because the table was passed ungrouped. One foreign span is
+    // enough — a partial answer measured against the wrong trace is
+    // the confident wrong answer, not a smaller right one.
+    const rows = [row(0, 5), row(1, 2.0), row(2, 5), row(3, 2.0), row(4, 5)];
+    expect(() =>
+      missFacts("clipA", rows, [miss(1, 1, "clipA"), miss(3, 3, "clipB")]),
+    ).toThrow(/clipB/);
+  });
+
+  it("joins normally when every span is the replayed clip's", () => {
+    const rows = [row(0, 5), row(1, 2.0), row(2, 5)];
+    const [fact] = missFacts("clipA", rows, [miss(1, 1, "clipA")]);
+    expect(fact?.crossingFrame).toBe(1);
   });
 });

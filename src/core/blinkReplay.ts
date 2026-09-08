@@ -124,9 +124,18 @@ export function replayTrace(rows: readonly TraceRow[]): ReplayedFrame[] {
  * is what `analysis/tools/miss_autopsy.py` scopes to. The two tables
  * are meant to be joined on `blinkId`, so the same span means the same
  * thing in both.
+ *
+ * `clip` says which video those frame numbers count within. It is not
+ * decoration: every clip in the corpus is numbered from its own frame
+ * 0, so a span from one clip measured against another clip's trace
+ * does not fall off the end — it lands on real frames of the wrong
+ * video and reports an ordinary-looking crossing for a closure that
+ * never happened. `missFacts` refuses that, and needs the clip on the
+ * span to see it.
  */
 export type MissSpan = {
   blinkId: string;
+  clip: string;
   startFrame: number;
   endFrame: number;
 };
@@ -197,9 +206,24 @@ export type MissFacts = {
  * would otherwise report a different quantity under the same name.
  */
 export function missFacts(
+  clip: string,
   rows: readonly TraceRow[],
   misses: readonly MissSpan[],
 ): MissFacts[] {
+  // The trace is one clip's. A span from another clip lands on real
+  // frames here and comes back with a plausible crossing for a closure
+  // that never happened, so one foreign span poisons the whole answer:
+  // refuse the batch rather than return a partial one that looks whole.
+  const foreign = misses.find((miss) => miss.clip !== clip);
+  if (foreign !== undefined) {
+    throw new Error(
+      `miss ${foreign.blinkId} is clip "${foreign.clip}" but this replay ` +
+        `is of "${clip}". Every clip is numbered from its own frame 0, so a ` +
+        "span measured against another clip's trace reports an " +
+        "ordinary-looking crossing for a closure that never happened. Group " +
+        "the miss table by clip and replay each against its own trace",
+    );
+  }
   const replayed = replayTrace(rows);
   // The replay is one entry per row, in order, so a row's state is at
   // its own index. Looked up by frame number instead, the lookup could
