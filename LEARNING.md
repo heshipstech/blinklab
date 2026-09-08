@@ -3526,3 +3526,30 @@ The habit worth taking: when a tool reproduces a committed artefact,
 the ordering is part of the artefact, and a test for it needs inputs
 where the right rule and the tempting wrong one give different answers.
 A fixture that both rules pass is not a test of the rule.
+
+## A runner that wraps a tool is pinned as the tool, not re-tested
+
+The replay runner reads a trace directory and a miss table off disk and
+writes the per-miss table. Its rules — group by clip, replay each clip's
+trace, refuse a clip the traces do not hold — are `joinMissFacts` in
+core; the disk is four calls in a `.mjs`. The temptation was to test the
+runner by hand-computing a few expected rows. That would have been a
+second, weaker copy of what `missFacts` already computes, drifting the
+moment `missFacts` changed.
+
+Instead the round-trip test pins an IDENTITY: `joinMissFacts(table, {clip:
+trace})` must equal `serialiseMissFacts(missFacts(clip, parseTrace(trace),
+spans))` with the clip re-attached. It asserts the runner is exactly the
+composition of the pieces it wraps, so it cannot diverge from them without
+the test going red, and it never restates what those pieces mean.
+
+Two things fell out of the same split. Modeling "a trace directory" as a
+`Map<clip, text>` kept the missing-clip refusal in pure, filesystem-free
+code, where a test reaches it without a `tmp` dir. And the disk half runs
+only under an env var, so it never touches the pinned test count — the
+`fixtures:write` arrangement, reused rather than reinvented.
+
+The habit worth taking: when new code is a composition of tested code,
+test that it IS the composition, not that the composition gives some
+answer you typed out. An identity test cannot rot the way a hand-computed
+expectation can.

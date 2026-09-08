@@ -92,7 +92,7 @@ describe("what counts as a rule-carrying module", () => {
     // as the moment to ask whether the test reaches the module rather
     // than merely importing it, which is the one thing a static reader
     // still cannot tell.
-    expect(declaredModules(root)).toHaveLength(26);
+    expect(declaredModules(root)).toHaveLength(27);
   });
 });
 

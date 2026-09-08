@@ -78,7 +78,7 @@ over shipping a version.
 
 ### Guards, which are the through-line
 
-26 modules under `tools/` carry the rules and the readers these checks are
+27 modules under `tools/` carry the rules and the readers these checks are
 built from, and every one is reached by a test that runs it: published numbers,
 retired claims, the DROZY measuring commit, the UI documentation against the
 page's own boxes, a coverage floor on `src/core`, a bundle size ceiling, the

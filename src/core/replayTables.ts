@@ -1,3 +1,4 @@
+import { missFacts } from "./blinkReplay";
 import type { MissFacts, MissSpan, TraceRow } from "./blinkReplay";
 import { FRAME_TRACE_COLUMNS } from "./frameTrace";
 
@@ -234,4 +235,54 @@ export function serialiseMissFacts(rows: readonly MissFactsRow[]): string {
     );
   }
   return out.join("\r\n") + "\r\n";
+}
+
+/**
+ * Join a committed miss table to the traces a corpus run produced and
+ * return the per-miss table as text: the whole replay runner, minus
+ * the disk.
+ *
+ * `traceByClip` maps each clip's stem to its `<clip>.frames.csv` text.
+ * The disk half in `tools/replayRunner.mjs` fills it by reading a
+ * directory; here it is a plain map so the join is testable without a
+ * filesystem, the same split every module in this folder keeps.
+ *
+ * REFUSES a miss table naming a clip the map does not hold, rather
+ * than writing a shorter table. A clip present in the annotations and
+ * absent from the traces is "we did not measure it", not "it had no
+ * misses", and a table that quietly skipped it could not tell the two
+ * apart — the difference this whole pipeline exists to keep. Clips are
+ * walked in the order the table first names them, so the output's row
+ * order is the table's, never this map's iteration order.
+ */
+export function joinMissFacts(
+  missTableText: string,
+  traceByClip: ReadonlyMap<string, string>,
+): string {
+  const spansByClip = new Map<string, MissSpan[]>();
+  for (const row of parseMissTable(missTableText)) {
+    const spans = spansByClip.get(row.clip);
+    if (spans === undefined) {
+      spansByClip.set(row.clip, [row]);
+    } else {
+      spans.push(row);
+    }
+  }
+  const rows: MissFactsRow[] = [];
+  for (const [clip, spans] of spansByClip) {
+    const traceText = traceByClip.get(clip);
+    if (traceText === undefined) {
+      throw new Error(
+        `the miss table names clip "${clip}" but the trace directory has ` +
+          `no ${clip}.frames.csv. A clip annotated and not measured is "we ` +
+          'did not look", not "no misses here", and skipping it would write ' +
+          "a shorter table that cannot tell the two apart",
+      );
+    }
+    const traceRows = parseTrace(traceText);
+    for (const fact of missFacts(clip, traceRows, spans)) {
+      rows.push({ ...fact, clip });
+    }
+  }
+  return serialiseMissFacts(rows);
 }
