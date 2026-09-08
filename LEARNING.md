@@ -3246,3 +3246,59 @@ The habit worth taking: after writing a check, ask what would have to
 change in the code, innocently, for this check to stop checking. If the
 answer is "someone tidies a string into a constant", the check is
 reading a spelling.
+
+## A ladder can look finished when it is only blocked at the far end
+
+For a day this project's roadmap said, mechanically and with a test
+holding it, that no work was left that could be started here. Every
+remaining row needed a camera, a corpus, a second browser engine, or a
+decision only the owner can make. That was not a guess. A guard read
+the ladder and agreed.
+
+It was still wrong, and the reason is worth more than the row that
+found it.
+
+**Every startability judgement had been made over whole rows.** A row
+was startable if _every_ clause of its Check could be met here, so a
+row died the moment its last clause needed a camera. That rule was
+written for a good reason — three rows had been claimed startable from
+their headlines and none of them were — and it is the right rule for
+deciding whether a row is _finishable_. It is the wrong rule for
+deciding whether there is _work_.
+
+Row 10.8a is the proof. It is the regression run: the owner measures a
+corpus this container will never hold. Blocked, obviously, and marked
+so. But its Check opens with five words — "the replay tool committed
+first" — and that tool needs no corpus at all. It runs on synthetic
+traces, exactly as the miss autopsy's tests already do. It had been
+sitting behind the word "blocked" for as long as the row had.
+
+So the rule gained a clause: a row whose later clauses are blocked may
+be **split**, provided each slice carries its own verifiable check and
+does not pre-judge a measurement somebody still owes.
+
+That proviso is the entire safeguard, and it is not decoration.
+Splitting is a very easy way to fake progress: carve a blocked row into
+pieces, ship the piece that needs nothing, and tick something. The test
+for an honest slice is whether it would still be worth building if the
+blocked part never happened. The replay tool passes — it answers a
+question the autopsy provably cannot, whatever the corpus eventually
+says. The slice after it deliberately _declines_ to add a verdict
+column naming which mechanism swallowed each missed blink, because that
+is a conclusion about data that does not exist yet, and writing it now
+would be pre-registering the answer instead of the question.
+
+The habit worth taking: when something reads as finished, check whether
+it is finished or merely blocked at the far end. Those look identical
+from a distance and they are not the same state at all. The question
+that separates them is not "can I complete this" but "is the first
+thing this needs also blocked" — and surprisingly often the answer is
+no.
+
+One smaller thing from the same hour, worth recording because it is the
+same shape. This lesson nearly went unwritten: the reasoning above sat
+in a pull request description, where it reads fine and holds nothing.
+A check in this repository refuses a change to `src/` that writes no
+LEARNING entry and gives no reason in a commit message, and it caught
+exactly that. A pull request description is not the record. The commit
+and the file are.
