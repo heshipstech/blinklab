@@ -8,7 +8,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > Revised 7 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
-Read in full on 7 September 2026, claims `317ff367`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 8 September 2026, claims `fe4ab3b6`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -613,10 +613,10 @@ Safari's extra frame was the final one counted twice, which is fixed.
 Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend and no analytics of ours. The CSV export writes a file to your own disk and uploads nothing.
 
 <!-- privacy:begin -->
-<!-- Generated from src/core/storedData.ts and
-src/core/exportContents.ts by tools/privacyBlock.mjs. Edit those,
-then regenerate with: npm run privacy:write. A test regenerates
-this block and fails when the committed README drifts from it. -->
+<!-- Generated from src/core/storedData.ts by
+tools/privacyBlock.mjs. Edit that, then regenerate with:
+npm run privacy:write. A test regenerates this block and fails
+when the committed README drifts from it. -->
 
 **4 things are kept on your device, and the page lists all of them and offers to erase them.**
 
@@ -627,15 +627,13 @@ this block and fails when the committed README drifts from it. -->
 
 A "Stored on this device" box at the bottom of the page names each of these, says which are present right now, and erases them on request. The erase clears the profile the running session is holding as well, so the heatmap goes back to asking you to calibrate, and the confirmation it prints is read back from the browser after the fact rather than assumed, because a delete that quietly does nothing is worse than one that fails loudly.
 
-**What an exported file contains.** Above the records the file carries a header describing this session: the camera's label (camera), the browser (user_agent), the machine's core count (hardware_concurrency), its screen and window sizes (screen, viewport), your two sleepiness answers, and the pseudonym if you set one (participant_pseudonym). The file is written to your own disk and nothing is uploaded, so sending it to anyone is your own act. The browser string is written in a reduced form by default, naming the browser, its major version and the platform family and nothing else; a checkbox beside the export buttons writes the full string instead, and a `user_agent_form` row in the file says which form you got.
-
 <!-- privacy:end -->
 
 One exception, found by the August 2026 audit and stated here because it was claimed otherwise for two weeks. The vendored MediaPipe library tries to send a `POST` to `odml.pa.googleapis.com` about sixty seconds after the face model is created, with no detections needed. It is Google's own usage reporting, it is inside the dependency rather than in any code here, and its payload is usage statistics: no video, no image, no landmark, no measurement. This page previously denied any reporting of any kind, which was false. Since 5 September 2026 that report no longer leaves your browser: the app installs a guard in front of `fetch`, `XMLHttpRequest` and `sendBeacon` before the model is loaded, and it drops any request to a `googleapis.com` host — the app has no legitimate reason to call one, since the model and its runtime are served from this origin. An end-to-end test drives a full camera session past the sixty-second mark and confirms nothing goes out. The open question in `decisions/ADR-0004-model-telemetry.md` is answered there.
 
 ## Status
 
-Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1619 unit tests, 43 end to end tests of which 41 run on every pull request in Chromium and on a 375-wide phone viewport and 2 rerun locally in WebKit, and 510 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
+Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1610 unit tests, 39 end to end tests of which 37 run on every pull request in Chromium and on a 375-wide phone viewport and 2 rerun locally in WebKit, and 510 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
