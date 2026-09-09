@@ -3753,3 +3753,33 @@ When a mutation run demands a new test, write the assertion from
 the physical claim ("a genuinely new closure earns its own event"),
 never from the trace that happened to kill the mutant — the trace
 encodes the current mechanism, defects included.
+
+## A threshold derived from defended constants needs no defence of its own
+
+Row 10.12c had to stop duplicate frames from filling the
+calibration sample floors: a loop that outruns its camera processes
+the same delivered frame more than once, and each pass counts as a
+sample. The obvious fix is a new constant — some minimum number of
+seconds a face must be seen — and a new constant is a new argument:
+why four seconds and not three, defended in a comment, revisited
+whenever anything nearby moves.
+
+This project already held two commitments. BASELINE_MIN_SAMPLES
+says one hundred samples is enough evidence to freeze a baseline,
+argued when the baseline was built. The credit rule from 10.12b's
+rate denominator says a frame may stand for at most one
+slowest-legal frame interval of looking — 40 milliseconds, from
+MIN_BLINK_FPS — argued when the rate stopped counting time it was
+not looking. Multiplying them gives the new floor: four seconds is
+not a fresh opinion about faces, it is the old floor restated in a
+unit duplicates cannot mint. On honest hardware the two floors are
+satisfied at the same moment, so the addition costs a working setup
+nothing, and that neutrality is not a hope — it follows from the
+derivation, and the prediction document commits to it as a
+byte-identical corpus before the owner's run scores it.
+
+The habit worth taking: before defending a new number, try deriving
+it from numbers the project has already defended. A derived
+threshold inherits its parents' arguments, moves when they move,
+and can never quietly disagree with them — where an independent
+constant starts drifting from its siblings the day it is written.
