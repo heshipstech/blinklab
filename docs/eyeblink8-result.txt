@@ -53,6 +53,20 @@ the detector ratchet in 10.1g4.
 When a corpus run regenerates the block above, paste it in above this
 line and leave the line where it is.
 
+THE LEARNING WINDOW OF EVERY CLIP, A CONDITION OF THE NUMBERS ABOVE
+
+Roadmap 10.13b, decided 9 September 2026 and kept deliberately: for
+the first ~29 rows of every clip — about the first thirty seconds,
+while the passive baseline is still learning — blinks are counted
+against the fixed 4 mm line (BLINK_APERTURE_THRESHOLD_MM), a constant
+from one face, and against the person's own line only after. The
+run's own exports say so per row: blinkLineSource reads `fixed` for
+those rows and `passive` after (docs/line-in-the-export.txt, the
+9 September re-score). The counts above INCLUDE those windows; the
+decision to keep them, the alternatives weighed, and the predicted
+zero delta are in docs/learning-window.txt. The demo page states the
+same condition while its own learning window runs.
+
 HOW TO REPRODUCE THIS EXACTLY
 
     node tools/measure_corpus.mjs \

@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1611 unit tests and 510 Python tests, each figure
+- **The suite:** 1614 unit tests and 510 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 297.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE LEARNING WINDOW IS LABELLED, NOT CHANGED, 9 September 2026 (row 10.13b, build half; pre-registration first).** Amendment 23's keep-and-label ruling lands: for the first ~30 seconds of every session the reducer compares each measured aperture against the fixed 4 mm fixture line — a pre-existing boot behaviour the 10.13a provenance column revealed, `blinkLineSource` reading `fixed` for the first ~29 rows of every corpus clip — and instead of changing that, the record now says it everywhere the numbers travel. The page's learning countdown gains the condition ("until then blinks count against the fixed 4 mm line", `learningWindowSentence` in lineProvenance, constant interpolated so the sentence cannot drift), MODEL_CARD corrects a sentence this closes as false — it said the learning period was one "during which the instrument is not yet measuring", and for blinks it was measuring all along — the result file carries a dated condition section beside its numbers, MANUAL item 23 quotes the labelled sentence, and a resultGuard pin holds the three statements together. The pre-registration (docs/learning-window.txt, committed before the labels) predicts a ZERO corpus delta because no counting behaviour changes; the owner's next run scores it, and the row ticks on that score, not on this build.
 
 **ROW 10.10c4d TICKS ON THE OWNER'S WORD, 9 September 2026, later the same day.** The entry below shipped the build half with a BLOCKED marker whose one open clause was a read: the row's premise wants a source the owner has READ, and choosing under delegation is not reading. The owner then read BOTH cited pages — the Cornea 2005 study and Google's MediaPipe Iris announcement — and said so, one more than the marker asked for. The marker lifts and the row ticks; the citation, the spread and the model-card condition were already pinned by the build half, so this entry records an act, not a change.
 

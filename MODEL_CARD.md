@@ -9,7 +9,7 @@ that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 9 September 2026, claims `d42b1e1d`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 9 September 2026, claims `e9b0416e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -221,8 +221,16 @@ five re-measurements at the same commit) — a fact about the model's
 tracker, not about lenses.
 
 **Thresholds are personal and learned per session**, over 30 seconds. A
-session shorter than that produces no score at all, and the learning
-period is a period during which the instrument is not yet measuring.
+session shorter than that produces no score at all. This card said the
+learning period was one "during which the instrument is not yet
+measuring" until 9 September 2026, and for blinks that was false:
+during the learning window blinks ARE counted, against a fixed 4 mm
+line from one face (`BLINK_APERTURE_THRESHOLD_MM`) rather than the
+person's own — the exported `blinkLineSource` column reads `fixed` on
+those rows — so the first ~30 seconds of every blink count are
+measured against a one-face constant. Kept deliberately and labelled
+(roadmap 10.13b, `docs/learning-window.txt`): the page says so while
+its own learning window runs.
 
 ## Who it has been tested on
 
