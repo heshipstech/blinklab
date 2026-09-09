@@ -5,6 +5,8 @@ import { MAX_BLINK_DURATION_MS } from "../../src/core/constants";
 import {
   EYES_SHUT_FRACTION,
   initialLongClosureState,
+  LONG_CLOSURE_MAX_GAP_MS,
+  LONG_CLOSURE_REARM_FRACTION,
   LONG_CLOSURE_THRESHOLD_MS,
   longClosureStep,
   longClosureThresholdMm,
@@ -184,22 +186,44 @@ describe("longClosureStep", () => {
     expect(state.count).toBe(2);
   });
 
-  it("abandons an unwitnessed closure, gaps stay gaps", () => {
-    // The face vanishes 300 ms into a closure, well before the line.
-    // When it returns still closed, the clock restarts: no event may
-    // be built on frames nobody saw.
+  it("a closure survives a sub-blink gap with its clock intact", () => {
+    // Roadmap 10.11 re-pinned this to the physical intent: the face
+    // vanishes 300 ms into a closure and returns still closed. Eyes
+    // shut before a gap shorter than any complete blink and shut
+    // after it did not plausibly open in between, so the clock does
+    // NOT restart — the closure fires the moment its ORIGINAL span
+    // crosses the line.
     let state = initialLongClosureState;
     state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
     state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
     state = longClosureStep(state, 400, null, THRESHOLD_MM);
     state = longClosureStep(state, 700, CLOSED_MM, THRESHOLD_MM);
-    state = longClosureStep(state, 1100, CLOSED_MM, THRESHOLD_MM);
-    expect(state.count).toBe(0);
-    // The fresh closure's clock started at 700, so the line falls at
-    // 700 + the threshold, not sooner.
+    expect(state.count).toBe(1);
+  });
+
+  it("abandons an unwitnessed closure past the bound, gaps stay gaps", () => {
+    // Past LONG_CLOSURE_MAX_GAP_MS the old rule holds in full: no
+    // event may be built on frames nobody saw, AND the frames after
+    // the gap may be the same droop still going, so nothing fires
+    // until the eye has been seen clearly open again.
+    let state = initialLongClosureState;
+    state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 400, null, THRESHOLD_MM);
     state = longClosureStep(
       state,
-      701 + LONG_CLOSURE_THRESHOLD_MS,
+      400 + LONG_CLOSURE_MAX_GAP_MS + 1,
+      CLOSED_MM,
+      THRESHOLD_MM,
+    );
+    state = longClosureStep(state, 2000, CLOSED_MM, THRESHOLD_MM);
+    // Long past any line, and still nothing: not seen open since.
+    expect(state.count).toBe(0);
+    state = longClosureStep(state, 2100, OPEN_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 2200, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(
+      state,
+      2201 + LONG_CLOSURE_THRESHOLD_MS,
       CLOSED_MM,
       THRESHOLD_MM,
     );
@@ -287,10 +311,14 @@ describe("the reopen crossing, found by review before the pull request", () => {
   });
 });
 
-describe("after the gap, found by mutation testing before the pull request", () => {
-  it("counts a second long closure after a gap ended the first", () => {
-    // A fired closure interrupted by a lost face must not poison the
-    // next cycle: the fresh closure earns its own event.
+describe("after the gap, re-pinned by roadmap 10.11 to the physical intent", () => {
+  it("a fired closure resumed across a sub-blink gap is the same droop", () => {
+    // The pre-10.11 pin here demanded a SECOND event after a 100 ms
+    // lost-face flicker, which counted one droop twice — the exact
+    // defect the row names. The same droop now stays one event, the
+    // readout speaks again on resumption, and a genuinely new
+    // closure after a real reopen still earns its own event, which
+    // is what the mutation run that created this block was proving.
     let state = initialLongClosureState;
     state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
     state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
@@ -298,26 +326,37 @@ describe("after the gap, found by mutation testing before the pull request", () 
     expect(state.count).toBe(1);
     state = longClosureStep(state, 1100, null, THRESHOLD_MM);
     state = longClosureStep(state, 1200, CLOSED_MM, THRESHOLD_MM);
-    // Still blink sized after the gap: the readout must stay silent
-    // and nothing may fire yet.
-    expect(ongoingClosureMs(state, 1300)).toBeNull();
-    expect(state.count).toBe(1);
+    // Resumed, still the same fired closure: the readout speaks the
+    // FULL span since the eyes closed, and nothing fires again.
+    expect(ongoingClosureMs(state, 1300)).toBe(1200);
     state = longClosureStep(state, 1900, CLOSED_MM, THRESHOLD_MM);
+    expect(state.count).toBe(1);
+    // A real reopen, clearly open, then a new long closure: its own
+    // event, exactly as before this row.
+    state = longClosureStep(state, 2000, OPEN_MM, THRESHOLD_MM);
+    expect(state.lastLongClosureDurationMs).toBe(1900);
+    state = longClosureStep(state, 2100, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(
+      state,
+      2101 + LONG_CLOSURE_THRESHOLD_MS,
+      CLOSED_MM,
+      THRESHOLD_MM,
+    );
     expect(state.count).toBe(2);
   });
 
-  it("records no duration for a blink sized closure after a gap", () => {
+  it("records the reopen-measured duration across a survived gap", () => {
     let state = initialLongClosureState;
     state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
     state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
     state = longClosureStep(state, 1000, CLOSED_MM, THRESHOLD_MM);
     state = longClosureStep(state, 1100, null, THRESHOLD_MM);
-    // A quick witnessed blink after the gap: count and duration must
-    // both stay exactly as the gap left them.
     state = longClosureStep(state, 1200, CLOSED_MM, THRESHOLD_MM);
     state = longClosureStep(state, 1300, OPEN_MM, THRESHOLD_MM);
+    // One closure, 100 to 1300, with a witnessed hole no longer than
+    // a blink: one event, and the duration spans to the reopen.
     expect(state.count).toBe(1);
-    expect(state.lastLongClosureDurationMs).toBeNull();
+    expect(state.lastLongClosureDurationMs).toBe(1200);
   });
 });
 
@@ -394,5 +433,133 @@ describe("a slow descent that stops between the two lines, issue #115", () => {
       t += DT_MS;
     }
     expect(state.blinkCount).toBe(1);
+  });
+});
+
+// Roadmap 10.11. The prediction, its traces and its refuters were
+// committed before the change in docs/long-closure-hysteresis.txt;
+// these tests are those traces, verbatim, and the aliases that keep
+// the two rules from drifting off the constants they were derived
+// from.
+
+describe("the 10.11 aliases", () => {
+  it("re-arms with blink.ts's own noise-floor fraction, aliased", () => {
+    expect(LONG_CLOSURE_REARM_FRACTION).toBe(0.1);
+  });
+
+  it("bounds the gap at the blink maximum, aliased", () => {
+    // A gap long enough to hide a complete blink-sized reopen is
+    // long enough to hide the closure's end.
+    expect(LONG_CLOSURE_MAX_GAP_MS).toBe(MAX_BLINK_DURATION_MS);
+  });
+});
+
+describe("the prediction's hover traces, docs/long-closure-hysteresis.txt", () => {
+  const LINE_MM = 3.04;
+
+  function trace(
+    centreMm: number,
+    noiseHz: number,
+    rateHz: number,
+    seconds: number,
+  ): LongClosureState {
+    let state = initialLongClosureState;
+    const n = Math.round(rateHz * seconds);
+    for (let i = 0; i < n; i += 1) {
+      const t = i / rateHz;
+      const apertureMm = centreMm + 0.3 * Math.sin(2 * Math.PI * noiseHz * t);
+      state = longClosureStep(state, Math.round(t * 1000), apertureMm, LINE_MM);
+    }
+    return state;
+  }
+
+  it("collapses the iPhone hover shapes to one event each", () => {
+    // Before this row the same traces measured 3 and 2 events — one
+    // sustained droop counted several times because its noise tops
+    // out at 3.2 mm, above the line but below the 3.34 mm re-arm
+    // height. The prediction: one event each, at both rates.
+    for (const rateHz of [30, 120]) {
+      expect(trace(2.9, 0.5, rateHz, 6).count).toBe(1);
+      expect(trace(2.9, 1 / 3, rateHz, 6).count).toBe(1);
+    }
+  });
+
+  it("leaves the clean desktop shape untouched", () => {
+    // The same noise around a centre the line never meets: one
+    // closure, fired mid-closure, still in progress at the end —
+    // every field exactly as the detector read it before this row.
+    for (const rateHz of [30, 120]) {
+      const state = trace(2.5, 0.5, rateHz, 6);
+      expect(state.count).toBe(1);
+      expect(state.eye).toBe("closed");
+      expect(state.firedForCurrentClosure).toBe(true);
+      expect(state.lastLongClosureDurationMs).toBeNull();
+    }
+  });
+
+  it("counts a six-second closure with noise once, at both rates", () => {
+    // The row's own phrasing of the defect, and the cadence rule:
+    // duplicate ticks carry the same aperture, so 30 and 120 Hz must
+    // agree or the change smuggled in a clock dependence.
+    const counts = [30, 120].map((rateHz) => trace(2.9, 0.5, rateHz, 6).count);
+    expect(counts[0]).toBe(counts[1]);
+  });
+});
+
+describe("the re-arm gate, roadmap 10.11", () => {
+  it("does not fire again until the eye is seen clearly open", () => {
+    // A reopen to just above the line — inside the noise band — is
+    // not evidence the droop ended. The next crossing arms nothing.
+    const justAboveMm = THRESHOLD_MM * 1.05;
+    let state = initialLongClosureState;
+    state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 1000, CLOSED_MM, THRESHOLD_MM);
+    expect(state.count).toBe(1);
+    state = longClosureStep(state, 1100, justAboveMm, THRESHOLD_MM);
+    state = longClosureStep(state, 1200, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 2500, CLOSED_MM, THRESHOLD_MM);
+    expect(state.count).toBe(1);
+  });
+
+  it("re-arms the moment the line is cleared by the fraction", () => {
+    const clearlyOpenMm = THRESHOLD_MM * (1 + LONG_CLOSURE_REARM_FRACTION);
+    let state = initialLongClosureState;
+    state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 1000, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 1100, clearlyOpenMm, THRESHOLD_MM);
+    state = longClosureStep(state, 1200, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 1801, CLOSED_MM, THRESHOLD_MM);
+    expect(state.count).toBe(2);
+  });
+
+  it("endings are untouched: the duration is the same span as before", () => {
+    // Hysteresis on the ARMING side only. A closure still ends the
+    // frame the aperture reaches the line, so the recorded span is
+    // what it always was.
+    let state = initialLongClosureState;
+    state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 1000, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 3000, CLOSED_MM, THRESHOLD_MM);
+    state = longClosureStep(state, 3100, THRESHOLD_MM, THRESHOLD_MM);
+    expect(state.count).toBe(1);
+    expect(state.lastLongClosureDurationMs).toBe(2100);
+  });
+
+  it("runs the boundary trio on the gap bound", () => {
+    const build = (gapMs: number): LongClosureState => {
+      let state = initialLongClosureState;
+      state = longClosureStep(state, 0, OPEN_MM, THRESHOLD_MM);
+      state = longClosureStep(state, 100, CLOSED_MM, THRESHOLD_MM);
+      state = longClosureStep(state, 400, null, THRESHOLD_MM);
+      return longClosureStep(state, 400 + gapMs, CLOSED_MM, THRESHOLD_MM);
+    };
+    // At and below the bound the closure survives with its clock:
+    // 100 to 400+gap is already past the line, so it fires at once.
+    expect(build(LONG_CLOSURE_MAX_GAP_MS - 1).count).toBe(1);
+    expect(build(LONG_CLOSURE_MAX_GAP_MS).count).toBe(1);
+    // Past it the cycle is abandoned and the gate is shut.
+    expect(build(LONG_CLOSURE_MAX_GAP_MS + 1).count).toBe(0);
   });
 });

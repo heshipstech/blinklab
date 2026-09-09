@@ -343,7 +343,7 @@ describe("a claimed row its phase will not let start", () => {
     // against a row whose phase forbids it whatever the real list
     // currently says.
     const claimed = roadmap.replace(
-      "Rows 10.11, 10.12c, 10.13b and 13.8b remain startable and are not marked",
+      "Rows 10.12c and 13.8b remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -524,11 +524,6 @@ describe("the ladder that has nothing left to start", () => {
     // corpus anchor at HEAD, which is what these rows' corpus clauses
     // score against. This pins what the ladder actually says today,
     // so changing it is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([
-      "10.11",
-      "10.12c",
-      "10.13b",
-      "13.8b",
-    ]);
+    expect(startableClaims(roadmap)).toEqual(["10.12c", "13.8b"]);
   });
 });
