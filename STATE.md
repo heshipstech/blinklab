@@ -10,7 +10,7 @@ fails when the committed copy differs by a byte.
 - **Phases 0 through 9 are complete**, counted from ROADMAP.md's own
   rows: a phase is finished when every row in it is done, declined, or
   moved.
-- **Eyeblink8, the regression harness:** recall 75.7% (309 of 408 found), precision 83.3% (62 invented), F1 79.3%.
+- **Eyeblink8, the regression harness:** recall 83.6% (341 of 408 found), precision 84.0% (65 invented), F1 83.8%.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE COLLAPSE WAS A TRANSIENT, AND THE FINGERPRINT READ ON IT WAS WRONG, 9 September 2026 (row 10.8a's diagnosis, closing the entry below).** Yesterday's entry convicted "the detector's code, at some commit between the anchors." The per-miss replay said something more precise first: all 37 of the glasses clip's misses carried the same verdict — no crossing, no re-arm, nothing measured — and the trace behind them showed the blink line alive to frame 1162 and never again, apertureMm null on 3,732 of 4,895 frames, faceDetected false from second 39 to the end, and inferenceMs falling from a working 7.3 ms to 1 ms: the face model answering instantly with nothing while sceneLum held at 0.53. Then the conviction failed its own test. Five re-measurements at the byte-identical commit (git rev-parse confirmed 68690bf) — four of the clip alone, one of the FULL corpus in the same eight-clips-one-session shape — all recovered the clip completely, 42 raw detections, the anchor's exact 38 found plus 4 false, and the 9 September full run reproduced the anchor table DIGIT FOR DIGIT. One failure in six runs. The 8 September collapse was a transient of MediaPipe's video-mode tracker: it lost the face once and rode the loss to the end of the clip, and nothing can currently make it do that again. **What moved in the record:** the headline reverts to the anchor (83.6/84.0/83.8), the transient's table stays published as a labelled column and a kept block, the "byte for byte" replay claim is qualified everywhere it appears (which frames are measured is exactly repeatable; what the model returns on them is not), the 8 September prediction-doc outcomes are re-scored in their own files — (i) and the adoption's neutrality HELD once the transient is set aside, and the reproducible finding left standing is line-in-the-export's (iv): blinkLineSource reads `fixed` for the first ~29 rows of EVERY clip, a pre-existing boot behaviour the provenance column uncovered. Two rows go to the roadmap: the tracker's ride-a-lost-face-to-the-end defect, BLOCKED on a reproduction nobody can force, and the boot-time fixed line. **The generalisable lesson is in LEARNING.md:** the shape of a disagreement narrows the suspects but only reproduction convicts, and one 90-second re-run would have been cheaper than the bisect plan it replaced.
 
 **THE RE-MEASUREMENT CAME BACK CARRYING ITS OWN CONTROL GROUP, 8 September 2026 (row 10.8a, the regression run at HEAD).** The owner ran the eight prepared clips through `tools/measure_corpus.mjs` at commit 68690bf: all eight stepped, `inexact_landings` 0 on every clip, no refusals, coverage identical to the anchor down to the same two "+1" rows. Seven clips reproduced the committed anchor DIGIT FOR DIGIT — found, miss, false, every row — and the eighth, the one glasses clip, fell from 38 of 43 blinks found to 6. The arithmetic closes exactly: 341 − 32 = 309 found, 65 − 3 = 62 invented, recall 83.6% to 75.7%. **The identity on seven clips is the finding's power:** in one stroke it cleared the machine, the prepared files and three stepper changes for those frames, and convicted the detector's decision on the eighth clip's frames, at some commit between the anchors — every candidate already a dated entry in the result file's caveat ledger, and none of their neutrality arguments predicted this. The anchor moved to the new run and the caveat block retired to "re-measured on 8 September 2026" with the reservation written in: no entry reaching executable detector code is individually cleared for that clip until its 37 misses are replayed. Three prediction documents were scored the day their run arrived: `stepper-honesty` confirmed on its own checks (zero inexact landings everywhere) with its "+1"-as-fabrication candidate REFUTED (an honest stepper measured the same counts, so the "+1" belongs to the clip-annotation pair); `line-in-the-export` prediction (i) FALSIFIED on one clip, with the run's own `blinkLineSource` column named as the read that attributes or clears it; `blink-line-adoption`'s falsifier fired in letter, mechanism check pending on the same column. The headline is published with its defect — README's table grew a sixth column that is not a fix but a finding, MODEL_CARD's card carries it, the changelog follows the record, and the cannot-see claim now splits the 67 characterised misses from the 32 open ones because a sentence mixing two provenances is false in a way no single number in it is. Diagnosis next: `analysis/tools/write_miss_table.py` and `npm run replay:run` over the run's own traces, the tools rows 10.8a1–a5 built for exactly this moment, on the machine that holds the data.
 
@@ -3472,12 +3474,12 @@ measuring before anything has been built.
 
     node tools/measure_corpus.mjs \
       "$DATASETS/eyeblink8-mp4" \
-      "$DATASETS/eyeblink8-measured-2026-09-08"
+      "$DATASETS/eyeblink8-measured-2026-09-09"
 
     cd analysis
     PYTHONPATH="$PWD" uv run python tools/evaluate_eyeblink8.py \
       "$DATASETS/eyeblink8/eyeblink8" \
-      "$DATASETS/eyeblink8-measured-2026-09-08"
+      "$DATASETS/eyeblink8-measured-2026-09-09"
 
 That prints recall, precision and F1 overall, then per clip, then split
 by the glasses flag, then a coverage table. Read the coverage table

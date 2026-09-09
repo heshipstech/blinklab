@@ -153,7 +153,9 @@ export function buildCannotSeeClaims(root) {
         `Ordinary blinks it simply misses. On the benchmark it was scored ` +
         `against, ${String(missed)} of ${String(parsed.annotated)} annotated ` +
         `blinks were missed at healthy frame rates. ` +
-        `${String(characterisedMisses)} of those misses are stable and ` +
+        (missed === characterisedMisses
+          ? `All ${String(characterisedMisses)} misses are stable and `
+          : `${String(characterisedMisses)} of those misses are stable and `) +
         `characterised, reproduced blink for blink across two machines: ` +
         `${closedShare} percent of them contain a frame a human marked ` +
         `fully closed, and about ${ceilingMisses} are a measured ceiling ` +

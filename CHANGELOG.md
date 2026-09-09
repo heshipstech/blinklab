@@ -21,14 +21,15 @@ over shipping a version.
 ### The evaluation track, Phase 7
 
 - **Measured against somebody else's ground truth for the first time.**
-  Eyeblink8, eight webcam clips, 408 human-marked blinks: 75.7% recall, 83.3%
-  precision, 79.3% F1 — the 8 September 2026 run at the current commit, whose
-  headline carries an open one-clip regression under diagnosis rather than the
-  older, better-looking anchor. Every earlier figure for the same benchmark is
-  published alongside it rather than replaced, because each was wrong for
-  reasons inside this app, and the road there is part of the result. There
-  have been six, and the table of all six is in [README.md](README.md); the
-  whole record, current run and superseded runs alike, is in
+  Eyeblink8, eight webcam clips, 408 human-marked blinks: 83.6% recall, 84.0%
+  precision, 83.8% F1, re-confirmed digit for digit on 9 September 2026 after
+  one run published a transient for a day (a face-tracking failure on one
+  clip, unreproducible in five re-measurements at the same commit). Every
+  earlier figure for the same benchmark is published alongside it rather than
+  replaced, because each was wrong for reasons inside this app, and the road
+  there is part of the result. There have been seven, the transient included,
+  and the table of all seven is in [README.md](README.md); the whole record,
+  current run and superseded runs alike, is in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 
   This entry itself carried the third of those five from 15 August until

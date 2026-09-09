@@ -6,9 +6,9 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.** This is a learning project. The sentence above is quoted from `src/core/notice.ts`, the one place the page's own notice lives, and a test holds this copy to it word for word.
 
-> Revised 8 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 9 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
-Read in full on 8 September 2026, claims `75f086f5`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 9 September 2026, claims `d4c8958c`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -34,7 +34,7 @@ This project's rule is that a limitation you know about belongs in the open.
 - Known open defects live in the [issue tracker](https://github.com/heshipstech/blinklab/issues), including one where an unusually high learned baseline inflates blink durations.
 - **How many blinks it finds depends on how fast your computer is.** The page processes frames as fast as the face model can run, not as fast as the camera delivers them. Measured on 17 August: two four-core machines ran at 29 to 32 frames per second while a twelve-core machine ran at 127, on cameras that all declare 30. In the same scripted test the four-core machines found 7 and 9 of ten deliberate blinks and the twelve-core machine found all ten. A firm blink is caught at any of those rates; the ones at risk are shallow or quick, and for those the odds run from about half at 25 frames per second to certain at 60. Since 20 August 2026 the page warns when its processing rate sits below 60 frames per second, stating the machine's own number and that the camera is not the cause. _Corrected 24 August 2026, and the sentence before this one stays as the record of what was believed:_ the first delivered-rate measurement — an M5 Max processing 120 frames per second on a camera delivering 30, reading exactly the 30 the camera handed it — showed the computer is the limit only up to what the camera delivers. The warning now judges the measured rate of distinct camera frames read and names whichever side binds; on that machine the old warning was silent while the instrument sat squarely in the risk band. Measured in `docs/blink-sample-rate.txt` and `docs/validation-dry-run.txt`.
 - Self reported sleepiness is a noisy label, and there is no objective validation of the score yet. Earning that is what Phase 7 is for.
-- An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. Until pull request #189 it still did not give exactly the same answer twice, because the face model was handed a wall clock reading and uses the gap between readings to follow a face. It now measures the same clip identically, byte for byte. Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
+- An uploaded clip can be measured two ways and the file records which. Stepped is the default. It seeks to every frame in turn and waits for the measurement. So which frames it measures depends on the recording, not on your computer. Until pull request #189 it still did not give exactly the same answer twice, because the face model was handed a wall clock reading and uses the gap between readings to follow a face. It now measures the same clip identically, byte for byte, almost always: which frames are measured is exactly repeatable, but the face model's own tracker carries state that can rarely diverge — in one run of six on one clip, on 8 September 2026, it lost the face mid-clip and never recovered, and five re-measurements at the identical commit could not reproduce it (`docs/eyeblink8-result.txt`). Watched plays in real time and is capped by how fast the model runs. So a fast clip loses frames, and how many depends on what else your machine is doing. Watching is offered because stepping is slow and unpleasant to film. Every export states its mode, the frames measured and the resulting rate. The app also reports the rate it detected, so you can check it against a clip you know.
 
 <!-- results:begin -->
 <!-- Generated from the committed result files by
@@ -44,7 +44,7 @@ when the committed README drifts from it. -->
 
 ## Results at a glance
 
-- **Does it find the blinks a human found?** On Eyeblink8, recall 75.7% (309 of 408 found, 95% interval 71.3 to 79.6), precision 83.3% (62 invented, 95% interval 79.2 to 86.7), F1 79.3%, measured from `eyeblink8-measured-2026-09-08` on 8 September 2026 — **and one clip of that run is an open defect**: seven of the eight clips reproduced the previous anchor (recall 83.6%, precision 84.0%, F1 83.8%) digit for digit, the eighth fell from 38 of 43 blinks found to 6 after a detector change made since that anchor, and the change is being isolated miss by miss. The headline carries the regression rather than the anchor, because a known defect belongs in the number, not under it. **The anchor's table was a property of the machine and the prepared files, measured on two machines.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gave recall 85.0% (347 of 408, 95% interval 81.3 to 88.2), precision 96.4% (13 invented), F1 90.4%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced the anchor IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, WebKit binary and fifteen commits of instrument change. That reproduction is WebKit to WebKit — the corpus runner launches no other engine — so no engine other than WebKit has measured this corpus, and roadmap row 13.0 is the measurement that would change that. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So these numbers are a measured property of the instrument and the prepared files — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+- **Does it find the blinks a human found?** On Eyeblink8, recall 83.6% (341 of 408 found, 95% interval 79.7 to 86.9), precision 84.0% (65 invented, 95% interval 80.1 to 87.2), F1 83.8%, measured from `eyeblink8-measured-2026-09-09`. **That table is a property of the machine and the prepared files, measured on two machines.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall 85.0% (347 of 408, 95% interval 81.3 to 88.2), precision 96.4% (13 invented), F1 90.4%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced this table IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, WebKit binary and fifteen commits of instrument change. That reproduction is WebKit to WebKit — the corpus runner launches no other engine — so no engine other than WebKit has measured this corpus, and roadmap row 13.0 is the measurement that would change that. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So the number above is a measured property of the instrument and the prepared files on two machines — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. **One qualification, measured 8 and 9 September 2026:** repeatability of WHICH frames are measured is exact, but the face model's tracker carries state that can rarely diverge — one run of six on one clip lost the face mid-clip and never recovered, moving that run's recall 7.9 points before five re-measurements at the identical commit showed the collapse was a transient. Full record, transient included: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 - **Does any of it track reported sleepiness?** On the small DROZY set, no — a null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the 20 of 36 DROZY sessions this instrument can measure. On the larger UTA-RLDD set, yes. Across 54 self-recording strangers (148 videos, and the model was never trained on anyone it was scored against), the pre-registered classifier separates a coarse self-reported drowsiness state better than chance: three-class balanced accuracy 0.498 where guessing scores 0.333, and alert-vs-drowsy 0.732 where guessing scores 0.500, both past a 1000-shuffle label-scramble control at p 0.001. The plan predicted a null in writing and was WRONG in the one way it had named — a weak effect that DROZY (13 people) and a 12-subject pilot were too small to see, and 54 were not. It is MODEST and not driving-relevant: the label is self-reported and noisy, each person recorded one video per state so the clips differ in more than drowsiness, nobody was driving, and this stays a demo, not a safety or medical device. Full records: [docs/uta-rldd-result.txt](docs/uta-rldd-result.txt), [docs/drozy-result.txt](docs/drozy-result.txt). Cite: Massoz, Langohr, Francois and Verly, WACV 2016. Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
 - **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion not met, the baseline's criterion FAILED, the frame-rate gate's criterion not met. Full record: [docs/validation-round.txt](docs/validation-round.txt).
 - **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the 36 it can measure; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that, in a pre-registered test (roadmap 9.1), separated self-reported alert from drowsy across strangers above chance (AUC 0.70 at p 0.001), but has not been validated as a per-person measure of anyone's actual sleepiness.
@@ -94,12 +94,12 @@ annotation. The 362 frame numbers in between have no row at all. The
 people who published the clips print 70,992 on their own site. So a
 reader who checks will meet two different totals, and this is why.
 
-|              | First answer        | Export fixed        | Clock fixed         | Ruler frozen        | Re-arm gated        | Now                     |
-| ------------ | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ----------------------- |
-| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | 341 of 408          | 341 of 408          | **309 of 408**          |
-| Recall       | 69.6%               | 82.8%               | 87.7%               | 83.6%               | 83.6%               | **75.7%**               |
-| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | 81.4% (78 invented) | 84.0% (65 invented) | **83.3%** (62 invented) |
-| F1           | 77.1%               | 84.6%               | 85.4%               | 82.5%               | 83.8%               | **79.3%**               |
+|              | First answer        | Export fixed        | Clock fixed         | Ruler frozen        | Re-arm gated        | One transient run   | Now                     |
+| ------------ | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | 341 of 408          | 341 of 408          | 309 of 408          | **341 of 408**          |
+| Recall       | 69.6%               | 82.8%               | 87.7%               | 83.6%               | 83.6%               | 75.7%               | **83.6%**               |
+| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | 81.4% (78 invented) | 84.0% (65 invented) | 83.3% (62 invented) | **84.0%** (65 invented) |
+| F1           | 77.1%               | 84.6%               | 85.4%               | 82.5%               | 83.8%               | 79.3%               | **83.8%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
 is the share of the app's detections that were real. F1 is the two
@@ -107,12 +107,13 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-**There are six columns because this page has corrected its own
-number four times and the sixth records a regression the
-re-measurement itself caught, and every time the fault was in this
-app rather than in the clips.** Every column stays. A project that
-shows you only its final answer tells you less than one that also
-shows you the road there.
+**There are seven columns because this page has corrected its own
+number four times, published a transient for one day, and then
+measured the number back, and every time the fault was in this app
+rather than in the clips.** Every column stays, the transient
+included, because it was published. A project that shows you only
+its final answer tells you less than one that also shows you the
+road there.
 
 - **The first answer, 69.6%.** The app was deleting its own results
   before writing them out. It found blinks and then threw them away.
@@ -144,15 +145,24 @@ shows you the road there.
   the line before a new blink may count. On the corpus it removed 13
   false alarms at zero recall cost, with its predictions and its
   decision rule committed first in `docs/blink-rearm.txt`.
-- **The sixth, the current number: recall 75.7%, precision 83.3%.**
-  The 8 September 2026 regression run at the current commit
-  reproduced seven of the eight clips digit for digit and found the
-  eighth collapsed, from 38 of 43 blinks found down to 6, after a
-  detector change made since the previous anchor. Which change is
-  being isolated miss by miss, and the candidates are all listed in
-  `docs/eyeblink8-result.txt`. The number is published with its
-  defect, because holding the old headline while knowing this one
-  would be showing you the road minus the pothole.
+- **The sixth, published for one day and withdrawn: recall 75.7%.**
+  The 8 September 2026 regression run reproduced seven of the eight
+  clips digit for digit and found the eighth collapsed, from 38 of
+  43 blinks found down to 6. The per-miss replay traced it to the
+  face tracker losing the face 39 seconds in and never recovering,
+  and five re-measurements at the byte-identical commit could not
+  reproduce it: four of the clip alone and one of the full corpus
+  all return the anchor exactly. One failure in six runs, a
+  transient of the model, not a change in this app. The column
+  stays because it was published; the record of the diagnosis is in
+  `docs/eyeblink8-result.txt`.
+- **The seventh, the current number, is the fifth's again: recall
+  83.6%, precision 84.0%,** re-measured in full on 9 September 2026
+  and matching the anchor digit for digit — every clip, both
+  splits, all eight coverage counts. What the transient bought was
+  a harder claim to state honestly: which frames are measured is
+  exactly repeatable, and what the face model returns on them can,
+  rarely, diverge.
 
 Precision fell from 86.4% to 83.3% between the second column and the
 third, and that is not a step backwards. Making the measurement
@@ -164,8 +174,10 @@ prediction: at the frozen, lower threshold, flutter near the line
 fragments into repeated crossings, the same double-counting signature
 one validation-round volunteer produced live. The fifth column is the
 gate built for exactly that signature doing its work. The sixth
-column is not a fix but a finding: recall fell because one clip's
-blinks stopped being seen at all, and that defect is open.
+column is a transient, kept because it was published: one run's face
+tracker lost one clip's face at second 39 and never recovered, and
+five re-measurements at the same commit could not make it happen
+again. The seventh is the number coming back.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
@@ -333,23 +345,22 @@ shows a person wearing glasses. The first write up said that clip scored
 that as evidence against this project's own warning about prescription
 lenses. That gap was not real. The defect created it. Both of the cut
 short clips were in the group without glasses, so that group's score was
-pulled down. On the current run the glasses clip scores 14.0% recall and
-85.7% precision. The seven without score 83.0% recall and 83.2%
-precision. That collapse is new and it is not evidence about glasses
-either: the 8 September 2026 run reproduced the other seven clips digit
-for digit while this one clip fell from 38 of 43 blinks found to 6, so
-what changed is the detector, at some commit since the previous anchor,
-and which commit is being isolated miss by miss. Until that diagnosis
-lands, the conclusion this paragraph reached stands: every direction of
-the glasses claim has rested on a single clip of 43 blinks, and this
-project still has no evidence about what glasses per se do to blink
-detection. What it now has is one clip, which happens to show glasses,
-on which the current detector badly underperforms its own anchor, and
-that is recorded as an open defect rather than as a fact about lenses.
-An earlier version of this paragraph printed a stale run's figures here
-while calling them the corrected ones; the figures above are the
-current run's, from
-[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+pulled down. On the current run the glasses clip scores 88.4% recall and
+90.5% precision. The seven without score 83.0% recall and 83.2%
+precision. The glasses clip scores a few points HIGHER on both, which
+is the opposite direction from the first write up's claim and just as
+meaningless. Both figures rest on a single clip of 43 blinks, and both
+settle nothing in either direction. So the claim is withdrawn rather
+than reversed. This project has no evidence yet about what glasses do
+to blink detection. One caution this clip did earn: on 8 September
+2026 a single run's face tracker lost this clip's face 39 seconds in
+and never recovered, scoring it 14.0% for a day before five
+re-measurements showed the collapse was a one-time transient of the
+model, not a fact about lenses or this app
+([docs/eyeblink8-result.txt](docs/eyeblink8-result.txt)). An earlier
+version of this paragraph printed a stale run's figures here while
+calling them the corrected ones; the figures above are the current
+run's.
 
 There is a version of this result that reads better, and it is not
 printed here. Leave out the blinks the human marked as long closures and
@@ -614,7 +625,10 @@ follows a face from frame to frame. So how busy the computer happened to
 be leaked into the measurement. That is the exact dependence stepping
 exists to remove, and it survived here for months because every frame
 was still being measured. Fixed in pull request #189. Measuring one clip
-three times now produces identical files, byte for byte.
+repeatedly now produces identical files almost always: which frames are
+measured is exactly repeatable, and the one recorded exception is the 8
+September 2026 face-tracking transient, one run of six on one clip,
+unreproducible since (`docs/eyeblink8-result.txt`).
 
 This is worth stating because the first version of stepped measurement
 failed it badly, and failed it invisibly. It played the clip and paused

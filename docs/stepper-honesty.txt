@@ -158,3 +158,19 @@ the caveat ledger in docs/eyeblink8-result.txt lists every detector
 change between the anchors. The collapse is recorded there, and its
 attribution — the per-miss replay of that clip's 37 misses — is the
 measurement in progress.
+
+9 September 2026, the attribution landed, and the count clause is
+RESTORED. The collapse was a transient of the face tracker, not of
+the stepper or any other change: five re-measurements at the same
+commit — four of the clip alone, one of the full corpus in the same
+shape — all reproduce the anchor, and the 9 September full run
+returns 341 of 408 and 65 invented DIGIT FOR DIGIT
+(docs/eyeblink8-result.txt, the transient section). So "the
+published counts stay within the anchor run's own repeatability"
+HELD for the reproducible run; the 8 September deviation was one
+face-tracking failure in six runs, and it belongs to the model, not
+the schedule. The frame_interval_s read also landed: all eight clips
+calibrated to 0.033333 s and sought exactly the frames they
+measured, so no clip took branch B's changed schedule, and the
+branch A prediction — nothing moves — is what the reproducible runs
+show.
