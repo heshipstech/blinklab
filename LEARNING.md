@@ -3672,3 +3672,32 @@ sentence, a file, a column — ask whether the place is load-bearing
 or incidental to the claim. If incidental, write the clause against
 the claim's owner instead, because places move and the clause should
 survive the move.
+
+## A countdown that says nothing is happening is a claim, and it was false
+
+The learning countdown read "Learning your open eyes: N s left" and
+the model card said the learning period was one "during which the
+instrument is not yet measuring." Both implied a quiet instrument.
+The export said otherwise one row at a time: `blinkLineSource` reads
+`fixed` for the first ~29 rows of every corpus clip, because the
+wiring hands the reducer the 4 mm fixture constant whenever an
+aperture is measured and no personal line exists yet. The instrument
+was measuring the whole time, against a ruler from one face, and
+every surface a person actually reads said nothing.
+
+The repair was chosen by ruling rather than reflex (amendment 23):
+feeding null while learning would discard blinks the fixture line
+demonstrably catches, and counting on the live learning line is the
+moving ruler the baseline freeze already rejected — so the behaviour
+stays and the CONDITION becomes visible, on the page while the window
+runs, in the model card, and beside the corpus numbers, held together
+by one pin. The prediction that this is labels-only — zero corpus
+delta — was committed before the labels were built.
+
+The habit worth taking: a status line is a claim about what the
+instrument is doing, and "not yet" is the easiest false thing to say
+while a default is quietly in force. When a period has a fallback —
+a constant, a cached value, a previous session's ruler — the surface
+that narrates the period must name the fallback, because the export
+already does, and two surfaces disagreeing is how the last three
+audits started.

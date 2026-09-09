@@ -118,6 +118,26 @@ describe("the model card's measurement-uncertainty section", () => {
     expect(section).toContain("within one person the ruler is constant");
   });
 
+  it("the learning-window condition is stated in all three places", () => {
+    // Roadmap 10.13b, amendment 23's keep-and-label ruling. The first
+    // ~30 seconds of every session count blinks against the fixed
+    // 4 mm line, and the condition travels with the numbers: the
+    // page's own sentence (held in lineProvenance beside the
+    // provenance vocabulary), the model card, and the result file's
+    // dated section. One statement deleted is a build that says so.
+    const provenance = readRepoFile("src/core/lineProvenance.ts", root);
+    expect(provenance).toContain("blinks count against the fixed");
+    expect(modelCard).toContain(
+      "during the learning window blinks ARE counted",
+    );
+    expect(modelCard).toContain("blinkLineSource");
+    const resultText = readRepoFile("docs/eyeblink8-result.txt", root);
+    expect(resultText).toContain(
+      "THE LEARNING WINDOW OF EVERY CLIP, A CONDITION OF THE NUMBERS ABOVE",
+    );
+    expect(resultText).toContain("blinkLineSource reads `fixed`");
+  });
+
   it("names both measured conditions with their committed numbers", () => {
     const section = uncertaintySection(modelCard) ?? "";
     // The preparation finding: a 12.4-point precision gap between the
