@@ -135,3 +135,31 @@ docs/eyeblink8-result.txt lists them all — so (i)'s failure convicts
 the window, not yet this row. What it does do is void every
 neutrality argument in that window for that clip until the per-miss
 replay says which one broke.
+
+RE-SCORED, 9 SEPTEMBER 2026, after the replay and five
+re-measurements (docs/eyeblink8-result.txt, the transient section):
+
+(i) and (ii) HELD. The 8 September deviation was a one-time
+face-tracking transient; the 9 September full re-run at the same
+commit reproduces the anchor's per-clip table, both split lines and
+the coverage block digit for digit. No provenance work changed any
+measurement.
+
+(iv) FALSIFIED, in the interesting way this document named in
+advance. blinkLineSource reads `fixed` for roughly the first 29
+rows of EVERY clip, then `passive`; it reads `none` on only one or
+two rows per clip and `guided` nowhere. So blinks in the first ~30
+seconds of every session are counted against the fallback constant,
+not left uncounted as this prediction assumed: the grounds above —
+"the reducer is handed a null aperture on exactly the frames where
+the line would be null" — were wrong, because the aperture is
+measured from the first frames while the LINE is null until the
+baseline freezes, and the `?? THRESHOLD` wiring fills that gap with
+the constant. As predicted for this case, the column found a
+pre-existing behaviour rather than causing one: the seven clips
+that reproduce the anchor digit for digit did so WITH these fixed
+rows, so the anchor's own first-30-seconds ran the same way. A real
+finding about the detector, on the roadmap on its own row.
+
+(v) HELD: shutLineSource reads `none` then `passive`, nothing else,
+on every clip.
