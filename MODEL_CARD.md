@@ -9,7 +9,7 @@ that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 9 September 2026, claims `1514a97d`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 9 September 2026, claims `d42b1e1d`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -381,6 +381,16 @@ arbitrarily transcoded copies of the same files;
 `docs/eyeblink8-result.txt` records the discovery and
 `docs/eyeblink8-preparation.txt` the tool that makes the preparation
 reproducible.
+
+Every published millimetre is scaled by an assumed iris. The aperture
+ruler takes the visible iris as 11.7 mm wide (`IRIS_DIAMETER_MM`),
+cited from Rüfer, Schröder and Erb, Cornea 2005 — white-to-white
+11.71 ± 0.42 mm across 390 healthy subjects — and matching the
+11.7 ± 0.5 mm Google's MediaPipe Iris uses, the lineage of the face
+model this page ships. The population spread is about ±4%, and every
+millimetre scales linearly with the measured person's true iris, so a
+between-person comparison carries that ±4% before any other error;
+within one person the ruler is constant and cancels.
 
 Blink duration is device-conditioned, and the mechanism is open. On the
 same scripted protocol both iPhones read about 96 ms and both Macs 149
