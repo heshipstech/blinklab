@@ -723,3 +723,23 @@ held. Originally declared 5 September 2026:
   frames measured. Only 10.8a's regression run can confirm it on the
   real clips, and that run now scores three stepper changes: ladder
   A1's whole-multiple rule, 10.14c's probe step, and this one.
+
+DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+
+  chore(deps): bump eslint, globals, typescript-eslint and vite (lockfile declared)
+
+  One watched file, package-lock.json, moved by four development
+  dependency bumps. Three of them — eslint 10.10.0, globals 17.12.0,
+  typescript-eslint 8.69.0 — are lint-time tools: they never execute
+  in the built page or anywhere on the measurement path, so they
+  cannot move a corpus number. The fourth, vite 8.2.1 to 8.2.2, is
+  the bundler, and the cheap proof is unavailable for a bundler; the
+  argument is from what the diff holds still: every detector source's
+  bytes are unchanged, and the two pinned instruments the model card
+  reads out of this same lockfile — @mediapipe/tasks-vision 1.0.1
+  with its integrity hash, and @playwright/test 1.62.1 — are
+  untouched in the diff, checkable with `git show <that commit> --
+  package-lock.json`. A bundler repackages the same sources; the
+  9 September anchor stands on those sources. The next corpus run
+  scores this the way every entry in the retired block above was
+  scored, and retires this caveat with it.
