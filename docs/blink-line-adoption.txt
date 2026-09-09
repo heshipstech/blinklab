@@ -154,3 +154,18 @@ What this does and does not establish, kept apart deliberately:
 
   Either way the per-miss replay of that clip's 37 misses names the
   broken change. A dated line lands here when both reads exist.
+
+9 SEPTEMBER 2026, both reads exist, and the prediction is RESTORED.
+The line-source read: blinkLineSource reads `guided` NOWHERE in any
+of the eight clips' exports — only `fixed` (the first ~29 rows of
+every clip, a pre-existing boot behaviour recorded in
+docs/line-in-the-export.txt), `passive` and one or two `none` rows —
+so the selection never reached the guided path, exactly as "neutral
+by construction" argued. The number read: the moved figure proved a
+one-time face-tracking transient — five re-measurements at the same
+commit reproduce the anchor digit for digit
+(docs/eyeblink8-result.txt, the transient section) — so with no
+stored calibration, no committed Eyeblink8 number moved in any
+reproducible run. The falsifier's letter fired on 8 September and
+its mechanism was refuted on 9 September; the prediction's operative
+claim held.

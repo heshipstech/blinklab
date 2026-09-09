@@ -3608,3 +3608,35 @@ on the old miss set. Every number in it was true and the sentence was
 false. A generated sentence is only as honest as the sourcing of each
 number in it, so the template now says which set each figure
 describes, and refuses to build when the sets stop nesting.
+
+## A fingerprint narrows the suspects; only reproduction convicts
+
+Yesterday's entry read the shape of a disagreement — seven clips
+identical, one collapsed — and concluded "a code change moves exactly
+what it touches. The only targeted thing that changed was the
+detector's code." The shape reading was sound and the conviction was
+wrong. The shape correctly cleared the machine, the files and the
+stepper. It could not distinguish "a code change that touches one
+clip" from "a stateful component that failed once on one clip",
+because both produce identity everywhere else. The missing suspect
+was the one component that carries state across frames: the face
+model's tracker, which lost the face 39 seconds into one run and
+never reacquired it, then behaved perfectly in five re-measurements
+at the byte-identical commit.
+
+The test that separated the two cost 90 seconds: run it again. A
+code cause reproduces; a transient does not. That one re-run
+replaced a five-commit bisect plan, and it should have come BEFORE
+the conviction, not after — the record moved twice in two days
+because publication outpaced reproduction, which is why the result
+file now carries the caution that a re-measure disagreeing on one
+clip gets a re-run before it is believed.
+
+The habit worth taking: a diagnosis of "what changed" is only as
+strong as its inventory of things that can differ between runs, and
+code is just one of them. Anything with internal state — a tracker,
+a cache, an accumulator — can produce a one-run fingerprint that
+looks exactly like a targeted code change. Before hunting the
+commit, re-run the measurement; the price of the check is minutes
+and the price of skipping it was a day of published wrong headline
+in each direction.
