@@ -99,6 +99,25 @@ describe("the model card's measurement-uncertainty section", () => {
     expect(Number((stated as RegExpMatchArray)[1])).toBe(run.invented);
   });
 
+  it("the iris constant carries its citation and spread, stated twice", () => {
+    // Roadmap 10.10c4d. Every millimetre the page publishes divides
+    // by IRIS_DIAMETER_MM, and until this row the 11.7 had no source
+    // and no stated spread. The citation lives beside the constant
+    // and the condition is stated in this uncertainty section; the
+    // pin holds both, so neither statement can be deleted without
+    // the build saying so. The sources: Rüfer et al., Cornea 2005
+    // (11.71 ± 0.42 mm, n=390) for the value, MediaPipe Iris
+    // (11.7 ± 0.5 mm) for the shipped model's lineage.
+    const constants = readRepoFile("src/core/constants.ts", root);
+    expect(constants).toContain("Rüfer");
+    expect(constants).toContain("11.71 ± 0.42 mm");
+    expect(constants).toContain("MediaPipe Iris");
+    const section = uncertaintySection(modelCard) ?? "";
+    expect(section).toContain("scaled by an assumed iris");
+    expect(section).toContain("11.71 ± 0.42 mm");
+    expect(section).toContain("within one person the ruler is constant");
+  });
+
   it("names both measured conditions with their committed numbers", () => {
     const section = uncertaintySection(modelCard) ?? "";
     // The preparation finding: a 12.4-point precision gap between the

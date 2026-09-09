@@ -9,6 +9,18 @@ export const INFERENCE_BUDGET_MS = 30;
 
 // The ruler humans are born with: the visible iris is close to
 // 11.7 mm across in almost every adult, stable from early childhood.
+// Cited, with its spread, per roadmap 10.10c4d: Rüfer, Schröder and
+// Erb, "White-to-white corneal diameter: normal values in healthy
+// humans obtained with the Orbscan II topography system", Cornea
+// 24(3), 2005 — 11.71 ± 0.42 mm across 390 healthy subjects aged 10
+// to 80; and Google's MediaPipe Iris announcement (2020), the
+// lineage of the face model this page ships, which uses 11.7 ± 0.5
+// mm. The spread matters as much as the value: ±0.42 mm is about
+// ±4%, every millimetre this page publishes divides by this
+// constant, so a person whose iris sits at the population edge
+// reads about 4% high or low on every aperture figure. MODEL_CARD's
+// measurement-uncertainty section states the same condition, and a
+// test holds both statements in place.
 export const IRIS_DIAMETER_MM = 11.7;
 
 // The fixed blink threshold of increment 4.1. The owner's fixture
