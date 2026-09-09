@@ -403,8 +403,9 @@ THE MEASUREMENT RATCHET, 5 September 2026 (roadmap 10.1a)
 
 Built from commit 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 — the
 corpus run of 9 September 2026, the full re-run recorded in the
-section above (the owner's machine, WebKit, all eight clips stepped,
-inexact landings 0 on every clip), which reproduced the 2 September
+section above (the owner's machine, WebKit driven by Playwright
+1.62.1, all eight clips stepped, inexact landings 0 on every clip),
+which reproduced the 2 September
 anchor 65e8e7ca2a6322c8a71f52caabcf2a189972f956 digit for digit on
 all eight clips and so confirmed it at this commit. The 8 September
 run at the same commit deviated on one clip through the transient
