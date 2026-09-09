@@ -8,7 +8,12 @@ import {
   startBaseline,
   type BaselineState,
 } from "../../src/core/baseline";
-import { BASELINE_MEDIAN_CEILING_FACTOR } from "../../src/core/constants";
+import { BASELINE_MIN_FACE_MS } from "../../src/core/baseline";
+import {
+  BASELINE_MEDIAN_CEILING_FACTOR,
+  BASELINE_MIN_SAMPLES,
+} from "../../src/core/constants";
+import { FACE_TIME_FRAME_CREDIT_MS } from "../../src/core/faceSeconds";
 import { percentile } from "../../src/core/statistics";
 
 // The clock is injected as always: timestamps are hand written, the
@@ -81,14 +86,15 @@ describe("baseline learning", () => {
   });
 
   it("needs 30 000 ms of clock, not 29 999, as a literal", () => {
-    // The sample floor is cleared first, at one sample a millisecond,
-    // so only the clock decides the last step. One millisecond short
-    // is still learning; the 30 000th is ready.
+    // Both other floors are cleared first — 200 samples at 40 ms
+    // steps is eight full seconds of credited face time, well past
+    // 10.12c's span — so only the clock decides the last step. One
+    // millisecond short is still learning; the 30 000th is ready.
     const learned = feed(
       startBaseline(0),
       0,
       Array.from({ length: 200 }, () => 7),
-      1,
+      40,
     );
     expect(learned.kind).toBe("learning");
     expect(baselineStep(learned, 29999, 7).kind).toBe("learning");
@@ -334,5 +340,45 @@ describe("learningSecondsLeft (remediation C1, the missing test)", () => {
     }
     expect(state.kind).toBe("ready");
     expect(learningSecondsLeft(state, 31_000)).toBeNull();
+  });
+});
+
+// Roadmap 10.12c, prediction committed first in docs/face-seconds.txt:
+// the floor demands a span of trusted-face TIME beside its tick count,
+// because the loop runs at the display's pace and past the camera's
+// rate a tick is a duplicate photograph, not more evidence.
+describe("the face-time floor, roadmap 10.12c", () => {
+  it("derives its span from the tick floor at the slowest legal rate", () => {
+    expect(BASELINE_MIN_FACE_MS).toBe(
+      BASELINE_MIN_SAMPLES * FACE_TIME_FRAME_CREDIT_MS,
+    );
+  });
+
+  it("a display outpacing the camera cannot fill the floor with duplicates", () => {
+    // The prediction's 120 Hz shape: 120 fed ticks in the first
+    // second — the OLD floor's 100 samples, satisfied by 0.83 s of
+    // face — then the face is gone for the rest of the window. The
+    // tick floor passes and the birth must still refuse to happen.
+    let state = startBaseline(0);
+    for (let i = 0; i < 120; i += 1) {
+      state = baselineStep(state, Math.round(i * 8.33), 7);
+    }
+    for (let t = 1000; t <= 31000; t += 100) {
+      state = baselineStep(state, t, null);
+    }
+    expect(state.kind).toBe("learning");
+  });
+
+  it("births once the face has actually been seen long enough", () => {
+    // The same session, but the face returns and is held: the floor
+    // fills at the pace of real face time and the ruler is born.
+    let state = startBaseline(0);
+    for (let i = 0; i < 120; i += 1) {
+      state = baselineStep(state, Math.round(i * 8.33), 7);
+    }
+    for (let t = 1000; t <= 31000; t += 40) {
+      state = baselineStep(state, t, 7);
+    }
+    expect(state.kind).toBe("ready");
   });
 });

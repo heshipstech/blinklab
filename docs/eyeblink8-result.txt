@@ -788,3 +788,22 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   `git show <that commit> -- package-lock.json`. Predicted delta:
   zero. The next corpus run scores this beside the two entries above
   and retires all three.
+
+DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+
+  Row 10.12c build: sample floors demand face-seconds, and duplicates cannot fill them
+
+  Two watched files moved, src/core/baseline.ts and
+  src/core/guidedCalibration.ts, by one kind of change in each: an
+  ADDED floor condition — a span of trusted-face time derived from
+  the existing tick floors at the slowest legal rate — beside floors
+  that all stay. A condition only added can refuse births it used to
+  allow; it cannot change any output it still allows. On the stepped
+  corpus the added floor binds nowhere, argued in the prediction
+  committed one commit earlier (docs/face-seconds.txt): every tick
+  is a distinct photograph, the clips run near 30 frames per second
+  so the credit cap never trims a gap, and every one of the eight
+  learning windows held a face far past the 4000 ms span, which is
+  how all eight baselines were born on the anchor run. Predicted
+  delta: byte-identical. The next corpus run scores this beside the
+  three entries above and retires all four.

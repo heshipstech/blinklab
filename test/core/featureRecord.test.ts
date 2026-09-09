@@ -37,6 +37,7 @@ const FULL: FeatureRecord = {
   blinkObservedFraction: 0.87,
   blinkCountingSuspended: false,
   irisOffsetVertical: 0.04,
+  faceSeconds: 58.4,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -70,6 +71,7 @@ const ALL_NULL: FeatureRecord = {
   blinkObservedFraction: null,
   blinkCountingSuspended: false,
   irisOffsetVertical: null,
+  faceSeconds: 0,
 };
 
 const NUMBER_KEYS = [

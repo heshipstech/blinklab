@@ -50,6 +50,7 @@ EXPECTED_COLUMNS = [
     "blinkObservedFraction",
     "blinkCountingSuspended",
     "irisOffsetVertical",
+    "faceSeconds",
 ]
 
 
