@@ -47,6 +47,9 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     shutLineSource: "none",
     sampledFps: null,
     inferenceMs: null,
+    blinkObservedFraction: 0.95,
+    blinkCountingSuspended: false,
+    irisOffsetVertical: 0.02,
     ...over,
   }));
 }

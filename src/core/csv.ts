@@ -57,6 +57,14 @@ export const CSV_COLUMNS = [
   // file written last month still loads.
   "sceneLum",
   "faceLum",
+  // Appended 9 September 2026 (roadmap 10.12b), trailing like every
+  // addition before them so older headers stay an exact prefix. The
+  // first says how much of the rate's window was observed, the
+  // second that counting was suspended, the third where the iris
+  // sat — the three facts that keep a quiet rate honest.
+  "blinkObservedFraction",
+  "blinkCountingSuspended",
+  "irisOffsetVertical",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

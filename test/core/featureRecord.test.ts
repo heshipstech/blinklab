@@ -34,6 +34,9 @@ const FULL: FeatureRecord = {
   inferenceMs: 12.5,
   sceneLum: 0.42,
   faceLum: 0.42,
+  blinkObservedFraction: 0.87,
+  blinkCountingSuspended: false,
+  irisOffsetVertical: 0.04,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -64,6 +67,9 @@ const ALL_NULL: FeatureRecord = {
   inferenceMs: null,
   sceneLum: null,
   faceLum: null,
+  blinkObservedFraction: null,
+  blinkCountingSuspended: false,
+  irisOffsetVertical: null,
 };
 
 const NUMBER_KEYS = [

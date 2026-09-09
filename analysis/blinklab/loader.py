@@ -47,6 +47,9 @@ COLUMNS: list[str] = [
     "inferenceMs",
     "sceneLum",
     "faceLum",
+    "blinkObservedFraction",
+    "blinkCountingSuspended",
+    "irisOffsetVertical",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -58,13 +61,23 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before roadmap 10.12b appended the observed fraction,
+# the suspension flag and the vertical iris offset (9 September
+# 2026). Every session recorded until then carries this header and
+# loads with all three unknown, which is the truth about those
+# files: they never wrote down how much of the rate's window was
+# observed, whether counting was suspended, or where the iris sat.
+PRE_RATE_FACTS_COLUMNS: list[str] = COLUMNS[:-3]
+
 # The header before sampledFps and inferenceMs were appended
 # (7 September 2026, roadmap 12.15). Those two say HOW a row was
 # measured — the evidence rate and what the face model cost — and
 # before them the first was session-level and the second was nowhere.
 # Every session recorded until then carries this header and loads with
-# both unknown, which is the truth about those files.
-PRE_LUMINANCE_COLUMNS: list[str] = COLUMNS[:-2]
+# both unknown, which is the truth about those files. Sliced from the
+# generation after it, per the rule below, so an append can never
+# silently re-cut it.
+PRE_LUMINANCE_COLUMNS: list[str] = PRE_RATE_FACTS_COLUMNS[:-2]
 """Files from before roadmap 12.16 appended sceneLum and faceLum.
 
 Sliced from COLUMNS because this is the generation immediately
@@ -115,6 +128,7 @@ LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_RATE_FACTS_COLUMNS,
     PRE_LUMINANCE_COLUMNS,
     PRE_MEASUREMENT_COLUMNS,
     PRE_LINE_COLUMNS,
@@ -122,7 +136,12 @@ ACCEPTED_GENERATIONS: list[list[str]] = [
     LEGACY_COLUMNS,
 ]
 
-BOOLEAN_COLUMNS = {"faceDetected", "fixating", "onScreen"}
+BOOLEAN_COLUMNS = {
+    "faceDetected",
+    "fixating",
+    "onScreen",
+    "blinkCountingSuspended",
+}
 
 
 class SessionError(ValueError):

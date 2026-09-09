@@ -47,6 +47,9 @@ EXPECTED_COLUMNS = [
     "inferenceMs",
     "sceneLum",
     "faceLum",
+    "blinkObservedFraction",
+    "blinkCountingSuspended",
+    "irisOffsetVertical",
 ]
 
 
