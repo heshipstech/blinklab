@@ -5,6 +5,7 @@ import { EYES_SHUT_FRACTION } from "../../src/core/longClosure";
 import {
   LINE_SOURCES,
   blinksWithheld,
+  learningWindowSentence,
   resolveBlinkLine,
   resolveShutLine,
   storedLineForSource,
@@ -187,5 +188,26 @@ describe("whether a stored line may be used at all", () => {
     expect(
       resolveBlinkLine(storedLineForSource(GUIDED, false), 3.9, false),
     ).toEqual({ mm: 3.9, source: "passive" });
+  });
+});
+
+describe("the learning window says what rules it", () => {
+  it("states the countdown and the fixed line in one sentence", () => {
+    // Roadmap 10.13b, amendment 23's keep-and-label ruling: the page's
+    // countdown used to imply nothing was being counted yet, while the
+    // reducer compared every measured aperture against the fixture
+    // constant and the export said `fixed` one row at a time.
+    expect(learningWindowSentence(17)).toBe(
+      "Learning your open eyes: 17 s left; until then blinks count against the fixed 4 mm line.",
+    );
+  });
+
+  it("prints the same constant the wiring falls back to", () => {
+    // Interpolated, not typed: a moved BLINK_APERTURE_THRESHOLD_MM
+    // must move this sentence, or the page would label the count with
+    // a line the reducer no longer holds.
+    expect(learningWindowSentence(1)).toContain(
+      `fixed ${String(BLINK_APERTURE_THRESHOLD_MM)} mm line`,
+    );
   });
 });

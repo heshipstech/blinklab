@@ -126,6 +126,27 @@ export function storedLineForSource(
 }
 
 /**
+ * The learning-window sentence, with its condition attached.
+ *
+ * Roadmap 10.13b, amendment 23's keep-and-label ruling. For the first
+ * ~30 seconds the passive baseline is still learning and the wiring
+ * hands the reducer BLINK_APERTURE_THRESHOLD_MM, a constant from one
+ * face — `resolveBlinkLine` above reports those frames as `fixed`.
+ * The count was already honest in the export, one row at a time; this
+ * sentence makes it honest on the page, where the countdown used to
+ * imply nothing was being counted yet.
+ *
+ * The constant is interpolated rather than typed so the sentence
+ * cannot drift from the line the reducer actually holds.
+ */
+export function learningWindowSentence(secondsLeft: number): string {
+  return (
+    `Learning your open eyes: ${String(secondsLeft)} s left; until then ` +
+    `blinks count against the fixed ${String(BLINK_APERTURE_THRESHOLD_MM)} mm line.`
+  );
+}
+
+/**
  * Whether this frame's blink numbers are withheld.
  *
  * One decision, in one place, for the four things that used to make it
