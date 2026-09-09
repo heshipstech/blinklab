@@ -3701,3 +3701,28 @@ a constant, a cached value, a previous session's ruler — the surface
 that narrates the period must name the fallback, because the export
 already does, and two surfaces disagreeing is how the last three
 audits started.
+
+## Search the code before adding to it, the ledger lesson one layer down
+
+Row 10.12b wanted the vertical iris offset exported, and a fresh
+module was written for it: corners as the reference, the iris chord
+as the ruler, five tests, bend-verified green. It was correct, and
+it was a duplicate. `src/core/gazeOffset.ts` had computed a vertical
+iris offset all along — projected onto the eye's own corner axis, so
+head roll rotates signal and ruler together, which is strictly
+better than the fresh module's screen-vertical read — and the page
+had been printing it on every frame. The wiring even held the mean
+of both eyes in a variable one scope above where the new column
+needed it.
+
+The duplicate was caught before it shipped, by reading the wiring
+site rather than trusting the module search that had come up empty:
+the search was for "irisOffset" as a concept in geometry.ts and
+landmarks.ts, and the existing signal lived under gaze, filed by
+PURPOSE rather than by anatomy. Twelve hours earlier row 10.18
+duplicated row 10.13b in the roadmap and the lesson was "search the
+table before adding to it". This is the same lesson one layer down,
+with the same sharpening: search by what the thing MEASURES and by
+where it would be USED, not only by what you would have named it —
+the consumer site knows about every existing producer, and reading
+it first would have found the signal before the module was written.
