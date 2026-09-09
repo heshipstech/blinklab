@@ -1,0 +1,80 @@
+SAMPLE FLOORS COUNT FACE-SECONDS, NOT TICKS, AND A PREDICTION
+=============================================================
+
+Written 9 September 2026, before the change is made, in the
+predict-then-verify discipline. Roadmap row 10.12c, brief A20.
+
+WHAT THE DEFECT IS
+------------------
+The baseline floor demands 100 samples and each guided calibration
+phase demands 30, and a sample is a TICK: one pass of the processing
+loop that was fed an aperture. The loop runs at the display's pace,
+not the camera's, and past the camera's rate it re-reads the same
+photograph — the 24 August correction to the sample-rate warning
+established that an M5 Max processing 120 frames per second on a
+30 fps camera reads 30 distinct photographs and 90 duplicates. So on
+a 120 Hz display, 100 ticks can span 0.83 seconds of actual face
+time, and a guided phase's 30 ticks a quarter of a second: floors
+meant to demand a second of held evidence are satisfied by
+duplicates of a handful of photographs.
+
+WHAT THE CHANGE WOULD BE
+------------------------
+Both floors additionally require a minimum span of TRUSTED-FACE
+TIME, counted the way roadmap 10.12b's rate counts observation: each
+fed frame credits the gap to the previous fed frame, capped at one
+frame interval at the slowest measurable rate (1000 /
+MIN_BLINK_FPS = 40 ms). The floors are DERIVED from the existing
+ones rather than chosen: the baseline's 100 samples at the slowest
+legal rate is 4000 ms of face time, and a guided phase's 30 samples
+is 1200 ms. The tick floors stay — the change only ADDS a
+condition, so nothing that fails today can start passing.
+
+Face-seconds become visible: shown on the page while the floors are
+filling, and exported per row as a trailing column, so a session
+whose floors were starved of face time says so in its own record.
+
+THE PREDICTION
+--------------
+On the stepped corpus, byte-identical output. Three reasons, each
+checkable: a clip is stepped frame by frame, so every tick is a
+DISTINCT photograph and deliveredCount does not exist there; the
+clips run near 30 frames per second, so inter-frame gaps of ~33 ms
+sit under the 40 ms credit cap and face-seconds accumulate at the
+pace of elapsed face time; and every one of the eight clips birthed
+its baseline on the anchor run, so each learning window held a face
+for far longer than 4000 ms. A floor that is satisfied everywhere
+the old floor was satisfied changes no output.
+
+Face-seconds equal elapsed seconds on every corpus clip whose face
+is never lost inside the window measured. The corpus-wide record
+allows few exceptions: the awake autopsy counted exactly 4
+no-trusted-face miss spans across all eight clips
+(docs/miss-character.txt), so at most a handful of seconds can
+differ anywhere. The per-clip traces live on the owner's machine,
+so WHICH clips differ is named when the next run computes the
+column, and the scoring of this prediction includes that naming.
+
+A 120 Hz display no longer satisfies the floor on 25 photographs:
+25 distinct photographs credit at most 25 x 40 = 1000 ms, under the
+guided phase's 1200 ms, however many duplicate ticks the display
+adds — the row's own synthetic, and a test verbatim. The baseline
+floor likewise stops accepting 100 duplicate-fed ticks that span
+less than 4000 ms of face time.
+
+WHAT WOULD REFUTE THIS
+----------------------
+  If any committed Eyeblink8 number, any exported corpus byte, or
+  any baseline birth certificate moves on the next run, the "only
+  adds a condition" claim is false and the added floor is binding
+  somewhere this document argued it could not.
+
+  If a clip's face-seconds differ from its elapsed seconds by more
+  than its recorded no-trusted-face spans explain, the credit rule
+  is dropping time it witnessed or crediting time it did not.
+
+  If the 25-photograph synthetic passes either floor, the credit
+  cap is not doing what the sample-rate record says it must.
+
+This prediction is not edited after the fact; the outcome becomes a
+new dated section below it.
