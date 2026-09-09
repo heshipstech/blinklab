@@ -118,6 +118,11 @@ export type FeatureRecord = {
   // drowsy kind; in the aperture alone the two are the same number.
   // Null with no trusted face.
   irisOffsetVertical: number | null;
+  // Roadmap 10.12c. How long a trusted face has actually been seen
+  // this session, in seconds, under the same duplicate-proof credit
+  // the sample floors read (src/core/faceSeconds.ts). Zero at the
+  // start rather than null: no face seen yet is a measured amount.
+  faceSeconds: number;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -220,6 +225,9 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     fractionOrNull(record.blinkObservedFraction) &&
     typeof record.blinkCountingSuspended === "boolean" &&
     numberOrNull(record.irisOffsetVertical) &&
+    typeof record.faceSeconds === "number" &&
+    Number.isFinite(record.faceSeconds) &&
+    record.faceSeconds >= 0 &&
     fractionOrNull(record.sceneLum) &&
     fractionOrNull(record.faceLum)
   );

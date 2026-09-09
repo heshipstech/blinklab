@@ -50,6 +50,7 @@ COLUMNS: list[str] = [
     "blinkObservedFraction",
     "blinkCountingSuspended",
     "irisOffsetVertical",
+    "faceSeconds",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -61,13 +62,19 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before roadmap 10.12c appended faceSeconds (9 September
+# 2026, later the same day): sessions recorded until then load with
+# the face time unknown, which is the truth about them.
+PRE_FACE_SECONDS_COLUMNS: list[str] = COLUMNS[:-1]
+
 # The header before roadmap 10.12b appended the observed fraction,
 # the suspension flag and the vertical iris offset (9 September
 # 2026). Every session recorded until then carries this header and
 # loads with all three unknown, which is the truth about those
 # files: they never wrote down how much of the rate's window was
 # observed, whether counting was suspended, or where the iris sat.
-PRE_RATE_FACTS_COLUMNS: list[str] = COLUMNS[:-3]
+# Sliced from the generation after it, per the rule below.
+PRE_RATE_FACTS_COLUMNS: list[str] = PRE_FACE_SECONDS_COLUMNS[:-3]
 
 # The header before sampledFps and inferenceMs were appended
 # (7 September 2026, roadmap 12.15). Those two say HOW a row was
@@ -128,6 +135,7 @@ LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_FACE_SECONDS_COLUMNS,
     PRE_RATE_FACTS_COLUMNS,
     PRE_LUMINANCE_COLUMNS,
     PRE_MEASUREMENT_COLUMNS,

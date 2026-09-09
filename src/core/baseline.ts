@@ -7,6 +7,26 @@ import {
   BASELINE_MIN_SAMPLES,
   BASELINE_THRESHOLD_FRACTION,
 } from "./constants";
+import {
+  FACE_TIME_FRAME_CREDIT_MS,
+  initialFaceTime,
+  tickFaceTime,
+  type FaceTimeState,
+} from "./faceSeconds";
+
+// Roadmap 10.12c, prediction first in docs/face-seconds.txt. The
+// sample floor counts TICKS of the processing loop, and the loop runs
+// at the display's pace: past the camera's rate a tick re-reads the
+// same photograph, so on a 120 Hz display 100 "samples" can span 0.83
+// seconds of actual face time. The birth therefore also demands a
+// span of trusted-face TIME, derived from the tick floor at the
+// slowest legal rate rather than chosen — the same evidence the tick
+// floor always meant to demand, restated in units a duplicate cannot
+// counterfeit. The tick floor stays: this only adds a condition, so
+// nothing that fails today can start passing, which is what makes the
+// stepped corpus byte-identical by argument rather than by luck.
+export const BASELINE_MIN_FACE_MS =
+  BASELINE_MIN_SAMPLES * FACE_TIME_FRAME_CREDIT_MS;
 
 // The personal baseline: what does OPEN mean for this person's eyes.
 // Learned over thirty seconds, then FROZEN, like any instrument that
@@ -30,7 +50,14 @@ import {
 // factor is the validation plan's own pre-registered implausibility
 // line.
 export type BaselineState =
-  | { kind: "learning"; startedAtMs: number; samples: number[] }
+  | {
+      kind: "learning";
+      startedAtMs: number;
+      samples: number[];
+      // How long a trusted face has actually been seen, credited per
+      // fed frame through faceSeconds.ts (roadmap 10.12c).
+      faceTime: FaceTimeState;
+    }
   // The ruler travels with its birth certificate. One value, one
   // account: `window.baselineMm` and `baselineMm` are the same number
   // by construction, and a test holds them together, so the export
@@ -53,7 +80,12 @@ export const CALIBRATION_REFUSED_SENTENCE =
   "Calibration was refused: while learning your baseline, the widest eye openings disagreed with the middle ones by more than the instrument allows, which usually means blinks or a squint contaminated the learning period. Numbers that depend on the blink line are withheld rather than guessed. Restart the camera and keep your eyes comfortably open for the first thirty seconds.";
 
 export function startBaseline(nowMs: number): BaselineState {
-  return { kind: "learning", startedAtMs: nowMs, samples: [] };
+  return {
+    kind: "learning",
+    startedAtMs: nowMs,
+    samples: [],
+    faceTime: initialFaceTime,
+  };
 }
 
 export function baselineStep(
@@ -70,10 +102,12 @@ export function baselineStep(
   if (state.kind === "learning") {
     const samples =
       apertureMm === null ? state.samples : [...state.samples, apertureMm];
+    const faceTime = tickFaceTime(state.faceTime, nowMs, apertureMm !== null);
     const elapsed = nowMs - state.startedAtMs;
     if (
       elapsed >= BASELINE_LEARN_MS &&
-      samples.length >= BASELINE_MIN_SAMPLES
+      samples.length >= BASELINE_MIN_SAMPLES &&
+      faceTime.faceMs >= BASELINE_MIN_FACE_MS
     ) {
       const window = describeCalibrationWindow(samples);
       if (window !== null) {
@@ -82,7 +116,7 @@ export function baselineStep(
           : { kind: "ready", baselineMm: window.baselineMm, window };
       }
     }
-    return { ...state, samples };
+    return { ...state, samples, faceTime };
   }
 
   // Ready means frozen, and refused means frozen too. No sample

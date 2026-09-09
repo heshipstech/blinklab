@@ -50,6 +50,7 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     blinkObservedFraction: 0.95,
     blinkCountingSuspended: false,
     irisOffsetVertical: 0.02,
+    faceSeconds: 42,
     ...over,
   }));
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { initialFaceTime } from "../../src/core/faceSeconds";
+
 import { CALIBRATION_REFUSED_SENTENCE } from "../../src/core/baseline";
 import {
   assessSession,
@@ -84,7 +86,12 @@ describe("the session verdict", () => {
 
   it("a never-frozen window is unknown, not ok and not refused", () => {
     const inputs = good();
-    inputs.calibration = { kind: "learning", startedAtMs: 0, samples: [] };
+    inputs.calibration = {
+      kind: "learning",
+      startedAtMs: 0,
+      samples: [],
+      faceTime: initialFaceTime,
+    };
     expect(surface(inputs, "calibration").status).toBe("unknown");
     const absent = good();
     absent.calibration = null;

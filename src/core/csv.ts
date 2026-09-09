@@ -65,6 +65,10 @@ export const CSV_COLUMNS = [
   "blinkObservedFraction",
   "blinkCountingSuspended",
   "irisOffsetVertical",
+  // Appended 9 September 2026 (roadmap 10.12c), trailing again: how
+  // long a trusted face was actually seen, in the same units the
+  // sample floors demand.
+  "faceSeconds",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

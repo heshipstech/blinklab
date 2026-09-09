@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   GUIDED_CALIBRATION_PHASE_MS,
+  GUIDED_MIN_FACE_MS_PER_PHASE,
   collectCalibrationSample,
   effectiveBlinkLineMm,
   emptyGuidedCalibration,
@@ -14,6 +15,8 @@ import {
   type GuidedCalibrationSamples,
   type StoredBlinkCalibration,
 } from "../../src/core/guidedCalibration";
+import { GUIDED_CALIBRATION_MIN_SAMPLES } from "../../src/core/constants";
+import { FACE_TIME_FRAME_CREDIT_MS } from "../../src/core/faceSeconds";
 import { aStoredLine } from "../support/storedLine";
 
 // The guided blink-line calibration measures a person's OWN open and
@@ -35,6 +38,14 @@ function samples(open: number[], closed: number[]): GuidedCalibrationSamples {
   return { open, closed };
 }
 
+// Generous face time on both phases, so the pre-10.12c tests keep
+// deciding on the clause each was written for.
+const HELD_MS = 3000;
+
+function resolveHeld(s: GuidedCalibrationSamples) {
+  return resolveGuidedCalibration(s, HELD_MS, HELD_MS);
+}
+
 describe("collectCalibrationSample", () => {
   it("routes a trusted reading to the phase in progress", () => {
     let s = emptyGuidedCalibration;
@@ -54,9 +65,7 @@ describe("collectCalibrationSample", () => {
 
 describe("resolveGuidedCalibration, ready", () => {
   it("places the personal line at the midpoint of open and closed", () => {
-    const result = resolveGuidedCalibration(
-      samples(repeat(8, ENOUGH), repeat(2, ENOUGH)),
-    );
+    const result = resolveHeld(samples(repeat(8, ENOUGH), repeat(2, ENOUGH)));
     expect(result.kind).toBe("ready");
     if (result.kind === "ready") {
       expect(result.openMedianMm).toBe(8);
@@ -73,37 +82,33 @@ describe("resolveGuidedCalibration, refusals", () => {
   // per phase, one second at 30 fps, chosen before any guided data
   // was read and never tuned against it.
   it("refuses at 29 samples and resolves at 30, as literals", () => {
-    expect(
-      resolveGuidedCalibration(samples(repeat(8, 29), repeat(2, 30))),
-    ).toEqual({ kind: "refused", reason: "not-enough-open" });
-    expect(
-      resolveGuidedCalibration(samples(repeat(8, 30), repeat(2, 29))),
-    ).toEqual({ kind: "refused", reason: "not-enough-closed" });
-    expect(
-      resolveGuidedCalibration(samples(repeat(8, 30), repeat(2, 30))).kind,
-    ).toBe("ready");
+    expect(resolveHeld(samples(repeat(8, 29), repeat(2, 30)))).toEqual({
+      kind: "refused",
+      reason: "not-enough-open",
+    });
+    expect(resolveHeld(samples(repeat(8, 30), repeat(2, 29)))).toEqual({
+      kind: "refused",
+      reason: "not-enough-closed",
+    });
+    expect(resolveHeld(samples(repeat(8, 30), repeat(2, 30))).kind).toBe(
+      "ready",
+    );
   });
 
   it("refuses when the open phase has too few samples", () => {
-    const result = resolveGuidedCalibration(
-      samples(repeat(8, 5), repeat(2, ENOUGH)),
-    );
+    const result = resolveHeld(samples(repeat(8, 5), repeat(2, ENOUGH)));
     expect(result).toEqual({ kind: "refused", reason: "not-enough-open" });
   });
 
   it("refuses when the closed phase has too few samples", () => {
-    const result = resolveGuidedCalibration(
-      samples(repeat(8, ENOUGH), repeat(2, 5)),
-    );
+    const result = resolveHeld(samples(repeat(8, ENOUGH), repeat(2, 5)));
     expect(result).toEqual({ kind: "refused", reason: "not-enough-closed" });
   });
 
   it("refuses when the closure was not registered, the ceiling's echo", () => {
     // Closed median 7 against open 8 is only 12% below: the instrument
     // did not see this person's closure, so no line can be drawn.
-    const result = resolveGuidedCalibration(
-      samples(repeat(8, ENOUGH), repeat(7, ENOUGH)),
-    );
+    const result = resolveHeld(samples(repeat(8, ENOUGH), repeat(7, ENOUGH)));
     expect(result).toEqual({
       kind: "refused",
       reason: "closure-not-registered",
@@ -113,11 +118,9 @@ describe("resolveGuidedCalibration, refusals", () => {
   it("accepts a closure exactly at the separation boundary", () => {
     // The separation floor is 30%: a closed median at exactly 70% of
     // open is accepted, one hair above it is refused.
-    const ready = resolveGuidedCalibration(
-      samples(repeat(10, ENOUGH), repeat(7, ENOUGH)),
-    );
+    const ready = resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)));
     expect(ready.kind).toBe("ready");
-    const refused = resolveGuidedCalibration(
+    const refused = resolveHeld(
       samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH)),
     );
     expect(refused.kind).toBe("refused");
@@ -309,5 +312,85 @@ describe("effectiveBlinkLineMm, which line the detector reads", () => {
 
   it("returns null when neither a calibration nor a baseline line exists", () => {
     expect(effectiveBlinkLineMm(null, null)).toBeNull();
+  });
+});
+
+// Roadmap 10.12c, prediction first in docs/face-seconds.txt: each
+// phase floor also demands a span of trusted-face TIME, because a
+// display outpacing the camera fills the tick floor with duplicate
+// photographs.
+describe("the guided face-time floors, roadmap 10.12c", () => {
+  it("derives the per-phase span from the tick floor", () => {
+    expect(GUIDED_MIN_FACE_MS_PER_PHASE).toBe(
+      GUIDED_CALIBRATION_MIN_SAMPLES * FACE_TIME_FRAME_CREDIT_MS,
+    );
+  });
+
+  it("refuses a phase filled by duplicates of 25 photographs", () => {
+    // The row's synthetic, verbatim: 25 distinct photographs credit
+    // at most 1000 ms however many duplicate ticks a 120 Hz display
+    // adds, and 1000 ms is under the 1200 ms floor.
+    const starved = 25 * FACE_TIME_FRAME_CREDIT_MS;
+    expect(
+      resolveGuidedCalibration(
+        samples(repeat(8, 120), repeat(2, 40)),
+        starved,
+        HELD_MS,
+      ),
+    ).toEqual({ kind: "refused", reason: "not-enough-open" });
+    expect(
+      resolveGuidedCalibration(
+        samples(repeat(8, 40), repeat(2, 120)),
+        HELD_MS,
+        starved,
+      ),
+    ).toEqual({ kind: "refused", reason: "not-enough-closed" });
+  });
+
+  it("runs the boundary trio on the per-phase span", () => {
+    const at = GUIDED_MIN_FACE_MS_PER_PHASE;
+    const under = resolveGuidedCalibration(
+      samples(repeat(8, 40), repeat(2, 40)),
+      at - 1,
+      HELD_MS,
+    );
+    expect(under.kind).toBe("refused");
+    expect(
+      resolveGuidedCalibration(
+        samples(repeat(8, 40), repeat(2, 40)),
+        at,
+        HELD_MS,
+      ).kind,
+    ).toBe("ready");
+  });
+
+  it("a session whose phases are starved of face refuses end to end", () => {
+    // Driven through the session step at the 120 Hz duplicate pace:
+    // a quarter second of fed frames per three-second phase.
+    let session = startCalibrationSession(0);
+    for (let t = 0; t <= 3000; t += 8) {
+      session = calibrationSessionStep(session, t, t <= 250 ? 8 : null);
+    }
+    for (let t = 3008; t <= 6008; t += 8) {
+      session = calibrationSessionStep(session, t, t <= 3258 ? 2 : null);
+    }
+    expect(session.kind).toBe("done");
+    if (session.kind === "done") {
+      expect(session.result.kind).toBe("refused");
+    }
+  });
+
+  it("a genuinely held session still resolves, at any display pace", () => {
+    let session = startCalibrationSession(0);
+    for (let t = 0; t <= 3000; t += 8) {
+      session = calibrationSessionStep(session, t, 8);
+    }
+    for (let t = 3008; t <= 6008; t += 8) {
+      session = calibrationSessionStep(session, t, 2);
+    }
+    expect(session.kind).toBe("done");
+    if (session.kind === "done") {
+      expect(session.result.kind).toBe("ready");
+    }
   });
 });

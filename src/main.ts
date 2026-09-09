@@ -38,6 +38,7 @@ import {
   pupilDiameterMm,
 } from "./core/pupil";
 import {
+  BASELINE_MIN_FACE_MS,
   CALIBRATION_REFUSED_SENTENCE,
   baselineStep,
   learningSecondsLeft,
@@ -46,6 +47,11 @@ import {
   type BaselineState,
 } from "./core/baseline";
 import { blinkStep, initialBlinkState } from "./core/blink";
+import {
+  initialFaceTime,
+  tickFaceTime,
+  type FaceTimeState,
+} from "./core/faceSeconds";
 import {
   countingSuspended,
   gatedBlinkRatePerMin,
@@ -1121,6 +1127,7 @@ function resetSession(): void {
   baselineState = null;
   rulerFitState = initialRulerFitState;
   rateState = null;
+  sessionFaceTime = initialFaceTime;
   blinkEvents = [];
   sessionStartMs = null;
   gazeSmoothing = null;
@@ -2423,6 +2430,9 @@ let baselineState: BaselineState | null = null;
 const rulerFitLabel = document.createElement("p");
 let rulerFitState = initialRulerFitState;
 let rateState: BlinkRateState | null = null;
+// Session-cumulative trusted-face time (roadmap 10.12c): the same
+// credit rule the floors read, exported per row as faceSeconds.
+let sessionFaceTime: FaceTimeState = initialFaceTime;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
@@ -3929,10 +3939,13 @@ function processFrame(
             0,
             Math.ceil((GUIDED_CALIBRATION_PHASE_MS - heldMs) / 1000),
           );
+          const phaseFaceS = (
+            blinkCalibrationSession.faceTime.faceMs / 1000
+          ).toFixed(1);
           blinkCalibrationProgress.textContent =
             phase === "open"
-              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
-              : `Step 2 of 2 · ${String(secondsLeft)} s left.`;
+              ? `Step 1 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
+              : `Step 2 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s.`;
         }
       }
 
@@ -3993,8 +4006,14 @@ function processFrame(
               ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
               : // Roadmap 10.13b: this branch is exactly the window where
                 // the reducer compares against the fixture constant, so
-                // the countdown carries that condition with it.
-                learningWindowSentence(secondsLeft ?? 0),
+                // the countdown carries that condition with it. 10.12c
+                // adds what the birth is actually waiting on: face
+                // time, which duplicates cannot counterfeit.
+                `${learningWindowSentence(secondsLeft ?? 0)} Face seen ${(
+                  (baselineState.kind === "learning"
+                    ? baselineState.faceTime.faceMs
+                    : 0) / 1000
+                ).toFixed(0)} of ${String(BASELINE_MIN_FACE_MS / 1000)} s.`,
       );
 
       const blinkCountBefore = blinkState.blinkCount;
@@ -4045,6 +4064,11 @@ function processFrame(
       // The rate's denominator is observed time, so every frame says
       // whether it fed the detector an aperture. Roadmap 10.12b.
       rateState = observeFrame(rateState, nowMs, fedApertureMm !== null);
+      sessionFaceTime = tickFaceTime(
+        sessionFaceTime,
+        nowMs,
+        fedApertureMm !== null,
+      );
       if (wasOpen && blinkState.eye === "closed") {
         closureStartFrame = currentFrameIndex;
       }
@@ -4354,6 +4378,7 @@ function processFrame(
             // honest — how much of the window was observed, whether
             // counting was suspended, and where the iris sat.
             blinkObservedFraction: observedFraction(rateState, nowMs),
+            faceSeconds: sessionFaceTime.faceMs / 1000,
             blinkCountingSuspended: countingSuspended(blinkState, nowMs),
             irisOffsetVertical: frameMeanOffset?.vertical ?? null,
           }),

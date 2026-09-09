@@ -48,6 +48,7 @@ export type FeatureRecord = {
   blinkObservedFraction: number | null; // how much of the rate's rolling window was actually fed an aperture, 0 to 1: blinkRatePerMin divides by observed time rather than the wall clock, and this says how much of the window that was (roadmap 10.12b)
   blinkCountingSuspended: boolean; // whether a blink this frame would not have been counted: the eye closed past the blink maximum, or the re-arm gate down because the eye never rose clearly above the line (roadmap 10.12b)
   irisOffsetVertical: number | null; // where the iris sits vertically in its eye, in eye widths, positive downward, mean of both eyes: separates downgaze droop from the drowsy kind, which the aperture alone cannot (roadmap 10.12b)
+  faceSeconds: number; // how long a trusted face has actually been seen this session, in seconds, under the duplicate-proof credit the sample floors read: each fed frame credits at most one frame interval at the slowest measurable rate (roadmap 10.12c)
 };
 ```
 

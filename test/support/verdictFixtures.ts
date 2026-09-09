@@ -1,3 +1,4 @@
+import { initialFaceTime } from "../../src/core/faceSeconds";
 import type { CalibrationWindow } from "../../src/core/calibrationWindow";
 import { serializeRecords } from "../../src/core/csv";
 import type { DeliveryRates } from "../../src/core/deliveryRate";
@@ -137,6 +138,7 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     blinkObservedFraction: null,
     blinkCountingSuspended: false,
     irisOffsetVertical: null,
+    faceSeconds: 0,
   }));
 }
 
@@ -241,7 +243,12 @@ function calibrationState(
     // No window froze, so the page is still learning. No fixture takes
     // this branch today; it is here because the type has it and a
     // fixture that added it must not have to invent the shape.
-    return { kind: "learning", startedAtMs: 0, samples: [] };
+    return {
+      kind: "learning",
+      startedAtMs: 0,
+      samples: [],
+      faceTime: initialFaceTime,
+    };
   }
   if (session.calibrationRefused) {
     return { kind: "refused", window: session.calibration };

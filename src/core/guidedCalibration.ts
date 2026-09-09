@@ -3,7 +3,22 @@ import {
   GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION,
   GUIDED_CALIBRATION_PHASE_MS,
 } from "./constants";
+import {
+  FACE_TIME_FRAME_CREDIT_MS,
+  initialFaceTime,
+  tickFaceTime,
+  type FaceTimeState,
+} from "./faceSeconds";
 import { percentile } from "./statistics";
+
+// Roadmap 10.12c, prediction first in docs/face-seconds.txt. A phase
+// floor counted TICKS, and the loop ticks at the display's pace: on a
+// 120 Hz display 30 "samples" can be duplicates of a quarter second
+// of face. Each phase therefore also demands a span of trusted-face
+// TIME, derived from the tick floor at the slowest legal rate rather
+// than chosen. The tick floor stays — this only adds a condition.
+export const GUIDED_MIN_FACE_MS_PER_PHASE =
+  GUIDED_CALIBRATION_MIN_SAMPLES * FACE_TIME_FRAME_CREDIT_MS;
 
 export { GUIDED_CALIBRATION_PHASE_MS };
 
@@ -89,11 +104,19 @@ export function collectCalibrationSample(
  */
 export function resolveGuidedCalibration(
   samples: GuidedCalibrationSamples,
+  openFaceMs: number,
+  closedFaceMs: number,
 ): GuidedCalibrationResult {
-  if (samples.open.length < GUIDED_CALIBRATION_MIN_SAMPLES) {
+  if (
+    samples.open.length < GUIDED_CALIBRATION_MIN_SAMPLES ||
+    openFaceMs < GUIDED_MIN_FACE_MS_PER_PHASE
+  ) {
     return { kind: "refused", reason: "not-enough-open" };
   }
-  if (samples.closed.length < GUIDED_CALIBRATION_MIN_SAMPLES) {
+  if (
+    samples.closed.length < GUIDED_CALIBRATION_MIN_SAMPLES ||
+    closedFaceMs < GUIDED_MIN_FACE_MS_PER_PHASE
+  ) {
     return { kind: "refused", reason: "not-enough-closed" };
   }
   const openMedianMm = percentile(samples.open, 50);
@@ -292,6 +315,10 @@ export type CalibrationSessionState =
       phase: CalibrationPhase;
       startedAtMs: number;
       samples: GuidedCalibrationSamples;
+      // The current phase's trusted-face time (roadmap 10.12c), and
+      // the open phase's total, banked when the phase turns.
+      faceTime: FaceTimeState;
+      openFaceMs: number;
     }
   | { kind: "done"; result: GuidedCalibrationResult };
 
@@ -303,6 +330,8 @@ export function startCalibrationSession(
     phase: "open",
     startedAtMs: nowMs,
     samples: emptyGuidedCalibration,
+    faceTime: initialFaceTime,
+    openFaceMs: 0,
   };
 }
 
@@ -325,11 +354,28 @@ export function calibrationSessionStep(
     state.phase,
     apertureMm,
   );
+  const faceTime = tickFaceTime(state.faceTime, nowMs, apertureMm !== null);
   if (nowMs - state.startedAtMs < GUIDED_CALIBRATION_PHASE_MS) {
-    return { ...state, samples };
+    return { ...state, samples, faceTime };
   }
   if (state.phase === "open") {
-    return { kind: "collecting", phase: "closed", startedAtMs: nowMs, samples };
+    // The open phase's face time is banked and the clock starts
+    // fresh: each phase's evidence stands alone.
+    return {
+      kind: "collecting",
+      phase: "closed",
+      startedAtMs: nowMs,
+      samples,
+      faceTime: initialFaceTime,
+      openFaceMs: faceTime.faceMs,
+    };
   }
-  return { kind: "done", result: resolveGuidedCalibration(samples) };
+  return {
+    kind: "done",
+    result: resolveGuidedCalibration(
+      samples,
+      state.openFaceMs,
+      faceTime.faceMs,
+    ),
+  };
 }
