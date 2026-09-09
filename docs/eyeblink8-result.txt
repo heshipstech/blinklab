@@ -772,3 +772,19 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   with no executable change has no mechanism by which to move a
   number. Predicted delta: zero, on every clip. The next corpus run
   scores this beside the lockfile entry above and retires both.
+
+DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+
+  chore(deps): bump vitest to 4.1.11 (lockfile declared)
+
+  One watched file, package-lock.json, moved by one development
+  dependency: vitest 4.1.10 to 4.1.11, the unit-test runner and its
+  own sub-packages. The runner never executes in the built page or
+  anywhere on the measurement path — it is the instrument that checks
+  the code, not the instrument that measures the corpus — and the two
+  pinned instruments the model card reads out of this same lockfile,
+  @mediapipe/tasks-vision 1.0.1 with its integrity hash and
+  @playwright/test 1.62.1, are untouched in the diff, checkable with
+  `git show <that commit> -- package-lock.json`. Predicted delta:
+  zero. The next corpus run scores this beside the two entries above
+  and retires all three.
