@@ -3726,3 +3726,30 @@ with the same sharpening: search by what the thing MEASURES and by
 where it would be USED, not only by what you would have named it —
 the consumer site knows about every existing producer, and reading
 it first would have found the signal before the module was written.
+
+## A test found by mutation can pin the mechanism instead of the intent
+
+The gap tests at longClosure.test.ts:291-307 were created by a
+mutation run before a pull request: the mutation killed the code
+that let a second long closure count after a gap, and a test was
+written so it could never be killed silently again. The test did
+its job — and it pinned the WRONG THING. What the mutation run
+proved was that second closures must be countable. What the test
+asserted was that a 100 ms lost-face flicker mints one: it demanded
+count 2 after a gap inside a single physical droop, which is
+precisely the defect row 10.11 existed to fix. For three weeks the
+defect had a green test protecting it, indistinguishable in a test
+listing from the pins that protect intended behaviour.
+
+The repair kept the intent and freed the mechanism: the re-pinned
+test still ends in a second event — after a REAL reopen, seen
+clearly above the line — so the property the mutation run
+established is still held; only the accidental route to it is gone.
+
+The habit worth taking: a test written to kill a mutant asserts
+whatever behaviour the code happened to have on the day the mutant
+died, and that is not the same as the behaviour the project means.
+When a mutation run demands a new test, write the assertion from
+the physical claim ("a genuinely new closure earns its own event"),
+never from the trace that happened to kill the mutant — the trace
+encodes the current mechanism, defects included.

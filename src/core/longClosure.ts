@@ -1,4 +1,7 @@
-import { MAX_BLINK_DURATION_MS } from "./constants";
+import {
+  APERTURE_HYSTERESIS_FRACTION,
+  MAX_BLINK_DURATION_MS,
+} from "./constants";
 
 // The long closure detector, the event 4.7 promised. A closure that
 // outstays a blink is a different phenomenon: not a flick of the
@@ -38,9 +41,36 @@ export function longClosureThresholdMm(baselineMm: number): number {
   return EYES_SHUT_FRACTION * baselineMm;
 }
 
+// Roadmap 10.11, briefs A7 and A19, prediction committed first in
+// docs/long-closure-hysteresis.txt. Two rules join the state machine,
+// both blink.ts's own patterns aliased rather than copied, and both
+// HYSTERESIS rather than filtering: no aperture sample is altered or
+// discarded, the rules only decide whether a crossing ARMS an event.
+//
+// The re-arm gate: an eyelid hovering AT the shut line crosses it
+// with every wobble of noise, and each crossing used to mint another
+// countable closure — the dry run's iPhone rows sat in a 2.79 to
+// 3.01 mm band against a 3.04 mm line and one sustained droop
+// counted three times. Now a closure fires only while the gate is
+// open, the gate closes on a fire, and it reopens only when the eye
+// is seen CLEARLY open: above the line by the same noise-floor-
+// derived fraction blink.ts arms with.
+export const LONG_CLOSURE_REARM_FRACTION = APERTURE_HYSTERESIS_FRACTION;
+
+// The bounded gap: a single untrusted frame used to abandon the whole
+// cycle, so a one-frame face flicker split a six-second closure in
+// two. Closure state now survives an untrusted run up to this bound,
+// aliased to the blink maximum: a gap long enough to hide a complete
+// blink-sized reopen is long enough to hide the closure's end, so
+// beyond it the cycle is honestly abandoned — and abandoned with the
+// gate CLOSED, because closed frames after a long gap may be a droop
+// that never ended, and firing there would count it twice.
+export const LONG_CLOSURE_MAX_GAP_MS = MAX_BLINK_DURATION_MS;
+
 export type LongClosureState = {
   eye: "open" | "closed" | "unknown";
-  // When the current closure began, meaningful only while closed.
+  // When the current closure began. Kept across a bounded untrusted
+  // run, so it is meaningful while closed AND during such a run.
   closedAtMs: number | null;
   // True once the current closure has fired its event: one closure,
   // one count, however long it holds.
@@ -48,6 +78,13 @@ export type LongClosureState = {
   count: number;
   // The full closed span of the most recent completed long closure.
   lastLongClosureDurationMs: number | null;
+  // Whether the eye has been seen clearly open — above the shut line
+  // by LONG_CLOSURE_REARM_FRACTION — since the last fired closure or
+  // the last over-bound untrusted run. True at the start: the first
+  // closure needs no prior reopening evidence, blink.ts's own rule.
+  rearmed: boolean;
+  // When the current untrusted run began, or null outside one.
+  unknownSinceMs: number | null;
 };
 
 export const initialLongClosureState: LongClosureState = {
@@ -56,6 +93,8 @@ export const initialLongClosureState: LongClosureState = {
   firedForCurrentClosure: false,
   count: 0,
   lastLongClosureDurationMs: null,
+  rearmed: true,
+  unknownSinceMs: null,
 };
 
 export function longClosureStep(
@@ -67,52 +106,79 @@ export function longClosureStep(
   // Backwards clock: ignored, state unchanged. Same contract as
   // blink.ts, same reason: a reopen stamped earlier than the close
   // measured a negative closure. Issue #107, remediation C3.
-  if (state.closedAtMs !== null && nowMs < state.closedAtMs) {
+  if (
+    nowMs < (state.closedAtMs ?? nowMs) ||
+    nowMs < (state.unknownSinceMs ?? nowMs)
+  ) {
     return state;
   }
-  // An invalid frame abandons the cycle, blink.ts's own rule: no
-  // event may be built on frames nobody saw. A count that already
-  // fired stays fired, that moment WAS witnessed, but the closure's
-  // end is lost, so no duration gets recorded.
+  // An untrusted frame no longer abandons the cycle outright: the
+  // closure survives a run of them up to LONG_CLOSURE_MAX_GAP_MS,
+  // because eyes shut before a sub-blink-length gap and shut after
+  // it did not plausibly open in between. Past the bound the cycle
+  // is abandoned — the closure's end is lost, so no duration — and
+  // the re-arm gate closes with it: what follows may be the same
+  // droop still going, and firing there would count it twice.
   if (apertureMm === null) {
-    return {
-      ...state,
-      eye: "unknown",
-      closedAtMs: null,
-      firedForCurrentClosure: false,
-    };
+    const unknownSinceMs = state.unknownSinceMs ?? nowMs;
+    if (nowMs - unknownSinceMs > LONG_CLOSURE_MAX_GAP_MS) {
+      return {
+        ...state,
+        eye: "unknown",
+        closedAtMs: null,
+        firedForCurrentClosure: false,
+        rearmed: false,
+        unknownSinceMs,
+      };
+    }
+    return { ...state, eye: "unknown", unknownSinceMs };
   }
+  // A trusted frame after an untrusted run: the run's length decides
+  // whether the cycle survived it. Measured from the run's first
+  // frame, which understates the unwitnessed span by at most one
+  // frame interval — on the honest side, since a shorter measured
+  // gap only ever KEEPS a closure the truth might have ended.
+  const gapOverBound =
+    state.unknownSinceMs !== null &&
+    nowMs - state.unknownSinceMs > LONG_CLOSURE_MAX_GAP_MS;
+  const survivedClosedAtMs = gapOverBound ? null : state.closedAtMs;
+  const fired = gapOverBound ? false : state.firedForCurrentClosure;
+  const rearmed = gapOverBound ? false : state.rearmed;
   if (apertureMm < thresholdMm) {
-    const closedAtMs =
-      state.eye === "closed" && state.closedAtMs !== null
-        ? state.closedAtMs
-        : nowMs;
+    const closedAtMs = survivedClosedAtMs ?? nowMs;
     const fires =
-      !state.firedForCurrentClosure &&
-      nowMs - closedAtMs > LONG_CLOSURE_THRESHOLD_MS;
+      rearmed && !fired && nowMs - closedAtMs > LONG_CLOSURE_THRESHOLD_MS;
     return {
       ...state,
       eye: "closed",
       closedAtMs,
-      firedForCurrentClosure: state.firedForCurrentClosure || fires,
+      firedForCurrentClosure: fired || fires,
       count: state.count + (fires ? 1 : 0),
+      // The gate closes the moment a closure fires: the next event
+      // needs the eye seen clearly open first.
+      rearmed: fires ? false : rearmed,
+      unknownSinceMs: null,
     };
   }
   const closedDurationMs =
-    state.eye === "closed" && state.closedAtMs !== null
-      ? nowMs - state.closedAtMs
-      : null;
+    survivedClosedAtMs !== null ? nowMs - survivedClosedAtMs : null;
   // A closure can cross the line BETWEEN its last closed frame and
   // the reopen frame. blink.ts measures the span to the reopen and
   // refuses anything beyond the maximum, so the same reopen-measured
   // span must fire here too, late, or a witnessed closure just past
   // the line would land in neither bin and the partition would leak.
   const lateFire =
-    !state.firedForCurrentClosure &&
+    rearmed &&
+    !fired &&
     closedDurationMs !== null &&
     closedDurationMs > LONG_CLOSURE_THRESHOLD_MS;
-  const completedLong =
-    (state.firedForCurrentClosure && closedDurationMs !== null) || lateFire;
+  const completedLong = (fired && closedDurationMs !== null) || lateFire;
+  // The gate reopens only on an eye seen CLEARLY open — the line
+  // cleared by the re-arm fraction — and a reopen that overshoots
+  // straight past that height on the firing frame has proven the
+  // reopening already, blink.ts's own boundary rule.
+  const clearlyOpen =
+    apertureMm >= thresholdMm * (1 + LONG_CLOSURE_REARM_FRACTION);
   return {
     ...state,
     eye: "open",
@@ -123,6 +189,8 @@ export function longClosureStep(
       completedLong && closedDurationMs !== null
         ? closedDurationMs
         : state.lastLongClosureDurationMs,
+    rearmed: (lateFire ? false : rearmed) || clearlyOpen,
+    unknownSinceMs: null,
   };
 }
 
