@@ -1,0 +1,235 @@
+THE PROBE BUDGET AT ORDINARY RATES
+Roadmap 10.14d. Written 7 September 2026, BEFORE the measurement, as
+this repository requires of anything it measures.
+
+
+WHAT 10.14c LEFT BEHIND
+
+Calibration may spend CALIBRATION_ATTEMPTS seeks, which is 60, to
+gather CALIBRATION_FRAMES distinct frames, which is 12. Row 10.14c
+replaced a constant 10 ms probe with a quarter of the smallest gap
+seen so far, floored at 2 ms, because a constant probe could not
+measure a clip above 200 frames per second at all.
+
+A quarter of a period is safe and slow. Three of every four probes
+land on the frame already showing, cost an attempt and teach nothing.
+That row measured the price at one rate: 30 frames per second went
+from 38 attempts to 45 of the 60 available. It recorded the number and
+handed the question here rather than pretending the budget was fine.
+
+The budget has to cover more than the arithmetic. Every imprecise
+landing, one where the browser answered `seeked` but no frame callback
+arrived, also costs an attempt and adds no frame. On a real clip in a
+real browser those are not rare. So the question is not only how many
+attempts the rule needs on a perfect clip; it is how much room is left
+over for the clip that does not answer cleanly.
+
+
+WHAT IS PREDICTED, AND HOW IT IS SCORED
+
+All predictions are about the fake-video harness in
+test/io/videoStepper.test.ts, which records every seek the stepper
+asks for, on a clip whose frame times are exact. There are no
+imprecise landings in that harness, so what it measures is the
+arithmetic floor: the fewest attempts the rule can possibly spend.
+
+P1. Attempts to gather 12 frames are roughly FLAT across rate, not
+    rising with it. The rule is proportional to the period it just
+    measured, so 30, 60, 120 and 240 frames per second should all cost
+    about the same number of probes, within 5 of each other.
+
+P2. That flat cost is between 40 and 50 of the 60 budget at every rate
+    from 30 to 300.
+
+P3. The margin left for imprecise landings is therefore under 20
+    attempts, or under a third of the budget, at every rate.
+
+P4. Raising the step from a quarter to a half of the smallest gap
+    would cost about half as many attempts, and would still measure
+    every rate from 30 to 300 correctly ONCE the smallest gap is a
+    true single period. It is the early gaps, before that is true,
+    where a half is unsafe.
+
+P5. The 60 frames per second end-to-end fixture and the 30 frames per
+    second case measure the same count and the same interval after
+    whatever change this row makes as before it.
+
+
+THE DECISION RULE, FIXED NOW
+
+If P1 fails, and attempts rise with rate, then the rule is not
+proportional in the way it was designed to be and this row rewrites
+the rule rather than the budget.
+
+If P2 and P3 hold, the margin is too thin and something changes. The
+row does NOT get to pick the change after seeing the numbers: the
+order of preference is fixed here, cheapest and least behavioural
+first.
+
+  1. Adapt the step. Once the whole-multiple rule can be run over the
+     landings gathered so far and returns a period, use half of THAT
+     period rather than a quarter of the smallest raw gap. The
+     quarter exists to survive a smallest gap that is up to four
+     times the true period; a reduced period is not that, so the
+     safety it buys is already bought.
+  2. Raise the budget. A seek is cheap in the harness and not free in
+     a browser, so this is second, and if it is taken the new number
+     is justified by the measured margin rather than rounded up.
+  3. Change the floor. Last, because 2 ms is what stops a pathological
+     clip driving the step to zero and it is not what costs attempts
+     at ordinary rates.
+
+If P5 fails at any point, the change is REVERTED rather than shipped
+with a caveat, on the same grounds as 10.14c: a fix for the budget
+that moves the behaviour of ordinary clips is not this row.
+
+If P4 fails, option 1 above is off the table and the row takes option
+2, because a rule that measures a rate wrongly is not a saving.
+
+
+WHAT WILL BE COMMITTED EITHER WAY
+
+A table of attempts against rate, measured, in this file. Not a
+sentence saying the budget is comfortable. The margin left for
+imprecise landings stated as a number of attempts, so a later row that
+makes landings less reliable can see what it is spending.
+
+
+SCORED, 7 September 2026, against the fake-video harness in
+test/io/videoStepper.test.ts, which records every seek the stepper
+asks for. Clips have exact frame times and the harness always answers,
+so what is measured is the ARITHMETIC FLOOR: the fewest probes the
+rule can possibly take.
+
+WHAT THE QUARTER RULE COST, as row 10.14c left it:
+
+    rate    attempts of 60    frames gathered of 12
+     15           60                    8
+     20           60                   11
+     24           51                   12
+     25           49                   12
+     30           48                   12
+     50           45                   12
+     60           44                   12
+    100           43                   12
+    120           42                   12
+    150           35                   12
+    200           28                   12
+    240           23                   12
+    300           20                   12
+
+P1  FAILED. Attempts are not flat across rate and they do not rise
+    with it. They FALL, from 51 at 24 frames per second to 20 at 300,
+    a spread of 31 where the prediction allowed 5. The reason is that
+    the quarter is taken from the smallest RAW gap, and at slow rates
+    that gap already is one period, so the step is a quarter of a
+    period and four probes are spent per frame. At fast rates the 2 ms
+    floor binds instead and the step is a larger share of the period.
+
+P2  FAILED. 40 to 50 held from 24 to 120 but not above: 150, 200, 240
+    and 300 came in at 35, 28, 23 and 20.
+
+P3  FAILED as a universal claim, and held where it matters. The margin
+    is 9 attempts at 24 frames per second and 40 at 300.
+
+THE FINDING THE PREDICTIONS DID NOT ANTICIPATE, and the reason this
+row is worth more than a tuning note. At 20 frames per second and
+below, the budget was EXHAUSTED: calibration spent all sixty attempts
+and gathered eleven frames at 20, eight at 15, then calibrated on
+those. CALIBRATION_FRAMES is twelve rather than the original six
+because one short gap among six frames set the whole schedule, which
+is the September audit's critical finding. That protection was
+thinning out at exactly the rates where the reproduced defect lived: a
+20 frames per second clip reported as 40.
+
+THE DECISION RULE DID NOT COVER WHAT WAS MEASURED, and that is stated
+rather than papered over. It was written for attempts RISING with rate
+and for P2 and P3 both holding. Neither happened. So the ordered
+preference was applied to the facts as found, and each step below is
+recorded with what it was measured to do.
+
+  1. THE RULE ADAPTS, taken. Once the landings reduce under the
+     whole-multiple rule, the step is half of THAT period rather than
+     a quarter of the smallest raw gap; the quarter stands for
+     landings that do not reduce, where there is no period to halve
+     and inventing one would be the mistake this module refuses.
+     Measured: 30 frames per second falls from 48 attempts to 41, 60
+     from 44 to 25, 120 from 42 to 23, 300 from 20 to 19. Nothing
+     below 30 moves, because the step is capped at the bootstrap and
+     at slow rates the cap is what binds.
+
+  2. LIFTING THAT CAP, measured and REJECTED. Allowing the reduced
+     half past the bootstrap step brings 24 frames per second from 51
+     attempts to 30 and 30 from 41 to 28, which is the whole slow-end
+     problem solved. It also switches off a refusal. On a 201 frame
+     clip carrying one frame 25 ms out of place, the larger probe
+     strides over the anomaly, calibration never lands on it, the
+     whole-multiple rule sees a clean 40 ms period, and the run
+     reports 200 frames at a confident 25 frames per second with zero
+     inexact landings, where before it refused the clip by name as
+     variable rate. A cheaper calibration that cannot see a bad clip
+     is not a saving. The cap stays, and the reason it stays is now
+     written where it is, because it was not the reason the cap was
+     given when it was added.
+
+  3. THE BUDGET RISES, taken, to 120 from 60. Justified by the floor
+     rather than rounded up: 81 attempts at 15 frames per second, 61
+     at 20, 51 at 24. Sixty could not gather twelve frames at 20 or
+     below. A hundred and twenty covers 15 with 39 spare, and at 24 —
+     the slowest rate this project will measure blinks on, since
+     MIN_BLINK_FPS is 24 — leaves 69 attempts for probes a browser
+     answers without a frame callback.
+
+  4. THE FLOOR, untouched. PROBE_STEP_FLOOR_S is what stops a
+     pathological clip driving the step to zero, and it is not what
+     costs attempts at ordinary rates.
+
+WHERE IT ENDED, arithmetic floor with the rule and budget above:
+
+    rate    attempts    of budget 120    frames gathered of 12
+     15         81           68%                  12
+     20         61           51%                  12
+     24         51           43%                  12
+     25         49           41%                  12
+     30         41           34%                  12
+     50         25           21%                  12
+     60         25           21%                  12
+    100         23           19%                  12
+    120         23           19%                  12
+    150         23           19%                  12
+    200         22           18%                  12
+    240         21           18%                  12
+    300         19           16%                  12
+
+P4  Held, in a narrower form than it was written. A half of a REDUCED
+    period measures every rate from 15 to 300 correctly and costs
+    about half what the quarter cost at 60 frames per second and
+    above. It cannot be had at slow rates without lifting the cap,
+    which item 2 measured and rejected, so the saving is real above 30
+    and absent below it.
+
+P5  Held, and more strongly than it was written. Every rate in both
+    tables above calibrates to the SAME interval before and after, to
+    the last digit a double carries: 0.03333333333333333 at 30 frames
+    per second either way, 0.016666666666666666 at 60. Only the number
+    of probes spent reaching that answer changed. This is also the
+    argument that Eyeblink8's published numbers cannot move: its clips
+    are 30 frames per second, the calibrated interval there is
+    identical, and the schedule the run walks is derived from that
+    interval and the origin alone, so an identical interval means an
+    identical schedule means identical frames measured.
+
+THE STATED MARGIN, which is what this row owes the next one. At every
+rate this project will measure blinks on, calibration's arithmetic
+floor leaves more attempts spare than it spends. The tightest is 24
+frames per second at 51 of 120. Below the blink floor, 15 frames per
+second spends 81 and keeps 39. A row that makes landings less reliable
+— a browser that answers fewer probes, a slower grace, a clip that
+seeks badly — is spending out of that margin, and
+summary.calibrationAttempts is where it shows.
+
+THE PRICE, recorded rather than discovered later. A clip that cannot
+calibrate now spends up to a hundred and twenty seeks before refusing
+rather than sixty. Each seek that lands inexactly waits out
+FRAME_GRACE_MS, so the worst case before a refusal roughly doubles.
+That is paid only by clips that were going to be refused anyway.

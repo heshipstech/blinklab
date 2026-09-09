@@ -4,7 +4,11 @@ import {
   INEXACT_LANDING_TOLERANCE,
   checkLandings,
 } from "../../src/core/stepCalibration";
-import { stepThroughVideo } from "../../src/io/videoStepper";
+import {
+  CALIBRATION_ATTEMPTS,
+  CALIBRATION_FRAMES,
+  stepThroughVideo,
+} from "../../src/io/videoStepper";
 import type { VideoWithFrameCallback } from "../../src/io/frameLoop";
 
 // The corpus that refused. On 25 August 2026 all eight Eyeblink8 clips
@@ -186,6 +190,83 @@ describe("stepping a clip whose timeline does not start at zero", () => {
     expect(seen[0]).toBeCloseTo(1.7, 3);
   }, 30_000);
 
+  it("measures every frame of a 240 frames per second clip", async () => {
+    // Roadmap 10.14c. THE case the row exists for, and it is not the
+    // case the row predicted. Measured on the old stepper, holding
+    // clip length constant to rule it out: 100, 120, 150 and 200
+    // frames per second were all measured correctly, and 240 and 300
+    // measured ZERO frames with no interval at all, at one second of
+    // clip and at three. The probe was a constant 10 ms, and by 240
+    // that is more than two frame periods, so it could not gather
+    // enough distinct landings to calibrate from.
+    //
+    // So the instrument did not publish a wrong rate for a fast clip.
+    // It failed to measure one, visibly. That is a better failure than
+    // the row assumed, and it is still a failure: a phone's
+    // slow-motion recording could not be stepped at all.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 240, 240) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(240);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 240, 6);
+    expect(summary.inexactLandings).toBe(0);
+    expect(summary.stoppedEarly).toBe(false);
+  }, 30_000);
+
+  it("measures every frame of a 300 frames per second clip", async () => {
+    // The other rate that measured nothing before.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 300, 300) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(300);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 300, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("measures every frame of a 200 frames per second clip", async () => {
+    // Correct BEFORE this row as well as after. Kept as the boundary
+    // marker: 200 worked, 240 measured nothing.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 200, 200) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(200);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 200, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("measures every frame of a 120 frames per second clip", async () => {
+    // NOT broken before this row, and the prediction in
+    // docs/stepper-probe-rate.txt said it was. Recorded as a failed
+    // prediction rather than quietly corrected: at 120 the 10 ms step
+    // gives a MIXTURE of one and two period gaps, and ladder A1's
+    // whole-multiple rule recovers the true period from that exactly.
+    // A regression guard on the rate the prediction named.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 120, 120) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(120);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 120, 6);
+    expect(summary.inexactLandings).toBe(0);
+    expect(summary.stoppedEarly).toBe(false);
+  }, 30_000);
+
+  it("measures every frame of a 100 frames per second clip", async () => {
+    // At 100 the old step was exactly ONE period, which lands on
+    // consecutive frames and calibrates correctly. Also not broken
+    // before, also kept as a regression guard.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 100, 100) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(100);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 100, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
+  it("leaves a 60 frames per second clip exactly as it was", async () => {
+    // P3 of the prediction. A fix for fast clips that moves an
+    // ordinary one is reverted rather than caveated.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 60, 60) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.framesMeasured).toBe(60);
+    expect(summary.frameIntervalSeconds).toBeCloseTo(1 / 60, 6);
+    expect(summary.inexactLandings).toBe(0);
+  }, 30_000);
+
   it("still measures a clip that starts at zero, in the ordinary way", async () => {
     const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 30, 20) });
     const summary = await stepThroughVideo(video, () => {});
@@ -330,4 +411,101 @@ describe("stepping a clip whose frames are not evenly spaced", () => {
       checkLandings(summary.framesMeasured, summary.inexactLandings).kind,
     ).toBe("inexactLandings");
   }, 30_000);
+});
+
+describe("what calibration spends", () => {
+  // Roadmap 10.14d, docs/stepper-probe-budget.txt. Calibration may
+  // spend sixty seeks to gather twelve distinct frames. Row 10.14c
+  // made the probe a quarter of the smallest gap seen, which is safe
+  // and slow: three of every four probes land on the frame already
+  // showing, cost an attempt and teach nothing.
+  //
+  // The cost was measured at one rate and handed here. It cannot be
+  // watched unless it is reported, and a number nobody can see is a
+  // number nobody notices moving, which is the shape of defect this
+  // project keeps finding. So it becomes a counted fact travelling
+  // with the summary, beside inexactLandings.
+  it("reports how many seeks calibration spent", async () => {
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 30, 20) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.calibrationAttempts).toBeGreaterThan(0);
+    expect(summary.calibrationAttempts).toBeLessThanOrEqual(
+      CALIBRATION_ATTEMPTS,
+    );
+  }, 30_000);
+
+  it("counts every seek calibration made, not only the ones that landed", async () => {
+    // The distinction that matters. Twelve frames are gathered from
+    // however many probes it takes, and the probes that taught nothing
+    // are exactly the cost this row exists to measure. A count of the
+    // frames gathered would always be twelve and would say nothing.
+    const { video } = fakeVideo({ frameTimes: constantRate(0, 1 / 30, 20) });
+    const summary = await stepThroughVideo(video, () => {});
+    expect(summary.calibration?.kind).toBe("calibrated");
+    const frames =
+      summary.calibration?.kind === "calibrated"
+        ? summary.calibration.frames
+        : 0;
+    expect(summary.calibrationAttempts).toBeGreaterThan(frames);
+  }, 30_000);
+});
+
+describe("the margin calibration leaves for a browser that answers badly", () => {
+  // Roadmap 10.14d, docs/stepper-probe-budget.txt. The budget is sixty
+  // seeks. Every one of them that lands on the frame already showing,
+  // and every one the browser answers without a frame callback, costs
+  // an attempt and gathers nothing. On a clip with exact frame times
+  // and a browser that always answers, what calibration spends is the
+  // arithmetic floor: the fewest probes the rule can possibly take.
+  //
+  // Half the budget is the stated margin. It is a CHOICE, not a
+  // derivation. Calibration needs twelve frames, so at worst it can
+  // afford to be told nothing on half its probes and still finish. A
+  // browser that answers four probes in five leaves calibration a
+  // clip it can measure; one that answers one in three does not, and
+  // the run refuses rather than guessing, which is the behaviour
+  // roadmap 10.14 already chose.
+  const MARGIN_SHARE = 0.5;
+
+  for (const rate of [15, 20]) {
+    it(`gathers all twelve calibration frames from a ${rate} frames per second clip`, async () => {
+      // The finding that raised the budget. Twelve frames rather than
+      // the original six is what makes one short gap a minority the
+      // whole-multiple rule can see, and that is the September audit's
+      // critical finding. On sixty attempts calibration gathered
+      // eleven frames at 20 frames per second and eight at 15, then
+      // calibrated on those: the protection thinned out at exactly the
+      // rates where the reproduced defect lived, a 20 frames per
+      // second clip reported as 40. These two rates sit below
+      // MIN_BLINK_FPS and are refused for blink measurement later, but
+      // calibration runs first and has to be honest before that.
+      const { video } = fakeVideo({
+        frameTimes: constantRate(0, 1 / rate, 40),
+      });
+      const summary = await stepThroughVideo(video, () => {});
+      expect(summary.calibration?.kind).toBe("calibrated");
+      const gathered =
+        summary.calibration?.kind === "calibrated"
+          ? summary.calibration.frames
+          : 0;
+      expect(gathered).toBe(CALIBRATION_FRAMES);
+    }, 60_000);
+  }
+
+  for (const rate of [24, 30, 60, 120, 240]) {
+    it(`spends at most half the budget calibrating a ${rate} frames per second clip`, async () => {
+      const frames = Math.max(rate, 20);
+      const { video } = fakeVideo({
+        frameTimes: constantRate(0, 1 / rate, frames),
+      });
+      const summary = await stepThroughVideo(video, () => {});
+      // Measured correctly is the precondition; a cheap calibration
+      // that gets the answer wrong is not a saving.
+      expect(summary.framesMeasured).toBe(frames);
+      expect(summary.inexactLandings).toBe(0);
+      expect(summary.calibrationAttempts).toBeLessThanOrEqual(
+        CALIBRATION_ATTEMPTS * MARGIN_SHARE,
+      );
+    }, 60_000);
+  }
 });

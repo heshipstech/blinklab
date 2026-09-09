@@ -6,7 +6,9 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.** This is a learning project. The sentence above is quoted from `src/core/notice.ts`, the one place the page's own notice lives, and a test holds this copy to it word for word.
 
-> Revised 6 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 8 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+
+Read in full on 8 September 2026, claims `75f086f5`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -42,7 +44,7 @@ when the committed README drifts from it. -->
 
 ## Results at a glance
 
-- **Does it find the blinks a human found?** On Eyeblink8, recall 83.6% (341 of 408 found, 95% interval 79.7 to 86.9), precision 84.0% (65 invented, 95% interval 80.1 to 87.2), F1 83.8%, measured from `eyeblink8-measured-rearm`. **That table is a property of the machine it was measured on.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall 85.0% (347 of 408, 95% interval 81.3 to 88.2), precision 96.4% (13 invented), F1 90.4%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced this table IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, WebKit binary and fifteen commits of instrument change. That reproduction is WebKit to WebKit — the corpus runner launches no other engine — so no engine other than WebKit has measured this corpus, and roadmap row 13.0 is the measurement that would change that. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So the number above is a measured property of the instrument and the prepared files on two machines — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+- **Does it find the blinks a human found?** On Eyeblink8, recall 75.7% (309 of 408 found, 95% interval 71.3 to 79.6), precision 83.3% (62 invented, 95% interval 79.2 to 86.7), F1 79.3%, measured from `eyeblink8-measured-2026-09-08` on 8 September 2026 — **and one clip of that run is an open defect**: seven of the eight clips reproduced the previous anchor (recall 83.6%, precision 84.0%, F1 83.8%) digit for digit, the eighth fell from 38 of 43 blinks found to 6 after a detector change made since that anchor, and the change is being isolated miss by miss. The headline carries the regression rather than the anchor, because a known defect belongs in the number, not under it. **The anchor's table was a property of the machine and the prepared files, measured on two machines.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gave recall 85.0% (347 of 408, 95% interval 81.3 to 88.2), precision 96.4% (13 invented), F1 90.4%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced the anchor IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, WebKit binary and fifteen commits of instrument change. That reproduction is WebKit to WebKit — the corpus runner launches no other engine — so no engine other than WebKit has measured this corpus, and roadmap row 13.0 is the measurement that would change that. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So these numbers are a measured property of the instrument and the prepared files — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. Full record: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 - **Does any of it track reported sleepiness?** On the small DROZY set, no — a null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the 20 of 36 DROZY sessions this instrument can measure. On the larger UTA-RLDD set, yes. Across 54 self-recording strangers (148 videos, and the model was never trained on anyone it was scored against), the pre-registered classifier separates a coarse self-reported drowsiness state better than chance: three-class balanced accuracy 0.498 where guessing scores 0.333, and alert-vs-drowsy 0.732 where guessing scores 0.500, both past a 1000-shuffle label-scramble control at p 0.001. The plan predicted a null in writing and was WRONG in the one way it had named — a weak effect that DROZY (13 people) and a 12-subject pilot were too small to see, and 54 were not. It is MODEST and not driving-relevant: the label is self-reported and noisy, each person recorded one video per state so the clips differ in more than drowsiness, nobody was driving, and this stays a demo, not a safety or medical device. Full records: [docs/uta-rldd-result.txt](docs/uta-rldd-result.txt), [docs/drozy-result.txt](docs/drozy-result.txt). Cite: Massoz, Langohr, Francois and Verly, WACV 2016. Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
 - **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion not met, the baseline's criterion FAILED, the frame-rate gate's criterion not met. Full record: [docs/validation-round.txt](docs/validation-round.txt).
 - **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the 36 it can measure; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that, in a pre-registered test (roadmap 9.1), separated self-reported alert from drowsy across strangers above chance (AUC 0.70 at p 0.001), but has not been validated as a per-person measure of anyone's actual sleepiness.
@@ -92,12 +94,12 @@ annotation. The 362 frame numbers in between have no row at all. The
 people who published the clips print 70,992 on their own site. So a
 reader who checks will meet two different totals, and this is why.
 
-|              | First answer        | Export fixed        | Clock fixed         | Ruler frozen        | Now                     |
-| ------------ | ------------------- | ------------------- | ------------------- | ------------------- | ----------------------- |
-| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | 341 of 408          | **341 of 408**          |
-| Recall       | 69.6%               | 82.8%               | 87.7%               | 83.6%               | **83.6%**               |
-| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | 81.4% (78 invented) | **84.0%** (65 invented) |
-| F1           | 77.1%               | 84.6%               | 85.4%               | 82.5%               | **83.8%**               |
+|              | First answer        | Export fixed        | Clock fixed         | Ruler frozen        | Re-arm gated        | Now                     |
+| ------------ | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ----------------------- |
+| Blinks found | 284 of 408          | 338 of 408          | 358 of 408          | 341 of 408          | 341 of 408          | **309 of 408**          |
+| Recall       | 69.6%               | 82.8%               | 87.7%               | 83.6%               | 83.6%               | **75.7%**               |
+| Precision    | 86.3% (45 invented) | 86.4% (53 invented) | 83.3% (72 invented) | 81.4% (78 invented) | 84.0% (65 invented) | **83.3%** (62 invented) |
+| F1           | 77.1%               | 84.6%               | 85.4%               | 82.5%               | 83.8%               | **79.3%**               |
 
 Recall is the share of the human's blinks that the app found. Precision
 is the share of the app's detections that were real. F1 is the two
@@ -105,11 +107,12 @@ numbers put together into one. It always sits close to the lower of the
 two. So an app cannot look good by staying quiet, and it cannot look
 good by firing all the time.
 
-**There are five columns because this page has corrected its own
-number four times, and every time the fault was in this app rather
-than in the clips.** Every column stays. A project that shows you only
-its final answer tells you less than one that also shows you the road
-there.
+**There are six columns because this page has corrected its own
+number four times and the sixth records a regression the
+re-measurement itself caught, and every time the fault was in this
+app rather than in the clips.** Every column stays. A project that
+shows you only its final answer tells you less than one that also
+shows you the road there.
 
 - **The first answer, 69.6%.** The app was deleting its own results
   before writing them out. It found blinks and then threw them away.
@@ -133,14 +136,23 @@ there.
   right way around for this project. The predictions were committed
   before the run in `docs/baseline-freeze.txt`, four held and one was
   wrong, and the wrong one is recorded there.
-- **The fifth, the current number: recall still 83.6%, precision up
-  to 84.0%.** One volunteer in the round blinked slowly and deeply
+- **The fifth, recall still 83.6% and precision up to 84.0%.** One
+  volunteer in the round blinked slowly and deeply
   and was counted 25 times for 10 blinks: after a counted blink,
   their hovering eyelid re-crossed the line before ever properly
   reopening. The re-arm gate now requires the eye to rise clear of
   the line before a new blink may count. On the corpus it removed 13
   false alarms at zero recall cost, with its predictions and its
   decision rule committed first in `docs/blink-rearm.txt`.
+- **The sixth, the current number: recall 75.7%, precision 83.3%.**
+  The 8 September 2026 regression run at the current commit
+  reproduced seven of the eight clips digit for digit and found the
+  eighth collapsed, from 38 of 43 blinks found down to 6, after a
+  detector change made since the previous anchor. Which change is
+  being isolated miss by miss, and the candidates are all listed in
+  `docs/eyeblink8-result.txt`. The number is published with its
+  defect, because holding the old headline while knowing this one
+  would be showing you the road minus the pothole.
 
 Precision fell from 86.4% to 83.3% between the second column and the
 third, and that is not a step backwards. Making the measurement
@@ -151,7 +163,9 @@ again in the fourth column, 83.3% to 81.4%, against the committed
 prediction: at the frozen, lower threshold, flutter near the line
 fragments into repeated crossings, the same double-counting signature
 one validation-round volunteer produced live. The fifth column is the
-gate built for exactly that signature doing its work.
+gate built for exactly that signature doing its work. The sixth
+column is not a fix but a finding: recall fell because one clip's
+blinks stopped being seen at all, and that defect is open.
 
 **The defect, in plain English.** The app keeps a list of the blinks it
 has found, and that one list was doing two jobs. It was the list you
@@ -271,8 +285,12 @@ long freezes of half a second or more. Those twelve sit in three clips
 and hold 611 of the 787 lost frames. Very few gaps land inside a blink.
 At the very most the lost frames explain 4 of the 70 remaining misses —
 **that is the second run's figure, and it has not been recomputed for
-this one.** The current run has 50 misses, not 70, so the "4 of 70" pair
-belongs to the run before it. Recomputing needs the corpus, which is not
+this one.** The current run has 67 misses, not 70, so the "4 of 70" pair
+belongs to the run before it. (That sentence said 50 until 7 September 2026. 50 is the 9 August run's miss count, three runs back — a
+correction that had itself gone stale, found by the first full read
+under this file's stamp. The current figure is in
+[docs/eyeblink8-result.txt](docs/eyeblink8-result.txt) and agrees with
+the "47 of the 67" below.) Recomputing needs the corpus, which is not
 in this repository. The script that counts all of this is
 [analysis/tools/audit_frame_loss.py](analysis/tools/audit_frame_loss.py),
 so you do not have to take the number on trust. Three more checks came
@@ -315,16 +333,22 @@ shows a person wearing glasses. The first write up said that clip scored
 that as evidence against this project's own warning about prescription
 lenses. That gap was not real. The defect created it. Both of the cut
 short clips were in the group without glasses, so that group's score was
-pulled down. On the current run the glasses clip scores 88.4% recall and
-90.5% precision. The seven without score 83.0% recall and 83.2%
-precision. The glasses clip now scores a few points HIGHER on both,
-which is the opposite direction from the first write up's claim and
-just as meaningless. Both figures rest on a single clip of 43 blinks,
-and both settle nothing in either direction. So the claim is withdrawn
-rather than reversed. This project has no evidence yet about what
-glasses do to blink detection. An earlier version of this paragraph
-printed a stale run's figures here while calling them the corrected
-ones; the figures above are the current run's, from
+pulled down. On the current run the glasses clip scores 14.0% recall and
+85.7% precision. The seven without score 83.0% recall and 83.2%
+precision. That collapse is new and it is not evidence about glasses
+either: the 8 September 2026 run reproduced the other seven clips digit
+for digit while this one clip fell from 38 of 43 blinks found to 6, so
+what changed is the detector, at some commit since the previous anchor,
+and which commit is being isolated miss by miss. Until that diagnosis
+lands, the conclusion this paragraph reached stands: every direction of
+the glasses claim has rested on a single clip of 43 blinks, and this
+project still has no evidence about what glasses per se do to blink
+detection. What it now has is one clip, which happens to show glasses,
+on which the current detector badly underperforms its own anchor, and
+that is recorded as an open defect rather than as a fact about lenses.
+An earlier version of this paragraph printed a stale run's figures here
+while calling them the corrected ones; the figures above are the
+current run's, from
 [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 
 There is a version of this result that reads better, and it is not
@@ -607,10 +631,10 @@ Safari's extra frame was the final one counted twice, which is fixed.
 Everything runs in your browser. No video, image or measurement ever leaves your device. There is no backend and no analytics of ours. The CSV export writes a file to your own disk and uploads nothing.
 
 <!-- privacy:begin -->
-<!-- Generated from src/core/storedData.ts and
-src/core/exportContents.ts by tools/privacyBlock.mjs. Edit those,
-then regenerate with: npm run privacy:write. A test regenerates
-this block and fails when the committed README drifts from it. -->
+<!-- Generated from src/core/storedData.ts by
+tools/privacyBlock.mjs. Edit that, then regenerate with:
+npm run privacy:write. A test regenerates this block and fails
+when the committed README drifts from it. -->
 
 **4 things are kept on your device, and the page lists all of them and offers to erase them.**
 
@@ -621,15 +645,13 @@ this block and fails when the committed README drifts from it. -->
 
 A "Stored on this device" box at the bottom of the page names each of these, says which are present right now, and erases them on request. The erase clears the profile the running session is holding as well, so the heatmap goes back to asking you to calibrate, and the confirmation it prints is read back from the browser after the fact rather than assumed, because a delete that quietly does nothing is worse than one that fails loudly.
 
-**What an exported file contains.** Above the records the file carries a header describing this session: the camera's label (camera), the browser (user_agent), the machine's core count (hardware_concurrency), its screen and window sizes (screen, viewport), your two sleepiness answers, and the pseudonym if you set one (participant_pseudonym). The file is written to your own disk and nothing is uploaded, so sending it to anyone is your own act. The browser string is written in a reduced form by default, naming the browser, its major version and the platform family and nothing else; a checkbox beside the export buttons writes the full string instead, and a `user_agent_form` row in the file says which form you got.
-
 <!-- privacy:end -->
 
 One exception, found by the August 2026 audit and stated here because it was claimed otherwise for two weeks. The vendored MediaPipe library tries to send a `POST` to `odml.pa.googleapis.com` about sixty seconds after the face model is created, with no detections needed. It is Google's own usage reporting, it is inside the dependency rather than in any code here, and its payload is usage statistics: no video, no image, no landmark, no measurement. This page previously denied any reporting of any kind, which was false. Since 5 September 2026 that report no longer leaves your browser: the app installs a guard in front of `fetch`, `XMLHttpRequest` and `sendBeacon` before the model is loaded, and it drops any request to a `googleapis.com` host — the app has no legitimate reason to call one, since the model and its runtime are served from this origin. An end-to-end test drives a full camera session past the sixty-second mark and confirms nothing goes out. The open question in `decisions/ADR-0004-model-telemetry.md` is answered there.
 
 ## Status
 
-Phases 0 through 8 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), and the public-durability work. That is 1240 unit tests, 35 end to end tests of which all run on every pull request in Chromium and 2 rerun locally in WebKit, and 495 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
+Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1610 unit tests, 39 end to end tests of which 37 run on every pull request in Chromium and on a 375-wide phone viewport and 2 rerun locally in WebKit, and 510 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 
@@ -672,7 +694,7 @@ The project grows one small increment per session, each one branch, one pull req
 - [ARCHITECTURE.md](ARCHITECTURE.md), how the pieces fit, written so a newcomer understands it in five minutes.
 - [MODEL_CARD.md](MODEL_CARD.md), what the measurement does, who it has been tested on, and what it does not do.
 - [decisions/](decisions/), architecture decision records.
-- [AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md), the August 2026 audit, and [REMEDIATION.md](REMEDIATION.md), what has been fixed since.
+- [AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md) and [docs/audit/2026-09-06-audit-report.md](docs/audit/2026-09-06-audit-report.md), the two audits, and [REMEDIATION-2026-09.md](REMEDIATION-2026-09.md), the live fix ladder. `REMEDIATION.md` is the retired August one and says so at its own first line.
 
 ## License
 

@@ -50,6 +50,23 @@ one list of cards, not two that can disagree. The `phone` Playwright project,
 lines.** There is one set of strings at every width, deliberately; the
 alternative was a second set for phones and a second list to document.
 
+**The nav bar carries three icon links**, roadmap 14.0f2: the source
+repository first, then the maintainer's profile and a mailbox. The
+repository link was missing until that row, on a page whose whole
+argument is that its numbers can be audited — a reader could see a
+figure, see the document it cites, and reach neither. `linkHrefs` in
+`tools/uiGuard.mjs` reads what the page builds each chrome link from,
+and a test holds the repository among them.
+
+**The head carries a description and an icon**, from the same row and
+for the same reason. It was twelve lines with neither, so a shared
+link previewed as the single word "blinklab" and a tab showed a blank
+sheet. Both are held to `src/core/pageIdentity.ts` by a test that reads
+`index.html` off disk, and the description is walked by
+`tools/claimGuard.mjs` like every other sentence this project
+publishes: the shortest natural description of this page reaches
+straight for a claim that was measured false.
+
 **This table is checked, not remembered.** `tools/uiGuard.mjs` reads every
 `box("...")` heading out of `src/main.ts` and a test fails when one of them
 has no section in this file, or when this file documents a box that no
@@ -323,21 +340,20 @@ strip plus the footer below.
 
 #### Box: Session
 
-| Element                        | Type     | Notes                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Feature records                | Text     | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)`                                                                                                                                                                                                                          |
-| Export CSV                     | Button   | Disabled until at least one record exists                                                                                                                                                                                                                                                                                                                                               |
-| Mark this moment               | Button   | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export                                                                                                                                                                                              |
-| Light response                 | Button   | `Light response`. Camera sessions only, on the same record gate as the marker. Opens a full-screen stimulus overlay (fullscreen requested only where the browser offers it); its words during the settle and at the end come from `lightPhaseMessage` in `core/lightSchedule.ts` and name both exits, Esc and a tap anywhere on the overlay (roadmap 14.0b)                             |
-| Export state                   | Text     | Empty until an export is attempted. See the five strings below                                                                                                                                                                                                                                                                                                                          |
-| Sleepiness                     | Text     | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                                                                                                                                                                                                                  |
-| Marks                          | Text     | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                                                                                                                                                                                                                          |
-| Export blink log               | Button   | Disabled until at least one blink exists                                                                                                                                                                                                                                                                                                                                                |
-| Export frame trace             | Button   | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                                                                                                                                                                                                                                                     |
-| Export contents                | Text     | One paragraph naming what an exported file carries beside the records: the camera label, the browser, the core count, the screen and window sizes, the two sleepiness answers and the pseudonym. Built by `exportContentsSentence` in `core/exportContents.ts` from the metadata row builders themselves, so a row that leaves the export takes its disclosure with it (roadmap 10.0a2) |
-| Full browser string in exports | Checkbox | Off by default. Off writes a reduced user agent (browser, major version, platform family); on writes the whole `navigator.userAgent`. Either way a `user_agent_form` row in the file says which                                                                                                                                                                                         |
-| Sleepiness panel               | Panel    | See below                                                                                                                                                                                                                                                                                                                                                                               |
-| Record fixture                 | Button   | **Development builds only.** Never on the live site                                                                                                                                                                                                                                                                                                                                     |
+| Element                        | Type     | Notes                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feature records                | Text     | `Feature records: N this session (about one per second)`, changing after an hour to `Feature records: last 3600 kept, oldest discarded (about one per second)`                                                                                                                                                                                              |
+| Export CSV                     | Button   | Disabled until at least one record exists                                                                                                                                                                                                                                                                                                                   |
+| Mark this moment               | Button   | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export                                                                                                                                                                  |
+| Light response                 | Button   | `Light response`. Camera sessions only, on the same record gate as the marker. Opens a full-screen stimulus overlay (fullscreen requested only where the browser offers it); its words during the settle and at the end come from `lightPhaseMessage` in `core/lightSchedule.ts` and name both exits, Esc and a tap anywhere on the overlay (roadmap 14.0b) |
+| Export state                   | Text     | Empty until an export is attempted. See the five strings below                                                                                                                                                                                                                                                                                              |
+| Sleepiness                     | Text     | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                                                                                                                                                                                      |
+| Marks                          | Text     | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                                                                                                                                                                                              |
+| Export blink log               | Button   | Disabled until at least one blink exists                                                                                                                                                                                                                                                                                                                    |
+| Export frame trace             | Button   | Disabled until a clip frame has been measured. Clips only: a camera session never records the per-frame trace (docs/miss-trace.txt)                                                                                                                                                                                                                         |
+| Full browser string in exports | Checkbox | Off by default. Off writes a reduced user agent (browser, major version, platform family); on writes the whole `navigator.userAgent`. Either way a `user_agent_form` row in the file says which                                                                                                                                                             |
+| Sleepiness panel               | Panel    | See below                                                                                                                                                                                                                                                                                                                                                   |
+| Record fixture                 | Button   | **Development builds only.** Never on the live site                                                                                                                                                                                                                                                                                                         |
 
 **Every export outcome says what happened, including the successful one.**
 The button had three outcomes and only one was visible, so a click that was
@@ -385,12 +401,32 @@ It was a panel until 16 August, and because the export waits on its answer, a
 card that can run past the fold plus a question that gave no sign of itself
 produced a report that Export CSV was broken when it was only waiting.
 
+Since roadmap 14.0f1 it is a **native `<dialog>`** opened with `showModal()`.
+It was a div carrying `role="dialog"` and `aria-modal="true"`, which is the
+hand-rolled imitation: the words were right and none of the behaviour came with
+them, so the page behind stayed reachable by Tab and a keyboard could walk out
+of a question that blocks the export. The element brings the focus trap, the
+inert page and the backdrop with it.
+
 It is **deliberately not closable** by the backdrop or by Escape: every way out
 records an answer, Skip included, and a dismissal that recorded nothing would
 leave a file that cannot say whether the question was declined or never asked.
-Focus moves into the dialog on open. The answer it records then appears in the
-Session card, because that answer goes into the exported file and being able to
-see what you said is part of trusting the data.
+Refusing Escape takes more than the obvious: a dialog's `cancel` event honours
+`preventDefault()` for ONE press, and with no user activation in between
+Chromium fires it again and closes anyway. Measured. So the page consumes the
+Escape keydown in the capture phase while the question is up, and no close
+request is ever made.
+
+**Focus opens on Skip**, not on the first rating, and that is a data decision
+rather than a layout one. A modal focuses its first focusable element by
+default, which here is `1 Extremely alert`, so pressing Enter to make the box
+go away would write a sleepiness label nobody meant into an exported file. Skip
+records a declining, which is true. Skip stays last in the tab order: focused
+first, offered last.
+
+The answer it records then appears in the Session card, because that answer
+goes into the exported file and being able to see what you said is part of
+trusting the data.
 
 Never appears at all on a clip session. Two prompts:
 
@@ -499,26 +535,38 @@ The guard in `tools/uiGuard.mjs` holds this list to the code. None says
 
 ## 6. Region 4: Overlays
 
-Both cover the whole window and sit above everything.
+All cover the whole window and sit above everything.
+
+**Escape closes every one of them**, roadmap 14.0f1. Before that row exactly
+one of them could be left with a key: 14.0b gave the light stimulus its own
+Escape listener, written beside it, and nothing carried that to the others — so
+a visitor working by keyboard who opened the gaze calibration was behind a
+black sheet with no way back. The rule now lives in `src/core/overlayEscape.ts`
+as a register of every screen the page raises over itself and whether Escape
+may close it, and `tools/uiGuard.mjs` holds that register to `src/main.ts` in
+both directions. The sleepiness dialog is the one entry marked undismissible,
+for the reason given in its own section above.
 
 ### Calibration overlay
 
-Opens on Calibrate gaze. Closes on any click, or on completion.
+Opens on Calibrate gaze. Closes on any click, on Escape, or on completion.
 
-| Element  | Content                                                    |
-| -------- | ---------------------------------------------------------- |
-| Dot      | Moves through nine positions at 10%, 50%, 90% of each axis |
-| Progress | `Follow the dot (N/9). Click anywhere to cancel.`          |
+| Element  | Content                                                        |
+| -------- | -------------------------------------------------------------- |
+| Dot      | Moves through nine positions at 10%, 50%, 90% of each axis     |
+| Progress | `Follow the dot (N/9). Click anywhere or press Esc to cancel.` |
 
 ### Heatmap overlay
 
-Opens on Gaze heatmap. Requires a calibration profile.
+Opens on Gaze heatmap. Requires a calibration profile. Closes on any click or
+on Escape.
 
-| Element         | Content                                                        |
-| --------------- | -------------------------------------------------------------- |
-| Heatmap canvas  | A test image with dwell shown as orange heat                   |
-| Caption         | `Gaze heatmap accumulating over a test image`                  |
-| Scanpath slider | Visible only after samples exist. Shows `Replay at X s of Y s` |
+| Element         | Content                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| Heatmap canvas  | A test image with dwell shown as orange heat                              |
+| Caption in card | `Look at the shapes, hold on each. Click anywhere or press Esc to close.` |
+| Caption         | `Gaze heatmap accumulating over a test image`                             |
+| Scanpath slider | Visible only after samples exist. Shows `Replay at X s of Y s`            |
 
 ---
 

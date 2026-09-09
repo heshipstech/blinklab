@@ -26,3 +26,18 @@ export function undocumentedStrings(
   strings: readonly string[],
   doc: string,
 ): string[];
+
+/** Every `dataset.testid` in main.ts naming a screen raised over the page. */
+export function overlayHandles(mainSource: string): string[];
+
+/** Every identifier assigned `.hidden` in a source file, once each. */
+export function hiddenAssignments(source: string): string[];
+
+/** What each chrome link is built from: a quoted URL or a constant's name. */
+export function linkHrefs(mainSource: string): string[];
+
+/** Which of `paths` name no file in the repository. */
+export function missingRepoFiles(
+  paths: readonly string[],
+  root: string,
+): string[];

@@ -40,8 +40,8 @@
 # kss_after: 4 (Rather alert)
 # protocol: docs/assessment-pilot-plan.md, 29 August 2026
 # app_commit: dev
-timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm,blinkLineMm,blinkLineSource,shutLineMm,shutLineSource
-1000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none
-42000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none
-55500,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none
-60000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none
+timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm,blinkLineMm,blinkLineSource,shutLineMm,shutLineSource,sampledFps,inferenceMs,sceneLum,faceLum
+1000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,
+42000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,
+55500,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,
+60000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,

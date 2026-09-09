@@ -1,0 +1,146 @@
+THE PROBE THAT CANNOT SEE A FAST CLIP
+Roadmap 10.14c. Written 7 September 2026, BEFORE the code, as this
+repository requires of anything it measures.
+
+
+THE MECHANISM
+
+Calibration finds the clip's frame interval by seeking forward in
+small steps and recording where it actually lands. The step is
+CALIBRATION_STEP_S in src/io/videoStepper.ts, and it is 10 ms.
+
+Ten milliseconds is one whole frame period at 100 frames per second
+and more than one at 120. A probe that advances by a whole period
+lands on every other frame, so every gap calibration observes is two
+periods rather than one.
+
+The rule that followed 10.14 asks that every gap be a whole multiple
+of the smallest. Gaps that are uniformly two periods satisfy it
+perfectly: the smallest gap IS two periods, every gap is one times the
+smallest, and the mean period those multiples imply is two periods.
+Calibration therefore returns half the true rate, and because two
+periods is a whole number of frames, every scheduled target lands
+exactly on a real frame. The inexact-landing count stays at zero, so
+10.14's refusal, which exists to catch a schedule the browser could
+not honour, cannot see this at all. The run reports a confident wrong
+rate and measures half the clip.
+
+The comment beside the constant still says "4 ms is under half a frame
+even at 120 frames per second". That was true of 4 ms. The constant
+was raised to 10 ms and the sentence was left behind, which is how the
+claim survived being false.
+
+
+WHAT IS PREDICTED, AND HOW IT IS SCORED
+
+P1. On a synthetic clip whose frame times are k/120 seconds, the
+    CURRENT stepper reports a frame rate at or below 60 and measures
+    at most half the frames, with ZERO inexact landings. If the
+    inexact-landing count is not zero, the mechanism above is wrong
+    and this row is rewritten before any fix is written.
+
+P2. After the change, the same fixture measures every frame and
+    reports 120.
+
+P3. The 60 frames per second fixture the end-to-end suite already
+    uses measures the same count as it does today, within one frame.
+
+P4. A synthetic 30 frames per second clip measures the same count and
+    reports the same rate before and after the change.
+
+P5. Eyeblink8's published recall and precision are unchanged by this
+    row. Its clips are 30 frames per second, so P4 is the reason to
+    expect it; only the owner's regression run (roadmap 10.8a) can
+    score it, and it now scores TWO stepper changes rather than one,
+    this row and ladder A1's whole-multiple rule.
+
+
+THE DECISION RULE, FIXED NOW
+
+If P3 or P4 fails, the change is REVERTED rather than shipped with a
+caveat. A fix for fast clips that moves the behaviour of ordinary ones
+is not this row, and the whole point of writing P3 and P4 down before
+measuring is that discovering them afterwards is not a discovery.
+
+If P1 fails, no fix is written until the mechanism is understood,
+because a fix aimed at a mechanism that is not there would be a change
+to the instrument justified by nothing.
+
+
+THE SHAPE OF THE FIX, PRE-REGISTERED
+
+The probe step stops being a constant. Calibration takes its first two
+landings at the current step, and from then on uses a quarter of the
+smallest gap it has seen, floored at 2 ms so a pathological clip
+cannot drive it to zero. A quarter of a period cannot step over a
+frame at any rate, which is the property the stale comment claimed and
+the constant had stopped providing. The comment goes with it.
+
+This is pre-registered as a voiding condition for roadmap 11.4: a
+TalkingFace run measured before this change, on a clip faster than 100
+frames per second, would have been measured at half its rate.
+
+
+SCORED, 7 September 2026, against the fake-video harness in
+test/io/videoStepper.test.ts, which drives the real stepThroughVideo
+over a clip with an explicit frame-time list.
+
+P1  FAILED. The prediction said a clip at 120 frames per second would
+    be measured at half its rate. It is measured exactly right, and it
+    was before this change. The mechanism above is wrong about WHERE it
+    bites. A 10 ms probe on a 120 fps clip produces a MIXTURE of one
+    and two period gaps, and ladder A1's whole-multiple rule recovers
+    the true period from a mixture exactly. The premise needs every gap
+    to come out the same, which needs the step to be a whole multiple
+    of the period.
+
+    Recorded rather than corrected, because that is what a prediction
+    is for. The row was written in amendment 17 against a stepper that
+    no longer exists: A1's rule landed in between and had already
+    absorbed most of this.
+
+WHAT WAS ACTUALLY MEASURED, sweeping the rate with clip length held at
+one second and again at three, to rule length out:
+
+    100 fps   measured correctly, before and after
+    120 fps   measured correctly, before and after
+    150 fps   measured correctly, before and after
+    200 fps   measured correctly, before and after
+    240 fps   ZERO frames before, correct after
+    300 fps   ZERO frames before, correct after
+
+    The boundary is between 200 and 240, at both clip lengths, so it is
+    the rate and not the length.
+
+    The failure is a zero, not a wrong number. By 240 the constant
+    probe is more than two frame periods and calibration cannot gather
+    enough distinct landings, so it returns no interval and the run
+    measures nothing. The instrument did not publish a confident wrong
+    rate for a fast clip; it visibly failed to measure one. That is a
+    better failure than the row assumed and still a failure: a phone's
+    slow-motion recording could not be stepped at all.
+
+P2  Held, in the amended form. Every rate from 100 to 300 measures
+    every frame with zero inexact landings.
+
+P3  Held. The 60 frames per second case measures 60, unchanged.
+
+P4  Held. The 30 frames per second case measures the same count and
+    calibrates to the same interval before and after.
+
+P5  Not scorable here. Eyeblink8's clips are 30 frames per second and
+    P4 held, which is the reason to expect no movement, but only the
+    owner's regression run (roadmap 10.8a) can score it, and it now
+    scores two stepper changes rather than one.
+
+THE DEVIATION FROM THE PRE-REGISTERED FIX, stated because it is a
+deviation. The shape above said a quarter of the smallest gap, floored
+at 2 ms, and that is what shipped. A half was also measured: it fixes
+every rate too and costs about half the probe attempts. It was NOT
+taken, because half of a gap that is itself two periods is exactly one
+period, which is the pathology being escaped, and at 250 frames per
+second the first gaps come out as two and three periods. A quarter is
+under one period even when the estimate it is taken from is four times
+too large. The attempt cost at 30 frames per second rises from 38 to
+45 of a 60 budget, which is the price and is recorded here rather than
+discovered later.

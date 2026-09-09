@@ -11,9 +11,11 @@ import pandas as pd
 import pytest
 
 from blinklab.loader import (
+    ACCEPTED_GENERATIONS,
     COLUMNS,
     LEGACY_COLUMNS,
     PRE_LINE_COLUMNS,
+    PRE_MEASUREMENT_COLUMNS,
     PRE_PUPIL_COLUMNS,
     SessionError,
     cohort_commit_line,
@@ -26,6 +28,7 @@ HEADER = ",".join(COLUMNS)
 LEGACY_HEADER = ",".join(LEGACY_COLUMNS)
 PRE_PUPIL_HEADER = ",".join(PRE_PUPIL_COLUMNS)
 PRE_LINE_HEADER = ",".join(PRE_LINE_COLUMNS)
+PRE_MEASUREMENT_HEADER = ",".join(PRE_MEASUREMENT_COLUMNS)
 
 
 def write(tmp_path: Path, text: str) -> Path:
@@ -462,3 +465,49 @@ class TestTheCohortsBuild:
 
         sessions = [session("def5678"), session("abc1234"), session(None)]
         assert cohort_commits(sessions) == ["abc1234", "def5678"]
+
+
+class TestTheMeasurementColumns:
+    """Roadmap 12.15.
+
+    ``sampledFps`` and ``inferenceMs`` say HOW a row was measured: the
+    evidence rate the frame-rate refusal judges, and what the face
+    model cost. Both were session-level or nowhere before 7 September
+    2026, so every file recorded until then loads with them unknown,
+    which is the truth about those files.
+    """
+
+    def test_the_generation_before_them_loads(self, tmp_path: Path) -> None:
+        older = a_row(columns=PRE_MEASUREMENT_COLUMNS)
+        text = f"{PRE_MEASUREMENT_HEADER}\r\n{older}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert list(session.frame.columns) == COLUMNS
+
+    def test_they_arrive_as_nan_not_zero(self, tmp_path: Path) -> None:
+        # Zero frames per second is a refusal and zero milliseconds is
+        # a model that did not run. Neither is what an older file
+        # says, which is nothing at all.
+        older = a_row(columns=PRE_MEASUREMENT_COLUMNS)
+        text = f"{PRE_MEASUREMENT_HEADER}\r\n{older}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert session.frame["sampledFps"].isna().all()
+        assert session.frame["inferenceMs"].isna().all()
+
+    def test_a_reordered_header_is_refused(self, tmp_path: Path) -> None:
+        # Swapping the last two turns every value in both columns into
+        # the other one's. A loader that accepted any permutation would
+        # read an inference cost as a frame rate and say nothing.
+        swapped = COLUMNS[:-2] + [COLUMNS[-1], COLUMNS[-2]]
+        text = f"{','.join(swapped)}\r\n{a_row(columns=swapped)}\r\n"
+        with pytest.raises(SessionError, match="wrong order"):
+            load_session(write(tmp_path, text))
+
+    def test_each_older_generation_is_a_prefix_of_the_current_one(
+        self,
+    ) -> None:
+        # The property every generation slice depends on. It is checked
+        # rather than assumed, because the slices were written as
+        # offsets from the end and an append moves what an absolute
+        # offset cuts.
+        for generation in ACCEPTED_GENERATIONS:
+            assert COLUMNS[: len(generation)] == generation

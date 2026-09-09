@@ -101,6 +101,10 @@ function record(timestampMs: number): FeatureRecord {
     blinkLineSource: "none",
     shutLineMm: null,
     shutLineSource: "none",
+    sampledFps: null,
+    inferenceMs: null,
+    sceneLum: null,
+    faceLum: null,
   };
 }
 

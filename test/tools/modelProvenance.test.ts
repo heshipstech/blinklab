@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bundledBrowsers,
+  cardInstrument,
   cardProvenance,
+  groupedExclusions,
   landmarkerOptions,
+  lockfilePlaywright,
   lockfileVision,
   modelHash,
+  runnerEngine,
 } from "../../tools/modelProvenance.mjs";
 import { DETECTOR_SOURCES } from "../../tools/detectorRatchet.mjs";
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
@@ -94,5 +99,99 @@ describe("the ratchet watches the model too", () => {
   it("the model file and the loader are detector sources now", () => {
     expect(DETECTOR_SOURCES).toContain("public/models/face_landmarker.task");
     expect(DETECTOR_SOURCES).toContain("src/io/landmarker.ts");
+  });
+});
+
+describe("the instrument that drove the corpus", () => {
+  // Roadmap 10.1g's provenance half. The card pinned the model, the
+  // runtime and the landmarker options, and said nothing about the
+  // browser. Every published Eyeblink8 number was produced by stepping
+  // real clips in a real browser, launched by Playwright from
+  // tools/measure_corpus.mjs, and a Playwright bump changes both the
+  // driver and the browser binary underneath it without one line of
+  // this repository changing. Row 10.1g4 put package-lock.json under
+  // the detector ratchet for that reason; this is the other half, so
+  // the card says WHICH browser rather than leaving a reader to guess.
+
+  it("names the engine the corpus runner actually launches", () => {
+    expect(
+      runnerEngine(
+        'import { webkit } from "@playwright/test";\nwebkit.launch();',
+      ),
+    ).toBe("webkit");
+  });
+
+  it("refuses a runner that launches an engine it did not import", () => {
+    // A source that imports one engine and launches another is not a
+    // source this parser may guess about. Reporting either name would
+    // put a browser in the card that never ran.
+    expect(() =>
+      runnerEngine(
+        'import { webkit } from "@playwright/test";\nchromium.launch();',
+      ),
+    ).toThrow(/launches/);
+  });
+
+  it("refuses a runner that launches more than one engine", () => {
+    expect(() =>
+      runnerEngine(
+        'import { webkit, chromium } from "@playwright/test";\nwebkit.launch();\nchromium.launch();',
+      ),
+    ).toThrow(/launches/);
+  });
+
+  it("refuses a runner that launches nothing", () => {
+    expect(() => runnerEngine("const x = 1;")).toThrow(/launches/);
+  });
+
+  it("reads the Playwright version from the lockfile, not from a comment", () => {
+    const pinned = lockfilePlaywright(root);
+    expect(pinned.version).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  it("reads the browser versions Playwright bundles", () => {
+    const bundled = bundledBrowsers(root);
+    expect(bundled.webkit).toMatch(/^\d+/);
+    expect(bundled.chromium).toMatch(/^\d+\./);
+  });
+
+  it("returns null when the card has no instrument section", () => {
+    expect(cardInstrument("## Privacy\n\nwords")).toBeNull();
+  });
+
+  it("the card names the engine the runner launches", () => {
+    const runner = readRepoFile("tools/measure_corpus.mjs", root);
+    expect(cardInstrument(card)?.engine).toBe(runnerEngine(runner));
+  });
+
+  it("the card states the Playwright version the lockfile pins", () => {
+    expect(cardInstrument(card)?.playwrightVersion).toBe(
+      lockfilePlaywright(root).version,
+    );
+  });
+
+  it("the card states the browser versions that Playwright bundles", () => {
+    const bundled = bundledBrowsers(root);
+    expect(cardInstrument(card)?.webkitVersion).toBe(bundled.webkit);
+    expect(cardInstrument(card)?.chromiumVersion).toBe(bundled.chromium);
+  });
+
+  it("keeps package-lock.json under the detector ratchet, which is what makes these lines matter", () => {
+    // Without the ratchet these pins only say the card is current.
+    // With it, a Playwright bump reddens twice: the card must be
+    // updated, and the bump must be declared against the published
+    // numbers or re-measured.
+    expect(DETECTOR_SOURCES).toContain("package-lock.json");
+  });
+});
+
+describe("Playwright arrives as its own pull request", () => {
+  // A bump that can move a published measurement must not arrive
+  // bundled with nine others under one grouped title. Roadmap 10.1g.
+  const dependabot = readRepoFile(".github/dependabot.yml", root);
+
+  it("excludes Playwright from the grouped minor and patch updates", () => {
+    expect(groupedExclusions(dependabot)).toContain("@playwright/test");
+    expect(groupedExclusions(dependabot)).toContain("playwright");
   });
 });

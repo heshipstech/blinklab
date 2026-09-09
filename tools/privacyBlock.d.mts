@@ -12,9 +12,6 @@ export type StoredItemSource = {
 /** The stored items parsed out of src/core/storedData.ts. Throws when it finds none. */
 export function storedItems(storedDataSource: string): StoredItemSource[];
 
-/** The export disclosure sentence parsed out of src/core/exportContents.ts. */
-export function exportSentence(exportContentsSource: string): string;
-
 /** The generated block, markers included. */
 export function buildPrivacyBlock(root: string): string;
 

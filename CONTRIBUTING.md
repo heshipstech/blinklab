@@ -1,6 +1,8 @@
 # Contributing
 
-Written 15 August 2026, against the state of `main` on that date.
+Written 15 August 2026, revised 7 September 2026.
+
+Read in full on 7 September 2026, claims `ba04d655`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 blinklab is a solo learning project built in public. It is not looking for
 feature contributions, and there is no roadmap row for this file: it exists
@@ -30,14 +32,24 @@ number.
 ## If you do open a pull request
 
 The gates below run on every pull request, and a gate you skip locally fails
-there instead. From the repository root:
+there instead. A test holds this line to the `checks` job in
+`.github/workflows/ci.yml`, so a gate added to one and not the other is a red
+build rather than a surprise on somebody's first pull request. That is not
+hypothetical: `npm run counts:check` went into continuous integration on
+7 September 2026 and this line did not follow it until the pin was written.
+From the repository root:
 
 ```bash
-npm run lint && npm run typecheck && npm test && npm run coverage && npm run build && npm run bundle:budget && npm run format:check && npm run e2e
+npm run lint && npm run typecheck && npm test && npm run coverage && npm run counts:check && npm run build && npm run bundle:budget && npm run format:check && npm run e2e
 ```
 
-Install with `npm ci --ignore-scripts`, which is what both workflows run since
-6 September 2026. A dependency's own install hook runs arbitrary code out of
+Install with the same command both workflows have run since 6 September 2026:
+
+```bash
+npm ci --ignore-scripts
+```
+
+A dependency's own install hook runs arbitrary code out of
 the npm tree, and only `fsevents` ships one today, a no-op away from macOS.
 The flag is per invocation, so the project's own steps are unaffected:
 `npm run build` still runs `prepare-assets` and the MediaPipe wasm files still
@@ -71,18 +83,27 @@ Three rules hold, and each was learned by breaking:
 
 ## Where the documents are
 
-| File              | What it is                                                |
-| ----------------- | --------------------------------------------------------- |
-| `README.md`       | what this measures, and the results with their history    |
-| `STATE.md`        | the save state: where things stand right now              |
-| `ROADMAP.md`      | the numbered increments and their amendments              |
-| `SPEC.md`         | the contracts between modules                             |
-| `ARCHITECTURE.md` | why `src/core` is pure and what that buys                 |
-| `LEARNING.md`     | one concept per increment, the reason this project exists |
-| `docs/log.md`     | one dated line per increment                              |
-| `docs/UI.md`      | every element the page can show, and every string         |
-| `REMEDIATION.md`  | the fix ladder after the August 2026 audit                |
-| `NEEDS-REVIEW.md` | decisions the audit parked for the owner                  |
+| File                     | What it is                                                     |
+| ------------------------ | -------------------------------------------------------------- |
+| `README.md`              | what this measures, and the results with their history         |
+| `STATE.md`               | the save state: a generated status block, then one entry a row |
+| `ROADMAP.md`             | the numbered increments and their amendments                   |
+| `SPEC.md`                | the contracts between modules                                  |
+| `ARCHITECTURE.md`        | why `src/core` is pure and what that buys                      |
+| `LEARNING.md`            | one concept per increment, the reason this project exists      |
+| `MODEL_CARD.md`          | what it measures, where it fails, and on which instrument      |
+| `PROJECT.md`             | the product intent, changed only when the intent changes       |
+| `CHANGELOG.md`           | the shape of the thing at each release                         |
+| `DATASETS.md`            | every public dataset assessed, and why none cleared the bar    |
+| `docs/UI.md`             | every element the page can show, and every string              |
+| `REMEDIATION-2026-09.md` | **the live fix ladder**, after the September 2026 audit        |
+
+Three documents in earlier versions of this table are retired and say so at
+their own first line: `REMEDIATION.md` and `NEEDS-REVIEW.md`, the August
+trackers, and `docs/log.md`, which promised one dated line per increment and
+stopped getting them. They are kept rather than deleted, which is the rule
+this project applies to a superseded measurement. This table listed all three
+as current until 7 September 2026, one row after they were retired.
 
 ## Security
 

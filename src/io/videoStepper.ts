@@ -1,5 +1,9 @@
 import { findFirstFrame } from "../core/frameSearch";
-import { calibrateStep, type StepCalibration } from "../core/stepCalibration";
+import {
+  calibrateStep,
+  probeStep,
+  type StepCalibration,
+} from "../core/stepCalibration";
 import type { VideoWithFrameCallback } from "./frameLoop";
 
 // Stepping a clip, rather than watching it.
@@ -45,6 +49,14 @@ export type StepSummary = {
   inexactLandings: number;
   /** What calibration made of the first frames, or null if none decoded. */
   calibration: StepCalibration | null;
+  /**
+   * Seeks calibration spent finding those frames, out of
+   * CALIBRATION_ATTEMPTS. A counted fact for the same reason
+   * inexactLandings is one: the probe rule buys safety with attempts,
+   * and a cost nobody can see is a cost nobody notices rising. Roadmap
+   * 10.14d, docs/stepper-probe-budget.txt.
+   */
+  calibrationAttempts: number;
 };
 
 // A seek that lands on the frame already showing produces no new frame
@@ -58,18 +70,40 @@ const SEEK_TIMEOUT_MS = 2000;
 // audit's critical finding), and more frames make a lone glitch a
 // minority the multiple-of-the-smallest rule can see. On a slow clip
 // the budget runs out first and calibration proceeds on what it has.
-const CALIBRATION_FRAMES = 12;
+export const CALIBRATION_FRAMES = 12;
 
-// How many seeks calibration may spend finding those frames. Generous
-// on purpose: a probe that lands on the frame already showing costs an
-// attempt and teaches nothing, and at a 10 ms step it takes three or
-// four of them to cross one frame of a 30 fps clip.
-const CALIBRATION_ATTEMPTS = 60;
+// How many seeks calibration may spend finding those frames. A probe
+// that lands on the frame already showing costs an attempt and teaches
+// nothing, and the slower the clip the more of those there are.
+//
+// Sixty was generous by eye and too thin by measurement. Roadmap
+// 10.14d swept the arithmetic floor, the fewest probes the rule can
+// possibly take on a clip with exact frame times and a browser that
+// always answers: 19 at 300 frames per second, 41 at 30, 51 at 24,
+// 61 at 20 and 81 at 15. Sixty could not gather twelve frames at 20
+// frames per second or below. It gathered eleven at 20 and eight at
+// 15, and calibrated on those, so the "twelve frames make a lone
+// glitch a minority" protection quietly thinned out at exactly the
+// rates where the September audit's reproduced defect lived, a 20
+// frames per second clip reported as 40.
+//
+// A hundred and twenty covers the floor at 15 frames per second with
+// 39 spare, and at 24 — the slowest rate this project will measure
+// blinks on, MIN_BLINK_FPS — leaves 69 attempts for probes the
+// browser answers without a frame callback. That is the stated
+// margin: more spare than spent, at every rate the project supports.
+// The price is that a clip that cannot calibrate spends up to a
+// hundred and twenty seeks before refusing rather than sixty.
+// docs/stepper-probe-budget.txt.
+export const CALIBRATION_ATTEMPTS = 120;
 
-// How far each probe moves. Under half a frame even at 60 fps, so it
-// cannot step over one, but four times the old 4 ms so the budget
-// actually reaches several distinct frames.
-const CALIBRATION_STEP_S = 0.01;
+// How far the FIRST probes move, before any landing has been seen.
+// Ten milliseconds reaches several distinct frames at ordinary rates
+// without spending the budget. It is not safe on its own: it is two
+// whole periods at 200 frames per second, which is roadmap 10.14c's
+// finding, so once two landings exist the step is derived from them
+// by probeStep() rather than staying at this value.
+const CALIBRATION_BOOTSTRAP_STEP_S = 0.01;
 
 // How long to let the frame callback answer after `seeked` has
 // already fired, before settling for the less precise reading.
@@ -194,10 +228,12 @@ function frameProbe(
 async function measureFrameInterval(
   video: VideoWithFrameCallback,
   originSeconds: number,
-): Promise<StepCalibration> {
+): Promise<{ calibration: StepCalibration; attempts: number }> {
   const times: number[] = [];
   let probe = originSeconds;
+  let spent = 0;
   for (let attempt = 0; attempt < CALIBRATION_ATTEMPTS; attempt += 1) {
+    spent += 1;
     const landing = await seekTo(video, probe);
     if (landing === null) break;
     // Only a frame callback knows where we actually landed. An
@@ -206,7 +242,7 @@ async function measureFrameInterval(
     // rather than the clip's frame interval. That is exactly how a 60
     // frame clip was once measured as 180.
     if (!landing.exact) {
-      probe += CALIBRATION_STEP_S;
+      probe += probeStep(times, CALIBRATION_BOOTSTRAP_STEP_S);
       continue;
     }
     const mediaTime = landing.mediaTimeSeconds;
@@ -220,9 +256,18 @@ async function measureFrameInterval(
     // the middle of frame zero returns mediaTime zero, so the next
     // probe is computed from zero again and the loop asks for the same
     // instant until it gives up. That is why the first real clip
-    // reported "unknown rate". 4 ms is under half a frame even at 120
-    // frames per second, so this cannot step over one.
-    probe = Math.max(probe, mediaTime) + CALIBRATION_STEP_S;
+    // reported "unknown rate".
+    //
+    // The distance comes from the landings rather than from a
+    // constant. A fixed 10 ms is two whole periods at 200 frames per
+    // second, and a probe that advances by a whole number of periods
+    // lands on every other frame, calibrates at half the rate, and
+    // leaves nothing for the inexact-landing rule to catch, because
+    // every target still falls exactly on a real frame (roadmap
+    // 10.14c, docs/stepper-probe-rate.txt).
+    probe =
+      Math.max(probe, mediaTime) +
+      probeStep(times, CALIBRATION_BOOTSTRAP_STEP_S);
   }
 
   // The rule lives in core so it can be pinned. Its history matters:
@@ -235,7 +280,7 @@ async function measureFrameInterval(
   // is the mean period those multiples imply. A gap that is no
   // multiple is a variable frame rate, refused by name rather than
   // stepped at the glitch. docs/stepper-honesty.txt.
-  return calibrateStep(times);
+  return { calibration: calibrateStep(times), attempts: spent };
 }
 
 /**
@@ -268,10 +313,12 @@ export async function stepThroughVideo(
       stoppedEarly: true,
       inexactLandings: 0,
       calibration: null,
+      calibrationAttempts: 0,
     };
   }
 
-  const calibration = await measureFrameInterval(video, origin);
+  const { calibration, attempts: calibrationAttempts } =
+    await measureFrameInterval(video, origin);
   // REFUSED rather than guessed, and this is the whole lesson of the
   // first corpus run. The old fallback assumed 60 frames per second
   // when calibration failed. On a 30 fps clip that halves the step, so
@@ -289,6 +336,7 @@ export async function stepThroughVideo(
       stoppedEarly: true,
       inexactLandings: 0,
       calibration,
+      calibrationAttempts,
     };
   }
   const interval = calibration.periodSeconds;
@@ -317,6 +365,7 @@ export async function stepThroughVideo(
         stoppedEarly: true,
         inexactLandings,
         calibration,
+        calibrationAttempts,
       };
     }
 
@@ -382,5 +431,6 @@ export async function stepThroughVideo(
     stoppedEarly: false,
     inexactLandings,
     calibration,
+    calibrationAttempts,
   };
 }

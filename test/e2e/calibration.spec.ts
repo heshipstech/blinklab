@@ -29,7 +29,9 @@ test("the calibration flow opens on dot 1 of 9 and cancels cleanly", async ({
   // server first. Generous timeout: CI machines are slow.
   await calibrate.click();
   await expect(
-    page.getByText("Follow the dot (1/9). Click anywhere to cancel."),
+    page.getByText(
+      "Follow the dot (1/9). Click anywhere or press Esc to cancel.",
+    ),
   ).toBeVisible({ timeout: 30_000 });
 
   // The dot sits on the first of the nine known targets.

@@ -1,5 +1,7 @@
 # REMEDIATION.md
 
+**RETIRED 7 September 2026.** This is the August 2026 tracker and it is no longer maintained. Some entries below describe work that has since shipped, and one lists as deliberately-not-doing a thing that was done. It is kept rather than deleted, which is the rule this project applies to a superseded measurement, and for the same reason: the road is part of the result. **The live tracker is [REMEDIATION-2026-09.md](REMEDIATION-2026-09.md)**, and where this file and that one disagree, that one is right. Where the project stands overall is the generated block at the top of [STATE.md](STATE.md).
+
 The save state for the work that follows the August 2026 audit.
 
 `AUDIT_PLAN.md` was the save state for the audit. This is the save state

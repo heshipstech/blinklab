@@ -35,6 +35,7 @@ describe("the generated cannot-see block", () => {
     // The deterministic miss, the device difference, the adjusted
     // PERCLOS, the censored log: the plan names all four as the
     // block's non-negotiable content.
+    expect(module).toContain("99");
     expect(module).toContain("67");
     expect(module).toContain("408");
     expect(module).toMatch(/not comparable/);

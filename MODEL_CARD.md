@@ -3,11 +3,13 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 6 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 8 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
+
+Read in full on 8 September 2026, claims `ee3e546d`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -32,9 +34,9 @@ measurements can be checked.
 
 | Measurement     | Unit   | Validated against                           | Result                                              |
 | --------------- | ------ | ------------------------------------------- | --------------------------------------------------- |
-| Blink detection | events | Eyeblink8, 8 clips, 408 human-marked blinks | recall **83.6%**, precision **84.0%**, F1 **83.8%** |
+| Blink detection | events | Eyeblink8, 8 clips, 408 human-marked blinks | recall **75.7%**, precision **83.3%**, F1 **79.3%** |
 
-**These numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. **Confirmed 26 August 2026: the table above reproduces identically on a second machine.** The full corpus, prepared by the committed remux tool, returned every count, percentage and coverage number digit for digit across a different processor generation, operating system, WebKit binary and fifteen commits of instrument change. The apparent machine gap reported on 25 August was the file preparation: that run's clips had been re-encoded instead of remuxed, and re-encoding alone collapses false alarms from 19 to 3 on the worst clip at every quality from lossless to visibly lossy. Two things follow: these numbers are a measured property of the instrument and the prepared files, on two machines; and the instrument's precision is sensitive to how a video was transcoded, so any comparison against other published numbers must state the preparation. The re-encoded table stays published as the record of that discovery; it is not an Eyeblink8 result. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+**These numbers are the 8 September 2026 run at the current commit, and one clip in them is an open defect.** Seven of the eight clips reproduce the previous anchor — recall 83.6%, precision 84.0%, F1 83.8% — digit for digit; the eighth fell from 38 of 43 blinks found to 6 after a detector change made since that anchor, the change is being isolated miss by miss, and the headline carries the regression rather than waiting for the fix ([docs/eyeblink8-result.txt](docs/eyeblink8-result.txt)). **The anchor's numbers are machine-conditional, measured 25 August 2026.** The same corpus, through the same code, the same committed face model and the same pinned runtime, measured on a second machine gives recall **85.0%**, precision **96.4%**, F1 **90.4%** — on identical frames, coverage matching to the frame on all eight clips. **Confirmed 26 August 2026: the anchor's table reproduces identically on a second machine.** The full corpus, prepared by the committed remux tool, returned every count, percentage and coverage number digit for digit across a different processor generation, operating system, WebKit binary and fifteen commits of instrument change. The apparent machine gap reported on 25 August was the file preparation: that run's clips had been re-encoded instead of remuxed, and re-encoding alone collapses false alarms from 19 to 3 on the worst clip at every quality from lossless to visibly lossy. Two things follow: these numbers are a measured property of the instrument and the prepared files, on two machines; and the instrument's precision is sensitive to how a video was transcoded, so any comparison against other published numbers must state the preparation. The re-encoded table stays published as the record of that discovery; it is not an Eyeblink8 result. Both tables, and the measurements that eliminated the code, the files, the model and the runtime as causes, are in [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
 | Eyelid aperture | millimetres | iris as a physical ruler | not validated against a physical measurement |
 | Blink duration, amplitude, closing velocity | ms, mm, mm/s | nothing external | unvalidated |
 | Gaze direction | screen region | nine point calibration, one person | not measured; quadrant-level target checked by the owner on one setup (MANUAL item 34) |
@@ -141,9 +143,11 @@ camera frames read and blames whichever side binds. The thresholds
 and the 25 fps floor did not move; the decision rule was committed
 in `docs/blink-sample-rate.txt` before the measurement was seen.
 
-**It misses blinks that are plainly there.** Of the blinks it missed on
-Eyeblink8, 70.1% contained at least one frame a human marked as fully
-closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%
+**It misses blinks that are plainly there.** The current run misses 99
+blinks. 67 of them are the stable, characterised set this paragraph
+describes; the other 32 are the open one-clip regression above, not yet
+characterised. Of the 67, 70.1% contained at least one frame a human
+marked as fully closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%
 until 20 August; each figure described the run it was measured on.)
 These are not faint or borderline events. An awake per-frame trace and
 a mechanism autopsy now explain why the eyelid measurement does not dip
@@ -172,8 +176,8 @@ gate of 21 August 2026 answers that by mechanism rather than timer:
 after a counted blink, no new blink may begin until the eyelid has
 risen clearly above the line. It removed 13 more false alarms at zero
 recall cost (`docs/blink-rearm.txt`, predictions committed first).
-65 false alarms remain and 38 of them still sit on top of a real
-blink. The refractory period stays at 150 ms, deliberately: a
+The current run counts 62 false alarms; at the anchor run there were
+65, 38 of them sitting on top of a real blink. The refractory period stays at 150 ms, deliberately: a
 constant chosen to improve a score on a benchmark already read is
 fitting rather than measuring.
 
@@ -211,9 +215,12 @@ so a person who blinks twice as often reads twice as high with no change
 in how droopy their eyes are. That is the second reason it is not
 comparable to another system's figure, and it is the larger of the two.
 
-**Strong prescription lenses degrade gaze**, though on the one glasses
-clip in Eyeblink8 they did not degrade blink detection. One clip of 43
-blinks settles nothing either way.
+**Strong prescription lenses degrade gaze**, and what they do to blink
+detection is unmeasured. The one glasses clip in Eyeblink8 scored close
+to the corpus average until 8 September 2026, when the regression run
+found it collapsed — a detector change under diagnosis, not lens
+evidence, since the other seven clips were untouched. One clip of 43
+blinks settles nothing either way, in either direction.
 
 **Thresholds are personal and learned per session**, over 30 seconds. A
 session shorter than that produces no score at all, and the learning
@@ -285,9 +292,14 @@ between readings to track a face, so machine speed leaked into the
 measurement. Measuring one clip three times now produces identical files,
 byte for byte.
 
-The published figure has been wrong twice, both times through a defect
-in this repository rather than in the data. Both wrong answers remain
-printed in the README beside the current one.
+The published figure has been corrected four times, every time through
+a defect in this repository rather than in the data, and on 8 September
+2026 a re-measurement added a sixth column recording a regression. All
+earlier answers remain printed in the README beside the current one, in
+a table of six columns. (This paragraph said "wrong twice" and "both wrong
+answers" until 7 September 2026, when the first full read under the
+stamp at the top of this file caught it. It was accurate when written
+and two corrections had landed since.)
 
 ## Model provenance
 
@@ -317,14 +329,47 @@ row 13.5. The model file and `src/io/landmarker.ts` are watched by the
 detector ratchet (`tools/detectorRatchet.mjs`), so changing either
 without a corpus re-measure or a dated caveat is a red build.
 
+## The instrument that stepped the corpus
+
+Every Eyeblink8 number in this card was produced by stepping real clip
+files in a real browser, not by decoding them in Node. The runner is
+`tools/measure_corpus.mjs`; it launches `webkit`, driven by
+@playwright/test `1.62.1`, which bundles WebKit `26.5` and Chromium
+`151.0.7922.34`.
+
+Those three versions describe the instrument AS IT STANDS, not as it
+stood. The browser binary that produced the 25 and 26 August 2026
+runs was never written down, which is the gap this section closes: the
+reproduction on a second machine is recorded as spanning "a different
+processor generation, operating system and WebKit binary", and nobody
+can now say which WebKit either run used. From here the version is on
+the record before the measurement, not reconstructed after it.
+
+A test reads all three from the committed lockfile and from the
+manifest inside the pinned `playwright-core`, so a Playwright bump that
+leaves this section behind turns the build red. It reddens twice, in
+fact: `package-lock.json` is watched by the detector ratchet
+(`tools/detectorRatchet.mjs`), so the bump also has to be declared
+against the published numbers or re-measured. Dependabot is configured
+to send Playwright as its own pull request rather than inside a
+grouped minor-and-patch title, because a bump that can move a
+published measurement should not arrive with nine others under one
+heading.
+
+Chromium is stated alongside WebKit because the end-to-end suite runs
+there on every pull request, so it is part of what this repository
+checks even though it is not what measured the corpus.
+
 ## Measurement uncertainty
 
 The published numbers carry conditions, and the conditions are part of
 the numbers.
 
 Precision is a property of the video preparation as much as of the
-detector. The precision above (65 invented blinks) is measured from the
-committed remux preparation, digit for digit on two machines. The same
+detector. The precision above (62 invented blinks) is measured from the
+committed remux preparation; at the previous anchor (65 invented) it
+reproduced digit for digit on two machines, and the 8 September run has
+so far been measured on one. The same
 recordings re-encoded measured precision 12.4 points lower, and one
 clip's false alarms collapse from 19 to 3 under re-encoding at every
 quality tried, lossless included. The figure does not transfer to

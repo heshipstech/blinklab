@@ -5,6 +5,7 @@ import {
   relapses,
   repoRoot,
   trackedFilesMatching,
+  unexempted,
 } from "../../tools/claimGuard.mjs";
 
 // Six files claimed this page sent nothing anywhere, and one of them was
@@ -96,5 +97,105 @@ describe("retired claims stay retired", () => {
     expect(family.test("your video and your measurements never leave")).toBe(
       false,
     );
+  });
+});
+
+// Roadmap 12.6. The fourth claim is a vocabulary cap rather than a
+// measured falsehood: amendment 16 capped "microsleep" at
+// "microsleep-RANGE closure", because the real thing is defined on
+// the electroencephalogram and no data this project may use could
+// validate one. The cap was a sentence in the ladder and nothing
+// held it.
+describe("the microsleep vocabulary cap", () => {
+  const capped = RETIRED_CLAIMS.find((c) => c.says === "microsleep detection");
+
+  it("is one of the retired claims and says why", () => {
+    expect(capped).toBeDefined();
+    expect(capped?.because).toMatch(/EEG|electroencephalogram/i);
+  });
+
+  it("bans the family and not one spelling", () => {
+    const family = new RegExp(capped?.pattern ?? "$^", "i");
+    expect(family.test("microsleep detection")).toBe(true);
+    expect(family.test("Microsleep detected")).toBe(true);
+    expect(family.test("microsleep-detection")).toBe(true);
+    expect(family.test("the microsleep is detected within a second")).toBe(
+      true,
+    );
+    expect(family.test("microsleeps are detected on device")).toBe(true);
+    expect(family.test("detects microsleeps")).toBe(true);
+    expect(family.test("detection of a microsleep")).toBe(true);
+  });
+
+  it("leaves the honest vocabulary alone", () => {
+    // The cap bans a claim, not a word. Describing the shape, the
+    // range, or the history has to stay writable or the guard would
+    // make the project unable to explain its own restraint.
+    const family = new RegExp(capped?.pattern ?? "$^", "i");
+    expect(family.test("microsleep-range closure")).toBe(false);
+    expect(family.test("the microsleep shape the literature watches")).toBe(
+      false,
+    );
+    expect(family.test("long closures, not microsleeps")).toBe(false);
+  });
+
+  it("would fire on the ladder, which is why the ladder is exempt", () => {
+    // The exemption below is only honest while the phrase is really
+    // in ROADMAP.md. If this ever finds nothing, the ladder has
+    // stopped naming what it refuses and the exemption goes with it.
+    expect(trackedFilesMatching(capped?.pattern ?? "$^", root)).toContain(
+      "ROADMAP.md",
+    );
+  });
+
+  it("exempts the ladder from this claim and from no other", () => {
+    // Amendment 16 and row 12.6 both quote the phrase, because
+    // declaring a refusal means naming it. That earns ROADMAP.md an
+    // exemption from THIS claim. It does not earn the ladder the
+    // right to say the page sends nothing anywhere, so the exemption
+    // is carried by the claim rather than by the caller's list.
+    expect(capped?.exempt).toContain("ROADMAP.md");
+    expect(EXEMPT).not.toContain("ROADMAP.md");
+    for (const claim of RETIRED_CLAIMS) {
+      if (claim.says === capped?.says) {
+        continue;
+      }
+      expect(claim.exempt ?? []).not.toContain("ROADMAP.md");
+    }
+  });
+});
+
+describe("a claim's own exemption", () => {
+  const withOwn = {
+    pattern: "irrelevant",
+    says: "one claim",
+    because: "one reason",
+    exempt: ["DOC.md"],
+  };
+  const without = {
+    pattern: "irrelevant",
+    says: "another claim",
+    because: "another reason",
+  };
+
+  it("covers that claim only", () => {
+    expect(unexempted(withOwn, ["DOC.md", "OTHER.md"])).toEqual(["OTHER.md"]);
+    expect(unexempted(without, ["DOC.md", "OTHER.md"])).toEqual([
+      "DOC.md",
+      "OTHER.md",
+    ]);
+  });
+
+  it("adds to the caller's list rather than replacing it", () => {
+    expect(unexempted(withOwn, ["DOC.md", "OTHER.md"], ["OTHER.md"])).toEqual(
+      [],
+    );
+    expect(unexempted(without, ["DOC.md", "OTHER.md"], ["OTHER.md"])).toEqual([
+      "DOC.md",
+    ]);
+  });
+
+  it("is optional, and a claim without one exempts nothing", () => {
+    expect(unexempted(without, ["DOC.md"])).toEqual(["DOC.md"]);
   });
 });

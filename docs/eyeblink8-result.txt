@@ -1,10 +1,10 @@
 BLINK DETECTION vs Eyeblink8 ground truth
 
-8 clips, 408 annotated blinks, 406 detected
+8 clips, 408 annotated blinks, 371 detected
 
-  Recall     83.6%   (341 of 408 found)
-  Precision  84.0%   (65 invented)
-  F1         83.8%
+  Recall     75.7%   (309 of 408 found, 95% interval 71.3 to 79.6)
+  Precision  83.3%   (62 invented, 95% interval 79.2 to 86.7)
+  F1         79.3%
 
 Per clip
   clip                   gl   true  found  miss  false   recall     prec
@@ -15,10 +15,10 @@ Per clip
   27122013_151644_cam      -    30     26     4     14    86.7%    65.0%
   27122013_152435_cam      -    41     36     5     19    87.8%    65.5%
   27122013_153916_cam      -    72     67     5     11    93.1%    85.9%
-  27122013_154548_cam    yes    43     38     5      4    88.4%    90.5%
+  27122013_154548_cam    yes    43      6    37      1    14.0%    85.7%
 
 Split by glasses
-  with glasses    1 clip(s), recall 88.4%, precision 90.5%
+  with glasses    1 clip(s), recall 14.0%, precision 85.7%
   without         7 clip(s), recall 83.0%, precision 83.2%
 
 Coverage
@@ -31,12 +31,43 @@ Coverage
   27122013_153916_cam    measured    9077, annotated    9077
   27122013_154548_cam    measured    4895, annotated    4895
 
+--- END OF THE CURRENT RUN ---
+
+Everything above this line is the block tools/evaluate_eyeblink8.py
+generates, and it is the only part of this file tools/resultGuard.mjs
+reads the published figures from. Everything below is history: how to
+reproduce the run, a second machine's, superseded runs kept for the
+record, and the measurement ratchet.
+
+The line exists because four blocks in this file carry a headline in
+the same shape, and the parser used to take the first one that
+matched. That is correct only while the current block keeps matching:
+roadmap 10.10c1 adds a confidence interval inside the parentheses of
+the recall and precision lines, and at the next regeneration the old
+pattern would have skipped the block above and read the 20 August one
+instead, publishing precision 81.4% and 78 invented in place of 84.0%
+and 65 while recall stayed right, because that superseded block
+carries an identical recall line. Roadmap 10.0b2, found by widening
+the detector ratchet in 10.1g4.
+
+When a corpus run regenerates the block above, paste it in above this
+line and leave the line where it is.
+
 HOW TO REPRODUCE THIS EXACTLY
 
+    node tools/measure_corpus.mjs \
+        "$DATASETS/eyeblink8-mp4" \
+        "$DATASETS/eyeblink8-measured-2026-09-08"
+
     cd analysis
-    PYTHONPATH="$PWD" .venv/bin/python tools/evaluate_eyeblink8.py \
+    PYTHONPATH="$PWD" uv run python tools/evaluate_eyeblink8.py \
         "$DATASETS/eyeblink8/eyeblink8" \
-        "$DATASETS/eyeblink8-measured-rearm"
+        "$DATASETS/eyeblink8-measured-2026-09-08"
+
+Until 8 September 2026 this section's evaluation command read the
+2026-08-21-rearm measured folder; the run recorded in the dated
+section below replaced the block above, and the correction notes
+that follow were written about that earlier command.
 
 A CORRECTION TO "EXACTLY", 24 August 2026. The heading above
 promised an exact reproduction and did not deliver one. The
@@ -291,14 +322,85 @@ checked:
   without         7 clip(s), recall 67.9%, precision 86.7%
 
 
+RE-MEASURED AT HEAD, 8 SEPTEMBER 2026, AND ONE CLIP COLLAPSED
+=============================================================
+
+The regression run row 10.8a promised: the owner's machine, WebKit
+through tools/measure_corpus.mjs (Playwright 1.62.1), all eight clips
+stepped, at commit 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5. Every
+honesty check the run carries passed: measurement_mode "stepped" on
+all eight exports, inexact_landings 0 on all eight, no refusals, and
+the coverage block identical to the anchor's on every clip, down to
+the same two "+1" rows. The block at the top of this file is that
+run's, and the one it supersedes is kept here:
+
+  8 clips, 408 annotated blinks, 406 detected
+
+    Recall     83.6%   (341 of 408 found)
+    Precision  84.0%   (65 invented)
+    F1         83.8%
+
+    clip                   gl   true  found  miss  false   recall     prec
+    26122013_223310_cam      -    38     28    10      5    73.7%    84.8%
+    26122013_224532_cam      -    88     80     8     10    90.9%    88.9%
+    26122013_230103_cam      -    65     43    22      2    66.2%    95.6%
+    26122013_230654_cam      -    31     23     8      0    74.2%   100.0%
+    27122013_151644_cam      -    30     26     4     14    86.7%    65.0%
+    27122013_152435_cam      -    41     36     5     19    87.8%    65.5%
+    27122013_153916_cam      -    72     67     5     11    93.1%    85.9%
+    27122013_154548_cam    yes    43     38     5      4    88.4%    90.5%
+
+    with glasses    1 clip(s), recall 88.4%, precision 90.5%
+    without         7 clip(s), recall 83.0%, precision 83.2%
+
+WHAT MOVED, EXACTLY. Seven of eight clips reproduced the anchor DIGIT
+FOR DIGIT: found, miss, false, recall and precision, every row. The
+eighth, 27122013_154548_cam — the one clip whose subject wears
+glasses — fell from 38 of 43 found to 6 of 43, recall 88.4% to
+14.0%, and its false alarms from 4 to 1. The arithmetic closes
+exactly: 341 - 32 = 309 found, 65 - 3 = 62 invented. The whole
+headline change is one clip.
+
+WHAT THE SEVEN IDENTICAL CLIPS ESTABLISH. The run is its own control
+group. Identity on seven clips clears, for those frames, everything
+the earlier corrections in this file taught us to suspect first: the
+machine (digit-for-digit across it), the prepared files (same
+folder, same remux, same coverage), and the stepper (three stepper
+changes since the anchor, and the frames measured did not move by
+one). What is left is the detector's decision on the glasses clip's
+frames, at some commit between the anchor
+65e8e7ca2a6322c8a71f52caabcf2a189972f956 and this run's head. Every
+candidate is a dated entry in the caveat block below, and none of
+their neutrality arguments predicted this: the collapse falsifies at
+least one of them, and which one is a measurement not yet made.
+
+NOT YET EXPLAINED, AND PUBLISHED ANYWAY. The number at the top is the
+instrument's current number, defect included, because this file does
+not publish the flattering column. The diagnosis is under way with
+the tools rows 10.8a1-10.8a5 built for it: the per-miss replay of the
+glasses clip's 37 misses against its own frame trace
+(analysis/tools/write_miss_table.py, then npm run replay:run), which
+separates "the aperture never crossed the line" from "the detector
+was not armed" from "no trusted face", per miss. Its outcome gets its
+own dated section here.
+
+TO REPRODUCE THIS RUN, use the two commands under HOW TO REPRODUCE
+THIS EXACTLY near the top of this file; they were updated to this
+run's measured folder when this section was written.
+
 THE MEASUREMENT RATCHET, 5 September 2026 (roadmap 10.1a)
 =========================================================
 
-Built from commit 65e8e7ca2a6322c8a71f52caabcf2a189972f956 — the awake
-corpus run of 2 September 2026, the most recent run to reproduce the
-numbers at the top of this file digit for digit (a second machine,
-WebKit, all eight clips stepped, the same 67 misses blink for blink as
-docs/evidence/2026-08-21-rearm).
+Built from commit 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 — the
+corpus run of 8 September 2026 recorded in the section above, the run
+that produced the block at the top of this file (the owner's machine,
+WebKit, all eight clips stepped, inexact landings 0 on every clip).
+The previous anchor was 65e8e7ca2a6322c8a71f52caabcf2a189972f956, the
+awake corpus run of 2 September 2026, which the 8 September run
+reproduced digit for digit on seven of eight clips and refuted on the
+eighth; the caveat block below is the ledger of every detector change
+between the two anchors, and the glasses-clip collapse recorded above
+is the measurement that retired it.
 
 From this line on, tools/detectorRatchet.mjs holds this file to the
 code: a commit that touches a detector source after the built-from
@@ -309,7 +411,13 @@ turns the build red from the other side. Retiring a caveat means
 editing its phrase to "re-measured on <date>", never deleting the
 record.
 
-DETECTOR CHANGED, not yet re-measured, 5 September 2026:
+DETECTOR CHANGED, re-measured on 8 September 2026 — the run recorded
+above scores every entry in this block. Seven clips came back digit
+for digit, so every "argued neutral" and "proved neutral" below held
+on those clips; the glasses clip did not come back, and until its 37
+misses are replayed, no entry below that reaches executable detector
+code is individually cleared for that clip. Originally declared 5
+September 2026:
 
   1a6c88f feat: the detector reads a person's own guided blink line
   dce2b87 feat: guided calibration stored form and a validated parse
@@ -333,10 +441,11 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   clip with millisecond-quantised timestamps changes schedule, and the
   pre-registered prediction is a frame count that drops by the
   fabricated excess and a blink count that moves by at most a handful.
-  The stepper and its rule are NOT yet on the ratchet's watch list, so
-  this paragraph is the only record that the schedule moved: ladder
-  item D4 adds them and names the merged commit, which a rebase merge
-  does not let this pull request know in advance.
+  The stepper and its rule were NOT on the ratchet's watch list when
+  this paragraph was written, so it was the only record that the
+  schedule had moved. Ladder item D4 has since added them, and the
+  merged commit it could not name in advance is named below, under 7
+  September 2026.
 
   7 September 2026, the velocity sampling bound (roadmap 10.10c4b,
   ladder B12, docs/velocity-sampling-bias.txt):
@@ -427,3 +536,180 @@ DETECTOR CHANGED, not yet re-measured, 5 September 2026:
   trailing columns was committed BEFORE any of this code existed
   (docs/line-in-the-export.txt), and 10.8a's regression run scores it.
   That is the measurement this caveat is standing in for.
+
+  7 September 2026, the whole chain comes under the watch (roadmap
+  10.1g4, ladder D4):
+
+  A published recall is made by four things in series: the detector
+  decides where the blinks are, the stepper decides which frames the
+  detector ever sees, the runner drives the clips, and the Python
+  scorer turns detections and annotations into a percentage. Until
+  today the ratchet watched the first and none of the other three, so
+  the stepper could be rewritten and the scorer's arithmetic changed
+  with this file staying green over a run that described neither.
+
+  Widening the list means every commit since the anchor that touched a
+  newly watched file has to be declared here. There are four, and they
+  are not equal. Three are shown inert from their diffs. The fourth is
+  the stepper and it can move the numbers, which is recorded as a fact
+  rather than argued away.
+
+  4e64877 feat: the stepper refuses what it cannot place on the clip's clock (ladder A1)
+
+  THIS ONE CAN MOVE THE NUMBERS, and any other verdict would be the
+  hand-wave this file exists to forbid. It touches three watched
+  files. tools/measure_corpus.mjs is inert: its whole diff is one log
+  line, `summary.slice(0, 62)` becoming `summary`, printed after the
+  CSVs are written and read by nothing. The other two are the frame
+  stepper, and the stepper decides which frames of a clip are measured
+  at all.
+
+  The schedule seeks `origin + (index + 0.5) * step` until the target
+  passes the clip's end. The step was the smallest gap over the first
+  six frame times landed on; it is now the mean period implied by
+  gaps that must be whole multiples of the smallest, over up to
+  twelve. On a clip whose container timestamps are exact the two are
+  the same number and nothing moves. On a millisecond-quantised clip
+  they differ: the schedule shifts, different frames reach the
+  detector, and a step short of the period fits an extra target before
+  the end. The same commit adds two refusals that end a run rather
+  than report it.
+
+  Eyeblink8's clips are 30 frames per second, and whether their
+  container timestamps are exact or quantised is exactly what a
+  re-measurement would show. The prediction was committed before the
+  code, in docs/stepper-honesty.txt, and row 10.8a's regression run
+  scores it. That run is the measurement this paragraph stands in for.
+
+  9d8932b feat: every counted proportion carries its interval (roadmap 10.10c1, ladder B8 and B10)
+
+  NOT argued neutral, argued from the whole diff, and then checked by
+  running it. One watched file, analysis/tools/evaluate_eyeblink8.py,
+  in three hunks: an import, a new `_interval` helper returning a
+  string, and two f-strings in `report()`. Loading both versions and
+  calling `report()` on the per-clip counts published above gives
+  output that differs on exactly two lines, where "(341 of 408
+  found)" and "(65 invented)" gain their intervals. Every figure is
+  unchanged: 83.6%, 84.0%, 83.8%, all eight clip rows, both glasses
+  rows, all eight coverage rows. So this commit changes the TEXT of
+  the published block at the next regeneration and no number in it.
+
+  It does, however, arm a trap for whoever pastes that regenerated
+  block in, and finding it is the reason this widening was worth
+  doing. tools/resultGuard.mjs reads the headline out of this file
+  with expressions that end at `found)` and `invented)`. The new
+  clause sits inside those parentheses, so after a regeneration
+  neither expression matches the block at the top any more, and
+  because this file keeps its superseded runs below and the parser
+  takes the FIRST match, precision would be read from the 20 August
+  block instead: 81.4% and 78 invented in place of 84.0% and 65.
+  Recall would stay correct, because that superseded block happens to
+  carry the same recall line, so the README would publish a current
+  recall beside a superseded precision and every byte comparison
+  would stay green, both sides reading the same wrong line. Nothing
+  is wrong in the committed file today, which is why this is a
+  caveat and not a correction; row 10.0b2 fixes the parser before
+  10.8a's regenerated block arrives.
+
+  394f0ff fix: four small pieces of arithmetic (roadmap 10.16, ladder A27)
+
+  One watched file, analysis/blinklab/blink_log.py, in two hunks: an
+  added import, and a `_read_metadata` body replaced by a call into a
+  new shared module carrying the same loop, with one statement added
+  so a repeated metadata key raises instead of the later line quietly
+  winning. That metadata is genuinely on the published path, because
+  the evaluator skips any clip whose measurement_mode is not
+  "stepped". The difference is a refusal rather than a value: the
+  anchor run's own files have no repeated keys, so the new raise
+  cannot fire on them, and if it ever did the run would stop rather
+  than publish a different number.
+
+  b048251 feat: what each reader does when a key is not there (roadmap 10.1f4, ladder D6's reading half)
+
+  NOT argued neutral, PROVED neutral. One watched file,
+  analysis/blinklab/blink_log.py, at nine insertions and no deletions,
+  all nine between the opening and closing triple quotes of a new
+  docstring on the `frames_measured` property. No executable line is
+  added, changed or removed. The scorer reads the same bytes it read
+  at the anchor.
+
+  7 September 2026, the probe step (roadmap 10.14c,
+  docs/stepper-probe-rate.txt):
+
+  feat: the probe step comes from the clip, not from a constant (roadmap 10.14c)
+
+  NOT argued neutral. The stepper's calibration probe stops being a
+  constant 10 ms and becomes a quarter of the smallest gap it has
+  seen, floored at 2 ms and never above the old constant. That changes
+  which instants calibration asks for on EVERY clip, including a 30
+  frames per second one, so the cheap proof is unavailable.
+
+  What it cannot change is the answer at 30 frames per second, and
+  that is measured rather than argued: the fake-video harness drives
+  the real stepThroughVideo over clips with explicit frame times, and
+  the 30 and 60 frames per second cases measure the same counts and
+  calibrate to the same intervals before and after. The schedule the
+  run then walks is derived from the calibrated interval and the
+  origin alone; the origin is the first landing, which is frame zero
+  either way. So identical calibration means an identical schedule
+  means identical frames measured.
+
+  The change is visible only above 200 frames per second, where the
+  old constant could not gather enough distinct landings and the run
+  measured nothing at all. Eyeblink8's clips are 30, so this is
+  expected to leave the numbers above untouched, and only 10.8a's
+  regression run can say so. That run now scores TWO stepper changes:
+  this one and ladder A1's whole-multiple rule.
+
+  7 September 2026, the same row's comment (roadmap 10.14c):
+
+  docs: the probe comment states what was measured, not what was assumed (roadmap 10.14c)
+
+  ARGUED NEUTRAL, and the argument is short because the diff is. One
+  block comment inside src/core/stepCalibration.ts is rewritten. No
+  executable line is added, changed or removed, no constant moves, and
+  the module exports exactly what it exported. The detector reads the
+  same bytes it read one commit earlier.
+
+  What changed is a claim. The comment said "Measured before the fix:
+  200 frames per second calibrated as 100, 240 as 120, 300 as 100".
+  None of those three numbers was ever measured; they are what the
+  mechanism predicts, written in the grammar of a reading. The sweep
+  in docs/stepper-probe-rate.txt says something milder: every rate up
+  to 200 came out right with the constant step, and 240 and 300
+  measured zero frames. The comment now says that.
+
+  7 September 2026, the probe budget (roadmap 10.14d,
+  docs/stepper-probe-budget.txt):
+
+  feat: the probe step halves a measured period, and the budget covers the slow end (roadmap 10.14d)
+
+  NOT argued neutral by reach, and PROVED neutral by measurement,
+  which is the stronger of the two and is available here because the
+  thing that could move is a number a test can read.
+
+  Two changes to the stepper. The calibration probe, once the landings
+  reduce under the whole-multiple rule, advances by half of that
+  period rather than a quarter of the smallest raw gap. And the
+  attempt budget rises from 60 to 120, because the sweep found the
+  budget was exhausted at 20 frames per second and below: calibration
+  gathered eleven frames at 20 and eight at 15 where the design asks
+  for twelve.
+
+  Both change which instants calibration asks for, on every clip, so
+  no argument from reach is available. What is available is the
+  calibrated interval itself. The fake-video harness drives the real
+  stepThroughVideo over clips with explicit frame times at thirteen
+  rates from 15 to 300 frames per second, and every one of them
+  calibrates to the SAME interval before and after, to the last digit
+  a double carries: 0.03333333333333333 at 30 frames per second on
+  both sides. Only the number of probes spent reaching that answer
+  moved, from 48 to 41 at 30 frames per second.
+
+  Eyeblink8's clips are 30. The schedule a run walks is derived from
+  the calibrated interval and the origin alone, and the origin is the
+  first landing, which is frame zero either way. An identical interval
+  and an identical origin give an identical schedule and identical
+  frames measured. Only 10.8a's regression run can confirm it on the
+  real clips, and that run now scores three stepper changes: ladder
+  A1's whole-multiple rule, 10.14c's probe step, and this one.

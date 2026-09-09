@@ -150,12 +150,15 @@ import {
   lightPhaseMessage,
   type LightPhase,
 } from "./core/lightSchedule";
-import {
-  exportContentsSentence,
-  writtenMetadataKeys,
-} from "./core/exportContents";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
+import {
+  escapeBlocked,
+  escapeCloses,
+  overlayById,
+  type OverlayId,
+} from "./core/overlayEscape";
+import { EYE_OUTLINE_PATH, REPOSITORY_URL } from "./core/pageIdentity";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
@@ -178,10 +181,6 @@ import {
 } from "./core/longClosure";
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
 import { replayIndex, sliderTime } from "./core/replay";
-import {
-  blinkCountConditionsSentence,
-  perclosConditionsSentence,
-} from "./core/samplingBounds";
 import {
   BLINK_TABLE_HEADERS,
   appendEvent,
@@ -208,6 +207,12 @@ import {
 } from "./core/landmarkGuard";
 import { pickPoints } from "./core/landmarks";
 import { projectNormalizedPoint } from "./core/projection";
+import {
+  LUMINANCE_THUMBNAIL_HEIGHT,
+  LUMINANCE_THUMBNAIL_WIDTH,
+  faceBox,
+  meanLuminance,
+} from "./core/sceneLuminance";
 import { pushBounded } from "./core/ringBuffer";
 import {
   sparklineSegments,
@@ -310,6 +315,7 @@ import {
   drawPolyline,
   drawVideoFrame,
   readVideoPixels,
+  readVideoThumbnail,
 } from "./io/videoCanvas";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 
@@ -421,10 +427,9 @@ eyeSvg.setAttribute("height", "15");
 eyeSvg.setAttribute("fill", "none");
 eyeSvg.setAttribute("aria-hidden", "true");
 const eyeOutline = document.createElementNS(SVG_NS, "path");
-eyeOutline.setAttribute(
-  "d",
-  "M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z",
-);
+// From core, so the nav mark and public/favicon.svg are one drawing
+// rather than two that agree today (roadmap 14.0f2).
+eyeOutline.setAttribute("d", EYE_OUTLINE_PATH);
 eyeOutline.setAttribute("stroke", "#ffffff");
 eyeOutline.setAttribute("stroke-width", "1.8");
 const eyePupil = document.createElementNS(SVG_NS, "circle");
@@ -442,6 +447,14 @@ brand.append(brandMark, title);
 const navLinks = document.createElement("div");
 navLinks.className = "nav-links";
 navLinks.append(
+  // The source, first: this page's whole argument is that its numbers
+  // can be audited, and until roadmap 14.0f2 the nav bar linked a
+  // profile and a mailbox and not the thing a reader would audit.
+  iconLink(
+    REPOSITORY_URL,
+    "Source code on GitHub",
+    "M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3z",
+  ),
   iconLink(
     "https://www.linkedin.com/in/eivinasnorusaitis/",
     "LinkedIn profile",
@@ -538,6 +551,76 @@ let canvasContext: CanvasRenderingContext2D | null = null;
 // mirrored, downscaled and may carry the landmark overlays.
 const pupilCanvas = document.createElement("canvas");
 const pupilContext = pupilCanvas.getContext("2d");
+
+// Roadmap 12.16. A second, TINY offscreen canvas for the light reading.
+// Separate from the pupil's on purpose: that one is resized to the
+// camera's full resolution, and sharing it would mean resizing back and
+// forth twice a second, which clears the canvas and costs more than the
+// second element saves.
+const luminanceCanvas = document.createElement("canvas");
+const luminanceContext = luminanceCanvas.getContext("2d");
+
+// How much light the camera thinks it is seeing, for the whole frame and
+// for the face, from ONE downscaled raster. Read only when a row is
+// written (about 1 Hz), the same budget the pupil read is held to: the
+// browser does the averaging as it scales, so about nine kilobytes cross
+// the boundary rather than the eight megabytes a full-resolution read of
+// a 1080p frame would move. Both numbers come from the same raster, so
+// the difference between them is a fact about the light rather than
+// about how they were read.
+function measureLuminance(
+  face: readonly Point2[] | undefined,
+  faceTrusted: boolean,
+): { scene: number | null; face: number | null } {
+  if (luminanceContext === null) {
+    return { scene: null, face: null };
+  }
+  const thumbnail = readVideoThumbnail(
+    luminanceContext,
+    video,
+    LUMINANCE_THUMBNAIL_WIDTH,
+    LUMINANCE_THUMBNAIL_HEIGHT,
+  );
+  if (thumbnail === null) {
+    return { scene: null, face: null };
+  }
+  const whole = {
+    x: 0,
+    y: 0,
+    width: LUMINANCE_THUMBNAIL_WIDTH,
+    height: LUMINANCE_THUMBNAIL_HEIGHT,
+  };
+  const scene = meanLuminance(
+    luminanceField(
+      thumbnail.data,
+      LUMINANCE_THUMBNAIL_WIDTH,
+      LUMINANCE_THUMBNAIL_HEIGHT,
+      whole,
+    ),
+  );
+  if (face === undefined || !faceTrusted) {
+    return { scene, face: null };
+  }
+  const box = faceBox(
+    face,
+    LUMINANCE_THUMBNAIL_WIDTH,
+    LUMINANCE_THUMBNAIL_HEIGHT,
+  );
+  if (box === null) {
+    return { scene, face: null };
+  }
+  return {
+    scene,
+    face: meanLuminance(
+      luminanceField(
+        thumbnail.data,
+        LUMINANCE_THUMBNAIL_WIDTH,
+        LUMINANCE_THUMBNAIL_HEIGHT,
+        box,
+      ),
+    ),
+  };
+}
 
 // The iris ruler in video pixels for one frame, or null when it cannot
 // be measured. This is the working distance: how many pixels the iris
@@ -988,7 +1071,7 @@ function render(): void {
 
   // A question, not a readout.
   if (!running) {
-    kssPanel.hidden = true;
+    closeKssDialog();
     alertBanner.hidden = true;
   }
 
@@ -1057,7 +1140,7 @@ function resetSession(): void {
   kssBeforeAsked = false;
   kssAfterAsked = false;
   kssAfterAtMs = null;
-  kssPanel.hidden = true;
+  closeKssDialog();
   refreshKssLine();
   writeReadout(featureLabel, "");
   writeReadout(scoreLabel, "");
@@ -1767,7 +1850,8 @@ const gazeStateLabel = document.createElement("p");
 const fixationStatsLabel = document.createElement("p");
 
 // The calibration capture screen: a dark overlay, one moving dot,
-// click anywhere to cancel. A profile solved in an earlier visit
+// click anywhere or press Esc to cancel. A profile solved in an
+// earlier visit
 // survives in local storage and works from the first frame.
 let calibrationProfile: CalibrationProfile | null = loadCalibrationProfile();
 const calibrateButton = document.createElement("button");
@@ -1812,10 +1896,11 @@ Object.assign(calibrationProgress.style, {
   color: "#ffffff",
 });
 calibrationOverlay.append(calibrationDot, calibrationProgress);
+// Click and Escape run the SAME closer, from OVERLAY_CONTROLS below.
+// Two paths out of one screen that each wrote their own teardown is
+// how one of them ends up forgetting a field.
 calibrationOverlay.addEventListener("click", () => {
-  captureState = null;
-  calibrationRequested = false;
-  calibrationOverlay.hidden = true;
+  OVERLAY_CONTROLS["calibration-overlay"].close();
 });
 
 // The guided blink calibration (core/guidedCalibration.ts), live. A
@@ -1893,12 +1978,11 @@ blinkCalibrationInner.append(
   blinkCalibrationProgress,
 );
 blinkCalibrationOverlay.append(blinkCalibrationInner);
-// Click anywhere to cancel, the same escape hatch as the gaze overlay.
-// A cancelled run stores nothing.
+// Click anywhere or press Esc to cancel, the same escape hatch as the
+// gaze overlay. A cancelled run stores nothing. Both paths run the one
+// closer in OVERLAY_CONTROLS below.
 blinkCalibrationOverlay.addEventListener("click", () => {
-  blinkCalibrationSession = null;
-  blinkCalibrationRequested = false;
-  blinkCalibrationOverlay.hidden = true;
+  OVERLAY_CONTROLS["blink-calibration-overlay"].close();
 });
 
 // The visitor-facing sentence for each refusal. The reasons are named
@@ -2064,6 +2148,10 @@ eraseButton.addEventListener("click", () => {
 refreshStoredBox();
 
 const heatmapOverlay = document.createElement("div");
+// A stable handle, added with the keyboard exit in 14.0f1: the escape
+// register names this overlay, and a register the page cannot be held
+// to by name is a register nothing checks.
+heatmapOverlay.dataset.testid = "heatmap-overlay";
 heatmapOverlay.hidden = true;
 Object.assign(heatmapOverlay.style, {
   position: "fixed",
@@ -2144,10 +2232,7 @@ replayButton.addEventListener("click", () => {
   renderReplay();
 });
 heatmapOverlay.addEventListener("click", () => {
-  heatmapOpen = false;
-  heatmapOverlay.hidden = true;
-  scanpathSlider.hidden = true;
-  refreshReplayButton();
+  OVERLAY_CONTROLS["heatmap-overlay"].close();
 });
 
 // The test card: five distinct shapes at known screen fractions, so
@@ -2198,7 +2283,7 @@ function drawHeatmapCard(context: CanvasRenderingContext2D): void {
   context.font = "16px system-ui, sans-serif";
   context.textAlign = "center";
   context.fillText(
-    "Look at the shapes, hold on each. Click anywhere to close.",
+    "Look at the shapes, hold on each. Click anywhere or press Esc to close.",
     width / 2,
     height - 24,
   );
@@ -2335,15 +2420,6 @@ let rateState: BlinkRateState | null = null;
 
 const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
-// The 10.10b conditions lines: static, set once, each quoting its own
-// committed document. The sentences live in core so a test can hold
-// them to the documents' numbers; these nodes are only where they
-// stand on the page — the blink one beside the count it bounds, the
-// PERCLOS one beside the share it scopes.
-const blinkConditionsNote = document.createElement("p");
-blinkConditionsNote.textContent = blinkCountConditionsSentence();
-const perclosConditionsNote = document.createElement("p");
-perclosConditionsNote.textContent = perclosConditionsSentence();
 const perclosLabel = document.createElement("p");
 let perclosState = emptyPerclos();
 const longClosureLabel = document.createElement("p");
@@ -2406,24 +2482,51 @@ kssPrompt.className = "kss-prompt";
 const kssButtons = document.createElement("div");
 kssButtons.className = "kss-grid";
 
-const kssDialog = document.createElement("div");
+// A native <dialog>, roadmap 14.0f1. It was a div with role="dialog"
+// and aria-modal="true", which is the hand-rolled imitation: the words
+// were right and none of the behaviour came with them. The page behind
+// it stayed reachable by Tab, so a keyboard could walk out of a
+// question that blocks the export and answer nothing. showModal()
+// brings the focus trap, the inert page and the backdrop for free.
+const kssDialog = document.createElement("dialog");
 kssDialog.className = "kss-dialog";
-kssDialog.setAttribute("role", "dialog");
-kssDialog.setAttribute("aria-modal", "true");
+kssDialog.dataset.testid = "kss-dialog";
 kssDialog.setAttribute("aria-labelledby", "kss-prompt");
 kssPrompt.id = "kss-prompt";
 kssDialog.append(kssPrompt, kssButtons);
-
-const kssPanel = document.createElement("div");
-kssPanel.id = "kss-backdrop";
-kssPanel.hidden = true;
-kssPanel.append(kssDialog);
 
 // Deliberately NOT closable by clicking the backdrop or pressing
 // Escape. Every way out of this dialog records an answer, and Skip is
 // one of them: a dismissal that recorded nothing would leave a session
 // whose file cannot say whether the question was declined or never
 // asked.
+//
+// A native dialog cancels on Escape by default, so this is the one
+// place the free behaviour is the wrong behaviour, and the refusal
+// reads its reason from the register in core rather than from this
+// comment.
+kssDialog.addEventListener("cancel", (event) => {
+  if (!overlayById("kss-dialog").dismissible) {
+    event.preventDefault();
+  }
+});
+
+/**
+ * Close the question, from any of the paths that end it.
+ *
+ * `.close()` rather than `hidden`, and the difference is not cosmetic:
+ * setting `hidden` on an OPEN modal hides it and leaves it open, so
+ * the dialog vanishes while the page behind it stays inert. Probed in
+ * Chromium before this row was written — the element still matched
+ * :modal with display:none. That is a page which looks fine and
+ * accepts nothing, and a test in test/tools/uiGuard.test.ts holds this
+ * element to `.close()` so the old spelling cannot come back.
+ */
+function closeKssDialog(): void {
+  if (kssDialog.open) {
+    kssDialog.close();
+  }
+}
 
 // The answer stays visible after the dialog closes. As an inline panel
 // it simply stayed on screen as a disabled button, and being able to
@@ -2466,7 +2569,7 @@ function askKss(
     // The dialog closes on every path out of it. Left open it blocks
     // the page it is asking about, which is the difference between a
     // modal and the panel this used to be.
-    kssPanel.hidden = true;
+    closeKssDialog();
     onAnswer(rating);
     refreshKssLine();
   };
@@ -2492,15 +2595,18 @@ function askKss(
     choose(null);
   });
   kssButtons.append(skip);
-  kssPanel.hidden = false;
-  // Focus moves into the dialog so a keyboard reaches the ratings
-  // without tabbing the whole page first, and so a screen reader
-  // announces the question rather than leaving the user where they
-  // were.
-  const first = kssButtons.querySelector("button");
-  if (first !== null) {
-    first.focus();
-  }
+  kssDialog.showModal();
+  // Focus lands on SKIP, not on the first rating, and the reason is
+  // the file the answer ends up in. A modal focuses its first
+  // focusable element by default, which here is "1 Extremely alert",
+  // so somebody who presses Enter to make the box go away writes a
+  // sleepiness label nobody meant into an exported CSV. Skip records a
+  // declining, which is true, and every rating is still one Tab or one
+  // click away. Same rule as everywhere else in this project: a
+  // refusal is never rounded into a value.
+  //
+  // Skip stays LAST in the tab order. Focused first, offered last.
+  skip.focus();
 }
 
 /**
@@ -3177,6 +3283,11 @@ let modelClock = initialModelClock;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
+// The mean the readout last printed, carried to the record. Null
+// until inference has run at all, which is measured absence: a row
+// written before the first detection is not a row where the model
+// took zero milliseconds.
+let inferenceMeanMs: number | null = null;
 
 // One frame, already accepted by the clock. nowMs is the pipeline's
 // clock: the wall clock live, the clip's own media time for a file.
@@ -3321,10 +3432,15 @@ function processFrame(
         performance.now() - inferenceStartMs,
         60,
       );
-      writeReadout(
-        inferenceLabel,
-        inferenceMessage(meanDurationMs(inferenceSamplesMs)),
-      );
+      // The page has shown the model's mean cost since the timing
+      // readout landed, and the exported file never carried it
+      // (roadmap 12.15). The row now takes the SAME number the
+      // readout prints, from the same call, so the page and the
+      // record cannot say different things about how long inference
+      // took — the rule this project already applies to its notice
+      // and its result figures.
+      inferenceMeanMs = meanDurationMs(inferenceSamplesMs);
+      writeReadout(inferenceLabel, inferenceMessage(inferenceMeanMs));
 
       const present = isFacePresent(result);
       if (present !== lastFacePresent) {
@@ -3730,7 +3846,7 @@ function processFrame(
             calibrationDot.style.left = `${String(target.x * 100)}%`;
             calibrationDot.style.top = `${String(target.y * 100)}%`;
           }
-          calibrationProgress.textContent = `Follow the dot (${String(captureState.targetIndex + 1)}/9). Click anywhere to cancel.`;
+          calibrationProgress.textContent = `Follow the dot (${String(captureState.targetIndex + 1)}/9). Click anywhere or press Esc to cancel.`;
         }
       }
 
@@ -3809,7 +3925,7 @@ function processFrame(
           );
           blinkCalibrationProgress.textContent =
             phase === "open"
-              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere to cancel.`
+              ? `Step 1 of 2 · ${String(secondsLeft)} s left. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
               : `Step 2 of 2 · ${String(secondsLeft)} s left.`;
         }
       }
@@ -4139,6 +4255,11 @@ function processFrame(
         // stale.
         const framePupilDiameterMm =
           face !== undefined && faceTrusted ? measurePupilMm(face) : null;
+        // Same once-per-row budget as the pupil above, and read even
+        // with no trusted face: how lit the room is does not depend on
+        // whether the model found somebody in it, and a dark scene with
+        // no face is exactly the row a later reader would want.
+        const luminance = measureLuminance(face, faceTrusted);
         writeReadout(
           pupilLabel,
           framePupilDiameterMm === null
@@ -4161,6 +4282,16 @@ function processFrame(
             timestampMs: nowMs,
             faceDetected: face !== undefined && faceTrusted,
             fps,
+            sceneLum: luminance.scene,
+            faceLum: luminance.face,
+            // The EVIDENCE rate, not the processing rate above: null
+            // on a clip and on a camera whose delivery the browser
+            // cannot report, which is measured absence rather than
+            // the display's pace (roadmap 12.15).
+            sampledFps: observation.observed
+              ? (delivery?.sampledFps ?? null)
+              : null,
+            inferenceMs: inferenceMeanMs,
             apertureMm: stabilityMm,
             baselineMm: readyBaselineMm,
             baselineOverResting: rulerFit?.ratio ?? null,
@@ -4556,13 +4687,6 @@ function refreshLightResponseButton(): void {
 }
 
 lightResponseButton.addEventListener("click", startLightStimulus);
-// Esc ends the stimulus. Browsers also exit fullscreen on Esc, so the
-// keydown and the fullscreen exit converge on the same end.
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !lightOverlay.hidden) {
-    endLightStimulus();
-  }
-});
 // A tap ends it too: a phone has no Esc, and the overlay's own words
 // promise this exit (roadmap 14.0b, audit A6).
 lightOverlay.addEventListener("click", () => {
@@ -4577,6 +4701,93 @@ document.addEventListener("fullscreenchange", () => {
     endLightStimulus();
   }
 });
+
+// Roadmap 14.0f1 [E2]: one Escape handler for every screen the page
+// raises over itself.
+//
+// The light stimulus had a keydown listener of its own from 14.0b,
+// written beside it for a good reason — a fullscreen flash nobody can
+// dismiss is frightening — and nothing carried that reason to the
+// other three overlays, so a keyboard could not leave any of them.
+// That listener is gone and this is what replaced it.
+//
+// Each screen keeps its OWN closer rather than being hidden
+// generically, because closing is not one thing: the light stimulus
+// cancels an animation frame and leaves fullscreen, the calibrations
+// discard a partial run, the heatmap re-enables the replay button.
+// A Record over the union is what makes this exhaustive — add an id to
+// the register in core and this object stops compiling until the page
+// says how that screen closes.
+const OVERLAY_CONTROLS: Record<
+  OverlayId,
+  { isOpen: () => boolean; close: () => void }
+> = {
+  "calibration-overlay": {
+    isOpen: () => !calibrationOverlay.hidden,
+    close: () => {
+      captureState = null;
+      calibrationRequested = false;
+      calibrationOverlay.hidden = true;
+    },
+  },
+  "blink-calibration-overlay": {
+    isOpen: () => !blinkCalibrationOverlay.hidden,
+    close: () => {
+      blinkCalibrationSession = null;
+      blinkCalibrationRequested = false;
+      blinkCalibrationOverlay.hidden = true;
+    },
+  },
+  "heatmap-overlay": {
+    isOpen: () => !heatmapOverlay.hidden,
+    close: () => {
+      heatmapOpen = false;
+      heatmapOverlay.hidden = true;
+      scanpathSlider.hidden = true;
+      refreshReplayButton();
+    },
+  },
+  "light-overlay": {
+    isOpen: () => !lightOverlay.hidden,
+    close: endLightStimulus,
+  },
+  // Present and never reached: the register marks it undismissible, so
+  // `escapeCloses` never names it. It is here because leaving it out
+  // would mean the exhaustive Record was not exhaustive, and then the
+  // compiler would stop being the thing that notices a new screen.
+  "kss-dialog": {
+    isOpen: () => kssDialog.open,
+    close: closeKssDialog,
+  },
+};
+
+// The CAPTURE phase, and that is load bearing rather than a style
+// choice. A native <dialog>'s Escape is handled by the browser's close
+// watcher, and preventing its `cancel` event works for exactly one
+// press: with no user activation in between, Chromium fires cancel a
+// second time, sees it prevented again, and closes the dialog anyway.
+// Watched happen. The only way to refuse the key is to stop it before
+// a close request exists, which means catching the keydown on its way
+// down and calling preventDefault.
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    const open = (Object.keys(OVERLAY_CONTROLS) as OverlayId[]).filter((id) =>
+      OVERLAY_CONTROLS[id].isOpen(),
+    );
+    if (escapeBlocked(open)) {
+      event.preventDefault();
+      return;
+    }
+    for (const id of escapeCloses(open)) {
+      OVERLAY_CONTROLS[id].close();
+    }
+  },
+  true,
+);
 
 const markButton = document.createElement("button");
 markButton.textContent = "Mark this moment";
@@ -4671,11 +4882,6 @@ fullUserAgentLabel.append(
   " Full browser string in exports",
 );
 
-const exportContentsNote = document.createElement("p");
-exportContentsNote.className = "caveat";
-exportContentsNote.setAttribute("data-testid", "export-contents");
-exportContentsNote.textContent = exportContentsSentence(writtenMetadataKeys());
-
 const exportRow = document.createElement("div");
 exportRow.className = "button-row";
 exportRow.append(
@@ -4762,7 +4968,6 @@ const sessionBox = box(
   featureLabel,
   exportRow,
   exportStatus,
-  exportContentsNote,
   fullUserAgentLabel,
   markLabel,
   kssAnswerLabel,
@@ -4771,7 +4976,6 @@ const sessionBox = box(
 const blinksBox = box(
   "Blinks",
   blinkLabel,
-  blinkConditionsNote,
   baselineLabel,
   blinkCalibrateButton,
   blinkCalibrationStatus,
@@ -4786,7 +4990,6 @@ const eyesBox = box(
   earLabel,
   stabilityLabel,
   perclosLabel,
-  perclosConditionsNote,
   longClosureLabel,
   pupilLabel,
 );
@@ -4993,7 +5196,7 @@ app.append(
   blinkCalibrationOverlay,
   heatmapOverlay,
   lightOverlay,
-  kssPanel,
+  kssDialog,
 );
 // Every readout starts with the sentence the idle page shows, from
 // the table in core/idleStrings.ts (roadmap 14.0b, audit B19): "not
