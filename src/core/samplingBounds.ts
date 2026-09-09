@@ -128,52 +128,10 @@ export function sampledClosedFraction(
 
 /**
  * The committed table's worst cell (15 fps), pinned by test against
- * docs/sampling-bounds.txt so the sentence below and the table cannot
+ * docs/sampling-bounds.txt so this constant and the table cannot
  * move apart.
  */
 export const WORST_PERCLOS_SAMPLING_BOUND = 0.0022;
-
-/**
- * The on-page conditions line for PERCLOS, roadmap 10.10b. The sweep
- * found the sampling term negligible, and saying only that would read
- * as "this number is exact" — so the sentence names what actually
- * conditions the number, each with its committed document.
- *
- * Roadmap 10.10c4a, ladder B12 (audit F-090). The bound is also
- * SCOPED now, and the scope was missing rather than wrong. The
- * simulation draws closures from MIN_CLOSURE_S upward, half a second
- * and longer. An ordinary blink is shorter than that, and the
- * instrument-adjusted shut line counts every full blink as closed
- * time, so the published share contains a population the bound never
- * sampled — and short closures are exactly the ones a slow frame rate
- * misjudges most, which is why "even at 15 frames per second" read
- * about twice as reassuring as it had earned. The table is not
- * touched: it measured what it measured. The sentence now says so.
- */
-export function perclosConditionsSentence(): string {
-  return (
-    "Conditions: for closures of half a second and longer the sampling " +
-    "term is at most ±0.002 of the share even at 15 frames per second " +
-    "(docs/sampling-bounds.txt); the share also counts blink time, " +
-    "which is shorter than anything that simulation drew. What bounds " +
-    "this number is the instrument-adjusted shut line and the landmark " +
-    "noise floor (docs/aperture-noise-floor.txt), not the frame rate."
-  );
-}
-
-/**
- * The on-page conditions line for blink counts, the other half of
- * 10.10b. Rate's sampling story is the opposite of PERCLOS's and was
- * committed first: quick shallow blinks are lost outright between
- * frames at ordinary webcam rates, so the count is a floor.
- */
-export function blinkCountConditionsSentence(): string {
-  return (
-    "Conditions: the count is a floor, not a count — at 25 to 30 " +
-    "frames per second a quick shallow blink can fall between frames " +
-    "and be lost outright (docs/blink-sample-rate.txt)."
-  );
-}
 
 export type SamplingBoundCell = {
   fps: number;

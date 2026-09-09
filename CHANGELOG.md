@@ -21,10 +21,22 @@ over shipping a version.
 ### The evaluation track, Phase 7
 
 - **Measured against somebody else's ground truth for the first time.**
-  Eyeblink8, eight webcam clips, 408 human-marked blinks: 87.7% recall, 83.3%
-  precision, 85.4% F1. Two earlier figures for the same benchmark are published
-  alongside it rather than replaced, because both were wrong for reasons inside
-  this app, and the road there is part of the result.
+  Eyeblink8, eight webcam clips, 408 human-marked blinks: 75.7% recall, 83.3%
+  precision, 79.3% F1 — the 8 September 2026 run at the current commit, whose
+  headline carries an open one-clip regression under diagnosis rather than the
+  older, better-looking anchor. Every earlier figure for the same benchmark is
+  published alongside it rather than replaced, because each was wrong for
+  reasons inside this app, and the road there is part of the result. There
+  have been six, and the table of all six is in [README.md](README.md); the
+  whole record, current run and superseded runs alike, is in
+  [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).
+
+  This entry itself carried the third of those five from 15 August until
+  7 September 2026, in the present tense, in the section that says what is
+  about to ship. Nothing was watching it. `tools/changelogGuard.mjs` now reads
+  these three numbers back from the current run in the result file, so the next
+  time the headline moves this line moves with it or the build goes red.
+
 - **The measurement repeats.** Measuring one clip three times produces
   identical files, byte for byte, which was not true of any earlier figure.
 - **A null result, published as readily as a positive one would have been.**
@@ -68,11 +80,21 @@ over shipping a version.
 
 ### Guards, which are the through-line
 
-Six checks that read the truth off disk and fail loudly when a document stops
-agreeing with it: published numbers, retired claims, the DROZY measuring
-commit, the UI documentation against the page's own boxes, a coverage floor on
-`src/core`, and a bundle size ceiling. Plus a Definition of Done that fails a
-pull request changing `src/` without a learning entry or a stated reason.
+27 modules under `tools/` carry the rules and the readers these checks are
+built from, and every one is reached by a test that runs it: published numbers,
+retired claims, the DROZY measuring commit, the UI documentation against the
+page's own boxes, a coverage floor on `src/core`, a bundle size ceiling, the
+detector-change ratchet, the model's provenance, the corpus rules, the
+continuous-integration gate list, this file's own headline, the generated
+status block, the read-in-full stamps and the ladder's blocked rows. Plus a
+Definition of Done that fails a pull request changing `src/` without a learning
+entry or a stated reason.
+
+That number is read back from the declarations on disk rather than typed here,
+which it had to be. The sentence this replaces said six, was written on
+15 August, and was wrong within a fortnight — in the section that describes
+what is about to ship, which is the same fault the Eyeblink8 headline above had
+and the same fix.
 
 ## v0.7.0 — 8 August 2026, Phase 6: the rolling state
 

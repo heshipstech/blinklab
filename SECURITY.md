@@ -6,6 +6,8 @@ blinklab is a research and learning project: a browser demo that measures
 blinks from a webcam, plus the analysis code behind its published numbers. It
 is **not a medical device** and is not used to make decisions about anyone.
 
+Read in full on 7 September 2026, claims `4470daba`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+
 Two properties shape what a vulnerability means here:
 
 - **Everything runs in the browser.** There is no server, no account, no
@@ -45,9 +47,14 @@ take a few days.
 ## What is out of scope
 
 - GitHub Pages platform behaviour. Pages serves a fixed header set and cannot
-  be configured, so the absence of a Content-Security-Policy or
-  `X-Frame-Options` on the deployed site is a hosting limit, not a defect this
-  repository can fix. It is recorded in the audit rather than left implicit.
+  be configured, so no HTTP security header can be set for the deployed site.
+  **That is a limit on HEADERS, not on policy.** An earlier version of this
+  section said the absence of a Content-Security-Policy was "not a defect this
+  repository can fix", which was wrong: a policy can be delivered as a
+  `<meta http-equiv="Content-Security-Policy">` tag in the page itself, and
+  roadmap row 10.2b is that work. `X-Frame-Options` has no meta equivalent and
+  remains a genuine hosting limit. Corrected 7 September 2026, by the first
+  full read under the stamp at the top of this file.
 - Automated scanner output with no demonstrated impact.
 - The accuracy of the published measurements. That is not a security question —
   it is the subject of the audit and remediation documents, and corrections are
@@ -55,6 +62,11 @@ take a few days.
 
 ## Related documents
 
-[AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md) is the August 2026 audit;
-[REMEDIATION.md](REMEDIATION.md) records what has been fixed since. Known open
-items live there rather than being rediscovered.
+[AUDIT_REPORT_AUG_2026.md](AUDIT_REPORT_AUG_2026.md) is the August 2026 audit
+and [docs/audit/2026-09-06-audit-report.md](docs/audit/2026-09-06-audit-report.md)
+is the September one. **Known open items live in
+[REMEDIATION-2026-09.md](REMEDIATION-2026-09.md)**, the live tracker.
+`REMEDIATION.md` is the retired August ladder and says so at its own first
+line; this section pointed at it as though it were current until 7 September
+2026, which is the sort of thing a full read is for. Where the project stands
+overall is the generated block at the top of [STATE.md](STATE.md).

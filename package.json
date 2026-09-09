@@ -26,6 +26,7 @@
     "predev": "npm run prepare-assets",
     "prebuild": "npm run prepare-assets",
     "fixtures:write": "UPDATE_FIXTURES=1 vitest run test/core/verdictFixtureSource.test.ts",
+    "replay:run": "REPLAY_RUN=1 vitest run test/core/replayRunner.test.ts",
     "counts:check": "node tools/checkCollectedTests.mjs"
   },
   "devDependencies": {

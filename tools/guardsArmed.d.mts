@@ -2,14 +2,26 @@
 // the guards it reads: the reader stays .mjs because it touches the
 // filesystem, and its caller is type checked.
 
-/** Every guard, generator or ratchet in tools/, by module name, sorted. */
-export function guardModules(root: string): string[];
+/** One test file and the tools modules it imports. */
+export type TestImports = {
+  file: string;
+  modules: string[];
+};
 
-/** Every unit test file's module name under test/, sorted. */
-export function testedModules(root: string): string[];
+/** Every rule-carrying module in tools/, by module name, sorted. */
+export function declaredModules(root: string): string[];
 
-/** Guards whose test is named for what it checks rather than for the module. */
-export const NAMED_DIFFERENTLY: Record<string, string>;
+/** Declarations with no module behind them, sorted. */
+export function orphanDeclarations(root: string): string[];
 
-/** Guards with no sibling test, so nothing runs them. */
+/** The tools modules one source file imports, in source order. */
+export function moduleImports(source: string): string[];
+
+/** Every test file under test/, with the tools modules it imports. */
+export function testImports(root: string): TestImports[];
+
+/** The modules nothing in `imported` reaches. */
+export function unarmed(modules: string[], imported: string[]): string[];
+
+/** Rule-carrying modules no test imports, so nothing runs them. */
 export function unarmedGuards(root: string): string[];

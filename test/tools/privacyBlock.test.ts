@@ -3,14 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildPrivacyBlock,
   committedPrivacyBlock,
-  exportSentence,
   privacySection,
   splicePrivacyBlock,
   storedItems,
 } from "../../tools/privacyBlock.mjs";
 import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
 import { STORED_ITEMS } from "../../src/core/storedData";
-import { EXPORT_CONTENTS } from "../../src/core/exportContents";
 
 // Roadmap 10.0a2, ladder B2. README's Privacy section said the app
 // touched two localStorage keys and that "those two keys are the only
@@ -47,14 +45,6 @@ describe("the stored items the generator reads", () => {
     expect(() => storedItems("export const STORED_ITEMS = [];")).toThrow(
       /storedData/,
     );
-  });
-});
-
-describe("the export sentence the generator reads", () => {
-  it("is the same sentence the page shows", () => {
-    expect(
-      exportSentence(readRepoFile("src/core/exportContents.ts", root)),
-    ).toBe(EXPORT_CONTENTS);
   });
 });
 

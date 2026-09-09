@@ -1,5 +1,7 @@
 # Build log
 
+**RETIRED 7 September 2026.** One line per increment was the record until the pace of increments outran anybody's willingness to write them, and the last lines here are weeks behind the repository. It is kept rather than deleted: the early entries are the only account of how the first phases actually went. What replaced it: `STATE.md` for what each increment decided and why, `CHANGELOG.md` for the shape of the thing at each release, and **[REMEDIATION-2026-09.md](REMEDIATION-2026-09.md)** for what is still owed. Where the project stands overall is the generated block at the top of [STATE.md](STATE.md).
+
 One line per increment: date, id, what changed, what was surprising.
 
 - 2026-07-28, 0.1, wrote the working documents, license and readme skeleton. Surprise: the plan itself had a contradiction (a Playwright check four phases before Playwright exists) and an ordering bug (dataset features needed video upload mode, which was scheduled later), both fixed as amendments before any code.

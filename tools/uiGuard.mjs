@@ -21,6 +21,9 @@
 // resultGuard and drozyGuard: plain .mjs that reads the disk,
 // hand-written types next door, callers type checked.
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 /**
  * Every heading passed to the box() helper in main.ts, in source
  * order.
@@ -89,4 +92,86 @@ export function idleStrings(idleSource) {
 /** The strings among `strings` that `doc` never mentions verbatim. */
 export function undocumentedStrings(strings, doc) {
   return strings.filter((text) => !doc.includes(text));
+}
+
+/**
+ * Every `dataset.testid` in main.ts that names a screen the page
+ * raises over itself: a handle ending in `-overlay` or `-dialog`.
+ *
+ * Roadmap 14.0f1. `src/core/overlayEscape.ts` holds the rule for which
+ * of these Escape may close, and a screen missing from that register
+ * is a screen a keyboard cannot leave — a failure nobody testing with
+ * a mouse will ever meet. So the register is held to the page in both
+ * directions by the test next door, and this is the half that reads
+ * the page.
+ *
+ * The suffix rather than a hand-kept list, for the reason 10.0b7
+ * learned the hard way: a guard that consults a list somebody
+ * maintains is a guard that goes stale the first time somebody forgets.
+ * A new screen has to be given a handle to be testable at all, and the
+ * moment it has one this sees it.
+ */
+export function overlayHandles(mainSource) {
+  return [
+    ...mainSource.matchAll(
+      /\.dataset\.testid = "([a-z0-9-]*-(?:overlay|dialog))"/g,
+    ),
+  ].map((m) => m[1]);
+}
+
+/**
+ * Every identifier assigned `.hidden` in a source file, in source
+ * order, once each.
+ *
+ * Roadmap 14.0f1, and the failure it prevents is silent and total.
+ * Setting `hidden` on an OPEN native modal gives it display:none and
+ * leaves it open: the dialog vanishes, the page behind it stays inert,
+ * and there is nothing on screen to answer. Probed in Chromium before
+ * the row was written, because the sleepiness question's five reset
+ * paths all spelled it exactly that way while it was a div.
+ *
+ * A reader rather than a rule, so the test next door names the one
+ * element this must never find and the guard stays about what the file
+ * says.
+ */
+export function hiddenAssignments(source) {
+  const found = [...source.matchAll(/\b(\w+)\.hidden = /g)].map((m) => m[1]);
+  return [...new Set(found)];
+}
+
+/**
+ * What the page builds each of its chrome links from, as the source
+ * spells it: a quoted URL, or the name of the constant holding one.
+ *
+ * Roadmap 14.0f2. The nav bar held a profile and a mailbox and not the
+ * source, on a page whose whole argument is that its numbers can be
+ * audited. The reader is deliberately about `iconLink(` rather than
+ * about anchors in general: those are the links a person chose to put
+ * in the chrome, which is what the row's Check is about, and a
+ * citation link built inside a loop is held by its own check instead.
+ *
+ * BOTH forms, because reading only quoted strings made this guard stop
+ * seeing a link the moment its URL moved into a shared constant, which
+ * is the direction this repository keeps moving things. A reader that
+ * goes quiet when the code improves is a reader that will be quiet on
+ * the day something is missing.
+ */
+export function linkHrefs(mainSource) {
+  const found = [
+    ...mainSource.matchAll(/\biconLink\(\s*(?:"([^"]+)"|([A-Za-z_$][\w$]*))/g),
+  ].map((m) => m[1] ?? m[2]);
+  return [...new Set(found)];
+}
+
+/**
+ * Which of `paths` name no file in the repository.
+ *
+ * Roadmap 14.0f2. The parsing that finds a citation lives in
+ * `src/core/docCitations.ts`, because the page needs it too; the disk
+ * lives here, because a test file in this repository compiles without
+ * node types and cannot read one. Same split as every other guard: the
+ * .mjs touches the disk, the typed caller decides what it means.
+ */
+export function missingRepoFiles(paths, root) {
+  return paths.filter((path) => !existsSync(join(root, path)));
 }

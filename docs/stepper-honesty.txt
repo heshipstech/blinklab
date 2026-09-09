@@ -126,3 +126,35 @@ Outcome
 -------
 
 (appended after the regression run; nothing above this line changes)
+
+8 September 2026, the regression run at
+68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 (docs/eyeblink8-result.txt):
+
+CONFIRMED: all eight clips measured stepped, none refused, and
+inexact_landings is 0 on every clip. The design's own falsifiable
+check passed everywhere.
+
+REFUTED, rule 3's candidate explanation for the "+1": the coverage
+block came back IDENTICAL to the anchor's, including measured 15784
+against annotated 15783 and measured 5405 against 5404. An honest
+stepper — mean period, whole-multiple gaps, zero inexact landings —
+measured the same frame counts the old stepper did, so the "+1" was
+never a fabricated frame from a drifting schedule. It is a property
+of the clip and annotation pair. The branch A/B classification of
+each clip (exact against quantised timestamps) awaits a read of the
+frame_interval_s header rows, and gets a dated line here when read.
+
+NOT AS PREDICTED, and not the stepper: "the published counts stay
+within the anchor run's own repeatability" did not hold — 309 of 408
+found and 62 invented, against 341 and 65. But every lost blink is on
+one clip, 27122013_154548_cam, whose frames_measured did not move by
+one, and the other seven clips reproduced the anchor digit for digit.
+A stepper effect changes which frames are measured; these frames did
+not change. The falsifier list above said a blink count moving on a
+branch A clip is "impossible by construction... so it would mean the
+run is not repeatable" — that construction silently assumed the
+detector was otherwise the code the anchor measured, and it was not:
+the caveat ledger in docs/eyeblink8-result.txt lists every detector
+change between the anchors. The collapse is recorded there, and its
+attribution — the per-miss replay of that clip's 37 misses — is the
+measurement in progress.

@@ -2323,3 +2323,1288 @@ naming none. And the card's patterns tolerate a line break between a
 name and the value it introduces, because the card is hard-wrapped
 prose and a guard that depends on where a paragraph happened to wrap
 fails for the wrong reason.
+
+## The explanation satisfied the guard the explanation was about
+
+A summary sentence restates something a machine-readable file already
+knows. CONTRIBUTING gives a contributor one command line and calls it
+the gates; the continuous integration workflow is the file that
+decides what the gates are. A gate added to one and not the other
+means somebody runs a suite that passes and then watches their first
+pull request fail on a step nobody told them about.
+
+That had already happened. A count check went into the workflow and
+the document did not follow, so the pin, on the day it was written,
+found real drift rather than confirming a tidy repository. The second
+pin found drift the other way: the README said fewer phases were
+complete than the roadmap did, because a phase finished and the
+sentence stayed where it was. A summary can be wrong in the modest
+direction too, and nothing notices, because nobody double-checks a
+claim that undersells.
+
+Counting complete phases turned out to mean deciding what this
+repository means by complete. There are three settled markers here,
+done, declined, and a row moved elsewhere and left in place with a
+pointer, and only the first is a tick. A guard that recognised ticks
+alone would have called a finished phase unfinished forever. The moved
+shape is matched narrowly, at the head of the row and in the file's own
+words, so ordinary prose about moving something cannot settle a row
+nobody moved.
+
+The part worth writing down is the hole that got dug and filled inside
+the same change. The first reader took commands from fenced blocks AND
+from inline code spans, on the reasoning that the install command was
+written inline and a reader follows it there. Beside the fix went a
+paragraph explaining the drift, and that paragraph names the missing
+gate in backticks while explaining it. So the pin was satisfied by its
+own explanation: deleting the gate from the command line a contributor
+actually runs left the suite green. The mutation caught it; nothing
+else would have.
+
+The rule that came out of it is small and general. A gate counts as
+documented where it is RUN, not where it is discussed. Prose may say
+anything, and a guard that reads prose is a guard an author can talk
+their way past without noticing they are doing it. This project has
+now found four guards that could not fail, and this is the first one
+it wrote and broke in the same afternoon.
+
+## The changelog was the one document nobody thought to guard
+
+This project keeps five figures for the same benchmark. Each was
+wrong for a reason inside the app, each is published rather than
+deleted, and the road between them is treated as part of the result.
+README carries all five in a table and marks which is current. The
+result file keeps the superseded runs below an explicit boundary line
+so a parser cannot mistake one for another. Every place a number
+appears is read back from the record by a test.
+
+Except the changelog. It said "87.7% recall, 83.3% precision, 85.4%
+F1", in the present tense, in the section headed Unreleased, which is
+the section that describes what is about to ship. Those are the third
+of the five. They had been superseded twice. Nothing anywhere said so,
+and the file had been in that state for three weeks.
+
+The reason it was missed is worth naming, because it is not
+carelessness. A changelog reads like history, and history is exactly
+the kind of document this project deliberately does not update: the
+superseded runs stay, the failed predictions stay, the retracted
+claims stay. So a habit that is right everywhere else — do not rewrite
+what was true when it was written — was applied to the one section of
+the one file where it is wrong. Unreleased is not history. It is a
+claim about the present that happens to live in a historical document.
+
+The fix is small. The three numbers are read back from the current run
+through the same parser README uses, so the changelog now follows the
+measurement rather than sitting beside it. The mutation that proves it
+is not the obvious one. Putting the old headline back reddens, which
+only shows the pin exists. Moving the RESULT FILE and watching the
+changelog test go red is the one that shows the direction of the
+dependency: the document now has to follow the record, not merely
+agree with a copy of it that was true once.
+
+One rule fell out of it. A headline is all three of its numbers or
+none. A sentence that gives recall and precision and drops F1 is a
+sentence somebody edited, and a parser that reports two thirds of a
+headline leaves the third drifting with nothing watching it, which is
+the same shape as a guard that searches a whole document for a short
+token: it cannot fail in the case it exists for.
+
+## Eight documents disagreed, and none of them was lying
+
+An audit found this project's own paperwork contradicting itself in
+eight places. One tracker listed "blocking the telemetry" under
+deliberately-not-doing, months after a commit shipped exactly that.
+Another said a set of issues stayed open, which GitHub disagreed with.
+A build log promising one line per increment had stopped weeks
+earlier. The state file's top entry was whatever landed last, which is
+a fine thing to have and is not a summary of anything.
+
+Not one of those sentences was written carelessly. Each was true when
+somebody wrote it. The failure is structural: a fact that lives in
+more than one document has to be maintained in more than one place,
+and the maintenance always lapses in the copy nobody is looking at.
+
+The fix that does not work is a ninth summary written by hand. It
+would be accurate the day it was written and would join the other
+eight within a month.
+
+What went in instead is a block whose every figure is read from the
+file that owns it, rewritten by a script, and compared byte for byte
+by a test. The phase count comes from counting roadmap rows. The
+headline comes from parsing the current run. The suite sizes come from
+the files the runners write. The bundle ceiling is imported from the
+constant rather than parsed out of the source that declares it,
+because a parse would be a second weaker copy of a fact that already
+has a home. Nothing there can be edited into agreement with a document
+that has drifted, because nothing there is typed.
+
+Two smaller things are worth keeping.
+
+The three superseded trackers were retired rather than deleted. That
+is the same rule this project applies to a superseded measurement, for
+the same reason: the road is part of the result, and the early entries
+in a build log are the only account of how the first phases actually
+went.
+
+And a retirement notice has to be the document's FIRST content line,
+which the test enforces rather than assumes. A notice further down is
+a notice the reader reaches after believing the page. One of these
+files already demonstrated the problem: it carried a correction of its
+own opening sentence, several lines below that sentence.
+
+## A stamp for reading is not the same as a stamp for editing
+
+Three documents here already carried a stamp saying when they were
+written or revised, and a test turned the build red when a stamped file
+changed without the date moving. That is a good rule and it catches a
+real thing: a document edited and left dated wrongly.
+
+It cannot catch what the audit actually found. The findings were
+sentences that were true when somebody wrote them and false by the time
+somebody read them, sitting in files that had been edited many times
+since. Every one of those edits bumped the revised stamp. The stamp was
+working perfectly and was blind to the problem, because the missing act
+was never editing. It was READING the whole thing and confirming it
+still holds.
+
+So this stamp is held to a different thing: the document's claim text,
+which is the prose with its generated blocks, its count figures and its
+own revised date normalised away. A number the machine updated is not
+something a human read would have caught, and a gate that fires every
+time a test count moves becomes a formality inside a week. A changed
+sentence is a different matter, and that is what goes stale.
+
+Two documents are deliberately not on the list. STATE.md and LEARNING.md
+are append-only logs: an old entry does not become false when a new one
+lands, so demanding a full re-read on every append would make the stamp
+meaningless for exactly the reason above.
+
+The first read found nine things. A security policy claiming a
+Content-Security-Policy was something this repository could not fix,
+which is wrong — a policy can go in a meta tag. Three documents pointing
+at a tracker retired an hour earlier by the previous increment, which
+had retired it without updating anything that pointed at it. A third,
+unpinned copy of the gate list, missing four gates and crediting them to
+a file that never held them. A README sentence correcting a stale
+number, itself three runs out of date. A card saying a figure had been
+wrong twice when it has been corrected four times.
+
+Not one of those was written carelessly. Every one was accurate on the
+day it was typed. That is the whole argument for the stamp: in a
+repository that corrects itself often, the corrections go stale too, and
+nothing but a read catches that.
+
+The mechanism cannot be stronger than the read behind it, which is why
+the stamp says who made it. This first pass was automated, and that is
+weaker evidence than the maintainer's own read. Writing "read in full"
+without having read in full would be the worst defect in this
+repository, because it would certify.
+
+One thing was caught by a guard rather than by care: the new tool was
+first named outside the project's own convention for guard filenames, so
+the check that demands every guard have a sibling test could not see it.
+The count that has to be bumped by hand is what surfaced it. A pin whose
+only job is to make you look is worth having.
+
+## The number was on the screen and not in the file
+
+A page can show a reader something the exported record does not keep,
+and nobody notices, because the person watching the screen and the
+person reading the file are the same person at different times.
+
+The timing readout here has printed the face model's mean cost for
+several increments. It is on the page while a session runs. It was in
+no column of the file that session writes. So an analyst opening a CSV
+could see that the processing rate was low and could not tell whether
+the model or the rest of the loop was the reason — a question the page
+had been answering out loud the whole time.
+
+The fix is not to compute the number again for the export. It is to
+take the SAME one the readout prints, from the same samples, so the
+page and the record cannot say different things about what inference
+cost. This project already applies that rule to its permanent notice
+and to its published figures; it had not applied it here.
+
+The other column is the same shape one step out. `sampled_fps`, the
+evidence rate the frame-rate refusal actually judges, existed as one
+number in a comment line above the header. A recording that ran at 30
+frames per second for a minute and 12 for the next reported a single
+figure for the whole file, and a reader could not tell which rows were
+measured on which. A per-session summary of a quantity that varies
+within the session is not wrong, exactly. It is just not enough to
+answer the question somebody will ask of it.
+
+The find on the way is worth more than either column. The Python
+loader keeps a list of accepted header generations, and the comment
+beside them states the rule plainly: slice each generation from the
+one after it, "so that appending a column never silently re-cuts an
+older header". Two lines above that comment, one generation was
+sliced as `COLUMNS[:-4]` — an absolute offset from the end of the
+CURRENT list. Appending these two columns would have re-cut it four
+short of the wrong list and refused every file of that vintage whole,
+including the validation round's six.
+
+So the rule was written down, correctly, in the same file, by somebody
+who then did not follow it in the line above. Writing a rule beside
+the code is not the same as the code obeying it, and the only thing
+that tells them apart is a test. There is one now: every accepted
+generation must be an exact prefix of the current header, which is the
+property all those slices quietly depend on and nothing had ever
+checked.
+
+## A plan that offers work it cannot deliver
+
+Five rows were picked off this ladder in one session and put back
+down. One wanted a browser engine nothing here installs. One asked for
+a test about two consumers a previous amendment had already demoted,
+so there was nothing to write the test against. One wanted a model
+output the app does not ask the library for. One wanted recordings
+this repository deliberately does not keep. One waited on a decision
+about intent that is not anybody's to make from the record.
+
+Every one of those took the same shape: read the row, believe it, work
+out what it needs, discover the thing is not there, put it back. And
+because nothing was written down, the next reader would pay the same
+cost again. That is not a planning failure. Plans go stale in exactly
+this way, quietly, as the world around them changes — a browser that
+never got installed, an amendment that demoted a consumer three
+hundred lines away, a dataset rule that was always going to forbid
+keeping the files.
+
+So a row that cannot be started now says so, and the marker has to
+name what would unblock it. "BLOCKED" on its own is the same silence
+in a louder font: the reader still has to work out what is missing,
+which is the entire cost the marker exists to save.
+
+The part worth keeping is what happens to a marker when its blocker
+lifts. One of these five is checkable against the code: a row wants a
+model output that a source file either asks for or does not. So the
+test reads that file, asserts the option is off, and asserts the row
+is marked as waiting on the increment that turns it on. When that
+increment lands, the test goes red first and the marker has to come
+off with it.
+
+A blocker that outlives its blocker is the next stale sentence, and
+this repository has spent a day finding stale sentences. A marker with
+no way to expire would have been one more.
+
+## A ratio, because the obvious number would have measured the rate twice
+
+Blink rate cannot tell two people apart when one blinks like a
+metronome and the other goes quiet and then flurries. Both report
+fifteen a minute. What separates them is how RAGGED the gaps are, and
+the obvious way to put a number on that is the standard deviation of
+the gaps.
+
+The obvious way is wrong here, and the reason is worth keeping. Two
+hundred milliseconds of spread means something quite different to
+somebody blinking every second and somebody blinking every ten. So a
+spread in milliseconds rises and falls with the blink rate, and a
+column that moves with blink rate is measuring blink rate a second
+time under another name — while looking like a new signal.
+
+Dividing by the mean removes that. The coefficient of variation is
+scale-free by construction: stretch every timestamp by the same factor
+and it does not move. That property is the whole argument for the
+shape, so it is a test rather than a sentence in a comment, and the
+mutation that swaps the ratio back to a raw spread reddens exactly
+that test and the known-value one.
+
+Two smaller things.
+
+The floor is a refusal, and null is not zero. Zero is what a metronome
+scores. A session with three blinks in it has not been measured as
+regular, and a column that answered zero for it would be inventing a
+finding out of a shortage of data.
+
+And the boundary tests were wrong on the first pass in a way this
+repository has met before. They built their probes from the constant
+they were meant to hold, so moving the floor moved the probes with it
+and every test kept passing at the new position. A floor tested only
+through its own constant is a floor nothing holds in place. The fix is
+two literal numbers, fourteen and fifteen, which is what an earlier
+row learned when the mutation runner was repaired. Learning it once
+was not enough; the shape has to be looked for every time a constant
+gets a test.
+
+## A word the instrument may not use, and a guard that still lets it be discussed
+
+A closure that outstays a blink has been one thing in this project
+since Phase 4: a count. Fifteen points on the score and one column in
+the export, charged the same whether the eyes were shut for six
+hundred milliseconds or six minutes. Those are not the same event, and
+a reader given only the count cannot tell them apart. This increment
+gives the durations bands: prolonged, microsleep-range, sustained.
+
+The arithmetic is four comparisons. The naming took the rest of the
+row.
+
+A microsleep is defined on the electroencephalogram. This instrument
+watches eyelids through a webcam, and no data this project may use,
+now or in this era, could tell it whether a brain went briefly
+offline. So the middle band is named for a RANGE OF DURATIONS and
+never for the thing itself: a closure can be reported as lasting as
+long as the ones that literature describes, which is a claim about a
+stopwatch, and cannot be reported as being one.
+
+The obvious way to hold that is to ban the word. It would have been a
+mistake. "The microsleep shape the drowsiness literature watches for"
+is the honest sentence that explains why the band exists at all, and a
+guard that removed it would have left the project unable to explain
+its own restraint — which is the kind of tidiness that reads as
+caution and functions as amnesia. What is banned is the CLAIM, not the
+word: the pairing that says the thing was found. In both directions,
+because putting the verb first says the same thing, and in the plural,
+because a claim is a family of wordings rather than a spelling.
+
+The guard proved that on this very entry. The paragraph above
+originally quoted the verb-first form as an example, the suite went
+red, and the file it named was this one. Nothing had to be exempted:
+the sentence was rewritten to describe the shape rather than spell it,
+which is the rule the guard has carried since it was written, now
+applied to the person writing about it.
+
+Then the guard met a problem it had built for itself. The ladder is
+where the refusal is declared, and declaring a refusal means naming
+it, so ROADMAP.md quotes the banned phrase twice on purpose. The
+existing exemption list was one list for all the retired claims, so
+letting the ladder through would also have let it claim that the page
+sends nothing anywhere — a sentence measured false a month ago. One
+document's licence to quote one phrase is not a licence to say
+everything. So the exemption now travels with the claim rather than
+with the caller, and a test pins that the ladder is exempt from this
+one and from no other.
+
+The edges themselves are two seconds and fifteen. Neither was measured
+and neither pretends to be. Placing them by measurement would need
+closures whose causes are known, which is exactly the ground truth
+whose absence made the vocabulary cap necessary in the first place.
+They are stated as choices, with the reasoning in the comment where
+somebody can disagree with it, and pinned from both sides by tests
+written as literal numbers.
+
+## The guard on the guards was reading name tags
+
+Every guard in this repository is a plain script that reads the disk,
+and nothing runs one except a test file. So a guard whose test is
+deleted, renamed, or never written is a file that looks like a control
+and enforces nothing, and no build anywhere goes red. There is a guard
+for exactly that, and this increment found it answering its question
+by reading name tags.
+
+It asked two things and got both from filenames. Is this module a
+guard? Yes, if it is CALLED one: the pattern was
+`*(Guard|Block|Ratchet).mjs`. Is it armed? Yes, if a test file is
+NAMED after it. Nowhere in either question is there a fact about what
+the files contain.
+
+Both halves leaked. Six modules carrying rules escaped the name
+pattern, including the guard on the guards itself. And because tests
+are sometimes named for what they check rather than for the module
+they load, a hand-kept map of exceptions had grown up beside the
+pattern — and one of its entries pointed at the wrong file. It sent
+`bundleGuard` to `bundleBudget.test.ts`, which loads `bundleBudget.mjs`
+and nothing else. `bundleGuard` had a real test of its own that
+nothing was watching. Moving that test out of the tree left the suite
+green.
+
+The fix is not a longer map. It is to ask questions whose answers are
+facts about the files. A module carries rules when somebody
+type-checked imports it, and the mark of that here is the hand-written
+`.d.mts` next door; the regeneration commands, which carry no rules,
+have none. A module is armed when a test IMPORTS it, which is a
+relationship between two files rather than a coincidence of their
+names. With both questions asked that way the map has nothing left to
+do and is deleted.
+
+One detail in the reading is worth the sentence. The import search is
+anchored on `from "…"` rather than on the path appearing anywhere in
+the text, because `claimGuard.test.ts` lists `tools/claimGuard.mjs`
+among its exemptions. A looser reader would have counted an exemption
+list as an import list, which is this guard committing its own
+mistake one layer down.
+
+And there is a residue, which is stated rather than hidden. A reader
+that never runs anything can prove a test imports a module. It cannot
+prove the test reaches one. An import with no call under it is still a
+guard nothing runs, and the only thing standing between this project
+and that is the stated count: bumping it is a deliberate act, and the
+moment to ask the question a machine here cannot.
+
+## Startable was judged from the headline, not from the last clause
+
+A ladder that offers work it cannot deliver costs whoever picks the row
+exactly the time it takes to find that out, and then costs the next
+reader the same again. An earlier amendment was written to end that,
+and it ended by naming the rows that could still be picked up.
+
+That sentence was wrong twice inside a day. It was wrong once inside
+the amendment itself, which caught and recorded the error while being
+written. And it was wrong again the next time somebody went looking
+for work: of the four rows it left standing, one had since landed and
+the other three each turned out to have a clause this working
+environment cannot meet. One wants a distribution reproduced from
+per-frame traces the project deliberately does not commit. One wants a
+refit from files that live only on the owner's machine. One ends with
+a live session under load, on a machine with no camera.
+
+The mistake was the same all three times, and it is the useful part.
+Startable was decided by reading what the row is FOR. A row is
+startable only when its last clause is, and the last clause is
+routinely the one that needs a device, a dataset or a person. Reading
+the headline gives you a confident answer to a question you have not
+asked.
+
+The judgement is not automatable. Whether a clause can be met here is
+a question about the world, and no test knows what is plugged in. What
+is automatable is that the sentence cannot quietly go out of date, and
+that is where the mechanism went: the guard reads the rows a startable
+claim names and holds each one to the ladder, so the moment one is
+ticked or picks up a blocked marker the build says so. A ladder with
+no such sentence at all is refused rather than passed, because a check
+that can be satisfied by deleting the claim is not a check.
+
+This is the second time in two days that the same shape has appeared:
+a sentence a person keeps true by remembering, in a repository whose
+whole discipline is that nobody has to. The first was a count. This
+was a list. Neither survived a fortnight unattended, and the fix both
+times was to read the claim back from the thing it describes.
+
+## The buffer that answers "an hour ago" whenever you ask
+
+Does somebody's blinking change over the length of a sitting? The
+project has the data for that question and had no way to ask it, and
+the interesting part turned out to be where NOT to look.
+
+The obvious source is the per-second buffer. It holds one row a second
+with everything the session knows, and it is bounded: three thousand
+six hundred rows, about an hour, oldest dropped. Ask it when the
+session began and in any longer sitting it answers an hour ago. A
+drift computed from it would not be an error message or an obviously
+wrong number. It would be a plausible reading, correctly calculated,
+about a session that did not happen — and the longer somebody sat, the
+smaller the fraction of their sitting it would describe. That is worse
+than a crash, because a crash gets fixed.
+
+The blink log survives the wrap. One event per blink instead of one
+row per second, bounded thirty times higher, which is about
+twenty-seven hours of ordinary blinking. So the measurement reads the
+log, and the session start is passed in as an argument rather than
+inferred from whatever is still in a buffer, because inferring it is
+precisely the mistake.
+
+Two smaller choices, both stated as choices rather than dressed as
+derivations. The halves split by TIME and not by blink count: half the
+blinks is not half the sitting, and somebody who blinks hard for ten
+minutes and then settles would have the boundary drawn inside those
+ten minutes, so the reading would be most of the first stretch against
+itself. And the change is reported as a fraction of where it started,
+for the same reason the rhythm measure is a ratio: a hundred
+milliseconds means something different to a two hundred millisecond
+blink and a six hundred millisecond one, so an absolute difference
+would smuggle blink length back into a measure of change.
+
+What travels with the number is a label saying it is a demonstration
+validated against no outcome. Blink parameters lengthening over a
+sitting is something this instrument can see. That it means fatigue is
+something this project has never measured, and saying so is a
+different row entirely.
+
+## The Check says what a row must prove; the gate says whether it may begin
+
+Two documents in this project answer questions about a row, and it took
+three mistakes in one day to notice they answer different ones.
+
+A row's Check lists what the work must demonstrate. Reading it tells
+you whether the demonstration is possible here: whether the dataset is
+on disk, whether the camera exists, whether the second browser is
+installed. That reading was learned the hard way and then learned
+again, and by the third amendment of the day it was being done clause
+by clause, which is the right way to do it.
+
+The gate is somewhere else entirely. It sits in the PHASE header, and
+it says whether a row of this kind may be begun at all yet, regardless
+of what its Check asks for. Phase 12's gate names seven rows that must
+land first, and gives its reason: a signal built before them inherits
+a tick rate and a shut line that those rows are going to change.
+
+Three rows were started with that gate shut. Every clause of every
+Check was satisfiable, the work was watched failing first, mutation
+covered and merged green, and none of that was the question. The
+question was whether to begin, and it was never asked, because the
+answer is not written in the row.
+
+Nothing published depends on them, which is luck shaped like
+discipline: each was deliberately shipped as a measurement with no
+consumer, so there is no number to withdraw. What was really lost is
+smaller and more specific. Their constants — two band edges, two
+floors, a midpoint — were chosen against an instrument that is going
+to be re-timed and re-ruled, and until this was noticed nothing said
+so. Now each row says it.
+
+The lesson generalises past this ladder. When a project has both a
+per-item contract and a phase-level ordering rule, the item contract
+is the one people read, because it is next to the work. The ordering
+rule is in a header nobody re-reads after the first week. Any process
+that relies on remembering the header will fail, and the failure will
+look exactly like competence: correct work, green tests, wrong order.
+
+## A guard that reads nothing reports a clean bill of health
+
+The previous entry describes a rule that lives in a phase header
+rather than in a row, and three rows that broke it because nobody
+re-reads a header. This entry is about building the machine that
+reads it, and about the mistake made while building it.
+
+The gate is prose. It names the rows that must land first, and it
+writes runs of them the way people write runs: `10.12a-c`, `10.13a-b`.
+So the reader has to expand those, and the first decision is what to
+do with an item it cannot parse. The tempting answer is to skip it,
+because skipping keeps the guard running. It is the wrong answer.
+A gate parsed to an empty list is a gate that permits everything, and
+it looks exactly like a gate nothing is violating. So an unreadable
+item throws.
+
+That decision paid immediately, because the reader was itself written
+wrong. Both patterns captured with a "not a dot" character class, the
+usual way to stop a regular expression at the end of a sentence. Every
+row number in this project contains a dot. The patterns matched
+nothing, the guard found no gates, and it reported a ladder with
+nothing to enforce — the precise failure the row exists to prevent,
+arriving inside the fix for it.
+
+What caught it was not the verdict. The verdict was green, and would
+have stayed green. It was caught because the tests pin the parsed
+prerequisite list itself: nine specific row numbers, in order. A test
+that had only asserted "no violations" would have passed on a reader
+that read nothing.
+
+That is the transferable part. When a guard's job is to find
+violations, testing that it finds none is nearly free of information,
+because a broken guard also finds none. Test what it PARSED, not only
+what it concluded, and give it a case where it must find something.
+This one has both: the real ladder must come back clean, and a
+deliberately doctored copy claiming a gated row must come back naming
+that row.
+
+## A dot ends a sentence and a dot numbers a version
+
+Two entries ago a guard was written to read a rule out of prose, and
+its patterns stopped at the first dot, which is the ordinary way to
+stop a regular expression at the end of a sentence. Every row number
+in this ladder contains a dot. The patterns read nothing and the guard
+reported a clean ladder.
+
+That was written up carefully as a lesson. Twenty minutes later the
+next guard was written and made the identical mistake, in a pattern
+whose job was to read `13.8b, 12.0a` and which captured `13`.
+
+Twice in an hour is not inattention. It is a shape, and the shape is
+worth naming: in a document about software, the sentence-ending dot
+and the version-numbering dot are the same character, and the second
+kind is everywhere. Any pattern that treats a dot as a terminator will
+work on the prose and truncate every identifier in it. The fix is to
+terminate on something the identifiers cannot contain — the closing
+markers of the phrase, the words that end the clause — and never on
+the punctuation.
+
+The second occurrence is the useful part of this entry. Writing the
+first one up did not prevent it. That is what tells you the write-up
+was a memory rather than a mechanism, and it is the same distinction
+this project keeps arriving at from different directions: a count, a
+list, a header, and now a character class. The difference between a
+convention and a control is whether it can be violated by somebody
+concentrating on something else, which is the state everybody is in
+most of the time.
+
+Both of these were caught by tests that pin what the reader PARSED
+rather than what it concluded. That is the control here, and it is the
+only reason two guards that read nothing did not ship reporting that
+everything was fine.
+
+## The charter is the one document nothing was holding
+
+Every published figure in this project is bound to a file by a test.
+The recall number, the guard count, the test count, the startable list,
+the caveats on three rows. All of them fail the build when they drift.
+
+PROJECT.md, the file that says what the project is for, had nothing.
+
+It said explainability beats accuracy, while the roadmap's current era
+set its goal as raising accuracy to the hardware's ceiling. It listed
+mobile as out of scope until an architecture decision record argued for
+it, while a phone surface was merged, a phone viewport ran in the
+end-to-end suite on every pull request, and the model card recorded
+phone sessions behind the published numbers. Neither contradiction was
+hidden. Both had simply never been read against the thing they
+described, because the file describing intent is the one nobody thinks
+of as a claim.
+
+It is a claim. It is the most load-bearing one here, because every
+other decision cites it.
+
+Resolving it was not a matter of finding the true answer in the record.
+The record contained both positions, held honestly, arrived at in
+different months. What was missing was a ruling, and a ruling is not
+something a reader can derive: somebody has to decide what the project
+is for. So this one waited for the owner rather than being settled by
+whoever noticed, and it is written as a decision record rather than a
+correction.
+
+The part worth keeping is what the ruling had to add. Both answers were
+already implied by practice. What was missing in each case was the
+TIE-BREAK: not "explainability matters", which nobody disputed, but
+what happens on the day an unexplainable method measures better. The
+answer chosen is that the result gets recorded and the method does not
+get shipped. A priority with no stated behaviour at the point of
+conflict is a preference, and a preference is what people abandon
+exactly when it would have cost something.
+
+## Blocked and retired are different verdicts
+
+A row on this ladder can be stuck in two quite different ways, and for
+one day a row was marked as both.
+
+Blocked means the work is ready and something outside it is in the
+way. That is a promise: lift the blocker and the row can be picked up
+unchanged. It is the promise the whole blocked-marker convention was
+introduced to make, after five rows were tried and put down for
+unrecorded reasons.
+
+Retired means the row should not be picked up at all. Not now, not
+when something lands. The shared slope module was retired because both
+of the consumers it existed to serve had been demoted, and a module
+built for nobody is speculative infrastructure. Nothing is going to
+arrive that unblocks it, because it is not waiting.
+
+A row carrying both markers tells a reader nothing twice, so a test
+now refuses the combination. Retiring a row removes its blocker.
+
+The second half of this increment is the same distinction one level
+down, inside a blocker's reason. One marker said only that no WebKit
+is installed here or in the CI workflow. True, and it reads like an
+accident: something nobody got around to. It was not. The test
+configuration carries a WebKit project deliberately excluded from
+continuous integration, with the reason written out at length,
+including the three platform-level failures a previous attempt
+produced and the conclusion that a test failing for unrelated reasons
+teaches people to ignore red.
+
+The cost of stating the surface fact instead of the decision is
+specific and was paid the same day: the next reader proposed adding
+WebKit to CI, which is precisely the thing that had already been tried
+and rejected. A blocker that names a symptom invites somebody to treat
+the symptom.
+
+So the rule underneath both halves is one rule. When you record that
+something cannot be done, record which KIND of cannot it is, and if a
+decision is behind it, name the decision and say where it is written.
+Otherwise the record reads as an obstacle, and obstacles look like
+things to remove.
+
+## Measure the light, name the number, refuse the adjective
+
+A webcam decides what the light looks like before this project sees a
+single byte. Automatic exposure and white balance act first, so a
+bright room and a dim room the camera has compensated for can arrive
+looking much alike. Nothing in this codebase knows what a lux is.
+
+That does not make the measurement worthless. The mean brightness of
+the picture is a real, repeatable quantity, and two regions of it are
+more useful than one: a lamp on the face leaves the rest of the frame
+dark, and the disagreement between a face mean and a scene mean is
+exactly the fact worth recording. What is worthless — worse, actively
+misleading — is an adjective on top of it. "Too dark" implies a
+threshold, a threshold implies a validation, and there is none.
+
+So the measurement half ships and the verdict half is parked, with the
+parking written into the label rather than left as an intention. The
+label says what the number is of and what it is not, and a test
+enumerates the words it may not contain.
+
+The other half of this entry is a distinction that shows up in every
+system with optional data: black is a measurement and broken is not.
+A lens cap reads zero. A crop that went wrong reads nothing. If those
+arrive as the same value, no reader can tell a dark room from a
+dropped frame ever again, and no amount of care at the serializer
+recovers it, because the information was destroyed upstream. So the
+refusal is a null at the source, and a test holds the two apart
+explicitly rather than trusting that nobody will reach for zero as a
+convenient default.
+
+That test is short and it is the most valuable one in the file.
+
+## One raster, read once, tells you two things about the light
+
+The wired half of the light measurement had an obvious shape and a
+better one, and the difference is worth writing down because it is not
+about performance.
+
+The obvious shape: read the pixels of the whole frame for a scene
+number, read the pixels of the face region for a face number. Two
+crops, two reads, two answers. On a 1080p camera that moves about
+eight megabytes a second across the boundary between the browser's
+canvas and this code, into a loop an audit had already flagged for
+drawing more than it needs.
+
+The better shape starts from a fact about the data rather than from
+the cost. Face landmarks arrive NORMALISED, as fractions of the frame.
+A face spanning 0.3 to 0.7 covers the same fraction of any raster it
+is drawn into, whatever the camera's resolution. So the frame can be
+downscaled once, by the browser, into a raster of sixty-four by
+thirty-six, and both numbers read out of that: the scene is the whole
+thing, the face is a box inside it. About nine kilobytes.
+
+The speed is the smaller half of the win. The larger half is that the
+two numbers now come from the same frame, at the same exposure,
+through the same scaling. Two separate reads could not promise any of
+that, and the entire point of having both numbers is the DIFFERENCE
+between them — a lamp on the face against a dark room. A difference
+computed from two reads taken under two conditions is a difference
+about the reading, not about the light.
+
+Downscaling also does the averaging in the right place. Asking the
+browser to scale 1920 by 1080 into 64 by 36 IS an average over
+blocks of pixels, computed where that work is fast, and an average is
+exactly the number wanted at the other end.
+
+The generalisable bit: when two measurements are only meaningful
+compared to each other, take them from one observation. Anything else
+leaves a gap for the conditions to change in, and that gap will
+eventually be larger than the effect being measured.
+
+## A sweep whose smallest entry is its answer has measured its own grid
+
+The question was how many iris pixels the pupil estimator needs. The
+project had a suspicion on the record — a light-response experiment
+resolved the pupil in 1 of 239 seconds, and the result page blamed the
+small forty-three pixel webcam iris — and no measurement behind it.
+
+The prediction went in first, in its own commit, before the generator
+existed: the floor would land below forty-three pixels, expected
+between twelve and thirty at a modest blur.
+
+The first sweep ran from eight pixels upward and reported a floor of
+eight at almost every blur. That is not a floor. Eight was the
+smallest thing tried, so the sweep had measured the edge of its own
+grid and dressed the result as a property of the estimator. Extending
+downward found the real answer: four pixels sharp, five at a one pixel
+blur, eighteen at a heavy four.
+
+Two things came out of that, and the second is bigger than the first.
+
+The small one: the prediction was half right. The direction held, and
+held by a wide margin. The magnitude did not — five pixels is well
+under the twelve-to-thirty band — because the reasoning over-estimated
+how much contrast the estimator needs. The band stays in the document
+uncorrected, next to the measurement that beat it.
+
+The large one: if the floor is five pixels and the camera delivered
+forty-three, then iris resolution never explained the failure. A
+sentence this project had been carrying for three days, in a published
+result page, was an incomplete explanation, and the row's most useful
+output turned out to be correcting it rather than producing the number
+it was asked for.
+
+There is also a tail worth keeping. Below four pixels the sweep is not
+monotone: two resolves, three does not, four does. At three pixels the
+pupil is barely one pixel across, so the answer turns on where the
+raster's centre happens to land. That is geometry, not the estimator.
+It would have been easy to start the sweep at four and never mention
+it. Instead the minimum is declared, the monotonicity claim is scoped
+to above it, and a separate test pins the two-three-four flip — so
+that nobody can later raise the minimum quietly to bury a genuine
+island in the estimator's behaviour.
+
+The habit worth taking: when a measurement returns the boundary of the
+range you searched, you have not measured the thing. You have measured
+your search.
+
+## A guarantee measured once is a guarantee about the first time
+
+Row 14.0f1 was meant to be an accessibility chore: let the Escape key
+close the screens the page throws over itself, and turn the sleepiness
+question into a real `<dialog>` instead of a div wearing the word.
+
+Three things it found were not in the plan.
+
+**The page was not keyboard-dead.** It already had an Escape handler.
+Row 14.0b wrote one for the light stimulus, right next to the light
+stimulus, because a fullscreen flash somebody cannot dismiss is
+frightening. That reasoning applies word for word to the other three
+overlays, and nothing carried it there. So a visitor working by
+keyboard who opened the gaze calibration was behind a black sheet with
+no way out: the overlay takes no focus, Tab walks through a page nobody
+can see, and the only exit was a mouse click they were not making.
+
+The escape hatch existed. What was missing was anything that made the
+next overlay inherit it. That is the same shape as the stale changelog
+count, the startable sentence that went wrong three times in a day, and
+the phase gate nobody re-read: a correct thing kept correct by somebody
+remembering it. The fix is the one this project keeps arriving at. One
+list in `core` naming every screen and whether Escape may close it,
+read by both the handler and the refusal, and held to the page in both
+directions so a screen added tomorrow without an entry turns the build
+red.
+
+**A native dialog will not refuse Escape twice.** The plan was the
+documented approach: listen for the dialog's `cancel` event and call
+`preventDefault()`, because this particular dialog must not be
+dismissible — every way out of it records an answer, Skip included, and
+a dismissal recording nothing would leave a file that cannot say
+whether the question was declined or never asked.
+
+A probe in the same browser the tests drive confirmed it: press Escape,
+`cancel` fires, prevented, dialog stays. It confirmed a false thing.
+Press Escape a second time and Chromium fires `cancel` again, sees it
+prevented again, and closes the dialog anyway. Without a user
+activation in between, the platform gives you one refusal and then
+overrules you.
+
+The end-to-end test caught it because the draft pressed the key twice,
+and it pressed twice for a reason worth writing down: one press proves
+nothing about an interceptor, since the press might have landed
+somewhere else entirely. That instinct was worth more here than the
+probe was.
+
+The working refusal is to stop the key before a close request exists at
+all — a capture-phase `preventDefault()` on the keydown while the
+question is up. Nothing to overrule if nothing is ever asked.
+
+**Hiding an open modal leaves the page dead.** Setting `hidden` on a
+`<dialog>` that is open gives it `display: none` while the element
+still matches `:modal`. The question disappears; the page behind it
+stays inert. That is a page which looks completely fine and accepts
+nothing, and it is the worst kind of broken because there is nothing
+on screen to blame for it.
+
+Every reset path in the page spelled the close exactly that way while
+the dialog was a div, and all of them were correct then. Converting the
+element without converting them would have shipped it. A check now
+reads the page's source and refuses that spelling on that element.
+
+**The small decision.** Focus opens on Skip rather than on the first
+rating. A modal focuses its first focusable element by default, which
+here reads `1 Extremely alert`, so somebody who presses Enter to make
+the box go away has just written a sleepiness label nobody meant into
+an exported file. Skip records a declining, which is true, and every
+rating is one Tab away. Focused first, offered last.
+
+The habit worth taking: a guarantee you measured once is a guarantee
+about the first time. Both platform surprises in this row were hiding
+behind a single press, and one of them was hiding behind a probe I had
+written specifically to be careful.
+
+## A guard that goes quiet when the code improves
+
+Row 14.0f2 gave the page three things it was missing: a link to its own
+source, links on the documents it cites, and a description and icon in
+a head that had neither.
+
+The citations are the part that mattered. The sentence beside the blink
+count ends `(docs/blink-sample-rate.txt)`. On a page served from a
+website, that is a path to nowhere. Every measurement this project
+argues from was one click away and the click did not exist.
+
+They are links now, and they point at the commit the page was built
+from rather than at `main`. A link to a branch would show somebody
+today's document beside a number measured last week, which is the same
+defect as a stale figure wearing a different hat.
+
+**The interesting failure was in the guard, not the page.** The row's
+check is that `uiGuard` sees the repository link. It did, until the
+URL moved out of the call and into a shared constant — which is the
+right change, and is the direction this repository keeps moving
+things, since a URL written twice is a URL that is eventually wrong
+once. The reader matched quoted strings, so it saw nothing and the
+test went red.
+
+The red was luck. If the constant had been introduced a week later, by
+someone not looking at this guard, the guard would have quietly stopped
+checking anything and no build would have gone red anywhere. That is
+the same shape as the guard that could not fail, and it has a specific
+smell: **a check that reads one spelling of a thing rather than the
+thing.** It works, it passes, and it stops working the day the code
+gets tidier.
+
+Two smaller ones from the same hour.
+
+The reader that finds a citation needed a test for a path that ENDS a
+sentence, because `docs/foo.txt.` has two dots doing different jobs and
+they look identical. This repository shipped that mistake twice in one
+hour on a different guard. Writing the test down is cheaper than
+learning it a third time.
+
+And the end-to-end assertion on the link's address was written as
+`/^https:...blob\/[0-9a-f]{7,40}|main\/docs\/...$/`. Alternation binds
+loosest of all, so that pattern says "starts with a blob URL, OR ends
+with the path" — and would have passed on almost anything. It was found
+by re-reading it, not by a failure, because a test that is too weak
+never fails. The grouping is now a comment as well as parentheses.
+
+The habit worth taking: after writing a check, ask what would have to
+change in the code, innocently, for this check to stop checking. If the
+answer is "someone tidies a string into a constant", the check is
+reading a spelling.
+
+## A ladder can look finished when it is only blocked at the far end
+
+For a day this project's roadmap said, mechanically and with a test
+holding it, that no work was left that could be started here. Every
+remaining row needed a camera, a corpus, a second browser engine, or a
+decision only the owner can make. That was not a guess. A guard read
+the ladder and agreed.
+
+It was still wrong, and the reason is worth more than the row that
+found it.
+
+**Every startability judgement had been made over whole rows.** A row
+was startable if _every_ clause of its Check could be met here, so a
+row died the moment its last clause needed a camera. That rule was
+written for a good reason — three rows had been claimed startable from
+their headlines and none of them were — and it is the right rule for
+deciding whether a row is _finishable_. It is the wrong rule for
+deciding whether there is _work_.
+
+Row 10.8a is the proof. It is the regression run: the owner measures a
+corpus this container will never hold. Blocked, obviously, and marked
+so. But its Check opens with five words — "the replay tool committed
+first" — and that tool needs no corpus at all. It runs on synthetic
+traces, exactly as the miss autopsy's tests already do. It had been
+sitting behind the word "blocked" for as long as the row had.
+
+So the rule gained a clause: a row whose later clauses are blocked may
+be **split**, provided each slice carries its own verifiable check and
+does not pre-judge a measurement somebody still owes.
+
+That proviso is the entire safeguard, and it is not decoration.
+Splitting is a very easy way to fake progress: carve a blocked row into
+pieces, ship the piece that needs nothing, and tick something. The test
+for an honest slice is whether it would still be worth building if the
+blocked part never happened. The replay tool passes — it answers a
+question the autopsy provably cannot, whatever the corpus eventually
+says. The slice after it deliberately _declines_ to add a verdict
+column naming which mechanism swallowed each missed blink, because that
+is a conclusion about data that does not exist yet, and writing it now
+would be pre-registering the answer instead of the question.
+
+The habit worth taking: when something reads as finished, check whether
+it is finished or merely blocked at the far end. Those look identical
+from a distance and they are not the same state at all. The question
+that separates them is not "can I complete this" but "is the first
+thing this needs also blocked" — and surprisingly often the answer is
+no.
+
+One smaller thing from the same hour, worth recording because it is the
+same shape. This lesson nearly went unwritten: the reasoning above sat
+in a pull request description, where it reads fine and holds nothing.
+A check in this repository refuses a change to `src/` that writes no
+LEARNING entry and gives no reason in a commit message, and it caught
+exactly that. A pull request description is not the record. The commit
+and the file are.
+
+## Three tools read a file that only an archived script can write
+
+Row 10.8a's replay tool joins each missed blink to a table called
+`eyeblink8_misses.csv`. So does the miss autopsy. So does the overlap
+tool. Three consumers, all naming the same file.
+
+**My first version of this note said nothing writes it. That was
+wrong**, and I am leaving the correction visible because the true
+version is the more interesting one. A producer is committed:
+`docs/evidence/2026-08-09/scripts/tables/autopsy.py` writes the file,
+with exactly the six columns those three consumers read.
+
+It is committed as _evidence_, not as a tool. It carries hardcoded
+`/PATH/TO/...` constants, a `sys.path.insert`, and no test. So the file
+can be regenerated, but only by someone who opens an archived script
+from a month ago and edits paths into it — which is precisely the
+practice this project replaced everywhere else it looked.
+
+That distinction is the whole lesson. A _missing_ producer is a gap:
+obvious the moment anyone goes looking. An _archived_ producer is a
+maintenance decision nobody revisited, and it looks exactly like a
+working pipeline from every angle except the one where you try to run
+it. Only the second explains how three tools could name the same file
+for weeks with nobody noticing.
+
+It could not fail, either. Each consumer is correct in isolation, each
+one's tests pass against a fixture it builds itself, and the archived
+producer only matters on the day somebody re-runs the corpus — which
+had not happened since the tables were written.
+
+**A dependency that only binds at the far end of a workflow is
+invisible to every test that runs at the near end.** Everything about
+this looked healthy. Three tools, all tested, all passing, all reading
+a format they agree on, and a hole where the writer should be.
+
+The check that would have caught it is not a unit test. It is asking,
+of each artefact a tool consumes: what produces this, is that thing
+maintained, and could someone run it from a clean machine and the raw
+dataset without editing it first? For `eyeblink8_misses.csv` the
+answer to the first is yes and to the last two is no.
+
+Related, and the same shape one level up: the reason this went looking
+at all was a decision to split a blocked row rather than judge it whole.
+Walking the row's own Check clause by clause is what surfaced a
+consumer with no producer. Reading a row for whether it is _finishable_
+never would have.
+
+## The ladder refused an identifier it could not parse
+
+Splitting a row twice produced `10.8a3b` — a letter, digits, then another
+letter. Every existing id in this ladder uses one letter group at most:
+`10.0b11`, `12.16b`, `10.8a2`. The pattern that finds a row is
+`[\d.]+[a-z]?\d*`, so `10.8a3b` matched nothing at all, and the guard
+reported the row as absent while it sat plainly in the file.
+
+The tempting fix was to widen the pattern. That would have been wrong.
+
+An identifier is not private to the file that holds it. Roadmap ids are
+quoted in commit messages, in prediction documents, in the remediation
+ladder, in audit findings, and in the amendment that gates a phase.
+Widening one regex would have created ids that this repository's other
+readers, and every human skimming a commit subject, have no convention
+for. The renumber cost one minute; the alternative was a second id
+grammar nobody had agreed to.
+
+The habit worth taking: when a validator refuses something you just
+made, check whether it is enforcing a convention you forgot rather than
+a limitation you should remove. The refusal is evidence about the
+system, not just an obstacle in front of it.
+
+## Every test passed, and the tool was measuring the wrong event
+
+The replay tool answers, for a blink the detector missed, how long since
+the last counted blink. It anchored that measurement on the first frame
+the eyelid dipped below the line inside the human's marked span.
+
+That is wrong, and no test caught it, because every test was written
+from the same understanding that produced the error.
+
+A lid can dip below the line without going deep enough to arm. The
+detector treats such a wobble as nothing at all. If a real closure
+follows inside the same marked span — and a lid that wobbles before it
+blinks is exactly the behaviour the re-arm gate was added for — then the
+real closure is the one the refractory window actually judged. Anchoring
+on the wobble produced a genuine measurement of a closure the detector
+never evaluated: 66.7 milliseconds where the decision used 133.3.
+
+Both are plausible. Neither is flagged. In a table of sixty-odd misses
+nobody would ever look twice.
+
+It was found by an adversarial review: agents told to attack the tool,
+write probes, run them, and report what actually happened rather than
+what should. One built a trace with a wobble before a blink, dumped the
+detector's state frame by frame, and the divergence was visible in the
+dump.
+
+**A test suite written by the author checks the author's
+understanding.** Mine were thorough — boundary cases, refusals, five
+separate bends of the module — and every one of them encoded the same
+wrong idea about which closure mattered. Thoroughness inside a mistaken
+frame does not escape the frame.
+
+The habit worth taking: for anything whose output is a number nobody can
+sanity-check by eye, spend the extra pass having something adversarial
+attack it before it produces data. Not a review of the code's style — an
+attempt to make it give a wrong answer that looks right. The cost here
+was one workflow. The alternative was publishing an explanation of why
+sixty blinks were missed, built on the wrong sixty closures.
+
+## A fallback nobody can reach is a branch nobody can test
+
+The branch-coverage floor went red, and the six uncovered branches were
+all the same shape: `(cell ?? "")`, `at?.before.rearmed ?? null`,
+`(atCompletion?.nowMs ?? 0)`. TypeScript demands them because indexing
+an array can in principle return undefined. No input can produce that
+here.
+
+There are two ways to make a coverage floor green in this situation and
+only one of them is honest.
+
+The dishonest way is to write a test that reaches the branch. For four
+of the six that was actually fine, because the branch corresponded to a
+real case I had not thought about: a file truncated mid-write leaves a
+row with a frame number and nothing after it, and a miss table can be
+empty. Those tests are worth having on their own merits, and the
+coverage was pointing at a genuine gap.
+
+For the other two it would have been theatre. They came from looking a
+row's state up in a Map keyed by frame number, where every row had been
+put in the Map moments earlier. The lookup cannot miss. To cover the
+fallback I would have had to build a state that the function itself
+makes impossible, purely to make a percentage move.
+
+So those two were removed instead. The state is read by index now,
+which is what it always was, and the branches are gone.
+
+The habit worth taking: when coverage points at a branch, ask first
+whether the branch should exist. Sometimes it is a case you forgot and
+the number has done its job. Sometimes it is a defensive shrug the type
+checker asked for and you granted, and the fix is to make the
+impossible state unrepresentable rather than to write a test that
+pretends it is possible. A coverage number that people satisfy with
+contrived tests stops measuring anything at all.
+
+## The type let the whole table pass as one clip's misses
+
+`missFacts(trace, spans)` measures each span against the trace it is
+given. The miss table has a clip on every row; the trace is one clip's.
+So the join is correct only when the spans handed in are that clip's,
+and nothing in the types said so.
+
+`MissTableRow` was `MissSpan & { clip }`. Read it and the clip looks
+accounted for. But the extra field sat on the ROW, not on the span the
+function consumes, and a row with an extra field is still assignable to
+the base. So a `MissTableRow[]` — the whole table, every clip's rows —
+typechecked as the one clip's `MissSpan[]` the function takes. A runner
+that read the traces and forgot to group the table by clip would
+compile, run, and print a full result: every clip is numbered from its
+own frame 0, so a foreign span lands on real frames of the wrong video
+and comes back with an ordinary crossing for a closure that never
+happened.
+
+The discriminator moved onto the member. `clip` is on `MissSpan` now,
+and `missFacts` takes the clip it is replaying and refuses a span that
+names another. The types still cannot tell one clip's `MissSpan[]` from
+another's — they are the same shape — so the guard is a runtime refusal,
+where the identity actually lives.
+
+The habit worth taking: when a value carries an identity that says which
+collection it belongs to, put that identity on the thing the consumer
+handles, so the consumer can at least check it. An identity on a wrapper
+one level up from the work is an identity the work never sees, and a
+`&`-extended type that stays assignable to its base is exactly that
+level up.
+
+## A positional read needs the header pinned to the writer, not to a prefix
+
+`parseTrace` located its header with `startsWith("frameIndex")` and then
+read four columns by index. Both halves were loose.
+
+`startsWith` is a prefix, so `frameIndexSought,...` passed. And the
+positional read trusted an ORDER that nothing enforced: the writer's
+`FRAME_TRACE_COLUMNS` and the reader's `cells[2] is apertureMm` were two
+copies of one fact kept in step by nobody. A column inserted or reordered
+in the writer would move `apertureMm` under the reader — read from the
+`irisAspectRatio` column, every frame reads eye-open and every miss
+never-crossed, with no error anywhere.
+
+The fix exports the writer's column list and holds the header to it
+exactly, by name and position. But the change that actually catches a
+future drift is the round-trip test: build a trace through the real
+`serialiseFrameTrace` and read it back. The hand-written header strings in
+the other tests state the reader's assumption a second time, so a column
+moved on the writer's side sails past them — they and the bug agree. Only
+a test that runs the real writer can disagree with it.
+
+The habit worth taking: when a reader parses a writer's output by position,
+one test must exercise the real writer, not a hand-typed sample of what you
+believe it emits. A fixture written from the same mental model as the parser
+cannot catch that model being wrong. Pin the shared shape in one place and
+prove the round trip; two hand-copied headers are one assumption, not two
+checks.
+
+## The row order was a fact about the folders, not the clip names
+
+The committed miss table's 67 rows are not in clip-name order. Its
+producer walked the corpus with `sorted(rglob("*.tag"))`, and the clips
+live in subject folders named 1, 2, 3, 4, 8, 9, 10, 11 — which sort as
+STRINGS, so "10" and "11" come before "2". The clip in folder 10 appears
+third, not near the end.
+
+A rewrite of that producer that reached for the obvious
+`sorted(clips, key=name)` would emit the right 67 rows in the wrong
+order, and a digit-for-digit check against the committed file would fail
+for a reason that has nothing to do with which blinks were missed. The
+tool keeps the corpus walk, and the test that guards it is built from
+two clips whose folder order and name order DISAGREE — a fixture where
+they happened to agree would pass under either sort and prove nothing.
+
+The habit worth taking: when a tool reproduces a committed artefact,
+the ordering is part of the artefact, and a test for it needs inputs
+where the right rule and the tempting wrong one give different answers.
+A fixture that both rules pass is not a test of the rule.
+
+## A runner that wraps a tool is pinned as the tool, not re-tested
+
+The replay runner reads a trace directory and a miss table off disk and
+writes the per-miss table. Its rules — group by clip, replay each clip's
+trace, refuse a clip the traces do not hold — are `joinMissFacts` in
+core; the disk is four calls in a `.mjs`. The temptation was to test the
+runner by hand-computing a few expected rows. That would have been a
+second, weaker copy of what `missFacts` already computes, drifting the
+moment `missFacts` changed.
+
+Instead the round-trip test pins an IDENTITY: `joinMissFacts(table, {clip:
+trace})` must equal `serialiseMissFacts(missFacts(clip, parseTrace(trace),
+spans))` with the clip re-attached. It asserts the runner is exactly the
+composition of the pieces it wraps, so it cannot diverge from them without
+the test going red, and it never restates what those pieces mean.
+
+Two things fell out of the same split. Modeling "a trace directory" as a
+`Map<clip, text>` kept the missing-clip refusal in pure, filesystem-free
+code, where a test reaches it without a `tmp` dir. And the disk half runs
+only under an env var, so it never touches the pinned test count — the
+`fixtures:write` arrangement, reused rather than reinvented.
+
+The habit worth taking: when new code is a composition of tested code,
+test that it IS the composition, not that the composition gives some
+answer you typed out. An identity test cannot rot the way a hand-computed
+expectation can.
+
+## Deleting single-sourced prose is one cut; the guards name the rest
+
+The owner ruled that the demo's explanatory notices interfered with the
+experience: the two "Conditions:" caveats and the export-contents
+disclosure came off the page, and the disclosure came out of the
+repository entirely, with README's privacy section regenerated without
+it. A product decision, recorded as one; the sampling limitations and
+their numbers still live in docs/sampling-bounds.txt,
+docs/blink-sample-rate.txt and the committed tables, so nothing was
+lost from the record — only from the page.
+
+The removal itself is the lesson. Every one of those sentences lived in
+ONE place — a core function or constant — and every consumer read it
+from there: the page, the README generator, the tests. So deleting each
+was one cut, and the type checker and the guards then NAMED every
+dependent that had to follow: the imports, the generator's reader, the
+tests that quoted it. Nothing had to be hunted by memory, because
+nothing had been hand-copied anywhere.
+
+The habit worth taking: prose that ships — disclosures, caveats,
+notices — earns the same single-source treatment as a constant, not
+because it will change, but because one day somebody will want it GONE,
+and a sentence pasted into four surfaces dies in one of them and
+lingers in three. The project already knew this for numbers; it holds
+for sentences.
+
+## Read the shape of a disagreement before hunting its cause
+
+The 8 September regression run disagreed with its anchor, and the
+useful fact was not the size of the disagreement but its shape: seven
+clips identical to the digit, one clip collapsed from 38 blinks found
+to 6. That shape did three eliminations before any bisection started.
+Identity on seven clips cleared the machine, the prepared files and
+three stepper changes at once, because every one of those causes would
+have moved many clips a little. Only a targeted mechanism moves one
+clip a lot while touching nothing else, and the only targeted thing
+that changed between the runs was the detector's code.
+
+The habit worth taking: when a re-measurement disagrees with its
+anchor, characterise the disagreement's shape first and suspect causes
+second. Noise moves everything a little. An environment change moves
+everything somehow. A code change moves exactly what it touches. The
+shape is a fingerprint, and reading it first meant the whole caveat
+ledger of "argued neutral" entries could be scored in one afternoon —
+held on seven clips, at least one broken on the eighth — without
+running a single bisection.
+
+A second, smaller lesson from the same evening: the one generated
+sentence that could not be mechanically regenerated was the one that
+mixed two provenances — a fresh miss count beside statistics measured
+on the old miss set. Every number in it was true and the sentence was
+false. A generated sentence is only as honest as the sourcing of each
+number in it, so the template now says which set each figure
+describes, and refuses to build when the sets stop nesting.

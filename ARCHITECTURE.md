@@ -5,6 +5,8 @@ How blinklab fits together, for somebody reading it for the first time.
 Roadmap row 8.2. The target is that a newcomer understands the shape in
 five minutes and knows where to put their first change.
 
+Read in full on 7 September 2026, claims `6b6fbb01`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+
 ## The one rule that shapes everything
 
 **`src/core` is pure. It cannot import from `src/io` or touch the
@@ -15,7 +17,7 @@ Everything that decides anything lives in `core` as a function from
 values to values. Everything that talks to the world lives in `io`.
 `main.ts` is the wiring between them.
 
-That is why 1313 unit tests run in about three seconds with no browser. A
+That is why 1610 unit tests run in about three seconds with no browser. A
 blink detector that takes numbers and returns numbers can be tested on a
 hand written series where you know the answer, and most of this project's
 real defects were found that way.
@@ -127,15 +129,16 @@ first, and it is long on purpose.
 does is noise. A comment saying which bug the line prevents is the
 reason the line survives a refactor.
 
-**Every gate runs before every pull request.** `npm run lint`,
-`typecheck`, `test`, `e2e`, `format:check`, `build`, and in `analysis/`
-`ruff check`, `ruff format --check` and `pytest`. The list is in
-`STATE.md` and was checked against the CI workflow rather than
-remembered.
+**Every gate runs before every pull request.** The list is in
+[CONTRIBUTING.md](CONTRIBUTING.md) and nowhere else, because a list in
+two places is a list that drifts in one of them. A test holds that copy
+to the `checks` job in `.github/workflows/ci.yml` (roadmap 10.0b3).
+This paragraph used to carry its own copy, unpinned, missing four of
+the gates and attributing the list to `STATE.md`, which never held it.
 
-**Wrong answers stay published.** The README prints three different
-values for the same benchmark, because the project got it wrong twice.
-If you correct a number, add a column rather than replacing one.
+**Wrong answers stay published.** The README prints five different
+values for the same benchmark, because the project got it wrong four
+times. If you correct a number, add a column rather than replacing one.
 
 ## What is not here yet
 

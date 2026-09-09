@@ -635,29 +635,28 @@ canvas {
 /* It used to be a panel low inside the Session card, which is how an
  * export that was merely waiting for an answer looked like a broken
  * button. A modal cannot be scrolled past.
+ *
+ * Roadmap 14.0f1: a native <dialog> now, so the hand-rolled backdrop
+ * div is gone and ::backdrop replaces it. The centring goes with it —
+ * a modal dialog's default margin:auto centres it in the top layer,
+ * which is the one piece of dialog default styling worth keeping. The
+ * border and padding are not: a UA border around a card that already
+ * has its own shadow reads as a mistake.
  */
-#kss-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 20;
-}
-#kss-backdrop[hidden] {
-  display: none;
-}
 .kss-dialog {
   background: var(--surface);
+  border: 0;
   border-radius: var(--radius-card);
   box-shadow: 0 10px 40px rgba(15, 23, 42, 0.2);
+  color: var(--body);
   padding: 26px;
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
+}
+.kss-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
 }
 .kss-prompt {
   margin: 0 0 16px 0;

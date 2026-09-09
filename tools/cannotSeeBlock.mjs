@@ -65,16 +65,30 @@ export function buildCannotSeeClaims(root) {
   // Roadmap 10.0a3, ladder B5. The generator said the mechanism was
   // unexplained for a month after docs/iris-occlusion.txt explained
   // it, so the number that settles it is parsed rather than typed.
-  const ceilingMisses = (() => {
-    const match = iris.match(/Of the \d+ misses, ~(\d+) are this ceiling/);
+  // Both numbers come from the same sentence, so the size of the
+  // characterised set and its ceiling share cannot drift apart. The
+  // characterised set is the misses the autopsy and the iris result
+  // actually describe; a corpus run can miss MORE than that set (the
+  // 8 September 2026 run did, by 32 on one clip), and those extra
+  // misses are an open defect, not part of the characterisation.
+  const [characterisedMisses, ceilingMisses] = (() => {
+    const match = iris.match(/Of the (\d+) misses, ~(\d+) are this ceiling/);
     if (match === null) {
       throw new Error(
         "cannot-see block: docs/iris-occlusion.txt no longer states how " +
           "many of the misses are the recall ceiling",
       );
     }
-    return match[1];
+    return [Number(match[1]), match[2]];
   })();
+  if (missed < characterisedMisses) {
+    throw new Error(
+      "cannot-see block: the current run misses fewer blinks than the " +
+        "characterised set docs/iris-occlusion.txt describes, so that " +
+        "characterisation no longer covers a subset of the misses; " +
+        "re-run the miss autopsy before regenerating this claim",
+    );
+  }
   const closedShare = (() => {
     const match =
       missChar.match(/against the overall ([\d.]+)\s*$/m) ??
@@ -138,14 +152,21 @@ export function buildCannotSeeClaims(root) {
       claim:
         `Ordinary blinks it simply misses. On the benchmark it was scored ` +
         `against, ${String(missed)} of ${String(parsed.annotated)} annotated ` +
-        `blinks — about one in six — were missed at healthy frame rates, ` +
-        `deterministically: the same ${String(missed)} blinks every run, ` +
-        `${closedShare} percent of them containing a frame a human marked ` +
-        `fully closed. About ${ceilingMisses} of them are a measured ` +
-        `ceiling rather than a tunable defect: on those closures the ` +
+        `blinks were missed at healthy frame rates. ` +
+        `${String(characterisedMisses)} of those misses are stable and ` +
+        `characterised, reproduced blink for blink across two machines: ` +
+        `${closedShare} percent of them contain a frame a human marked ` +
+        `fully closed, and about ${ceilingMisses} are a measured ceiling ` +
+        `rather than a tunable defect, because on those closures the ` +
         `eyelid aperture and the iris shape are both flat, so this face ` +
         `model does not register them and no threshold move or signal ` +
-        `fusion can recover a signal that is not there.`,
+        `fusion can recover a signal that is not there.` +
+        (missed > characterisedMisses
+          ? ` The other ${String(missed - characterisedMisses)} misses ` +
+            `appeared in the latest corpus run and are an open defect ` +
+            `under diagnosis, not an understood limit ` +
+            `(docs/eyeblink8-result.txt).`
+          : ``),
       source:
         "docs/eyeblink8-result.txt; docs/miss-character.txt; " +
         "docs/iris-occlusion.txt",
