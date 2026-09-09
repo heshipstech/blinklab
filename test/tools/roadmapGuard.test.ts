@@ -338,12 +338,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder DECLARES nothing startable again (10.8a4 and 10.8a5
-    // both marked on 8 September), so the fixture swaps that
-    // declaration for a list claiming 12.7 alone — the marked rows
-    // cannot join it without tripping staleStartables instead.
+    // The ladder's live claim (amendment 23's five rows) is swapped
+    // for a list claiming 12.7 alone, so the gate check is exercised
+    // against a row whose phase forbids it whatever the real list
+    // currently says.
     const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable",
+      "Rows 10.11, 10.12b, 10.12c, 10.13b and 13.8b remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -520,11 +520,16 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // The slices amendment 22 opened have all landed: 10.8a5 is ticked
-    // and 10.8a4 is marked waiting on the owner's regression run, so
-    // the ladder is back to the NONE form amendment 21 gave it. This
-    // pins what the ladder actually says today, so changing it is a
-    // deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+    // Amendment 23 reopened the list: 10.8a's completion put the
+    // corpus anchor at HEAD, which is what these rows' corpus clauses
+    // score against. This pins what the ladder actually says today,
+    // so changing it is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual([
+      "10.11",
+      "10.12b",
+      "10.12c",
+      "10.13b",
+      "13.8b",
+    ]);
   });
 });
