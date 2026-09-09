@@ -1,0 +1,96 @@
+THE LEARNING WINDOW, DECIDED, AND A PREDICTION
+==============================================
+
+Written 9 September 2026, before the change is made and before any
+new measurement is read, in the predict-then-verify discipline.
+Roadmap row 10.13b; the decision was taken the same day by the
+owner's delegation and is recorded in ROADMAP amendment 23.
+
+WHAT IS DECIDED
+---------------
+For roughly the first 30 seconds of every session — live or clip —
+the passive baseline is still learning and the personal blink line
+does not exist yet. Through that window the detector counts blinks
+against the boot-time fixture line of 4 mm, a constant from one
+face. This behaviour predates the column that revealed it: since
+roadmap 10.13a every per-second export carries blinkLineSource, and
+the 10.8a corpus run's exports read `fixed` for the first ~29 rows
+of every one of the eight clips, then `passive` to the end
+(docs/line-in-the-export.txt, the 9 September re-score). The
+behaviour was never a decision anybody wrote down. Now it is.
+
+The decision: KEEP the fixture line for the learning window, and
+LABEL the condition everywhere the count travels. Three options were
+weighed:
+
+  Feed null while learning. Discards blinks the fixture line
+  demonstrably catches — the anchor's found blinks include the
+  pre-freeze window on every clip — and blanks the demo's first
+  half minute. Rejected for throwing away true detections to
+  satisfy a purity rule.
+
+  Count on the live learning line. A line that moves while it is
+  being learned is the moving ruler this project already rejected
+  once, when it froze the baseline (docs/baseline-freeze.txt).
+  Rejected for the same reason it was rejected then.
+
+  Keep the fixture line and say so. The count stands, and the
+  CONDITION becomes visible: the record states that early-window
+  blinks are measured against a one-face constant rather than the
+  person's own line, and the per-row blinkLineSource column already
+  says it frame by frame. Chosen.
+
+WHAT THE CHANGE WILL BE, AND WHAT IT WILL NOT TOUCH
+---------------------------------------------------
+Labels only. The page will say, in its session surface, that the
+first ~30 seconds are counted against the fixed 4 mm line;
+docs/eyeblink8-result.txt will record the condition beside the
+numbers it applies to; MODEL_CARD's conditions will state it; and a
+test will hold the statements in place, the same shape as every
+other pinned sentence in this repository.
+
+No counting behaviour changes. Not the fixture constant, not the
+baseline freeze, not the line selection, not a threshold, not a
+timer. The diff will contain no change to any DETECTOR_SOURCES file
+watched by tools/detectorRatchet.mjs, and the ratchet stays green
+without a caveat — a checkable property of the increment, not a
+promise.
+
+THE PREDICTION
+--------------
+Scored against the 10.8a anchor (docs/eyeblink8-result.txt, the
+current block at 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5) on the
+owner's next corpus run at a commit carrying this change:
+
+  The delta is ZERO. All eight clips: the same found, miss and
+  false counts, digit for digit — 341 of 408 found, 65 invented,
+  recall 83.6%, precision 84.0%, F1 83.8%. No clip moves in either
+  direction, because a label is not a measurement.
+
+  The line-source distribution is unchanged: blinkLineSource reads
+  `fixed` for the first ~29 rows of every clip and `passive` after,
+  exactly as the 9 September exports read.
+
+One caution inherited from the record: a re-measure that disagrees
+on ONE clip gets a re-run before it is believed. The 8 September
+transient (docs/eyeblink8-result.txt, the transient section) showed
+the face tracker can lose a face once and ride the loss to the end
+of a clip, unreproducibly; a single-clip disagreement is checked
+against that mechanism before it is read as this change's delta.
+
+WHAT WOULD REFUTE THIS
+----------------------
+  If any committed Eyeblink8 number moves REPRODUCIBLY on a run
+  whose only detector-window change is this increment, then
+  something labelled here also touched behaviour, the "labels only"
+  claim is false, and the diff — not the corpus — is where the
+  defect lives.
+
+  If the next run's blinkLineSource distribution differs from the 9
+  September read (fixed for ~29 rows, then passive), the premise
+  this decision stands on was a property of those runs rather than
+  of the code, and the decision is re-opened with the new read in
+  front of it.
+
+This prediction is not edited after the fact; the outcome becomes a
+new dated section below it.
