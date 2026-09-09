@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   gatedBlinkRatePerMin,
+  observeFrame,
   recordBlink,
   startRate,
 } from "../../src/core/blinkRate";
+import { initialBlinkState } from "../../src/core/blink";
 import {
   BLINK_RISK_CLEAR_FPS,
   BLINK_RISK_FPS,
@@ -45,20 +47,34 @@ describe("measurableAtFps", () => {
 });
 
 describe("the ladder's assertion: null, not zero", () => {
-  it("returns null below the gate even though blinks exist", () => {
+  function observedRate(): ReturnType<typeof startRate> {
+    // Roadmap 10.12b moved the rate onto observed time, so the gate
+    // tests observe their thirty seconds explicitly.
     let rate = startRate(0);
+    for (let t = 0; t <= 30000; t += 40) {
+      rate = observeFrame(rate, t, true);
+    }
     rate = recordBlink(rate, 10000);
     rate = recordBlink(rate, 20000);
-    expect(gatedBlinkRatePerMin(20, rate, 30000)).toBeNull();
-    expect(gatedBlinkRatePerMin(20, rate, 30000)).not.toBe(0);
+    return rate;
+  }
+
+  it("returns null below the gate even though blinks exist", () => {
+    const rate = observedRate();
+    expect(gatedBlinkRatePerMin(20, rate, initialBlinkState, 30000)).toBeNull();
+    expect(gatedBlinkRatePerMin(20, rate, initialBlinkState, 30000)).not.toBe(
+      0,
+    );
   });
 
   it("returns the true number at and above the gate", () => {
-    let rate = startRate(0);
-    rate = recordBlink(rate, 10000);
-    rate = recordBlink(rate, 20000);
-    expect(gatedBlinkRatePerMin(MIN_BLINK_FPS, rate, 30000)).toBeCloseTo(4, 6);
-    expect(gatedBlinkRatePerMin(60, rate, 30000)).toBeCloseTo(4, 6);
+    const rate = observedRate();
+    expect(
+      gatedBlinkRatePerMin(MIN_BLINK_FPS, rate, initialBlinkState, 30000),
+    ).toBeCloseTo(4, 6);
+    expect(
+      gatedBlinkRatePerMin(60, rate, initialBlinkState, 30000),
+    ).toBeCloseTo(4, 6);
   });
 });
 

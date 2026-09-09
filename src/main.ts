@@ -48,6 +48,7 @@ import {
 import { blinkStep, initialBlinkState } from "./core/blink";
 import {
   gatedBlinkRatePerMin,
+  observeFrame,
   recordBlink,
   startRate,
   type BlinkRateState,
@@ -4037,6 +4038,9 @@ function processFrame(
         });
       }
       rateState ??= startRate(nowMs);
+      // The rate's denominator is observed time, so every frame says
+      // whether it fed the detector an aperture. Roadmap 10.12b.
+      rateState = observeFrame(rateState, nowMs, fedApertureMm !== null);
       if (wasOpen && blinkState.eye === "closed") {
         closureStartFrame = currentFrameIndex;
       }
@@ -4104,7 +4108,12 @@ function processFrame(
       } else if (!blinkMeasurable) {
         writeReadout(blinkLabel, fpsGateMessage(fps));
       } else {
-        const ratePerMin = gatedBlinkRatePerMin(fps, rateState, nowMs);
+        const ratePerMin = gatedBlinkRatePerMin(
+          fps,
+          rateState,
+          blinkState,
+          nowMs,
+        );
         const parts = [`Blinks: ${String(blinkState.blinkCount)}`];
         if (blinkState.lastBlinkDurationMs !== null) {
           parts.push(`last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms`);
@@ -4307,7 +4316,7 @@ function processFrame(
             // go with the rate, and until 10.13a the record kept them.
             blinkRatePerMin: withheld
               ? null
-              : gatedBlinkRatePerMin(fps, rateState, nowMs),
+              : gatedBlinkRatePerMin(fps, rateState, blinkState, nowMs),
             lastBlinkDurationMs: withheld
               ? null
               : blinkState.lastBlinkDurationMs,
