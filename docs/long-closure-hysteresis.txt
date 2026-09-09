@@ -1,0 +1,117 @@
+ARMING HYSTERESIS FOR THE LONG-CLOSURE DETECTOR, AND A PREDICTION
+=================================================================
+
+Written 9 September 2026, before the change is made, in the
+predict-then-verify discipline. Roadmap row 10.11, briefs A7 and
+A19. The current counts below are MEASURED on today's detector over
+the traces this document defines; the predictions are for the
+detector after the change.
+
+WHAT THE DEFECT IS
+------------------
+A long closure ends the frame the aperture reaches the shut line,
+and a new one begins the frame it dips back under. An eyelid
+hovering AT the line — the dry run's iPhone rows sat in a 2.79 to
+3.01 mm per-second band against a 3.04 mm line — crosses it with
+every wobble of measurement noise, and each crossing splits what is
+physically one sustained droop into another countable closure. The
+same detector loses its state entirely on a single untrusted frame,
+so a one-frame face flicker in the middle of a six-second closure
+splits it in two.
+
+WHAT THE CHANGE WOULD BE
+------------------------
+blink.ts's own re-arm pattern, aliased rather than copied:
+
+  A long closure still ENDS the frame the aperture reaches the shut
+  line. Nothing about endings changes, so every duration that is
+  still recorded is computed exactly as today.
+
+  A new closure cannot FIRE until the aperture has cleared the shut
+  line by APERTURE_HYSTERESIS_FRACTION — the same noise-floor-derived
+  fraction blink.ts arms with, 10 percent of the line, which at the
+  dry run's 3.04 mm line is a 3.34 mm re-arm height the 2.79-3.01
+  hover band never reaches. The gate closes when a closure fires and
+  opens when the eye is seen clearly open.
+
+  Closure state survives a bounded run of untrusted frames, the
+  bound aliased to MAX_BLINK_DURATION_MS: a gap long enough to hide
+  a complete blink-sized reopen is long enough to hide the closure's
+  end, so beyond it the cycle is honestly abandoned; within it the
+  closure continues, because eyes shut before a sub-blink-length gap
+  and shut after it did not plausibly open in between.
+
+  A closure that begins right after an over-bound gap does not fire
+  until the eye has been seen clearly open — the same re-arm height —
+  because firing there could count a droop that never ended.
+
+Hysteresis, not filtering, stated as the rule: no aperture sample is
+altered, smoothed or discarded, and no crossing is hidden from the
+record. The change only decides whether a crossing ARMS a new event.
+
+THE TRACES, DEFINED EXACTLY
+---------------------------
+Aperture in millimetres as a function of time t in seconds, sampled
+at 30 Hz and at 120 Hz for 6 seconds (timestamps rounded to whole
+milliseconds), against a 3.04 mm shut line:
+
+  hover A   2.9 + 0.3 * sin(2*pi * 0.5   * t)     crosses the line
+  hover B   2.9 + 0.3 * sin(2*pi * (1/3) * t)     crosses the line
+  clean     2.5 + 0.3 * sin(2*pi * 0.5   * t)     never reaches it
+
+Hover A and hover B are the iPhone shapes: a centre in the dry run's
+band with plus-minus 0.3 mm of periodic noise that tops out at
+3.2 mm, above the line but below the re-arm height. Clean is the
+desktop shape: the same noise around a centre the line never meets.
+
+MEASURED TODAY, before the change:
+
+  rate 30 Hz    hover A  3 events    hover B  2 events    clean  1
+  rate 120 Hz   hover A  3 events    hover B  2 events    clean  1
+
+  Last recorded closure duration, hover A: 1300 ms at 30 Hz,
+  1308 ms at 120 Hz. Hover B: 1933 ms at 30 Hz, 1958 ms at 120 Hz.
+
+THE PREDICTION
+--------------
+After the change, on the same traces at the same rates:
+
+  Hover A counts 1. Hover B counts 1. Clean counts 1, unchanged in
+  every field. The same at 30 Hz and at 120 Hz, because duplicate
+  ticks carry the same aperture and nothing here reads the clock
+  except through the spans it always read.
+
+  Every duration that is still recorded is byte-identical to the
+  same closure's duration today at the same rate: the first hover
+  stretch ends exactly where it ends today, and the collapsed
+  events record nothing because they no longer exist.
+
+  A 6-second closure with plus-minus 0.3 mm noise counts once —
+  hover A and hover B are exactly that closure.
+
+  A closure interrupted by an untrusted run no longer than
+  MAX_BLINK_DURATION_MS counts once, with its start preserved. An
+  untrusted run longer than that abandons the cycle, and closed
+  frames after it fire nothing until the eye is seen clearly open.
+
+WHAT WOULD REFUTE THIS
+----------------------
+  If either hover shape still counts more than once, the re-arm
+  height is inside the noise band and the fraction is not doing
+  what the dry run's numbers say it must.
+
+  If the clean shape's count, firing frame or recorded duration
+  moves at all, the change leaked into endings or into closures the
+  gate was never meant to touch, and "durations unchanged" is false.
+
+  If the 30 Hz and 120 Hz counts differ on any shape, the change
+  introduced a cadence dependence the row explicitly forbids.
+
+  On the corpus: the next Eyeblink8 run through 10.8a's regression
+  discipline must reproduce the anchor's blink table digit for
+  digit — blink counting shares no state with this detector — and
+  any change in a clip's longClosureCount column is this change's
+  to explain.
+
+This prediction is not edited after the fact; the outcome becomes a
+new dated section below it.
