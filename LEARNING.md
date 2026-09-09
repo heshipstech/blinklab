@@ -3608,3 +3608,67 @@ on the old miss set. Every number in it was true and the sentence was
 false. A generated sentence is only as honest as the sourcing of each
 number in it, so the template now says which set each figure
 describes, and refuses to build when the sets stop nesting.
+
+## A fingerprint narrows the suspects; only reproduction convicts
+
+Yesterday's entry read the shape of a disagreement — seven clips
+identical, one collapsed — and concluded "a code change moves exactly
+what it touches. The only targeted thing that changed was the
+detector's code." The shape reading was sound and the conviction was
+wrong. The shape correctly cleared the machine, the files and the
+stepper. It could not distinguish "a code change that touches one
+clip" from "a stateful component that failed once on one clip",
+because both produce identity everywhere else. The missing suspect
+was the one component that carries state across frames: the face
+model's tracker, which lost the face 39 seconds into one run and
+never reacquired it, then behaved perfectly in five re-measurements
+at the byte-identical commit.
+
+The test that separated the two cost 90 seconds: run it again. A
+code cause reproduces; a transient does not. That one re-run
+replaced a five-commit bisect plan, and it should have come BEFORE
+the conviction, not after — the record moved twice in two days
+because publication outpaced reproduction, which is why the result
+file now carries the caution that a re-measure disagreeing on one
+clip gets a re-run before it is believed.
+
+The habit worth taking: a diagnosis of "what changed" is only as
+strong as its inventory of things that can differ between runs, and
+code is just one of them. Anything with internal state — a tracker,
+a cache, an accumulator — can produce a one-run fingerprint that
+looks exactly like a targeted code change. Before hunting the
+commit, re-run the measurement; the price of the check is minutes
+and the price of skipping it was a day of published wrong headline
+in each direction.
+
+## A Check clause aimed at a rendering surface dies with the surface
+
+Row 10.10c4d's Check ended "and the conditions sentences state it" —
+written when the demo page carried two Conditions lines under its
+counts. Row 14.0g later removed those lines at the owner's request,
+and the clause quietly became unsatisfiable: not wrong about WHAT
+should be stated, wrong about WHERE. Nothing flagged it, because the
+clause named a surface and no guard connects a roadmap sentence to
+the DOM nodes it assumes.
+
+The repair was to restate the clause against where the statement
+lives rather than where it once rendered: the constant's own comment
+in `src/core/constants.ts` and MODEL_CARD's measurement-uncertainty
+section, held together by a resultGuard test. A comment and a card
+section are things a test can read; a page paragraph is a thing a
+later row may delete for reasons the clause's author never saw.
+
+Two smaller costs from the same increment, recorded because each
+will recur. Bending an UNCOMMITTED edit to watch a test fail must
+bend back with the editor — `git checkout -- <file>` restores HEAD,
+not the edit, and it destroyed the citation text once before this
+was learned. And `roadmapGuard.mjs`'s row pattern cannot parse a
+letter-digit-letter id like `10.10c4d`, so the BLOCKED marker this
+row now wears is prose the guard cannot enumerate — found while
+placing the marker, left for its own increment.
+
+The habit worth taking: when a Check clause names a place — a
+sentence, a file, a column — ask whether the place is load-bearing
+or incidental to the claim. If incidental, write the clause against
+the claim's owner instead, because places move and the clause should
+survive the move.
