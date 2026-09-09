@@ -743,3 +743,18 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   9 September anchor stands on those sources. The next corpus run
   scores this the way every entry in the retired block above was
   scored, and retires this caveat with it.
+
+DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+
+  Row 10.10c4d build half: the iris constant carries its citation and spread, stated twice and pinned
+
+  One watched file, src/core/constants.ts, moved — and the whole diff
+  to it is a comment: the citation block written above
+  IRIS_DIAMETER_MM by roadmap 10.10c4d. The constant's value, 11.7,
+  and every other token of executable code in the file are unchanged
+  byte for byte, checkable with `git show <that commit> --
+  src/core/constants.ts`: the diff adds comment lines and nothing
+  else. A comment is stripped before any measurement runs; a diff
+  with no executable change has no mechanism by which to move a
+  number. Predicted delta: zero, on every clip. The next corpus run
+  scores this beside the lockfile entry above and retires both.
