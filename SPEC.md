@@ -45,6 +45,9 @@ export type FeatureRecord = {
   inferenceMs: number | null; // the mean the timing readout prints, from the same samples, so the page and the record cannot disagree about what the model cost (roadmap 12.15)
   sceneLum: number | null; // mean luminance of the whole frame in [0,1], from one downscaled raster; the camera's rendering of light and NOT lux, because a webcam's exposure and white balance act before it is read (roadmap 12.16)
   faceLum: number | null; // the same raster, averaged over the box the face lands in; null with no trusted face or a face too small for the raster to resolve. A lens cap reads 0 and a failed read reads blank, because black is a measurement and broken is not (roadmap 12.16)
+  blinkObservedFraction: number | null; // how much of the rate's rolling window was actually fed an aperture, 0 to 1: blinkRatePerMin divides by observed time rather than the wall clock, and this says how much of the window that was (roadmap 10.12b)
+  blinkCountingSuspended: boolean; // whether a blink this frame would not have been counted: the eye closed past the blink maximum, or the re-arm gate down because the eye never rose clearly above the line (roadmap 10.12b)
+  irisOffsetVertical: number | null; // where the iris sits vertically in its eye, in eye widths, positive downward, mean of both eyes: separates downgaze droop from the drowsy kind, which the aperture alone cannot (roadmap 10.12b)
 };
 ```
 

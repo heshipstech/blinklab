@@ -61,10 +61,21 @@ describe("the evidence rate and the inference cost travel per second", () => {
     // exported before today, a cost this project has already declined
     // three times (baselineOverResting, pupilDiameterMm, and the two
     // luminance columns row 12.16 appended after these).
-    expect(CSV_COLUMNS.slice(-4, -2)).toEqual(["sampledFps", "inferenceMs"]);
+    expect(CSV_COLUMNS.slice(-7, -5)).toEqual(["sampledFps", "inferenceMs"]);
   });
 
   it("keeps the luminance pair trailing, for the same reason", () => {
-    expect(CSV_COLUMNS.slice(-2)).toEqual(["sceneLum", "faceLum"]);
+    expect(CSV_COLUMNS.slice(-5, -3)).toEqual(["sceneLum", "faceLum"]);
+  });
+
+  it("keeps 10.12b's three facts trailing after them, likewise", () => {
+    // The observed fraction, the suspension flag and the vertical
+    // iris offset landed 9 September 2026 as the newest generation,
+    // so every earlier header stays an exact prefix.
+    expect(CSV_COLUMNS.slice(-3)).toEqual([
+      "blinkObservedFraction",
+      "blinkCountingSuspended",
+      "irisOffsetVertical",
+    ]);
   });
 });

@@ -87,6 +87,9 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     inferenceMs: null,
     sceneLum: null,
     faceLum: null,
+    blinkObservedFraction: null,
+    blinkCountingSuspended: false,
+    irisOffsetVertical: null,
   };
 }
 

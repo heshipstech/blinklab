@@ -47,10 +47,14 @@ import {
 } from "./core/baseline";
 import { blinkStep, initialBlinkState } from "./core/blink";
 import {
+  countingSuspended,
   gatedBlinkRatePerMin,
+  observedFraction,
   observeFrame,
   recordBlink,
   startRate,
+  suspendedSentence,
+  suspendedSinceMs,
   type BlinkRateState,
 } from "./core/blinkRate";
 import {
@@ -4118,10 +4122,17 @@ function processFrame(
         if (blinkState.lastBlinkDurationMs !== null) {
           parts.push(`last: ${blinkState.lastBlinkDurationMs.toFixed(0)} ms`);
         }
+        // The suspension speaks where the rate would: a blink right
+        // now would not be counted, and "measuring..." over such a
+        // stretch would claim an attention the detector does not
+        // have. Roadmap 10.12b.
+        const suspendedSince = suspendedSinceMs(blinkState, nowMs);
         parts.push(
-          ratePerMin === null
-            ? "rate: measuring..."
-            : `rate: ${ratePerMin.toFixed(0)}/min`,
+          suspendedSince !== null
+            ? suspendedSentence(Math.round((nowMs - suspendedSince) / 1000))
+            : ratePerMin === null
+              ? "rate: measuring..."
+              : `rate: ${ratePerMin.toFixed(0)}/min`,
         );
         writeReadout(
           blinkLabel,
@@ -4339,6 +4350,12 @@ function processFrame(
             blinkLineSource: recordedBlinkLine.source,
             shutLineMm: recordedShutLine.mm,
             shutLineSource: recordedShutLine.source,
+            // Roadmap 10.12b: the three facts that keep a quiet rate
+            // honest — how much of the window was observed, whether
+            // counting was suspended, and where the iris sat.
+            blinkObservedFraction: observedFraction(rateState, nowMs),
+            blinkCountingSuspended: countingSuspended(blinkState, nowMs),
+            irisOffsetVertical: frameMeanOffset?.vertical ?? null,
           }),
           FEATURE_RECORD_CAP,
         );

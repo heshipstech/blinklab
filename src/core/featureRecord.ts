@@ -97,6 +97,27 @@ export type FeatureRecord = {
   // a lens cap is a measurement and a failed read is not.
   sceneLum: number | null;
   faceLum: number | null;
+  // Roadmap 10.12b. How much of the rate's rolling window was
+  // actually observed, 0 to 1: `blinkRatePerMin` above divides by
+  // fed-frame time rather than the wall clock, and this says how
+  // much of the window that was — a rate over a third of the window
+  // is a different fact from the same rate over all of it. Null
+  // before any wall time has passed.
+  blinkObservedFraction: number | null;
+  // Whether blink counting was suspended this frame: the eye closed
+  // past the longest thing the detector calls a blink, or the
+  // re-arm gate down because the eye never rose clearly above the
+  // line. A blink on a `true` row would not have been counted, so
+  // this is the flag that keeps a quiet stretch from reading as
+  // calm eyes.
+  blinkCountingSuspended: boolean;
+  // Where the iris sits vertically in its eye, in eye widths,
+  // positive downward — gazeOffset's own signal, the mean of both
+  // eyes. A lid drooping because the eyes LOOK DOWN carries the
+  // iris down with it; a lid drooping over a level iris is the
+  // drowsy kind; in the aperture alone the two are the same number.
+  // Null with no trusted face.
+  irisOffsetVertical: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -196,6 +217,9 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     // schema is where this project refuses one (roadmap 12.15).
     nonNegativeOrNull(record.sampledFps) &&
     nonNegativeOrNull(record.inferenceMs) &&
+    fractionOrNull(record.blinkObservedFraction) &&
+    typeof record.blinkCountingSuspended === "boolean" &&
+    numberOrNull(record.irisOffsetVertical) &&
     fractionOrNull(record.sceneLum) &&
     fractionOrNull(record.faceLum)
   );
