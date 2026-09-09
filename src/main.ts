@@ -248,6 +248,7 @@ import {
 } from "./core/guidedCalibration";
 import {
   blinksWithheld,
+  learningWindowSentence,
   resolveBlinkLine,
   resolveShutLine,
   storedLineForSource,
@@ -3985,7 +3986,10 @@ function processFrame(
             ? `Personal blink threshold: ${usableStoredLine.personalLineMm.toFixed(1)} mm (from your guided calibration)`
             : baselineState.kind === "ready" && personalMm !== null
               ? `Personal blink threshold: ${personalMm.toFixed(1)} mm (half of your ${baselineState.baselineMm.toFixed(1)} mm baseline)`
-              : `Learning your open eyes: ${String(secondsLeft ?? 0)} s left`,
+              : // Roadmap 10.13b: this branch is exactly the window where
+                // the reducer compares against the fixture constant, so
+                // the countdown carries that condition with it.
+                learningWindowSentence(secondsLeft ?? 0),
       );
 
       const blinkCountBefore = blinkState.blinkCount;
