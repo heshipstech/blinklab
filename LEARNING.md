@@ -3813,3 +3813,34 @@ look for data recorded UNDER the distortion before writing the fix
 is real it is already in the files, and a prediction scored on them
 turns "this was broken" from a belief about code into a measured
 fact with a date earlier than the fix.
+
+## A falsifier that fires by two hundredths still fired
+
+Row 13.8a's pre-registration predicted the clean iPhone pair's
+amplitude-over-velocity ratio at 0.55 if the velocity inflation ran
+undamped, and named its falsifier as a ratio above 0.8. The
+measurement came back 0.82. The direction was right, the other two
+predictions held exactly, and the gap over the line was two
+hundredths — everything about the moment invites rounding the
+verdict to "close enough, prediction confirmed".
+
+That discretion is precisely what the pre-registration was built to
+remove. A falsifier line drawn AFTER seeing 0.82 would land
+wherever the narrator needed it; the only reason 0.8 means anything
+is that it was committed before any number existed, and a line that
+moves when the result lands near it is not a line. So the falsifier
+fired, the prediction is recorded as falsified as written, and the
+verdict is the falsifier branch's — the inflation is real but
+damped, the named suspect stands — which is a BETTER outcome for
+the record than a rounded confirmation, because the damping is now
+a measured fact with a size (about 0.4 of the arithmetic) instead
+of a discrepancy quietly absorbed into "about".
+
+The habit worth taking is a pair. When writing a prediction whose
+mechanism passes through a stage you cannot model — here MediaPipe's
+temporal smoothing — predict the clean arithmetic AND name the
+interference, so either outcome lands in a branch you wrote; and
+when the result falls a hair past the line, let the line decide.
+The cost of honoring a borderline falsifier is one word in a
+verdict. The cost of nudging it is that every future line this
+project draws means less.
