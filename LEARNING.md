@@ -3934,3 +3934,34 @@ before treating it as damage: this tool first refused thirty times
 on files that were never lost, and the fix was not to accept
 absence but to find the witness (the seconds file's own sticky
 columns) that says which kind of absence each one is.
+
+## A guard that compares two lists agrees with their shared silence
+
+Row 13.2 added six new export-header keys, and the export contract
+has a guard for exactly that: tools/metadataKeys.mjs reads the
+writer modules on one side and SPEC.md's key table on the other and
+fails when they disagree. While building the row the guard was run
+early, before either side had been touched — and it PASSED. Not
+because the work was done, but because both sides were missing the
+same six keys: the new writer module was not yet in the guard's
+METADATA_WRITERS list, so the guard read no new keys anywhere and
+found the two silences in perfect agreement.
+
+That is the shape of the hole, and it is worth naming because it is
+invisible from inside the guard. A differential check can only see
+what at least ONE of its sides declares; a brand-new writer module
+is declared by neither until a person adds it to the list by hand,
+and until then every key it writes is outside the contract
+entirely — unchecked in SPEC, unchecked in the presence tests,
+unchecked in the Python mirror that trusts the same list. The
+enrolment step cannot be automated away cheaply either: the list
+is the guard's definition of "the export", and something has to
+say a new module belongs to it.
+
+The habit to keep: when a change adds a NEW source to a guarded
+set, the first edit is the guard's roster, and the proof is
+watching the guard fail — six keys in the writers, absent from
+SPEC — before making it pass. A green differential guard over an
+unenrolled source is the most convincing false pass this project
+has produced, because every visible part of it is working exactly
+as designed.
