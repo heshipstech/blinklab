@@ -46,10 +46,17 @@ def main() -> int:
         f"{'blinks':>6}  {'observed s':>10}"
     )
     for r in results:
+        # A video with no blink log and no blink evidence is the
+        # exporter's zero-blink case, and the row says so out loud.
+        note = (
+            "  [no log: zero-blink export]"
+            if (r.blink_log == "absent-no-blinks")
+            else ""
+        )
         print(
             f"{r.name:32}  {_fmt(r.old_rate_per_min):>8}  "
             f"{_fmt(r.new_rate_per_min):>8}  {r.blink_count:>6}  "
-            f"{r.observed_seconds:>10}"
+            f"{r.observed_seconds:>10}{note}"
         )
 
     olds = [

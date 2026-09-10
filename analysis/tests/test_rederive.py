@@ -61,7 +61,8 @@ def _write_seconds(
     *,
     last_second: int = 400,
     aperture_of=None,
-    column_rate: float = 17.0,
+    column_rate: float | str = 17.0,
+    last_blink_ms: float | str = "",
 ) -> None:
     lines = ["# measurement_mode: stepped", ",".join(SECONDS_COLUMNS)]
     for second in range(last_second + 1):
@@ -72,6 +73,7 @@ def _write_seconds(
             "fps": 30.0,
             "apertureMm": aperture,
             "blinkRatePerMin": column_rate,
+            "lastBlinkDurationMs": last_blink_ms,
         }
         lines.append(",".join(str(row.get(c, "")) for c in SECONDS_COLUMNS))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -166,13 +168,53 @@ class TestRederiveVideo:
         assert result.observed_seconds == 0
         assert result.new_rate_per_min is None
 
-    def test_a_missing_blink_log_is_refused_by_name(
+    def test_a_missing_log_with_blink_evidence_is_refused_by_name(
         self, tmp_path: Path
     ) -> None:
+        # The seconds file's own rate column says blinks happened, so
+        # a log SHOULD exist — its absence is loss, not a zero, and
+        # the fixture's default rate of 17 is exactly that evidence.
         seconds = tmp_path / "s1_alert.seconds.csv"
         _write_seconds(seconds)
         with pytest.raises(RederiveError, match="s1_alert.blinks.csv"):
             rederive_video(seconds, tmp_path / "s1_alert.blinks.csv")
+
+    def test_a_sticky_duration_alone_is_evidence_too(
+        self, tmp_path: Path
+    ) -> None:
+        # lastBlinkDurationMs is written from the first blink on, so
+        # one filled cell proves at least one blink was measured even
+        # where the rolling rate reads zero.
+        seconds = tmp_path / "s1_alert.seconds.csv"
+        _write_seconds(seconds, column_rate="", last_blink_ms=120.0)
+        with pytest.raises(RederiveError, match="s1_alert.blinks.csv"):
+            rederive_video(seconds, tmp_path / "s1_alert.blinks.csv")
+
+    def test_a_missing_log_with_no_evidence_is_a_zero_blink_export(
+        self, tmp_path: Path
+    ) -> None:
+        # The corpus runner clicks the blinks export only when the
+        # button is enabled, and a session with no blinks disables it:
+        # a zero-blink video writes NO log, by design. When the
+        # seconds file carries no blink evidence anywhere — no rate
+        # above zero, no sticky duration — the absent log IS the
+        # zero-blink export, and zero blinks over observed time is a
+        # measured rate of 0, not a refusal.
+        seconds = tmp_path / "s1_drowsy.seconds.csv"
+        _write_seconds(seconds, column_rate="")
+        result = rederive_video(seconds, tmp_path / "s1_drowsy.blinks.csv")
+        assert result.blink_log == "absent-no-blinks"
+        assert result.blink_count == 0
+        assert result.new_rate_per_min == pytest.approx(0.0)
+
+    def test_a_present_log_is_marked_as_the_source(
+        self, tmp_path: Path
+    ) -> None:
+        seconds = tmp_path / "s1_alert.seconds.csv"
+        blinks = tmp_path / "s1_alert.blinks.csv"
+        _write_seconds(seconds)
+        _write_blinks(blinks, _window_blinks(6))
+        assert rederive_video(seconds, blinks).blink_log == "present"
 
 
 class TestRederiveDirectory:
