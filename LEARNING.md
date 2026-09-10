@@ -3844,3 +3844,34 @@ when the result falls a hair past the line, let the line decide.
 The cost of honoring a borderline falsifier is one word in a
 verdict. The cost of nudging it is that every future line this
 project draws means less.
+
+## The watchdog must not ride the thing it watches
+
+Row 13.8b moved the camera's measurement off the display loop and
+onto the camera's own frames, and the row's words — drive
+processFrame from the frame callback, keep the display loop for the
+page — sound like a mechanical swap. Reading processFrame before
+touching it found the one piece that cannot make the move: the
+camera-stopped check. Row 14.0d put it there — a whole window with
+no frame ends the session by name — and inside the measurement path
+it worked, because the display loop ticked whether or not the
+camera did, so the check ran during exactly the silence it exists
+to catch.
+
+Move measurement onto the frames and that inversion becomes fatal:
+a stalled camera stops the frame callbacks, the callbacks were the
+only thing running the check, and the page freezes forever on
+precisely the failure the check was built to end by name. Nothing
+would have crashed and no test that presents frames could see it —
+the defect only exists when frames stop arriving, which is the one
+condition a frame-driven test never exercises unless written to.
+The check rides the display loop now, which ticks regardless, and
+the fallback path calls the same single function so the ending
+decision has one home.
+
+The habit worth taking: when moving work onto an event source, list
+what the old loop did per tick and ask of each duty whether it
+still runs when the events STOP. Anything that detects the source's
+absence, times out its silence, or reports it stale must stay on a
+clock the source cannot stop — a watchdog scheduled by the thing it
+watches dies first, quietly, in exactly the failure it was for.
