@@ -94,3 +94,16 @@ WHAT WOULD REFUTE THIS
 
 This prediction is not edited after the fact; the outcome becomes a
 new dated section below it.
+
+THE OUTCOME, 10 September 2026
+------------------------------
+The owner's stepped Eyeblink8 run of 10 September 2026 reproduced
+the anchor DIGIT FOR DIGIT: 341 of 408 found, 65 invented, recall
+83.6, precision 84.0, F1 83.8, every per-clip row identical, both
+confidence intervals identical, coverage identical down to the same
+two +1 rows. The predicted delta was ZERO and the measured delta is
+zero. The labels changed nothing the corpus can see, which is the
+whole claim: the learning window's fixed line was already the
+behaviour, and this row only made the record say so. The keep-and-
+label decision stands on its own measured ground now, and roadmap
+row 10.13b ticks on this section.
