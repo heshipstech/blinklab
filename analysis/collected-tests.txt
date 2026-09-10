@@ -13,4 +13,4 @@
 # tests/test_collected_count.py holds this file to what pytest itself
 # collects. Neither job can drift alone, and the one number below is
 # the one the documents publish.
-521
+533
