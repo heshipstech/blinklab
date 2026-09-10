@@ -282,6 +282,7 @@ import {
   type StorageProbe,
 } from "./core/storedData";
 import {
+  negotiateFrameRate,
   attachStream,
   listMediaDevices,
   requestCamera,
@@ -292,6 +293,10 @@ import {
 import { readDeviceInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
+import {
+  negotiationMetadataRows,
+  type FrameRateNegotiation,
+} from "./core/frameRateNegotiation";
 import {
   observeVideoDelivery,
   startCameraFrameLoop,
@@ -1264,6 +1269,14 @@ async function beginCamera(deviceId?: string): Promise<void> {
       stopStream(stream);
       return;
     }
+    // The 60 fps ask, before the stream reaches the element so the
+    // attached frame size is the FINAL negotiation (roadmap 13.2).
+    // Recorded whole in the export; a resolution the ask traded away
+    // is surfaced there, never silent, because the iris ruler runs
+    // on source pixels. readDeviceInfo below reads the post-ask
+    // settings, which is the point: the record describes the track
+    // the session actually measured through.
+    frameRateNegotiation = await negotiateFrameRate(stream);
     const frame = await attachStream(video, stream);
     if (runToken !== sourceRunToken) {
       // Superseded during play(): the superseder's stopCamera ran
@@ -1422,8 +1435,10 @@ async function beginVideoFile(file: File): Promise<void> {
   clipStopRequested = true;
   stopCameraDriver();
   // A clip is driven by its own decoded frames; there is no camera
-  // driver to name in its export (absence, not "unknown").
+  // driver to name in its export (absence, not "unknown"), and no
+  // track for the 60 fps ask to have negotiated with.
   cameraFrameDriver = null;
+  frameRateNegotiation = null;
   stopDeliveryObserver();
   stopCamera(video);
   clipLoop?.stop();
@@ -1886,6 +1901,10 @@ function stopCameraDriver(): void {
   cameraDriver?.stop();
   cameraDriver = null;
 }
+// The 60 fps ask's whole record for the export header (13.2). Kept
+// after the session ends because the export happens after; null on a
+// clip, which has no track to negotiate with — absence, not unknowns.
+let frameRateNegotiation: FrameRateNegotiation | null = null;
 // The camera's own rate, beside the instrument's. The processing rate
 // alone cannot tell a viewer whether a faster machine would help them:
 // a machine reading 24 of 30 delivered frames is limited by itself, and
@@ -2766,6 +2785,10 @@ function exportSession(): void {
     // Which loop drove measurement (13.8b): appended last, new keys
     // after every row a reader already parses; absent on a clip.
     ...driverMetadataRows(cameraFrameDriver),
+    // The 60 fps ask, whole (13.2): declared, asked, before, after,
+    // verdict, and any resolution the ask traded away; absent on a
+    // clip.
+    ...negotiationMetadataRows(frameRateNegotiation),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.

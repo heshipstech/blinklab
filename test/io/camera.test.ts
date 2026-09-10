@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   attachStream,
+  negotiateFrameRate,
   requestCamera,
   stopCamera,
   stopStream,
 } from "../../src/io/camera";
+import { FRAME_RATE_ASK_FPS } from "../../src/core/frameRateNegotiation";
 
 // Roadmap 14.0d (audit A5). startCamera used to request the stream,
 // attach it to the video element and play it before returning, and
@@ -120,5 +122,101 @@ describe("attaching a stream", () => {
 
     expect(tracks[0]?.readyState).toBe("ended");
     expect(video.srcObject).toBeNull();
+  });
+});
+
+// Roadmap 13.2, brief C1: the ask for 60, made as a measurement. The
+// io half performs the reads and the constraint; every judgement
+// about what happened is core's (frameRateNegotiation.ts), so these
+// tests only prove the reads happen in the right order, the ask is
+// `ideal` rather than `exact`, and a browser that throws or lacks
+// getCapabilities loses a diagnostic and never a session.
+
+type NegotiableTrack = {
+  getCapabilities?: () => { frameRate?: { max?: number } };
+  getSettings: () => MediaTrackSettings;
+  applyConstraints: (c: MediaTrackConstraints) => Promise<void>;
+};
+
+function negotiableStream(track: NegotiableTrack): MediaStream {
+  return {
+    getVideoTracks: () => [track],
+    getTracks: () => [track],
+  } as unknown as MediaStream;
+}
+
+describe("asking the live track for 60 (roadmap 13.2)", () => {
+  it("reads capabilities, settings before, asks ideal 60, reads after", async () => {
+    let asked: MediaTrackConstraints | null = null;
+    let settingsReads = 0;
+    const track: NegotiableTrack = {
+      getCapabilities: () => ({ frameRate: { max: 60 } }),
+      getSettings: () => {
+        settingsReads += 1;
+        return settingsReads === 1
+          ? { frameRate: 30, width: 1920, height: 1080 }
+          : { frameRate: 60, width: 1920, height: 1080 };
+      },
+      applyConstraints: (c) => {
+        asked = c;
+        return Promise.resolve();
+      },
+    };
+
+    const negotiation = await negotiateFrameRate(negotiableStream(track));
+
+    expect(asked).toEqual({ frameRate: { ideal: FRAME_RATE_ASK_FPS } });
+    expect(negotiation).toEqual({
+      declaredMaxFps: 60,
+      before: { frameRate: 30, widthPx: 1920, heightPx: 1080 },
+      after: { frameRate: 60, widthPx: 1920, heightPx: 1080 },
+      askedFps: FRAME_RATE_ASK_FPS,
+      applyFailed: false,
+    });
+  });
+
+  it("records a refusing browser rather than throwing at it", async () => {
+    // A failed ask leaves the default negotiation standing, which is
+    // a session worth having: the record says failed, the "after"
+    // read still happens, and nothing propagates.
+    const track: NegotiableTrack = {
+      getSettings: () => ({ frameRate: 30, width: 1280, height: 720 }),
+      applyConstraints: () =>
+        Promise.reject(new Error("constraints not satisfiable")),
+    };
+
+    const negotiation = await negotiateFrameRate(negotiableStream(track));
+
+    expect(negotiation?.applyFailed).toBe(true);
+    expect(negotiation?.declaredMaxFps).toBeNull();
+    expect(negotiation?.after).toEqual({
+      frameRate: 30,
+      widthPx: 1280,
+      heightPx: 720,
+    });
+  });
+
+  it("reads null for the whole step when the stream has no video track", async () => {
+    const stream = {
+      getVideoTracks: () => [],
+      getTracks: () => [],
+    } as unknown as MediaStream;
+    expect(await negotiateFrameRate(stream)).toBeNull();
+  });
+
+  it("prefers the person-facing camera, as a preference", async () => {
+    // facingMode ideal, never exact: a laptop webcam has no facing
+    // mode to declare and must not be refused over one.
+    const { stream } = fakeStream();
+    const getUserMedia = vi
+      .fn<(constraints: MediaStreamConstraints) => Promise<MediaStream>>()
+      .mockResolvedValue(stream);
+    vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
+
+    await requestCamera();
+
+    const video = getUserMedia.mock.calls[0]?.[0].video as
+      MediaTrackConstraints | undefined;
+    expect(video?.facingMode).toEqual({ ideal: "user" });
   });
 });

@@ -29,6 +29,7 @@ import {
   type PoseFrameCounts,
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
+import { negotiationMetadataRows } from "../../src/core/frameRateNegotiation";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
 import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
 import type { VerdictInputs } from "../../src/core/sessionVerdict";
@@ -159,6 +160,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "pseudonymMetadataRows",
   "lightStimulusMetadataRows",
   "driverMetadataRows",
+  "negotiationMetadataRows",
 ];
 
 /**
@@ -197,8 +199,18 @@ export function fixtureCsv(session: FixtureSession): string {
     ...pseudonymMetadataRows(null),
     ...lightStimulusMetadataRows(null),
     // Every fixture session is a camera session, and since 13.8b
-    // every camera session names the loop that drove it.
+    // every camera session names the loop that drove it — and since
+    // 13.2, the 60 fps ask it made. The fixtures' ask negotiates
+    // nothing (rate holds, resolution holds): the typical outcome on
+    // a camera that tops out at 30, and stable bytes for the pin.
     ...driverMetadataRows("video-frame-callback"),
+    ...negotiationMetadataRows({
+      declaredMaxFps: 30,
+      before: { frameRate: 30, widthPx: 1280, heightPx: 720 },
+      after: { frameRate: 30, widthPx: 1280, heightPx: 720 },
+      askedFps: 60,
+      applyFailed: false,
+    }),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

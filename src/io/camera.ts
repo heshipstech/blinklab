@@ -1,3 +1,9 @@
+import {
+  FRAME_RATE_ASK_FPS,
+  type FrameRateNegotiation,
+  type TrackReading,
+} from "../core/frameRateNegotiation";
+
 export type CameraFrameSize = {
   widthPx: number;
   heightPx: number;
@@ -35,9 +41,77 @@ export async function requestCamera(deviceId?: string): Promise<MediaStream> {
     video: {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
+      // Roadmap 13.2: the instrument means to watch the person
+      // holding the device, and a phone offered no preference has
+      // been free to hand over either camera. `ideal`, never
+      // `exact`: a laptop webcam has no facing mode to declare and
+      // must not be refused over one.
+      facingMode: { ideal: "user" },
       ...(deviceId === undefined ? {} : { deviceId: { exact: deviceId } }),
     },
   });
+}
+
+/**
+ * Ask the live track for 60 frames per second, as a MEASUREMENT
+ * (roadmap 13.2, brief C1): capabilities read, settings before, the
+ * ideal-60 constraint, settings after, every step handed to core as
+ * data. No judgement lives here — what a resolution change means and
+ * how the record states it is src/core/frameRateNegotiation.ts.
+ *
+ * Every read is defensive, deviceInfo.ts's own rule: getCapabilities
+ * is absent on some browsers and a metadata step is never worth a
+ * session, so a throwing browser is RECORDED (applyFailed, unknown
+ * cells) and never propagated. Null only when there is no video
+ * track at all, where the step never ran and absence is the record.
+ */
+export async function negotiateFrameRate(
+  stream: MediaStream,
+): Promise<FrameRateNegotiation | null> {
+  const track = stream.getVideoTracks()[0];
+  if (track === undefined) {
+    return null;
+  }
+
+  const reading = (): TrackReading => {
+    let settings: MediaTrackSettings;
+    try {
+      settings = track.getSettings();
+    } catch {
+      settings = {};
+    }
+    return {
+      frameRate: settings.frameRate ?? null,
+      widthPx: settings.width ?? null,
+      heightPx: settings.height ?? null,
+    };
+  };
+
+  let declaredMaxFps: number | null;
+  try {
+    declaredMaxFps = track.getCapabilities?.().frameRate?.max ?? null;
+  } catch {
+    declaredMaxFps = null;
+  }
+
+  const before = reading();
+  let applyFailed = false;
+  try {
+    await track.applyConstraints({
+      frameRate: { ideal: FRAME_RATE_ASK_FPS },
+    });
+  } catch {
+    applyFailed = true;
+  }
+  const after = reading();
+
+  return {
+    declaredMaxFps,
+    before,
+    after,
+    askedFps: FRAME_RATE_ASK_FPS,
+    applyFailed,
+  };
 }
 
 /** Put a requested stream on the element and start it. */
