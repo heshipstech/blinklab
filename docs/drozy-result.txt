@@ -96,4 +96,14 @@ VERDICT, by the rule fixed before the data was seen
   the result, and the plan said it would be published as readily as
   a positive one.
 
+THE RATE COLUMN AND ROADMAP 10.12b, 10 September 2026
+  Roadmap 10.12b later changed the live page's rolling blink rate to
+  divide by observed time instead of the wall clock. This analysis
+  is untouched by that change and needed no re-derivation: its rate
+  was never the app's rolling column — analysis/blinklab/drozy.py
+  counts the blink events in each session's log over the window's
+  real length — so the numbers above mean today what they meant when
+  they were computed (blinklab/rederive.py's docstring records the
+  same fact from the other side).
+
 Cite: Massoz, Langohr, Francois and Verly, WACV 2016.
