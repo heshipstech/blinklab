@@ -1,0 +1,105 @@
+FRAME-RATE NEGOTIATION: THE ADOPTION CONDITION, WRITTEN FIRST
+=============================================================
+
+Written 10 September 2026, before any owned device is read under
+the new request, in the predict-then-verify discipline. Roadmap row
+13.2, brief C1 — the era's other real lever, and the one this
+project has never pulled: in every session in the record, every
+camera declared 30.0 frames per second, because the page has never
+ASKED for more (src/io/camera.ts requests a resolution and no frame
+rate at all, a fact docs/blink-sample-rate.txt has stated since
+August).
+
+WHY 60 IS WORTH ASKING FOR
+--------------------------
+The committed sampling model (docs/blink-sample-rate.txt) puts the
+catch probability for a blink at the 3.40 mm minimum at 0.48 when
+the camera delivers 30 frames per second and 0.96 when it delivers
+60. The dry run's field data agrees from its own direction: the two
+~30 fps sessions missed 3 and 1 of ten deliberate blinks, the 55
+and 126.7 processing sessions caught 10 of 10 — with the 27 August
+correction standing, that the rate that decides is the rate of
+DISTINCT frames read. Doubling delivery is the one change the model
+says roughly doubles the odds of catching a minimal blink.
+
+WHAT THE CODE WILL DO — A MEASUREMENT, NOT AN ASSUMPTION
+--------------------------------------------------------
+After the camera is granted and before measurement begins:
+
+1. Read the live track's getCapabilities(): the DECLARED maximum
+   frame rate (and width/height bounds), recorded even when the ask
+   fails, because "the camera says it can do 60 and did not" and
+   "the camera never claimed 60" are different facts.
+2. Record the track's settings BEFORE the ask: the negotiated rate
+   and resolution the default request produced.
+3. applyConstraints({ frameRate: { ideal: 60 } }) — ideal, never
+   exact, so a camera that cannot comply returns what it can and
+   nothing breaks.
+4. Record settings AFTER: the negotiated rate and resolution.
+
+The request also gains facingMode: { ideal: "user" }, per the row:
+a phone offered no preference has been free to hand over either
+camera, and the instrument means to watch the person holding it.
+
+The whole step is written down in the export header per session —
+declared maximum, rate before, rate after, resolution before and
+after — and A RESOLUTION CHANGE IS SURFACED, never silent: the
+model's iris ruler runs on source pixels, so a camera that trades
+1920x1080@30 down to 1280x720@60 has moved the instrument's
+precision, and the record must say so wherever the rate gain is
+claimed.
+
+THE ADOPTION CONDITION, COMMITTED BEFORE ANY DEVICE IS READ
+-----------------------------------------------------------
+The ask ships unconditionally as a measurement. What the owner's
+device day decides is what may be CLAIMED from it, and the
+condition is fixed now:
+
+- A setup counts as 60-CAPABLE only if the ask negotiates a
+  measured rate of at least 55 frames per second (the dry run's own
+  10-of-10 threshold, not a round number) AND the negotiated
+  resolution keeps the iris ruler at or above the smallest iris the
+  record has published a sound session at — 22 pixels, the MacBook
+  Air's — at the owner's ordinary sitting distance. Rate bought by
+  resolution the ruler cannot afford is not a capability, it is a
+  trade, and it is recorded as one.
+- If NO owned camera meets that condition, the honest conclusion is
+  the one the row names: live accuracy on owned hardware is capped
+  at 30 frames per second, the capability ladder (13.6a) says so
+  per setup, and the 60 fps branch of the sampling model stays a
+  model. That outcome is as publishable as the other.
+- The per-device numbers land in a dated section below this one:
+  declared maximum, negotiated rate, any resolution change, per
+  owned device. Until that section exists, no sentence anywhere in
+  this repository claims a delivered rate above 30.
+
+THE PREDICTIONS
+---------------
+P1. At least one owned camera's getCapabilities() declares a
+    maximum of 60 or more (modern webcams commonly do), so the
+    interesting question will be what applyConstraints DOES, not
+    what the driver claims.
+P2. The Sony rig through the Cam Link (the pcsony setup) negotiates
+    60 at 1080p: capture cards commonly expose 1080p60, and that
+    rig already processed at 126.7.
+P3. The built-in FaceTime camera holds 30 whatever is asked, or
+    yields 60 only below 1080p — either way it fails the adoption
+    condition at 1080p.
+P4. On every device, the stepped corpus is untouched by
+    construction: a clip has no track to negotiate with, and the
+    change lives entirely on the camera path.
+
+THE FALSIFIERS, NAMED BEFORE THE NUMBERS
+----------------------------------------
+If a camera negotiates 60 while getCapabilities() declared 30, the
+capabilities read is not trustworthy on that platform and the
+record says which. If the ask CHANGES the resolution silently —
+settings after differing from before with no surfaced record — the
+builder test has failed at its one job and the code does not ship.
+If asking for 60 breaks the stream outright on any device (black
+frames, zero delivery), the ask is demoted from unconditional to
+opt-in and this section records why.
+
+Whichever way the device day lands, its outcome becomes a dated
+section below, and row 13.2 ticks on that section — not on this
+build.
