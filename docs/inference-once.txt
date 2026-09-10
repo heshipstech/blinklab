@@ -96,3 +96,62 @@ is where that restatement would be recorded.
 Whichever way it lands, the outcome section below is written from
 the computed table, dated, and 13.8b does not open before it
 exists.
+
+THE OUTCOME, 10 September 2026
+------------------------------
+The owner ran the provided command over the retained dry-run blink
+logs the same day the prediction merged. Every number below is a
+median over that session's logged blinks, with the blink count n
+beside it; the re-read ratio r is processing over the declared
+30.0 fps. Sound sessions only, as pre-registered:
+
+    session         proc fps    r     n   amplitude   velocity      A/V
+    macbookair2        29.2   0.97   14    3.80 mm    52.5 mm/s   77.2 ms
+    iphone2            30.7   1.02   25    3.86 mm    84.0 mm/s   44.9 ms
+    iphone17promax     55.0   1.83   67    4.10 mm   112.7 mm/s   36.8 ms
+    pcsony            126.7   4.22   60    3.99 mm   159.4 mm/s   25.9 ms
+
+Scored prediction by prediction:
+
+P2, the ordering: CONFIRMED EXACTLY. Median A/V is strictly inverse
+in r — 25.9 < 36.8 < 44.9 < 77.2 ms as r falls 4.22, 1.83, 1.02,
+0.97 — and median velocity is strictly monotone WITH r, pcsony
+highest. Four sessions, no exceptions.
+
+P3, the magnitude: CONFIRMED. pcsony reads 159.4 / 52.5 = 3.04
+times the Mac control's median velocity, over the predicted floor
+of two. Amplitude stayed out of it as predicted: the four medians
+span 3.80 to 4.10 mm, eight percent, against a threefold spread in
+velocity.
+
+P1, the clean pair: FALSIFIED AS WRITTEN. The iPhone 17's median
+velocity reads 112.7 / 84.0 = 1.34 times the iPhone 14's against
+the undamped 1.8, and its A/V ratio is 36.8 / 44.9 = 0.82 against
+the predicted 0.55 — two hundredths over the falsifier's own 0.8
+line. The line was committed before the numbers and it decides:
+this fires the falsifier, and the falsifier's branch is the
+verdict.
+
+THE VERDICT: the inflation is real, rate-linked and DAMPED. Three
+independent reads agree that re-reading photographs inflates the
+published velocity — the ordering, the pcsony magnitude, and the
+clean pair's direction — and the clean pair puts the size at about
+40 percent of the full arithmetic at r 1.8 (1.34 measured against
+1.83 undamped), with MediaPipe's VIDEO-mode smoothing the standing
+suspect for the difference, exactly as named before the numbers.
+For the record rather than for the score, the two unsound sessions
+(excluded in the prediction section, for reasons the dry-run doc
+committed in August) read 71.8 and 85.5 mm/s at r about 1.05,
+consistent with the two controls.
+
+What this changes for 13.8b: nothing in its Check, and one word in
+its benefit. The driver change proceeds as the correctness row it
+always was — a timestamp that means "the display repainted" is the
+wrong denominator for a camera measurement whether the damage is
+4x or 1.3x — but the benefit claim is restated from "velocities
+inflated up to about 4x on fast machines" to the measured sizes:
+about 1.34x at r 1.8 within one device family, about 3x at r 4.2
+against a slower-blinking cross-device control, damping included.
+The row's own claim, that velocity and A/V STOP scaling with
+processing over delivery, is what the next live sessions on the
+same machines would score after the driver lands.
