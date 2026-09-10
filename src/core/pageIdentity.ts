@@ -46,6 +46,35 @@ export const PAGE_DESCRIPTION =
   "into numbers you can audit. A demo, not a medical device.";
 
 /**
+ * The page's Content-Security-Policy, delivered as a meta tag because
+ * GitHub Pages serves a fixed header set and cannot be configured —
+ * the tag in the page is the one delivery this repository controls
+ * (SECURITY.md's out-of-scope section, corrected by 10.0b6's first
+ * full read; roadmap 10.2b is the row).
+ *
+ * One directive, deliberately. The residual this closes is the
+ * NETWORK CALL: the vendored MediaPipe bundle attempts a usage report
+ * to Google about a minute after the model is created (ADR-0004), and
+ * `src/io/telemetryBlock.ts` already intercepts the three send
+ * primitives inside the page. That wrapper is net-shaped over the
+ * transports it knows; this policy is the layer under it, refusing at
+ * the network boundary any connection to anywhere but this origin —
+ * including a transport the wrapper does not wrap. The wrapper still
+ * answers first for the hosts it matches, handing the caller its
+ * synthetic success, so the stall ADR-0004 worried a bare policy
+ * could cause never arises on a wrapped transport.
+ *
+ * `connect-src 'self'` and nothing more: the model and its WASM
+ * runtime are vendored and served from this origin (ADR-0002), so
+ * 'self' is every connection the app has a legitimate reason to
+ * make. Scripts, styles, media and workers keep their browser
+ * defaults, because a directive wider than its evidence would be a
+ * guess — and this policy ships to real Safari users, where the
+ * WebKit half of the row's Check runs on the owner's Mac, not here.
+ */
+export const CONTENT_SECURITY_POLICY = "connect-src 'self'";
+
+/**
  * The eye outline the brand mark draws, as SVG path data.
  *
  * Exported so the nav mark and the tab icon are literally the same

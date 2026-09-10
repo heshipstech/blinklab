@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--
+      Roadmap 10.2b. GitHub Pages serves a fixed header set, so the
+      Content-Security-Policy rides the page itself. connect-src only:
+      the model and its WASM runtime are vendored and served from this
+      origin, so 'self' is every connection the app legitimately makes,
+      and the vendored bundle's telemetry attempt (ADR-0004) meets a
+      network-layer refusal beneath the wrapper that already answers
+      it. Held word for word to src/core/pageIdentity.ts.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="connect-src 'self'" />
+    <!--
       Roadmap 14.0f2. This head was bare: no description, so a shared
       link previewed as the single word "blinklab", and no icon, so the
       tab showed a blank sheet. Both are held to
