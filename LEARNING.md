@@ -3906,3 +3906,31 @@ compute. A column name shared between two pipelines does not mean
 one definition — here the same words "blink rate" named an event
 count in one file and a frozen rolling estimate in the other, and
 only one of them was ever broken.
+
+## The old rate could not say zero, and nobody knew until a tool tried
+
+Scoring row 10.12b's last clause meant re-deriving the blink rate
+for 178 retained drowsiness videos, and the most useful thing the
+re-derivation found was not in the numbers it computed but in the
+cells it could not: THIRTY videos had no blink log at all, because
+the exporter writes no blink file for a session that counted no
+blinks. Under the old rolling-rate column those videos' rate cells
+read as MISSING — a rolling estimate that divides the wall clock
+has no way to distinguish "the eyes did not blink" from "there is
+no number here" — and missing cells fall to imputation, which
+quietly replaces the most extreme value a drowsiness feature can
+take with a typical one. The new definition reads those same
+videos as measured zeros over their observed seconds. For a corpus
+about drowsiness, where zero blinks over five minutes is closer to
+the signal than any other rate in the table, that gap in the old
+definition may matter more than the denominator change the row was
+actually about.
+
+The pair of habits worth taking. First, when a re-derivation is
+demanded, run it over everything rather than sampling — the finding
+lived in the corpus's tails, in exactly the videos a spot-check
+skips. Second, when a value can be absent, ask what absence MEANS
+before treating it as damage: this tool first refused thirty times
+on files that were never lost, and the fix was not to accept
+absence but to find the witness (the seconds file's own sticky
+columns) that says which kind of absence each one is.

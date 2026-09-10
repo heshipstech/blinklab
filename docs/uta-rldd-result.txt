@@ -151,5 +151,48 @@ WHAT WOULD COUNT AS THIS BEING WRONG
   this result overturned the pilot's. Any positive result a later audit
   traces to subject leakage is retracted here, not quietly dropped.
 
+THE RATE COLUMN UNDER THE NEW DEFINITION, 10 September 2026
+  Roadmap 10.12b changed what the live page's blink rate MEANS after
+  these files were exported: it now divides by OBSERVED time — the
+  seconds a face was actually measured — instead of the wall clock,
+  so a face-loss gap no longer dilutes the rate into looking calm.
+  The blink_rate_per_min column this analysis read is the app's OLD
+  rolling estimate, frozen in the retained files, so on 10 September
+  the rate was re-derived from what those files also hold: the blink
+  events in each paired log, over the observed seconds in the same
+  60-360 s window (analysis/blinklab/rederive.py; reproduce with
+  tools/rederive_rates.py on the retained per-fold folders, which
+  carry the blink logs the merged folder does not).
+
+  What the re-derivation measured, owner's machine, all 178 videos:
+
+  - The medians barely move: fold 1 reads old 9.00 against new 8.11
+    per minute over 36 videos, folds 2-5 old 8.00 against new 7.29
+    over 142. For a fully observed video the two derivations agree
+    closely, which is what the published correlations stand on.
+  - The dilution 10.12b removed is REAL in this corpus and the
+    re-derivation shows it where the face was partly lost: the
+    largest mover reads 3.00 under the old derivation and 11.63
+    under the new, on a video with only 98 of 300 window seconds
+    observed; 2.00 to 3.91 at 138 observed and 3.00 to 8.97 at 87
+    observed are the same shape. Under the old column those videos'
+    published rates understated the eyes by up to a factor of four.
+  - THIRTY videos counted ZERO blinks — their logs were never
+    written, because the exporter writes no blink file for a session
+    with no blinks — and under the old derivation their rate cells
+    read as MISSING, falling to the analysis's imputation rule,
+    while the re-derivation reads them as a measured 0 over their
+    observed seconds. A rate that cannot say zero was a gap in the
+    old definition this re-read makes visible. Six further videos
+    hold logs whose blinks all fall outside the analysis window
+    (window rate 0), and two observed no face in the window at all
+    (re-derived rate refused, not zero).
+
+  What stands and what this changes: the published LOSO result and
+  its correlations were computed from the OLD column and stand as
+  facts about that definition; nothing here re-runs the classifier.
+  A classification under the new definition belongs to the one-shot
+  v2 re-measure (roadmap 12.18a-c), which now carries it.
+
 Cite: Ghoddoosian, Galib and Athitsos, "A Realistic Dataset and Baseline
 Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
