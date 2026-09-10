@@ -3783,3 +3783,33 @@ it from numbers the project has already defended. A derived
 threshold inherits its parents' arguments, moves when they move,
 and can never quietly disagree with them — where an independent
 constant starts drifting from its siblings the day it is written.
+
+## Score the defect on data you already have before building the fix
+
+Row 13.8b will change how the camera path is driven, and the
+temptation with a correctness fix is to ship it and argue from the
+code that things were wrong before. Row 13.8a resists that by doing
+the arithmetic first: the dry-run exports from August already
+contain per-blink amplitude and velocity from four machines whose
+processing rates ranged from one to four times their camera's
+delivery, so the inflation the driver change would remove is either
+visible in those files or it is not — and which one is a fact worth
+knowing BEFORE the fix exists, because it cannot be an after-the-fact
+justification once it is on record first.
+
+The discipline has a second edge here worth naming. The prediction
+is falsifiable in a way that does not protect the fix: if the
+numbers come back flat, the named suspect is MediaPipe's temporal
+smoothing hiding the damage, and the driver change survives as a
+correctness row while its benefit claim shrinks to whatever was
+measured. Writing that branch down in advance is what separates a
+pre-registration from a prosecution: the document commits to
+recording either answer, so the fix's justification rests on the
+timestamps being honest, not on the measurement coming out big.
+
+The habit worth taking: when a fix claims to remove a distortion,
+look for data recorded UNDER the distortion before writing the fix
+— retained exports, old logs, a committed table. If the distortion
+is real it is already in the files, and a prediction scored on them
+turns "this was broken" from a belief about code into a measured
+fact with a date earlier than the fix.
