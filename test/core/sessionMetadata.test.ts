@@ -8,6 +8,7 @@ import {
   IRIS_SAMPLE_CAP,
   PROTOCOL_ID,
   deviceMetadataRows,
+  driverMetadataRows,
   faceDetectedFraction,
   featureRecordOverrunRows,
   medianIrisWidthPx,
@@ -388,6 +389,25 @@ describe("provenance rows", () => {
       "# app_commit: abc1234",
     );
     expect(provenanceMetadataRows(null)).toContain("# app_commit: unknown");
+  });
+});
+
+describe("the camera driver row (roadmap 13.8b)", () => {
+  it("names which loop drove measurement, and is absent off the camera", () => {
+    // Row 13.8a measured that the two drivers publish DIFFERENT
+    // velocities from the same eyes, so a file that does not say
+    // which loop drove it leaves its velocity columns ambiguous in
+    // exactly the way the export header exists to prevent.
+    expect(driverMetadataRows("video-frame-callback")).toEqual([
+      "# camera_frame_driver: video-frame-callback",
+    ]);
+    expect(driverMetadataRows("animation-frame")).toEqual([
+      "# camera_frame_driver: animation-frame",
+    ]);
+    // Absence, not "unknown": a clip is driven by its own decoded
+    // frames by construction, so on a clip there is no camera driver
+    // to name — the same absence rule the pseudonym row follows.
+    expect(driverMetadataRows(null)).toEqual([]);
   });
 });
 

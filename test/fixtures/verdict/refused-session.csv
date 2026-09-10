@@ -40,6 +40,7 @@
 # kss_after: 4 (Rather alert)
 # protocol: docs/assessment-pilot-plan.md, 29 August 2026
 # app_commit: dev
+# camera_frame_driver: video-frame-callback
 timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm,blinkLineMm,blinkLineSource,shutLineMm,shutLineSource,sampledFps,inferenceMs,sceneLum,faceLum,blinkObservedFraction,blinkCountingSuspended,irisOffsetVertical,faceSeconds
 1000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,,,false,,0
 42000,true,60,7,,,,,,,,0,0,,false,true,,,,none,,none,,,,,,false,,0

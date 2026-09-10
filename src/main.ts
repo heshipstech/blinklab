@@ -146,11 +146,13 @@ import {
   calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
+  driverMetadataRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   featureRecordOverrunRows,
   sessionMetadataRows,
+  type CameraFrameDriver,
   type DeviceInfo,
   type MeasurementFrame,
   type SessionMarker,
@@ -292,6 +294,7 @@ import { downloadTextFile } from "./io/download";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
   observeVideoDelivery,
+  startCameraFrameLoop,
   startFrameLoop,
   startVideoFrameLoop,
   supportsVideoFrameCallback,
@@ -1236,6 +1239,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
   // A camera session has no clip to stop. Without this, a stepped run
   // superseded by the camera left its button behind.
   stopClipButton.hidden = true;
+  stopCameraDriver();
   stopDeliveryObserver();
   stopCamera(video);
   unloadVideoFile(video);
@@ -1313,6 +1317,36 @@ async function beginCamera(deviceId?: string): Promise<void> {
           stopDeliveryObserver();
         },
       );
+      // Inference once per photograph (roadmap 13.8b, brief A2): the
+      // camera's own presented frames drive measurement, on the
+      // callback's own timestamp, so a fast machine can no longer
+      // re-read the same photograph into the record and inflate every
+      // published velocity with its re-read ratio — row 13.8a
+      // measured that inflation on the dry-run exports
+      // (docs/inference-once.txt). The display loop keeps the watch
+      // duties a frame-driven loop cannot do; the observer above
+      // stays a separate registration because its death costs a
+      // diagnostic while this driver's death costs the session.
+      cameraFrameDriver = "video-frame-callback";
+      cameraDriver = startCameraFrameLoop(
+        video,
+        (nowMs) => {
+          const clockStep = acceptFrame(frameClock, nowMs);
+          frameClock = clockStep.state;
+          if (!clockStep.accepted) return;
+          const stamped = stampModelClock(modelClock, nowMs);
+          modelClock = stamped.state;
+          if (stamped.modelClockMs === null) return;
+          processFrame(nowMs, stamped.modelClockMs);
+        },
+        measurementCrashed,
+      );
+    } else {
+      // The kept fallback: no requestVideoFrameCallback, so the
+      // display loop drives measurement as it always did, and the
+      // export header says so — 13.8a measured that the two drivers
+      // publish different velocities from the same eyes.
+      cameraFrameDriver = "animation-frame";
     }
     // AFTER resetSession, which clears it, and after the stream is
     // live, because getSettings() on a track that has not finished
@@ -1347,6 +1381,7 @@ async function beginCamera(deviceId?: string): Promise<void> {
       // sign of the stream; review called that the dishonest shape.
       // Retry re-requests the camera, which a granted permission
       // makes near-instant.
+      stopCameraDriver();
       stopDeliveryObserver();
       stopCamera(video);
       setState({ kind: "modelFailed" });
@@ -1385,6 +1420,10 @@ async function beginVideoFile(file: File): Promise<void> {
   // on a large recording this state is on screen long enough to read.
   setState({ kind: "loadingClip" });
   clipStopRequested = true;
+  stopCameraDriver();
+  // A clip is driven by its own decoded frames; there is no camera
+  // driver to name in its export (absence, not "unknown").
+  cameraFrameDriver = null;
   stopDeliveryObserver();
   stopCamera(video);
   clipLoop?.stop();
@@ -1829,6 +1868,23 @@ let attentiveSinceMs = performance.now();
 function stopDeliveryObserver(): void {
   deliveryObserver?.stop();
   deliveryObserver = null;
+}
+// The camera's measurement driver (roadmap 13.8b, brief A2): one
+// processFrame per PRESENTED frame, on the frame's own callback,
+// where the display loop below re-read the same photograph at the
+// display's pace and inflated every published velocity with the
+// re-read ratio (docs/inference-once.txt measured it). Null means
+// the display loop is driving: either no camera session, or a
+// browser without requestVideoFrameCallback on the kept fallback.
+let cameraDriver: { stop: () => void } | null = null;
+// Which loop drove THIS session's measurement, for the export header.
+// Kept after the session ends because the export happens after; set
+// to null by a clip session, whose driver is its own decoded frames.
+let cameraFrameDriver: CameraFrameDriver | null = null;
+
+function stopCameraDriver(): void {
+  cameraDriver?.stop();
+  cameraDriver = null;
 }
 // The camera's own rate, beside the instrument's. The processing rate
 // alone cannot tell a viewer whether a faster machine would help them:
@@ -2707,6 +2763,9 @@ function exportSession(): void {
     // and the start, in the timestampMs clock, so the analysis can sort
     // each row into dark or bright (docs/pupil-light-plan.md, 9.4).
     ...lightStimulusMetadataRows(lightStimulusStartMs),
+    // Which loop drove measurement (13.8b): appended last, new keys
+    // after every row a reader already parses; absent on a clip.
+    ...driverMetadataRows(cameraFrameDriver),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -3009,6 +3068,7 @@ stopCameraButton.addEventListener("click", () => {
   settledDeliveryRates();
   setState({ kind: "ended" });
   try {
+    stopCameraDriver();
     stopDeliveryObserver();
     stopCamera(video);
   } catch (stopError: unknown) {
@@ -3027,12 +3087,40 @@ stopCameraButton.addEventListener("click", () => {
  * its record kept, the cause on the status line, and the after
  * question asked as at any other end (roadmap 14.0d, audit A26).
  */
+/**
+ * The one camera duty that cannot ride the frames: noticing that the
+ * frames stopped (roadmap 13.8b, guarding 14.0d's contract). With
+ * measurement driven by requestVideoFrameCallback, a stalled camera
+ * stops the driver's callbacks entirely — no frame, no tick, and a
+ * watchdog living inside the measurement path would die with it. So
+ * the whole-window silence check lives here, called from the display
+ * loop, which ticks whether or not the camera does, and from
+ * processFrame on the display-paced fallback, where it is the same
+ * check it always was.
+ */
+function watchCameraLiveness(): void {
+  if (state.kind !== "running" || frameSource !== "camera") return;
+  if (deliveryObserver === null) return;
+  const staleForMs = deliveryStaleness(
+    deliveryState,
+    performance.now(),
+    attentiveSinceMs,
+  );
+  if (staleForMs === null) return;
+  const track = streamOf(video)?.getVideoTracks()[0];
+  const silence = `no frames in the last ${String(DELIVERY_WINDOW_MS / 1000)} s`;
+  endCameraSession(
+    track?.muted === true ? `the camera track is muted, ${silence}` : silence,
+  );
+}
+
 function endCameraSession(reason: string): void {
   if (state.kind !== "running" || frameSource !== "camera") return;
   sourceRunToken += 1;
   settledDeliveryRates();
   setState({ kind: "cameraStopped", reason });
   try {
+    stopCameraDriver();
     stopDeliveryObserver();
     stopCamera(video);
   } catch (stopError: unknown) {
@@ -3090,6 +3178,7 @@ exportBlinksButton.addEventListener("click", () => {
         loadedClipDurationSeconds,
       ),
       ...steppingMetadataRows(steppingWitness()),
+      ...driverMetadataRows(cameraFrameDriver),
     ],
     // The detector's own count, handed over so the file can compare it
     // against its own rows and say so if any are missing. Nothing here
@@ -3124,6 +3213,7 @@ exportFramesButton.addEventListener("click", () => {
         loadedClipDurationSeconds,
       ),
       ...steppingMetadataRows(steppingWitness()),
+      ...driverMetadataRows(cameraFrameDriver),
     ],
     // The measurement's own count, so a capped trace declares the
     // frames that fell off its end rather than looking complete.
@@ -3392,12 +3482,11 @@ function processFrame(
   // A whole window with no frame, on a page that has been able to
   // receive them: the camera stopped, and the session ends by name
   // rather than writing rows from a photograph nobody is taking.
-  if (liveCamera && observation.staleForMs !== null) {
-    const track = streamOf(video)?.getVideoTracks()[0];
-    const silence = `no frames in the last ${String(DELIVERY_WINDOW_MS / 1000)} s`;
-    endCameraSession(
-      track?.muted === true ? `the camera track is muted, ${silence}` : silence,
-    );
+  // One decision, one place: the same watch the display loop runs
+  // when the frame-driven driver is on, because a watchdog inside
+  // the measurement path dies with the frames it watches (13.8b).
+  if (liveCamera) {
+    watchCameraLiveness();
   }
 
   if (state.kind === "running" && canvasContext !== null) {
@@ -5297,44 +5386,57 @@ function applyIdleReadouts(): void {
 
 render();
 
-// The display loop drives the camera. A clip is driven by its own
-// decoded frames instead, so this returns early in file mode rather
-// than sampling an interpolated currentTime sixty times a second.
-startFrameLoop(
-  (wallClockMs) => {
-    if (frameSource === "file") return;
-    const clockStep = acceptFrame(frameClock, wallClockMs);
-    frameClock = clockStep.state;
-    if (!clockStep.accepted) return;
-    const stamped = stampModelClock(modelClock, wallClockMs);
-    modelClock = stamped.state;
-    if (stamped.modelClockMs === null) return;
-    processFrame(wallClockMs, stamped.modelClockMs);
-  },
-  (error) => {
-    // The loop is dead for the life of the page, and the flag is what
-    // keeps that honest: beginCamera refuses while it is set, because
-    // a "running" session with no loop behind it is the frozen page
-    // this state exists to replace. Records stop appending because
-    // nothing appends them; what was recorded stays exportable.
-    //
-    // The token bump makes every in-flight continuation stale:
-    // review walked a pending startCamera resolving AFTER the crash
-    // and writing "running" over this state, camera light on, page
-    // frozen. The state is written FIRST because it is the one duty
-    // that may not be skipped; stopping the camera is best effort.
-    console.error("the measurement loop stopped:", error);
-    sourceRunToken += 1;
-    frameLoopCrashReason =
-      error instanceof Error ? error.message : String(error);
-    // Captured before the observer stops, as at every other end.
-    settledDeliveryRates();
-    setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
-    try {
-      stopDeliveryObserver();
-      stopCamera(video);
-    } catch (stopError: unknown) {
-      console.error("the camera could not be stopped:", stopError);
-    }
-  },
-);
+// Measurement died mid-run — a throw out of processFrame, whichever
+// loop was driving it. The flag is what keeps the failure honest:
+// beginCamera refuses while it is set, because a "running" session
+// with no measurement behind it is the frozen page this state exists
+// to replace. Records stop appending because nothing appends them;
+// what was recorded stays exportable. The throw comes from
+// measurement code, so it would recur on the next session; refusing
+// until a reload is today's behaviour under either driver.
+//
+// The token bump makes every in-flight continuation stale: review
+// walked a pending startCamera resolving AFTER the crash and writing
+// "running" over this state, camera light on, page frozen. The state
+// is written FIRST because it is the one duty that may not be
+// skipped; stopping the camera is best effort.
+function measurementCrashed(error: unknown): void {
+  console.error("the measurement loop stopped:", error);
+  sourceRunToken += 1;
+  frameLoopCrashReason = error instanceof Error ? error.message : String(error);
+  // Captured before the observer stops, as at every other end.
+  settledDeliveryRates();
+  setState({ kind: "measurementFailed", reason: frameLoopCrashReason });
+  try {
+    stopCameraDriver();
+    stopDeliveryObserver();
+    stopCamera(video);
+  } catch (stopError: unknown) {
+    console.error("the camera could not be stopped:", stopError);
+  }
+}
+
+// The display loop. A clip is driven by its own decoded frames, so
+// this returns early in file mode rather than sampling an
+// interpolated currentTime sixty times a second — and since 13.8b a
+// camera on a browser with requestVideoFrameCallback is driven by
+// its own presented frames the same way, so this loop's remaining
+// camera duty is the one thing a frame-driven loop cannot do: notice
+// that the frames STOPPED. No frame, no callback; only a loop that
+// ticks anyway can end the session by name (roadmap 14.0d). The
+// display-paced measurement path below it stays as the kept fallback
+// for browsers without the callback.
+startFrameLoop((wallClockMs) => {
+  if (frameSource === "file") return;
+  if (cameraDriver !== null) {
+    watchCameraLiveness();
+    return;
+  }
+  const clockStep = acceptFrame(frameClock, wallClockMs);
+  frameClock = clockStep.state;
+  if (!clockStep.accepted) return;
+  const stamped = stampModelClock(modelClock, wallClockMs);
+  modelClock = stamped.state;
+  if (stamped.modelClockMs === null) return;
+  processFrame(wallClockMs, stamped.modelClockMs);
+}, measurementCrashed);
