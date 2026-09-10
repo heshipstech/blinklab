@@ -27,6 +27,10 @@ import {
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import {
+  negotiationMetadataRows,
+  type FrameRateNegotiation,
+} from "../../src/core/frameRateNegotiation";
 import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
 import { aStoredLine } from "../support/storedLine";
 import {
@@ -149,6 +153,8 @@ type Shape = {
   lightStimulusStartMs: number | null;
   /** Which loop drove measurement; null off the camera (13.8b). */
   cameraFrameDriver: CameraFrameDriver | null;
+  /** The 60 fps ask's record; null off the camera (13.2). */
+  frameRateNegotiation: FrameRateNegotiation | null;
 };
 
 /**
@@ -186,6 +192,13 @@ const MINIMAL_CAMERA: Shape = {
   pseudonym: null,
   lightStimulusStartMs: null,
   cameraFrameDriver: "video-frame-callback",
+  frameRateNegotiation: {
+    declaredMaxFps: null,
+    before: { frameRate: 30, widthPx: 1280, heightPx: 720 },
+    after: { frameRate: 30, widthPx: 1280, heightPx: 720 },
+    askedFps: 60,
+    applyFailed: false,
+  },
 };
 
 /**
@@ -201,6 +214,7 @@ const MINIMAL_CLIP: Shape = {
   mode: "stepped",
   device: null,
   cameraFrameDriver: null,
+  frameRateNegotiation: null,
 };
 
 /** A session where every optional thing happened at least once. */
@@ -239,6 +253,13 @@ const FULL: Shape = {
   pseudonym: "participant-01",
   lightStimulusStartMs: 5000,
   cameraFrameDriver: "video-frame-callback",
+  frameRateNegotiation: {
+    declaredMaxFps: 60,
+    before: { frameRate: 30, widthPx: 1920, heightPx: 1080 },
+    after: { frameRate: 60, widthPx: 1920, heightPx: 1080 },
+    askedFps: 60,
+    applyFailed: false,
+  },
 };
 
 /**
@@ -275,6 +296,7 @@ function metadataRows(shape: Shape): string[] {
     ...pseudonymMetadataRows(shape.pseudonym),
     ...lightStimulusMetadataRows(shape.lightStimulusStartMs),
     ...driverMetadataRows(shape.cameraFrameDriver),
+    ...negotiationMetadataRows(shape.frameRateNegotiation),
   ];
 }
 
@@ -294,6 +316,7 @@ const CALLED_HERE = [
   "pseudonymMetadataRows",
   "lightStimulusMetadataRows",
   "driverMetadataRows",
+  "negotiationMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {
