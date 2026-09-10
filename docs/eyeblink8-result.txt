@@ -415,17 +415,26 @@ makes the transient checkable.
 THE MEASUREMENT RATCHET, 5 September 2026 (roadmap 10.1a)
 =========================================================
 
-Built from commit 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 — the
-corpus run of 9 September 2026, the full re-run recorded in the
-section above (the owner's machine, WebKit driven by Playwright
-1.62.1, all eight clips stepped, inexact landings 0 on every clip),
-which reproduced the 2 September
-anchor 65e8e7ca2a6322c8a71f52caabcf2a189972f956 digit for digit on
-all eight clips and so confirmed it at this commit. The 8 September
-run at the same commit deviated on one clip through the transient
-recorded above; the caveat block below is the ledger of every
-detector change between the two anchors, and the two September runs
-together are the measurement that retired it.
+Built from commit cc882c7643f4e9426bba73af48d35e81e25ce608 — the
+corpus run of 10 September 2026 on the owner's machine, all eight
+clips stepped, coverage identical down to the same two +1 rows,
+which reproduced the block above DIGIT FOR DIGIT: every per-clip
+found and false count, both confidence intervals, the same 341 of
+408 and 65 invented. That identity scores and retires the four
+caveats below, the ledger of every detector change since the
+previous built-from
+commit, 68690bff63cbc3d0d2d7d754f85e219a3c28a4d5 — the 9 September
+2026 full re-run (WebKit driven by Playwright 1.62.1, inexact
+landings 0 on every clip) which itself reproduced the 2 September
+anchor 65e8e7ca2a6322c8a71f52caabcf2a189972f956 digit for digit.
+Three commits, three runs, one table. The build stamps its commit
+only in continuous integration, so the 10 September run's commit
+was pinned the way the 9 September one was: git itself, read on the
+machine that ran it, with the checkout unchanged since the build.
+The 8 September run deviated on one clip through the transient
+recorded above; the caveat ledger between the FIRST two anchors is
+the retired block below, and the two early-September runs together
+are the measurement that retired it.
 
 From this line on, tools/detectorRatchet.mjs holds this file to the
 code: a commit that touches a detector source after the built-from
@@ -738,7 +747,7 @@ held. Originally declared 5 September 2026:
   real clips, and that run now scores three stepper changes: ladder
   A1's whole-multiple rule, 10.14c's probe step, and this one.
 
-DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+DETECTOR CHANGED, re-measured on 10 September 2026, digit for digit by the run at the built-from line. Originally declared 9 September 2026:
 
   chore(deps): bump eslint, globals, typescript-eslint and vite (lockfile declared)
 
@@ -758,7 +767,7 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   scores this the way every entry in the retired block above was
   scored, and retires this caveat with it.
 
-DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+DETECTOR CHANGED, re-measured on 10 September 2026, digit for digit by the run at the built-from line. Originally declared 9 September 2026:
 
   Row 10.10c4d build half: the iris constant carries its citation and spread, stated twice and pinned
 
@@ -773,7 +782,7 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   number. Predicted delta: zero, on every clip. The next corpus run
   scores this beside the lockfile entry above and retires both.
 
-DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+DETECTOR CHANGED, re-measured on 10 September 2026, digit for digit by the run at the built-from line. Originally declared 9 September 2026:
 
   chore(deps): bump vitest to 4.1.11 (lockfile declared)
 
@@ -789,7 +798,7 @@ DETECTOR CHANGED, not yet re-measured, 9 September 2026:
   zero. The next corpus run scores this beside the two entries above
   and retires all three.
 
-DETECTOR CHANGED, not yet re-measured, 9 September 2026:
+DETECTOR CHANGED, re-measured on 10 September 2026, digit for digit by the run at the built-from line. Originally declared 9 September 2026:
 
   Row 10.12c build: sample floors demand face-seconds, and duplicates cannot fill them
 

@@ -373,7 +373,9 @@ describe("the caveats amendment 20 left on three rows", () => {
       "12.9",
     ]);
     for (const caveat of caveats) {
-      expect(caveat.waitsOn).toEqual(["13.8b", "12.0a"]);
+      // 13.8b landed on 10 September 2026 and its re-look is written
+      // into each caveat, so the one row still waited on is 12.0a.
+      expect(caveat.waitsOn).toEqual(["12.0a"]);
     }
   });
 
@@ -428,11 +430,12 @@ describe("the caveats amendment 20 left on three rows", () => {
     ).toEqual([]);
   });
 
-  it("would fire the moment 13.8b is ticked", () => {
-    // The whole point, against the real ladder. 13.8b re-times the
-    // frame driver, which is what two of the three caveats are about,
-    // and this is the reminder arriving by itself.
-    const landed = roadmap.replace("- [ ] 13.8b ", "- [x] 13.8b ");
+  it("would fire the moment 12.0a is ticked", () => {
+    // The whole point, against the real ladder. This fired for real
+    // when 13.8b ticked on 10 September 2026 — the re-look was done
+    // and written into each caveat the same day — and 12.0a, the
+    // remaining named row, re-arms the same reminder.
+    const landed = roadmap.replace("- [ ] 12.0a ", "- [x] 12.0a ");
     expect(
       ripeCaveats(landed)
         .map((one) => one.id)
