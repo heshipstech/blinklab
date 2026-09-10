@@ -51,6 +51,14 @@ class RederivedRate:
     is blinks over observed time, or None when no window second was
     observed — a refusal, because dividing by nothing would invent an
     infinite rate and zero would invent a calm one.
+
+    `blink_log` says where the numerator came from: "present" when
+    the paired log was read, "absent-no-blinks" when no log exists
+    AND the seconds file carries no blink evidence anywhere — which
+    is the exporter's own behaviour, because the corpus runner clicks
+    the blinks export only when the button is enabled and a session
+    with no blinks disables it. A zero-blink video writes no log by
+    design, and its zero is a measured count.
     """
 
     name: str
@@ -58,16 +66,11 @@ class RederivedRate:
     blink_count: int
     observed_seconds: int
     new_rate_per_min: float | None
+    blink_log: str
 
 
 def _blink_times_ms(blinks_csv: Path) -> list[float]:
     """Every blink's `atMs` from one blink log, metadata stripped."""
-    if not blinks_csv.exists():
-        raise RederiveError(
-            f"{blinks_csv.name} is missing: the re-derivation needs the "
-            "blink log beside its per-second file, because the events "
-            "are the numerator"
-        )
     body = [
         line
         for line in blinks_csv.read_text(encoding="utf-8").splitlines()
@@ -83,15 +86,42 @@ def _blink_times_ms(blinks_csv: Path) -> list[float]:
     return times
 
 
-def _observed_window_seconds(seconds_csv: Path) -> int:
-    """Window rows whose aperture was measured: the denominator."""
+def _seconds_rows(seconds_csv: Path) -> list[dict[str, str]]:
+    """The per-second rows, `# ...` metadata stripped."""
     body = [
         line
         for line in seconds_csv.read_text(encoding="utf-8").splitlines()
         if not line.startswith("#")
     ]
+    return list(csv.DictReader(body))
+
+
+def _blink_evidence(rows: list[dict[str, str]]) -> bool:
+    """Whether the seconds file itself says any blink was measured.
+
+    Two witnesses, either sufficient: `lastBlinkDurationMs` is written
+    from the first blink on and stays, so one filled cell proves a
+    blink; `blinkRatePerMin` above zero anywhere proves the same where
+    a truncated file might have lost the sticky columns. Checked over
+    the WHOLE file rather than the window, because the blink log is
+    session-wide: a blink anywhere means a log was written.
+    """
+    for row in rows:
+        if (row.get("lastBlinkDurationMs") or "").strip():
+            return True
+        raw = (row.get("blinkRatePerMin") or "").strip()
+        try:
+            if float(raw) > 0:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def _observed_window_seconds(rows: list[dict[str, str]]) -> int:
+    """Window rows whose aperture was measured: the denominator."""
     observed = 0
-    for row in csv.DictReader(body):
+    for row in rows:
         raw_ms = (row.get("timestampMs") or "").strip()
         raw_aperture = (row.get("apertureMm") or "").strip()
         try:
@@ -111,14 +141,32 @@ def rederive_video(
     seconds_path = Path(seconds_csv)
     blinks_path = Path(blinks_csv)
     features = load_video_features(seconds_path)
-    window_start_ms = WINDOW_START_S * 1000
-    window_end_ms = WINDOW_END_S * 1000
-    blink_count = sum(
-        1
-        for at in _blink_times_ms(blinks_path)
-        if window_start_ms <= at < window_end_ms
-    )
-    observed = _observed_window_seconds(seconds_path)
+    rows = _seconds_rows(seconds_path)
+    if blinks_path.exists():
+        blink_log = "present"
+        window_start_ms = WINDOW_START_S * 1000
+        window_end_ms = WINDOW_END_S * 1000
+        blink_count = sum(
+            1
+            for at in _blink_times_ms(blinks_path)
+            if window_start_ms <= at < window_end_ms
+        )
+    elif _blink_evidence(rows):
+        # The seconds file says blinks happened, so a log was written
+        # and is not here: that is loss, and a lost numerator refuses
+        # by name rather than guessing.
+        raise RederiveError(
+            f"{blinks_path.name} is missing: the re-derivation needs the "
+            "blink log beside its per-second file, because the events "
+            "are the numerator — and this per-second file's own blink "
+            "columns say blinks were measured, so a log was written"
+        )
+    else:
+        # No log and no evidence anywhere: the zero-blink export, and
+        # zero is a measured count.
+        blink_log = "absent-no-blinks"
+        blink_count = 0
+    observed = _observed_window_seconds(rows)
     new_rate = (blink_count / observed) * 60 if observed else None
     return RederivedRate(
         name=f"{features.subject}_{features.label}",
@@ -126,6 +174,7 @@ def rederive_video(
         blink_count=blink_count,
         observed_seconds=observed,
         new_rate_per_min=new_rate,
+        blink_log=blink_log,
     )
 
 
