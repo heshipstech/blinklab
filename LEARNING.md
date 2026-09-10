@@ -3875,3 +3875,34 @@ still runs when the events STOP. Anything that detects the source's
 absence, times out its silence, or reports it stale must stay on a
 clock the source cannot stop — a watchdog scheduled by the thing it
 watches dies first, quietly, in exactly the failure it was for.
+
+## Half the re-derivation was already true, found by reading first
+
+Row 10.12b's remaining clause asked for the DROZY and RLDD rate
+columns re-derived under the new observed-time definition, and the
+natural plan was one tool covering both. Reading the two analysis
+modules before building anything cut the work in half: DROZY's rate
+never read the app's rolling column — it counts blink events over
+the window's real length, a derivation the live-path change cannot
+reach — while RLDD's takes the window median of the exported
+column, frozen at the old definition the day each file was written.
+One dataset needed an instrument; the other needed a sentence
+saying why it does not.
+
+The instrument that was built keeps two disciplines worth naming.
+The OLD number goes through the real loader — load_video_features
+itself — so the comparison is against exactly what the result file
+printed, never a reimplementation's idea of it; and the denominator
+is stated as the approximation it is (a second with a measured
+aperture stands for an observed second, the one-second shadow of
+the live path's per-frame credit rule), because an approximation
+declared is a condition and an approximation hidden is a defect
+waiting for a reader.
+
+The habit worth taking is the same one the duplicate-module
+near-miss taught last week, one layer up: before building a tool a
+clause seems to demand, read what the clause's subjects actually
+compute. A column name shared between two pipelines does not mean
+one definition — here the same words "blink rate" named an event
+count in one file and a frozen rolling estimate in the other, and
+only one of them was ever broken.
