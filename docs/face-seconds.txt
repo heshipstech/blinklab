@@ -78,3 +78,25 @@ WHAT WOULD REFUTE THIS
 
 This prediction is not edited after the fact; the outcome becomes a
 new dated section below it.
+
+THE OUTCOME, 10 September 2026
+------------------------------
+The owner's stepped Eyeblink8 run of 10 September 2026 reproduced
+the anchor DIGIT FOR DIGIT with the face-time floors in the tree:
+341 of 408 found, 65 invented, every per-clip row identical,
+coverage identical on all eight clips including the same two +1
+rows. The floors were LIVE during the run — a clip whose credited
+face time had fallen under BASELINE_MIN_FACE_MS would have delayed
+or refused its baseline and the counts would have moved — so the
+identical table is the added-condition-neutrality claim measured:
+on a stepped corpus every frame is distinct at real cadence, the
+floors fill at the same moment the sample floors always did, and
+nothing changed. One honest narrowing, recorded rather than
+implied: the prediction's phrase "byte-identical output" was
+written about THIS change alone, and between the two runs the
+export deliberately grew trailing columns (10.12b's and 10.12c's
+own), so a byte comparison of the folders was never the test — the
+digit-for-digit table and identical coverage are, and both held.
+No clip is named as differing in face-seconds from elapsed, because
+none refused and none delayed: the run's own completeness is that
+reading. Roadmap row 10.12c ticks on this section.

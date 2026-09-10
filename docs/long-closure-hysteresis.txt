@@ -115,3 +115,18 @@ WHAT WOULD REFUTE THIS
 
 This prediction is not edited after the fact; the outcome becomes a
 new dated section below it.
+
+THE OUTCOME, 10 September 2026
+------------------------------
+The owner's stepped Eyeblink8 run of 10 September 2026 reproduced
+the anchor's blink table DIGIT FOR DIGIT — 341 of 408 found, 65
+invented, every per-clip found and false count identical, coverage
+identical — with the re-arm gate and the bounded gap in the tree.
+The corpus clause asked exactly this: blink counting shares no
+state with the long-closure detector, so the blink table had to
+come back untouched, and it did. The synthetic half (the hover
+shapes collapsing to one event at 30 and 120 Hz alike) was scored
+in the build; the evaluator does not read longClosureCount, so no
+corpus closure count is claimed either way — what is claimed is
+what was predicted: this change cost the blink measurement nothing.
+Roadmap row 10.11 ticks on this section.
