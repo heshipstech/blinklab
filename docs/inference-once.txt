@@ -1,0 +1,98 @@
+INFERENCE ONCE PER PHOTOGRAPH: THE ARITHMETIC, PRE-REGISTERED
+=============================================================
+
+Written 10 September 2026, before any dry-run number is read for
+this question, in the predict-then-verify discipline. Roadmap row
+13.8a, brief A2. This row ships NO CODE: it is the arithmetic that
+row 13.8b's driver change either survives or does not, scored on
+exports that already exist.
+
+WHAT THE MECHANISM IS
+---------------------
+The camera path runs `processFrame` on every animation tick, and an
+animation tick is the DISPLAY's event, not the camera's. Past the
+camera's delivery rate the loop re-reads the same photograph: the
+24 August correction to the sample-rate warning measured an M5 Max
+processing 120 frames per second on a 30 fps camera reading 30
+distinct photographs and 90 duplicates. Every dry-run session
+declared a 30.0 fps camera, and the processing rates ranged from
+29.2 to 126.7 — so the re-read ratio r = processing / 30 ranged
+from about 1 to about 4.2.
+
+Peak closing velocity is where the re-reads stop being harmless.
+`analyzeClosing` (src/core/blinkShape.ts) takes the maximum over
+ADJACENT sample pairs of aperture drop divided by timestamp gap,
+and the samples are one per processing tick. When the same
+photograph is read r times, the whole frame-to-frame drop lands
+between the LAST duplicate of one photograph and the FIRST read of
+the next — the same millimetres over one PROCESSING interval
+instead of one delivery interval. The drop is unchanged; the gap is
+divided by r; the velocity is multiplied by about r. The September
+audit reproduced this with the repository's own module: a 30 fps
+step read at 30, 60 and 120 Hz reads 120, 240 and 480 mm/s — the
+same blink, three velocities, linear in r.
+
+Amplitude reads the same photographs and does not care how often:
+it is a difference of two apertures, not a rate. So the
+amplitude-over-velocity ratio A/V — the duration-like quantity the
+drowsiness literature watches — is DEFLATED by about r.
+
+One interference is named before the numbers are: MediaPipe runs in
+VIDEO mode, whose temporal smoothing sees r near-duplicate
+timestamps per photograph on a fast machine. If smoothing spreads
+the frame-to-frame drop across several ticks, the inflation is
+damped below r. The synthetic reproduction above bypassed MediaPipe
+entirely, so it establishes the arithmetic, not the field size.
+
+WHAT WILL BE COMPUTED
+---------------------
+From the retained dry-run exports in $DATASETS/validation-dry-run
+(the blink logs, blinklab-blinks-*.csv, which have carried
+amplitudeMm and peakClosingVelocityMmPerS since the log existed):
+per session, over every logged blink, the MEDIAN amplitude, the
+median peak closing velocity, and the median of per-blink A/V
+computed as amplitude / velocity × 1000 — computed from the two
+base columns rather than trusted from the third, with the blink
+count n reported beside every median. Sound sessions only, the same
+four the dry-run doc uses for its rate claims:
+
+    session         processing fps   re-read ratio r
+    macbookair2         29.2             ~1.0  (control)
+    iphone2             30.7             ~1.0  (control)
+    iphone17promax      55.0             ~1.8
+    pcsony             126.7             ~4.2
+
+THE PREDICTIONS
+---------------
+P1, the clean pair. iphone2 and iphone17promax are the same device
+family, same face, and their median blink durations already agree
+to a millisecond (96 vs 97 ms), so the device confound is minimal.
+If the inflation is real and undamped, the iPhone 17's median
+velocity reads about 1.8 times the iPhone 14's, and its median A/V
+about 0.55 times — for the same physical blinking.
+
+P2, the ordering. Across the four sound sessions, median A/V orders
+INVERSELY with r: pcsony lowest, iphone17promax next, the two ~1.0
+controls highest. Median velocity orders WITH r, pcsony highest.
+
+P3, the magnitude. pcsony at r ~4.2 reads a median velocity at
+least twice macbookair2's. Device differences cannot make that
+number: the same face's median duration differs between those two
+sessions by 15 percent (129 vs 149 ms), not by a factor of two.
+
+THE FALSIFIER, NAMED BEFORE THE NUMBERS
+---------------------------------------
+If the iPhone pair's A/V ratio comes back near 1 (above 0.8), or
+the P2 ordering fails, the inflation is damped or absent on the
+LIVE path and VIDEO-mode smoothing is the named suspect. That
+outcome would NOT cancel 13.8b — the driver change is a correctness
+row either way, because a timestamp that means "the display
+repainted" is the wrong denominator for a camera measurement even
+when smoothing hides most of the damage — but the benefit claim
+would have to be restated from "velocities are inflated up to 4x on
+fast machines" to whatever the damping measured, and this section
+is where that restatement would be recorded.
+
+Whichever way it lands, the outcome section below is written from
+the computed table, dated, and 13.8b does not open before it
+exists.
