@@ -103,6 +103,7 @@ CONDITIONAL = {
     "calibration_spread_ratio": "a baseline that froze",
     "camera_declared_fps": "a camera session",
     "camera_delivered_fps": "a camera session with a measurable rate",
+    "camera_frame_driver": "a camera session",
     "camera_resolution": "a camera session",
     "delivered_frames_read_fraction": (
         "a camera session with a measurable rate"

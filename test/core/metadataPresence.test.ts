@@ -14,11 +14,13 @@ import {
   calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
+  driverMetadataRows,
   featureRecordOverrunRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
+  type CameraFrameDriver,
   type DeviceInfo,
   type MeasurementFrame,
   type PoseFrameCounts,
@@ -145,6 +147,8 @@ type Shape = {
   appCommit: string | null;
   pseudonym: string | null;
   lightStimulusStartMs: number | null;
+  /** Which loop drove measurement; null off the camera (13.8b). */
+  cameraFrameDriver: CameraFrameDriver | null;
 };
 
 /**
@@ -181,6 +185,7 @@ const MINIMAL_CAMERA: Shape = {
   appCommit: null,
   pseudonym: null,
   lightStimulusStartMs: null,
+  cameraFrameDriver: "video-frame-callback",
 };
 
 /**
@@ -195,6 +200,7 @@ const MINIMAL_CLIP: Shape = {
   clipName: "corpus/06-5.mp4",
   mode: "stepped",
   device: null,
+  cameraFrameDriver: null,
 };
 
 /** A session where every optional thing happened at least once. */
@@ -232,6 +238,7 @@ const FULL: Shape = {
   appCommit: "abc1234",
   pseudonym: "participant-01",
   lightStimulusStartMs: 5000,
+  cameraFrameDriver: "video-frame-callback",
 };
 
 /**
@@ -267,6 +274,7 @@ function metadataRows(shape: Shape): string[] {
     ...provenanceMetadataRows(shape.appCommit),
     ...pseudonymMetadataRows(shape.pseudonym),
     ...lightStimulusMetadataRows(shape.lightStimulusStartMs),
+    ...driverMetadataRows(shape.cameraFrameDriver),
   ];
 }
 
@@ -285,6 +293,7 @@ const CALLED_HERE = [
   "provenanceMetadataRows",
   "pseudonymMetadataRows",
   "lightStimulusMetadataRows",
+  "driverMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

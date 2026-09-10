@@ -343,7 +343,7 @@ describe("a claimed row its phase will not let start", () => {
     // against a row whose phase forbids it whatever the real list
     // currently says.
     const claimed = roadmap.replace(
-      "Row 13.8b remains startable and is not marked",
+      "NOTHING outside Phase 12 remains startable",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -520,10 +520,11 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 23 reopened the list: 10.8a's completion put the
-    // corpus anchor at HEAD, which is what these rows' corpus clauses
-    // score against. This pins what the ladder actually says today,
-    // so changing it is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual(["13.8b"]);
+    // 13.8b's build half landed on 10 September 2026 and its marker
+    // names the corpus clause, so the ladder declares emptiness in
+    // the form amendment 21 built — a claim, not a deletion. This
+    // pins what the ladder actually says today, so changing it is a
+    // deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual([]);
   });
 });

@@ -18,6 +18,7 @@ import {
   calibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
+  driverMetadataRows,
   featureRecordOverrunRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
@@ -157,6 +158,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "provenanceMetadataRows",
   "pseudonymMetadataRows",
   "lightStimulusMetadataRows",
+  "driverMetadataRows",
 ];
 
 /**
@@ -194,6 +196,9 @@ export function fixtureCsv(session: FixtureSession): string {
     ...provenanceMetadataRows(session.appCommit),
     ...pseudonymMetadataRows(null),
     ...lightStimulusMetadataRows(null),
+    // Every fixture session is a camera session, and since 13.8b
+    // every camera session names the loop that drove it.
+    ...driverMetadataRows("video-frame-callback"),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

@@ -269,6 +269,28 @@ export function observedDurationSeconds(
  * The conditions the session itself reveals, as opposed to the ones the
  * device declared. A camera session had none of this before.
  */
+/**
+ * Which loop drove the camera's measurement (roadmap 13.8b, brief
+ * A2): `video-frame-callback` is once per presented frame, the
+ * driver 13.8b installed; `animation-frame` is the display-paced
+ * fallback kept for browsers without requestVideoFrameCallback.
+ *
+ * The row exists because 13.8a measured that the two drivers publish
+ * DIFFERENT velocities from the same eyes — the display-paced loop
+ * inflates peak closing velocity with its re-read ratio
+ * (docs/inference-once.txt) — so a file that does not name its
+ * driver leaves its velocity columns ambiguous.
+ *
+ * Absent rather than "unknown" off the camera: a clip is driven by
+ * its own decoded frames by construction, so there is no camera
+ * driver to name — the same absence rule the pseudonym row follows.
+ */
+export type CameraFrameDriver = "video-frame-callback" | "animation-frame";
+
+export function driverMetadataRows(driver: CameraFrameDriver | null): string[] {
+  return driver === null ? [] : [line("camera_frame_driver", driver)];
+}
+
 export function sessionMetadataRows(
   records: readonly FeatureRecord[],
   irisWidths: readonly number[],

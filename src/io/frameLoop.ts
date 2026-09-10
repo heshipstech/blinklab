@@ -111,6 +111,64 @@ export function observeVideoDelivery(
   };
 }
 
+/**
+ * Drive the CAMERA's measurement from the frames themselves — one
+ * callback per presented frame, handing on the callback's own
+ * timestamp (roadmap 13.8b, brief A2).
+ *
+ * The display loop above cannot do this job: it ticks at the
+ * display's pace and cannot tell a fresh photograph from the same one
+ * read again, so on a fast machine most of its ticks re-measure a
+ * frame that already exists in the record. Row 13.8a measured what
+ * that does to the published velocity: the frame-to-frame aperture
+ * drop lands across one PROCESSING interval instead of one delivery
+ * interval, and the number inflates with the re-read ratio
+ * (docs/inference-once.txt).
+ *
+ * The timestamp handed on is the callback's own `now` — the same
+ * performance.now() clock the display loop stamped, so every
+ * downstream span still subtracts like-for-like — and NOT the
+ * metadata's mediaTime, which is a media-clock second and a thousand
+ * times smaller. The clip loop below reads mediaTime because a clip's
+ * frames are addressed by their own timeline; a camera has no
+ * timeline to address, only the moment a photograph arrived.
+ *
+ * Crash contract as everywhere in this file: report once, stop for
+ * good, let the caller say so.
+ */
+export function startCameraFrameLoop(
+  video: VideoWithFrameCallback,
+  onFrame: (nowMs: number) => void,
+  onCrash: (error: unknown) => void,
+): VideoFrameLoop {
+  let stopped = false;
+  let handle: number | null = null;
+
+  function tick(nowMs: number): void {
+    if (stopped) return;
+    try {
+      onFrame(nowMs);
+    } catch (error: unknown) {
+      stopped = true;
+      onCrash(error);
+      return;
+    }
+    handle = video.requestVideoFrameCallback(tick);
+  }
+
+  handle = video.requestVideoFrameCallback(tick);
+
+  return {
+    stop: () => {
+      stopped = true;
+      if (handle !== null) {
+        video.cancelVideoFrameCallback(handle);
+        handle = null;
+      }
+    },
+  };
+}
+
 export function startVideoFrameLoop(
   video: VideoWithFrameCallback,
   onFrame: (mediaTimeSeconds: number) => void,
