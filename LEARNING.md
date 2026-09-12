@@ -4015,3 +4015,27 @@ second would leave an auditor nothing to recompute from. A claim
 that carries its own evidence can be re-derived by any reader
 with no second source — which is the property this whole report
 is for, applied one level up, to the report itself.
+
+## A guard that reads source sees shapes, and a refactor changes shapes
+
+Row 13.5's landmarker change had an innocent first draft: the two
+load paths (GPU, then the one CPU retry) shared a helper that took
+the delegate as a parameter. Behavior identical, code tidier — and
+tools/modelProvenance.mjs, which holds MODEL_CARD's configuration
+block to the source by reading the `delegate: "GPU"` literal, read
+null through it. This is 14.0f2's lesson wearing new clothes: there
+the linkHrefs guard fell SILENT when a URL moved into a constant,
+here the provenance pin failed LOUDLY because it compares two
+documents and one side went null — the lucky variant, and luck is
+not a property to build on. A guard that reads source text sees the
+SHAPE it was written against, and a refactor is precisely a change
+of shape without a change of behavior, so every tidying pass is a
+chance to walk out of a guard's field of view.
+
+The fix was chosen over the obvious one. Widening the parser to
+understand helpers would teach it this draft's shape and go blind
+on the next; instead the options are spelled out twice, once per
+load path, with a comment saying WHY the duplication exists — the
+literals are what the card's pin reads, and a helper is exactly
+what hides them. Duplication bought auditability, and the comment
+is what stops the next tidy-minded editor from selling it back.
