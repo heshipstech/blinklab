@@ -81,13 +81,14 @@ over shipping a version.
 
 ### Guards, which are the through-line
 
-27 modules under `tools/` carry the rules and the readers these checks are
+28 modules under `tools/` carry the rules and the readers these checks are
 built from, and every one is reached by a test that runs it: published numbers,
 retired claims, the DROZY measuring commit, the UI documentation against the
 page's own boxes, a coverage floor on `src/core`, a bundle size ceiling, the
-detector-change ratchet, the model's provenance, the corpus rules, the
-continuous-integration gate list, this file's own headline, the generated
-status block, the read-in-full stamps and the ladder's blocked rows. Plus a
+detector-change ratchet, the model's provenance, the metric provenance table
+against the page's readouts, the corpus rules, the continuous-integration gate
+list, this file's own headline, the generated status block, the read-in-full
+stamps and the ladder's blocked rows. Plus a
 Definition of Done that fails a pull request changing `src/` without a learning
 entry or a stated reason.
 
