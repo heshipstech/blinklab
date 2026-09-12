@@ -4089,3 +4089,28 @@ twenty seconds" is unfinishable as text — the person cannot see it
 end. Every cue boundary sounds a tone, and the words hand the
 ending to the ear. An instruction's medium has to survive the state
 the instruction puts the person in.
+
+## Least squares always answers, which is why the fit must testify
+
+Row 14.9a's core defect was not a bug, it was a property of the
+tool: least squares produces a line for ANY input, including pure
+noise, and nothing in the line itself says which it was given. The
+gaze solver had exactly that shape — a noise-only axis fit to a
+slope and an intercept, shipped as a calibration, classifying
+quadrants with confidence about nothing. The repair is not a better
+fitter but a testimony requirement: every fit now carries its RMS
+residual and R², and a fit that cannot clear bounds STATED IN THE
+ROADMAP ROW BEFORE ANY CAPTURE WAS READ refuses by name. The
+pre-statement is the load-bearing part. Bounds chosen after seeing
+residuals are bounds fitted to the answer, the same discretion the
+pre-registration documents exist to remove, so the row's own text
+is the place they were written down.
+
+The second habit, smaller: a calibration is a claim about a room.
+Slopes learned in one window through one camera at one head
+position answer a different question in any other room, so the
+profile now stores its room and the load checks it — and the
+choice of verbs matters: a KNOWN difference refuses, an unknown on
+either side can never convict, because a camera label the browser
+withheld is not evidence of a different camera. Null means not
+measured, applied to a comparison instead of a value.

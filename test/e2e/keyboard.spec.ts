@@ -45,6 +45,21 @@ test("Escape closes the heatmap overlay", async ({ page }) => {
       JSON.stringify({
         horizontal: { slope: 1, intercept: 0 },
         vertical: { slope: 1, intercept: 0 },
+        quality: {
+          horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
+          vertical: { rmsResidual: 0.03, rSquared: 0.98 },
+        },
+        conditions: {
+          pitchDeg: null,
+          yawDeg: null,
+          irisWidthPx: null,
+          viewportWidthPx: window.innerWidth,
+          viewportHeightPx: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
+          screenWidthPx: window.screen.width,
+          screenHeightPx: window.screen.height,
+          cameraLabel: null,
+        },
       }),
     );
   }, PROFILE_KEY);
