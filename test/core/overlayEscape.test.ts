@@ -31,6 +31,7 @@ describe("the register of things the page raises over itself", () => {
       "blink-calibration-overlay",
       "heatmap-overlay",
       "light-overlay",
+      "cue-overlay",
       "kss-dialog",
     ]);
   });

@@ -146,6 +146,7 @@ import {
 import {
   IRIS_SAMPLE_CAP,
   calibrationMetadataRows,
+  cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
@@ -332,6 +333,13 @@ import {
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import { probeWebgl2 } from "./io/webgl2Probe";
+import { playCueTone } from "./io/cueTone";
+import {
+  cueAmong,
+  cueOverlayText,
+  cueTimeScale,
+  scaledCues,
+} from "./core/cueSchedule";
 import {
   idleModelLoad,
   modelLoadResolved,
@@ -1128,6 +1136,7 @@ function render(): void {
   // them off here rather than waiting for a frame that will not come.
   refreshMarkButton();
   refreshLightResponseButton();
+  refreshCueProtocolButton();
   refreshReportGate();
 }
 
@@ -1223,6 +1232,8 @@ function resetSession(): void {
   // one must come down so it cannot cover the fresh session.
   lightStimulusStartMs = null;
   endLightStimulus();
+  cueProtocolStartMs = null;
+  endCueProtocol();
   visibilityChanges = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
@@ -1234,6 +1245,7 @@ function resetSession(): void {
   reportPre.textContent = "";
   refreshMarkButton();
   refreshLightResponseButton();
+  refreshCueProtocolButton();
   framesBlinkMeasurable = 0;
   lastStepSummary = null;
   currentFrameIndex = null;
@@ -2856,6 +2868,9 @@ function exportSession(): void {
     // vendored API, and these rows carry the request, the probe and
     // the inference spread that stand in for it.
     ...delegateMetadataRows(delegateTruth, inferenceSessionSamplesMs),
+    // The cued protocol's whole ground truth (11.0b): absent unless
+    // the protocol ran, appended last like every new block.
+    ...cueMetadataRows(cueProtocolStartMs, cueProtocol.cues, cueProtocolScale),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -4603,6 +4618,7 @@ function processFrame(
         // nothing to measure the reflex against until records exist.
         refreshMarkButton();
         refreshLightResponseButton();
+        refreshCueProtocolButton();
         writeReadout(
           featureLabel,
           featureRecords.length >= FEATURE_RECORD_CAP
@@ -4962,6 +4978,128 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
+// The cued protocol (roadmap 11.0b), on the light stimulus's pattern:
+// every timing decision is pure (core/cueSchedule.ts, fixed in 11.0a
+// before any camera ran), and the code here is the thin io that
+// paints the instruction, sounds the boundary tone, and reads the
+// clock. The scale is 1 except on the shortened runs the end-to-end
+// Check drives, and the export says which (cue_time_scale).
+const cueProtocolScale = cueTimeScale(window.location.search);
+const cueProtocol = scaledCues(cueProtocolScale);
+
+const cueProtocolButton = document.createElement("button");
+cueProtocolButton.textContent = "Cued protocol";
+cueProtocolButton.dataset.testid = "cued-protocol";
+cueProtocolButton.disabled = true;
+
+const cueOverlay = document.createElement("div");
+cueOverlay.dataset.testid = "cue-overlay";
+cueOverlay.hidden = true;
+Object.assign(cueOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  // Below the light stimulus (which must own the screen's luminance)
+  // and above everything else. No `display` is set, so the `hidden`
+  // attribute alone controls it — the light overlay's own lesson.
+  zIndex: "19",
+  background: "#111111",
+});
+const cueMessage = document.createElement("p");
+cueMessage.dataset.testid = "cue-message";
+Object.assign(cueMessage.style, {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  width: "80%",
+  transform: "translate(-50%, -50%)",
+  textAlign: "center",
+  color: "#eeeeee",
+  font: "28px system-ui, sans-serif",
+});
+cueOverlay.append(cueMessage);
+
+// performance.now(), sharing its origin with the records' timestampMs,
+// exactly as the light stimulus's start does — and it STAYS set after
+// the run or an early Escape, so the export records that the protocol
+// ran and when, and the scorer's session-length refusals judge an
+// abandoned run rather than this page guessing.
+let cueProtocolStartMs: number | null = null;
+let cueRafHandle: number | null = null;
+// The tone sounds at every cue BOUNDARY, because closed eyes cannot
+// read a screen: the ending of "close your eyes" belongs to the ear.
+let lastCueMark: string | null = null;
+
+function endCueProtocol(): void {
+  if (cueRafHandle !== null) {
+    cancelAnimationFrame(cueRafHandle);
+    cueRafHandle = null;
+  }
+  cueOverlay.hidden = true;
+}
+
+function startCueProtocol(): void {
+  // Running, on a camera, with a session clock: the same guards the
+  // light stimulus applies, for the same reasons (roadmap 14.0a).
+  if (
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera"
+  ) {
+    return;
+  }
+  cueProtocolStartMs = performance.now();
+  lastCueMark = null;
+  cueOverlay.hidden = false;
+  const step = (): void => {
+    if (cueProtocolStartMs === null) {
+      return;
+    }
+    const current = cueAmong(
+      cueProtocol.cues,
+      cueProtocol.totalMs,
+      performance.now() - cueProtocolStartMs,
+    );
+    const mark =
+      typeof current === "string"
+        ? current
+        : `${current.kind}@${String(current.atMs)}`;
+    if (mark !== lastCueMark) {
+      cueMessage.textContent = cueOverlayText(current);
+      cueOverlay.dataset.cue =
+        typeof current === "string" ? current : current.kind;
+      // No tone for the settle: nothing has been asked yet, and a
+      // beep with no instruction teaches the ear to ignore beeps.
+      if (lastCueMark !== null || mark !== "settle") {
+        playCueTone();
+      }
+      lastCueMark = mark;
+    }
+    if (current === "done") {
+      // Leave the finished screen up to be read; Escape or a tap
+      // closes it, the light overlay's own convention.
+      cueRafHandle = null;
+      return;
+    }
+    cueRafHandle = requestAnimationFrame(step);
+  };
+  cueRafHandle = requestAnimationFrame(step);
+}
+
+function refreshCueProtocolButton(): void {
+  cueProtocolButton.disabled =
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera";
+}
+
+cueProtocolButton.addEventListener("click", startCueProtocol);
+// A tap ends it too: a phone has no Esc (roadmap 14.0b's lesson).
+cueOverlay.addEventListener("click", () => {
+  if (!cueOverlay.hidden) {
+    endCueProtocol();
+  }
+});
+
 // Roadmap 14.0f1 [E2]: one Escape handler for every screen the page
 // raises over itself.
 //
@@ -5010,6 +5148,10 @@ const OVERLAY_CONTROLS: Record<
   "light-overlay": {
     isOpen: () => !lightOverlay.hidden,
     close: endLightStimulus,
+  },
+  "cue-overlay": {
+    isOpen: () => !cueOverlay.hidden,
+    close: endCueProtocol,
   },
   // Present and never reached: the register marks it undismissible, so
   // `escapeCloses` never names it. It is here because leaving it out
@@ -5149,6 +5291,7 @@ exportRow.append(
   // session, before the exports end it, so they come first in the
   // order a person reaches for them.
   lightResponseButton,
+  cueProtocolButton,
   markButton,
   exportButton,
   exportBlinksButton,
@@ -5456,6 +5599,7 @@ app.append(
   blinkCalibrationOverlay,
   heatmapOverlay,
   lightOverlay,
+  cueOverlay,
   kssDialog,
 );
 // Every readout starts with the sentence the idle page shows, from

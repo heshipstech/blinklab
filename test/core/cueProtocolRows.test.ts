@@ -6,6 +6,7 @@ import {
   CUE_SETTLE_MS,
   CUE_TOTAL_MS,
   cueAt,
+  cueOverlayText,
   cueTimeScale,
   scaledCues,
 } from "../../src/core/cueSchedule";
@@ -121,5 +122,30 @@ describe("the cue rows in the export", () => {
     // Measured absence versus a measured zero, the house rule: a
     // protocol that began the instant the record clock did began.
     expect(cueMetadataRows(0, [...CUE_SCHEDULE], 1).length).toBeGreaterThan(0);
+  });
+});
+
+describe("the overlay's words", () => {
+  it("names every instruction and never leaves a moment blank", () => {
+    expect(cueOverlayText("settle")).toContain("baseline");
+    expect(cueOverlayText("done")).toContain("Done");
+    expect(cueOverlayText({ kind: "blink", atMs: 0, holdMs: 1000 })).toContain(
+      "Blink",
+    );
+    // Closed eyes cannot read a screen, so the closure instructions
+    // hand the ending to the ear: every cue boundary sounds a tone,
+    // and the words say to wait for the next one.
+    expect(cueOverlayText({ kind: "close3", atMs: 0, holdMs: 3000 })).toContain(
+      "tone",
+    );
+    expect(
+      cueOverlayText({ kind: "close20", atMs: 0, holdMs: 20000 }),
+    ).toContain("tone");
+    expect(
+      cueOverlayText({ kind: "lookAway", atMs: 0, holdMs: 5000 }),
+    ).toContain("away");
+    expect(
+      cueOverlayText({ kind: "rest", atMs: 0, holdMs: 4000 }).length,
+    ).toBeGreaterThan(0);
   });
 });

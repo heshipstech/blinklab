@@ -32,6 +32,7 @@ export type OverlayId =
   | "blink-calibration-overlay"
   | "heatmap-overlay"
   | "light-overlay"
+  | "cue-overlay"
   | "kss-dialog";
 
 export type Overlay = {
@@ -85,6 +86,15 @@ export const OVERLAYS: readonly Overlay[] = [
       "a fullscreen flash somebody cannot dismiss is frightening, which " +
       "row 14.0b already knew: this is that overlay's own listener, kept " +
       "and moved into the list so the next overlay inherits it",
+  },
+  {
+    id: "cue-overlay",
+    dismissible: true,
+    because:
+      "an abandoned cued run records nothing false — the export says " +
+      "when the protocol started and the scorer refuses a session " +
+      "shorter than the schedule, so leaving early loses a run and " +
+      "never invents one (roadmap 11.0b)",
   },
   {
     id: "kss-dialog",
