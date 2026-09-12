@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { capabilityLadder } from "../../src/core/capabilityLadder";
+
 import {
   buildParticipantReport,
   type ParticipantReportInputs,
@@ -46,6 +48,7 @@ function goodVerdict(): VerdictInputs {
 function goodInputs(): ParticipantReportInputs {
   return {
     verdict: assessSession(goodVerdict()),
+    ladder: capabilityLadder({ sampledFps: 60, irisWidthPx: 26.0 }),
     measured: [
       { label: "Blinks detected", value: { kind: "measured", text: "14" } },
       {
@@ -141,6 +144,10 @@ describe("the full report renderings, committed and diffable", () => {
     verdict.poseValidFraction = 0.62;
     verdict.rulerFitShown = "tooLong";
     inputs.verdict = assessSession(verdict);
+    // The degraded session's browser reports no delivery, so its
+    // ladder must read unknown from the same silence the verdict
+    // reads — one setup, one story, across all three surfaces.
+    inputs.ladder = capabilityLadder({ sampledFps: null, irisWidthPx: 26.0 });
     inputs.truncations = [
       "iris width: computed over the first 20000 frames, later frames " +
         "not sampled",

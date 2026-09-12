@@ -38,6 +38,12 @@ KSS before: 3 of 9
 KSS after: skipped
 Markers (stamped on the record clock, about one second of slack): 2
 
+Capability ladder — what this setup can deliver, from what was
+already measured (each sentence cites its source document):
+  OK — Delivered rate 60.0 frames per second: at or above 60, where the committed sampling model puts a minimal blink's catch odds near certain (docs/blink-sample-rate.txt).
+  OK — Iris ruler 26.0 pixels: at or above the 22 pixels of the smallest iris the record has published a sound session at (docs/frame-rate-negotiation.txt).
+  UNKNOWN — Light: unknown by design. Scene and face luminance are measured on every exported row, but no committed threshold rules them — roadmap 13.6b derives one from committed data, or this cell stays unknown.
+
 5. WHAT WAS WITHHELD, REFUSED, OR TRUNCATED
 
 Every surface, and what it decided:

@@ -31,6 +31,7 @@ import {
   irisAspectRatio,
   irisWidthPx,
 } from "./core/aperture";
+import { capabilityLadder } from "./core/capabilityLadder";
 import { mergedApertureMm } from "./core/crossEyeGate";
 import { toPixels, type Point2 } from "./core/geometry";
 import {
@@ -149,6 +150,7 @@ import {
   deviceMetadataRows,
   driverMetadataRows,
   lightStimulusMetadataRows,
+  medianIrisWidthPx,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   featureRecordOverrunRows,
@@ -2997,8 +2999,19 @@ function participantReportText(): string {
     );
   }
   const breakdown = refused ? null : scoreRecords(featureRecords);
+  const reportVerdictInputs = participantVerdictInputs();
   const inputs: ParticipantReportInputs = {
-    verdict: assessSession(participantVerdictInputs()),
+    verdict: assessSession(reportVerdictInputs),
+    // The ladder reads the SAME rounded rate the verdict reads and
+    // the SAME median the export writes, so the three surfaces
+    // cannot disagree about one setup (roadmap 13.6a).
+    ladder: capabilityLadder({
+      sampledFps: reportVerdictInputs.sampledFps,
+      irisWidthPx: (() => {
+        const median = medianIrisWidthPx(irisWidthSamples);
+        return median === null ? null : asExported(median, 1);
+      })(),
+    }),
     measured,
     score: breakdown,
     scoreWithheldReason: refused

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { capabilityLadder } from "../../src/core/capabilityLadder";
+
 import { CALIBRATION_REFUSED_SENTENCE } from "../../src/core/baseline";
 import { CANNOT_SEE_CLAIMS } from "../../src/core/cannotSee";
 import { demoNoticeText } from "../../src/core/notice";
@@ -74,6 +76,7 @@ function inputs(): ParticipantReportInputs {
       ],
     },
     scoreWithheldReason: null,
+    ladder: capabilityLadder({ sampledFps: 55.0, irisWidthPx: 26.0 }),
     conditions: [
       { label: "Camera", value: { kind: "measured", text: "Fixture Cam" } },
       { label: "KSS before", value: { kind: "unknown" } },
