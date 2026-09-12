@@ -26,7 +26,7 @@ export type FeatureRecord = {
   baselineMm: number | null; // the 4.2 baseline, frozen at birth since 2026-08-20 (blink line)
   shutBaselineMm: number | null; // first-ready baseline (shut line); equals baselineMm since the freeze, kept for contract stability
   blinkRatePerMin: number | null;
-  lastBlinkDurationMs: number | null;
+  lastBlinkDurationMs: number | null; // closed time under the blink line, which makes it ONE of two quantities: a passive-line duration or a guided-line duration, 30-50% apart on the same eyes; blinkLineSource says which this session measured (roadmap 12.0b, ladder A9)
   lastBlinkAmplitudeMm: number | null;
   lastBlinkPeakVelocityMmPerS: number | null;
   perclos: number | null; // 0 to 1
@@ -106,6 +106,14 @@ rare.
 
 - Columns, in order: `startFrame`, `endFrame`, `atMs`, `durationMs`,
   `amplitudeMm`, `peakClosingVelocityMmPerS`, `amplitudeOverVelocityMs`.
+- `durationMs` is closed time under the session's blink line, so the
+  one column carries one of TWO quantities: a passive-line duration
+  (against the line derived from the learned baseline) or a
+  guided-line duration (against the person's own measured
+  open-to-closed midpoint), 30-50% apart on the same eyes (ladder
+  A9). The per-second file's `blinkLineSource` says which ruler this
+  session's blinks were timed against, and a duration is comparable
+  across sessions only at the same source (roadmap 12.0b).
 - **The frame numbers are the reason it exists.** A human annotator
   marks blinks BY FRAME, so a comparison against ground truth has to
   happen in frames. Milliseconds cannot substitute, because our clock

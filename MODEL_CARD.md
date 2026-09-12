@@ -3,13 +3,13 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 9 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 12 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 9 September 2026, claims `e9b0416e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 12 September 2026, claims `83d63008`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -405,6 +405,23 @@ same scripted protocol both iPhones read about 96 ms and both Macs 149
 to 166 ms (`docs/validation-dry-run.txt`), a gap no explanation has yet
 survived. Until roadmap row 10.9 settles it, durations are comparable
 within a device and not across devices.
+
+Blink duration is also line-conditioned, and the duration column does
+not say so by itself — the export's `blinkLineSource` column does.
+Every exported duration is closed time under the session's blink line,
+and that line is one of two different rulers, so the one column
+carries one of two quantities: a **passive-line duration**, timed
+against the line derived from the session's learned baseline, or a
+**guided-line duration**, timed against the person's own measured
+open-to-closed midpoint. On the same eyes the two differ by 30 to 50
+percent, because the guided line sits above the passive one (ladder
+A9, `REMEDIATION-2026-09.md`). A duration is therefore comparable
+across sessions only at the same `blinkLineSource`. The shut side's
+base is recorded the same way: `shutBaselineMm` is the aperture
+baseline frozen the first time it reads ready, and `shutLineSource`
+names the rule that turned it into a line. Named here per roadmap
+12.0b; the adoption decision for a personal shut line is
+`decisions/ADR-0006-shut-line-adoption.md`.
 
 Every corpus number here is also true of a commit, not of the
 repository in general: since 5 September 2026 the result file names the
