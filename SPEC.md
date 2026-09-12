@@ -134,7 +134,7 @@ The file is written to the user's own device through the browser's download path
 ### The session metadata block
 
 Above the header of every export sits a block of `# key: value` lines.
-There are 82 keys, written by nine modules under `src/core`, and this
+There are 96 keys, written by nine modules under `src/core`, and this
 table is the contract: what writes each one, when, in what format, and
 which reader on the Python side consumes it.
 
@@ -239,6 +239,13 @@ defaulting to zero.
 | `frames_measured`                | Every export                              | Integer count of frames the instrument looked at                                                        | `blink_log.py`, `miss_autopsy.py`                                               |
 | `frames_recorded`                | Frame trace only, when truncated          | Integer count of rows the file holds                                                                    | Nothing                                                                         |
 | `frames_sought`                  | Stepped clips                             | Integer count of frames sought                                                                          | Nothing                                                                         |
+| `gaze_calibrated`                | Camera sessions                           | `true` or `false`: whether a gaze profile was in force (14.9a)                                          | Nothing                                                                         |
+| `gaze_r2_bound`                  | Camera sessions                           | The pre-stated R² floor a fit must clear (0.8)                                                          | Nothing                                                                         |
+| `gaze_r2_horizontal`             | Camera sessions with a gaze profile       | The horizontal axis fit's R², three decimals                                                            | Nothing                                                                         |
+| `gaze_r2_vertical`               | Camera sessions with a gaze profile       | The vertical axis fit's R², three decimals                                                              | Nothing                                                                         |
+| `gaze_rms_bound`                 | Camera sessions                           | The pre-stated RMS residual ceiling, screen fractions (0.15)                                            | Nothing                                                                         |
+| `gaze_rms_horizontal`            | Camera sessions with a gaze profile       | The horizontal axis RMS residual, screen fractions, three decimals                                      | Nothing                                                                         |
+| `gaze_rms_vertical`              | Camera sessions with a gaze profile       | The vertical axis RMS residual, screen fractions, three decimals                                        | Nothing                                                                         |
 | `hardware_concurrency`           | Camera sessions                           | Integer core count, or `unknown`                                                                        | Nothing                                                                         |
 | `inexact_landings`               | Stepped clips                             | Integer count of seeks the browser never placed on the clip's clock                                     | Nothing                                                                         |
 | `inference_note`                 | Only when the sample cap bound            | A sentence naming the cap                                                                               | Nothing                                                                         |

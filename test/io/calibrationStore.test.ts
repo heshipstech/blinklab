@@ -8,7 +8,7 @@ import {
   saveCalibrationProfile,
   saveCalibrationSamples,
 } from "../../src/io/calibrationStore";
-import type { CalibrationProfile } from "../../src/core/calibrationProfile";
+import type { StoredGazeProfile } from "../../src/core/calibrationProfile";
 import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
 import { aStoredLine } from "../support/storedLine";
 
@@ -19,9 +19,24 @@ import { aStoredLine } from "../support/storedLine";
 // The contract under test: a failed read reports as nothing stored,
 // a failed write says so with a false, and neither ever throws.
 
-const PROFILE: CalibrationProfile = {
+const PROFILE: StoredGazeProfile = {
   horizontal: { slope: 1, intercept: 0 },
   vertical: { slope: 1, intercept: 0 },
+  quality: {
+    horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
+    vertical: { rmsResidual: 0.03, rSquared: 0.98 },
+  },
+  conditions: {
+    pitchDeg: 1,
+    yawDeg: 0,
+    irisWidthPx: 30,
+    viewportWidthPx: 1200,
+    viewportHeightPx: 800,
+    devicePixelRatio: 2,
+    screenWidthPx: 1512,
+    screenHeightPx: 982,
+    cameraLabel: "Fixture Cam",
+  },
 };
 
 const BLINK: StoredBlinkCalibration = aStoredLine({

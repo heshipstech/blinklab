@@ -17,6 +17,7 @@ import {
 import {
   calibrationMetadataRows,
   cueMetadataRows,
+  gazeCalibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
@@ -166,6 +167,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "negotiationMetadataRows",
   "delegateMetadataRows",
   "cueMetadataRows",
+  "gazeCalibrationMetadataRows",
 ];
 
 /**
@@ -226,6 +228,10 @@ export function fixtureCsv(session: FixtureSession): string {
     // No fixture session runs the cued protocol: the builder is
     // called and writes nothing, the guided-line precedent.
     ...cueMetadataRows(null, CUE_SCHEDULE, 1),
+    // Every fixture is an uncalibrated camera session: the verdict
+    // rows are written (false, and the two bounds), the residual rows
+    // are not (14.9a).
+    ...gazeCalibrationMetadataRows(true, null),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);
