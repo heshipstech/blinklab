@@ -343,7 +343,7 @@ describe("a claimed row its phase will not let start", () => {
     // against a row whose phase forbids it whatever the real list
     // currently says.
     const claimed = roadmap.replace(
-      "Rows 10.3, 11.0b, 13.5, 13.10, 14.3 and 14.9a remain startable and are not marked",
+      "Rows 10.3, 11.0b, 13.10, 14.3 and 14.9a remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -532,7 +532,6 @@ describe("the ladder that has nothing left to start", () => {
     expect(startableClaims(roadmap)).toEqual([
       "10.3",
       "11.0b",
-      "13.5",
       "13.10",
       "14.3",
       "14.9a",
