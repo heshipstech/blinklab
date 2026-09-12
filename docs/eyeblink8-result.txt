@@ -863,3 +863,21 @@ DETECTOR CHANGED, not yet re-measured, declared 12 September 2026:
   line by hand for exactly that reason. Predicted corpus impact:
   none, digit for digit. The owner's next run scores this entry and
   retires it beside the two above.
+
+DETECTOR CHANGED, not yet re-measured, declared 12 September 2026,
+second entry that day:
+
+  The model rides the Cache API, and the runtime prefetches at idle
+
+  src/io/landmarker.ts changes for roadmap 13.10: the model file is
+  fetched by the page's own code, stored in the Cache API, and handed
+  to the landmarker as BYTES (modelAssetBuffer) where that road is
+  open, with the plain same-origin URL kept as the fallback for a
+  browser without the Cache API. Identical bytes travel either road —
+  the file is the committed face_landmarker.task from the page's own
+  origin, sha-pinned by the provenance guard — so which road ran can
+  move no landmark and no number; what changes is only whether a
+  returning visitor re-downloads 3.8 MB. The stepped corpus runner
+  loads the same page and takes the same bytes. Predicted corpus
+  impact: none, digit for digit, scored with the two entries above on
+  the owner's next run.
