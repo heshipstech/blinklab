@@ -4039,3 +4039,29 @@ load path, with a comment saying WHY the duplication exists — the
 literals are what the card's pin reads, and a helper is exactly
 what hides them. Duplication bought auditability, and the comment
 is what stops the next tidy-minded editor from selling it back.
+
+## A speed number is three different numbers wearing one costume
+
+Row 13.10 had to say what the first load costs, and the trap in that
+sentence is the word "costs": a byte count is a property of the
+build, a transfer time is arithmetic over a bitrate somebody chose,
+and a stopwatch reading is a property of one machine on one day.
+All three end up printed in milliseconds or megabytes and read
+interchangeably, and a document that mixes them silently produces
+the classic unfalsifiable page-speed claim — wrong on every machine
+and checkable on none. docs/cold-load.txt therefore labels every
+number with its kind in the same line that states it, and the same
+split told us where the leverage was: the byte counts said gzip
+buys 71% on the wasm and 11% on the model, the derived floors said
+the network dominates every profile below broadband, and the scoped
+timing said no network improvement can beat this machine's 3-second
+compute floor.
+
+The rule's other face is refusing a number you cannot take. The two
+headers that decide which transfer column is real live on the
+public host, and this container's proxy answers for that host — so
+a reading taken here would be a measurement of the proxy wearing
+the host's name. The document reserves the space and names the one
+place the reading can come from, which costs a blank section and
+buys a file with no number in it that a reader cannot trace to its
+kind.
