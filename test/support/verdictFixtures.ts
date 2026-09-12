@@ -29,6 +29,7 @@ import {
   type PoseFrameCounts,
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
+import { delegateMetadataRows } from "../../src/core/delegateTruth";
 import { negotiationMetadataRows } from "../../src/core/frameRateNegotiation";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
 import type { StoredBlinkCalibration } from "../../src/core/guidedCalibration";
@@ -161,6 +162,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "lightStimulusMetadataRows",
   "driverMetadataRows",
   "negotiationMetadataRows",
+  "delegateMetadataRows",
 ];
 
 /**
@@ -211,6 +213,13 @@ export function fixtureCsv(session: FixtureSession): string {
       askedFps: 60,
       applyFailed: false,
     }),
+    // The delegate block (13.5): the ordinary machine, stated once
+    // and stable for the pin — GPU asked and loaded, webgl2 there,
+    // five inferences whose nearest-rank p50 is 7.4 and p95 is 8.1.
+    ...delegateMetadataRows(
+      { requested: "GPU", gpuRejected: false, webgl2Supported: true },
+      [7.2, 7.4, 7.3, 8.1, 7.5],
+    ),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

@@ -24,6 +24,7 @@ export const METADATA_WRITERS = [
   "blinkCalibrationStamp",
   "blinkLog",
   "csv",
+  "delegateTruth",
   "frameClock",
   "frameRateNegotiation",
   "frameTrace",

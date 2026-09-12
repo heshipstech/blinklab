@@ -47,6 +47,12 @@
 # frame_rate_after: 30
 # frame_rate_apply: ok
 # frame_rate_resolution_change: none
+# delegate_requested: GPU
+# delegate_gpu_load: ok
+# delegate_executed: unobservable
+# webgl2_supported: true
+# inference_p50_ms: 7.4
+# inference_p95_ms: 8.1
 timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm,blinkLineMm,blinkLineSource,shutLineMm,shutLineSource,sampledFps,inferenceMs,sceneLum,faceLum,blinkObservedFraction,blinkCountingSuspended,irisOffsetVertical,faceSeconds
 1000,true,60,7,7.9,,,,,,,0,0,,false,true,1.1285714285714286,,,none,,none,,,,,,false,,0
 42000,true,60,7,7.9,,,,,,,0,0,,false,true,1.1285714285714286,,,none,,none,,,,,,false,,0
