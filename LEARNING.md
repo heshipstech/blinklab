@@ -3989,3 +3989,29 @@ commit that created it. A differential guard cannot see a source
 nobody enrolled — that was the metadata guard's lesson on 10
 September — and a ratchet is the same shape of guard wearing
 different clothes.
+
+## Hold the rendering to the module on the numbers it prints itself
+
+Row 13.6a's end-to-end test had a standard shape on offer: drive
+the page, then assert the three ladder sentences against strings
+copied into the spec. That shape rots in a known way — the copies
+pass whenever they match the page, so the spec and the page can
+drift from core TOGETHER, and every wording change means updating
+a fixture that proves nothing. The spec does something stricter
+with less: it parses each rung's own printed number out of the
+rendered report — the delivered rate, the iris pixels — hands
+exactly those numbers back to capabilityLadder(), and requires
+each rendered line to be the module's own sentence for its own
+status. Nothing in the spec knows the right answer; it only knows
+the rendering must agree with the module ON THE INPUTS THE
+RENDERING ITSELF CLAIMS. A wiring bug that feeds the ladder one
+number and prints another now disagrees with its own digits, and
+no fixture exists to be updated into agreement.
+
+The precondition is worth naming, because it is a design pressure
+and not an accident: this only works when the sentence PRINTS its
+inputs. A rung that said "rate is sound" without the frames per
+second would leave an auditor nothing to recompute from. A claim
+that carries its own evidence can be re-derived by any reader
+with no second source — which is the property this whole report
+is for, applied one level up, to the report itself.
