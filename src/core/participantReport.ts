@@ -1,4 +1,5 @@
 import { CANNOT_SEE_CLAIMS } from "./cannotSee";
+import type { LadderRung } from "./capabilityLadder";
 import type { CameraState } from "./cameraState";
 import { demoNoticeText } from "./notice";
 import type { ScoreBreakdown } from "./score";
@@ -41,6 +42,10 @@ export type ParticipantReportInputs = {
   scoreWithheldReason: string | null;
   /** Section 4's lines: camera, rates, frame, KSS, markers. */
   conditions: readonly ReportLine[];
+  /** Section 4's capability ladder: what this setup can deliver,
+   * derived by core/capabilityLadder from already-measured numbers
+   * and never exported (roadmap 13.6a). */
+  ladder: readonly LadderRung[];
   /** Truncation declarations, verbatim as the file carries them. */
   truncations: readonly string[];
   storedProbe: StorageProbe;
@@ -278,6 +283,12 @@ export function buildParticipantReport(
     "4. CONDITIONS",
     "",
     ...lines(inputs.conditions),
+    "",
+    "Capability ladder — what this setup can deliver, from what was",
+    "already measured (each sentence cites its source document):",
+    ...inputs.ladder.map(
+      (rung) => `  ${statusWord(rung.status)} — ${rung.sentence}`,
+    ),
     divider,
     ...sectionFive(inputs),
     divider,

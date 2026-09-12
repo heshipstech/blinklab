@@ -28,6 +28,11 @@ import {
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
 import {
+  delegateMetadataRows,
+  INFERENCE_SAMPLE_CAP,
+  type DelegateTruth,
+} from "../../src/core/delegateTruth";
+import {
   negotiationMetadataRows,
   type FrameRateNegotiation,
 } from "../../src/core/frameRateNegotiation";
@@ -155,6 +160,10 @@ type Shape = {
   cameraFrameDriver: CameraFrameDriver | null;
   /** The 60 fps ask's record; null off the camera (13.2). */
   frameRateNegotiation: FrameRateNegotiation | null;
+  /** The delegate block's inputs: machine facts, so every session
+   * has them, camera or clip (13.5). */
+  delegate: DelegateTruth;
+  inferenceSamplesMs: readonly number[];
 };
 
 /**
@@ -199,6 +208,10 @@ const MINIMAL_CAMERA: Shape = {
     askedFps: 60,
     applyFailed: false,
   },
+  // A session so thin the model never answered: the rows are still
+  // written, reading unknown, because these are promises (13.5).
+  delegate: { requested: null, gpuRejected: null, webgl2Supported: null },
+  inferenceSamplesMs: [],
 };
 
 /**
@@ -260,6 +273,10 @@ const FULL: Shape = {
     askedFps: 60,
     applyFailed: false,
   },
+  delegate: { requested: "GPU", gpuRejected: false, webgl2Supported: true },
+  // At the cap, so the note row — the conditional key — appears in
+  // the session where every optional thing happened.
+  inferenceSamplesMs: Array.from({ length: INFERENCE_SAMPLE_CAP }, () => 7),
 };
 
 /**
@@ -297,6 +314,7 @@ function metadataRows(shape: Shape): string[] {
     ...lightStimulusMetadataRows(shape.lightStimulusStartMs),
     ...driverMetadataRows(shape.cameraFrameDriver),
     ...negotiationMetadataRows(shape.frameRateNegotiation),
+    ...delegateMetadataRows(shape.delegate, shape.inferenceSamplesMs),
   ];
 }
 
@@ -317,6 +335,7 @@ const CALLED_HERE = [
   "lightStimulusMetadataRows",
   "driverMetadataRows",
   "negotiationMetadataRows",
+  "delegateMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

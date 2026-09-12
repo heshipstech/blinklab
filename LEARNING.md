@@ -3998,3 +3998,77 @@ from a green that means "everything". The check that caught it is
 worth keeping too: rerun the failures on a clean tree before
 blaming the change — six failures that reproduce identically
 without the diff are the environment's, not the code's.
+
+## A threshold derived from a distribution needs the factor, not the percentile
+
+Row 10.7b's one constant had a tempting derivation: the noise floor
+committed a cross-eye p95 of 0.86 mm, the row demanded a threshold
+"derived, not chosen", and the p95 itself is the most literal
+derivation on offer. It is also wrong, and the reason is what the
+number MEANS: a 95th percentile of honest frames is a line that
+five percent of honest frames sit past by definition. A refusal
+placed exactly there refuses one good frame in twenty forever, as
+a property of the arithmetic rather than of any eye. The damage
+the gate exists to catch — one eye's landmarks breaking while the
+other holds — sits millimetres past the tail, so the line went to
+twice the p95, the same clear-it-by-a-factor stance the shut-line
+margin and the hysteresis band already take. The derivation stays
+mechanical (a test parses the document and pins the doubling); the
+factor is where the meaning lives.
+
+The smaller habit, applied for the second time in three days: the
+new module joined the detector ratchet's watch list in the same
+commit that created it. A differential guard cannot see a source
+nobody enrolled — that was the metadata guard's lesson on 10
+September — and a ratchet is the same shape of guard wearing
+different clothes.
+
+## Hold the rendering to the module on the numbers it prints itself
+
+Row 13.6a's end-to-end test had a standard shape on offer: drive
+the page, then assert the three ladder sentences against strings
+copied into the spec. That shape rots in a known way — the copies
+pass whenever they match the page, so the spec and the page can
+drift from core TOGETHER, and every wording change means updating
+a fixture that proves nothing. The spec does something stricter
+with less: it parses each rung's own printed number out of the
+rendered report — the delivered rate, the iris pixels — hands
+exactly those numbers back to capabilityLadder(), and requires
+each rendered line to be the module's own sentence for its own
+status. Nothing in the spec knows the right answer; it only knows
+the rendering must agree with the module ON THE INPUTS THE
+RENDERING ITSELF CLAIMS. A wiring bug that feeds the ladder one
+number and prints another now disagrees with its own digits, and
+no fixture exists to be updated into agreement.
+
+The precondition is worth naming, because it is a design pressure
+and not an accident: this only works when the sentence PRINTS its
+inputs. A rung that said "rate is sound" without the frames per
+second would leave an auditor nothing to recompute from. A claim
+that carries its own evidence can be re-derived by any reader
+with no second source — which is the property this whole report
+is for, applied one level up, to the report itself.
+
+## A guard that reads source sees shapes, and a refactor changes shapes
+
+Row 13.5's landmarker change had an innocent first draft: the two
+load paths (GPU, then the one CPU retry) shared a helper that took
+the delegate as a parameter. Behavior identical, code tidier — and
+tools/modelProvenance.mjs, which holds MODEL_CARD's configuration
+block to the source by reading the `delegate: "GPU"` literal, read
+null through it. This is 14.0f2's lesson wearing new clothes: there
+the linkHrefs guard fell SILENT when a URL moved into a constant,
+here the provenance pin failed LOUDLY because it compares two
+documents and one side went null — the lucky variant, and luck is
+not a property to build on. A guard that reads source text sees the
+SHAPE it was written against, and a refactor is precisely a change
+of shape without a change of behavior, so every tidying pass is a
+chance to walk out of a guard's field of view.
+
+The fix was chosen over the obvious one. Widening the parser to
+understand helpers would teach it this draft's shape and go blind
+on the next; instead the options are spelled out twice, once per
+load path, with a comment saying WHY the duplication exists — the
+literals are what the card's pin reads, and a helper is exactly
+what hides them. Duplication bought auditability, and the comment
+is what stops the next tidy-minded editor from selling it back.

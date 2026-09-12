@@ -1,0 +1,136 @@
+ONE PERSONAL RULER: THE SHUT-LINE RULE, WRITTEN FIRST
+=====================================================
+
+Written 10 September 2026, before any dry-run column is read for
+this question and before the owner's droop session exists, in the
+predict-then-verify discipline. Roadmap row 12.0a, brief C2, the
+corpus rule at the head of Phase 12.
+
+THE DEFECT THE RULE FIXES
+-------------------------
+This instrument owns two "eyes shut" consumers — PERCLOS and the
+long-closure detector — and both draw their line the same way:
+EYES_SHUT_FRACTION (0.4) times shutBaselineMm, where shutBaselineMm
+is the aperture baseline frozen the first time the baseline reducer
+reads ready (src/core/longClosure.ts, src/core/perclos.ts,
+main.ts's frozen copy). That is a POPULATION fraction applied to a
+number that was never measured as this person's shut eye: the
+frozen baseline is an open-eye statistic, and 40 percent of it is a
+guess about where "shut" lives that no committed measurement has
+ever checked. Meanwhile the guided calibration already measures the
+person's OWN closed median — and only the blink line uses it. One
+eye, two rulers, and the shut one borrowed.
+
+THE FORM, ONE FOR BOTH LINES
+----------------------------
+Every personal line becomes the same expression:
+
+    line = closedMedian + k x (openMedian - closedMedian)
+
+- The BLINK line is the k = 0.5 instance: today's midpoint
+  (guidedCalibration.ts places it at (open + closed) / 2), restated
+  in the common form with NO behavioural change. The corpus cannot
+  move on this restatement, by arithmetic.
+- The SHUT line is the new instance, and its k is pre-registered
+  here, from the only wobble numbers this repository has committed.
+
+THE SHUT k, DERIVED BEFORE ANY DATA IS READ
+-------------------------------------------
+The 10.7a noise floor (docs/aperture-noise-floor.txt, recomputed by
+test on every run) says: per-eye p95 |frame-to-frame change| 0.286
+and 0.242 mm on the fixture face. A shut line's one job is that an
+eye resting at its own closed median reads shut frame after frame,
+so the line must sit above closedMedian by a margin that p95 tail
+cannot cross; and the convention this code already uses for "clear
+of a line" is the 10 percent hysteresis band
+(APERTURE_HYSTERESIS_FRACTION, blink arm and long-closure re-arm
+alike).
+
+    k = 0.15, with the ADOPTION CONDITION that the margin it buys
+    is real in millimetres:
+
+    0.15 x (openMedian - closedMedian) >= 0.6 mm
+
+0.6 mm is twice the worst committed per-eye p95 (2 x 0.286 =
+0.572, rounded up, the same clear-it-by-a-factor stance the
+hysteresis band takes). A guided pair whose span cannot fund the
+margin does NOT get a personal shut line: the session keeps the
+population rule and the record says which rule ran — the absence
+rule, not a silent downgrade. The guided flow's own separation gate
+(closed at least 30 percent below open) makes the condition
+satisfiable at ordinary spans: any open median of 4 mm or more at
+the minimum legal separation funds it.
+
+Two placement invariants, refusals rather than clamps:
+- The shut line must sit BELOW the blink line's lower hysteresis
+  band: 0.15 x span against 0.45 x span, ordered by construction
+  for any positive span; a violation means the inputs are not a
+  sound guided pair and the placement refuses.
+- k itself never moves per session. A k fitted to a session is not
+  a rule, it is the session grading itself.
+
+ADOPTION: the personal shut line is used by PERCLOS and the
+long-closure detector exactly when a guided line exists for the
+session (the same condition under which the blink line goes
+personal), lifting their baseline-refusal the way it lifts the
+blink line's. No guided line, no change: the population rule
+stands, and a clip never has a stored line by construction.
+
+THE PREDICTIONS
+---------------
+P1 (floor shift, testable from the dry-run exports' existing
+    shutBaselineMm and apertureMm columns, with proxies fixed now:
+    openMedian proxied by the session's median apertureMm over
+    trusted rows, closedMedian by its 1st percentile). On sessions
+    whose frozen baseline was sound — near the open-aperture
+    median — the personal shut line lands BELOW 0.4 x
+    shutBaselineMm: 0.4 of an open-eye number sits near mid-lid,
+    while closed + 0.15 x span hugs the lid. Time-below-line can
+    only fall or hold there.
+P2 (the P80 phone trace, named by the row's own Check). Where the
+    frozen baseline froze wrong-low, 0.4 x baseline can sit at or
+    under the noise around closed and count nothing. Anchored at
+    the person's own closed value plus a funded margin, the
+    personal line sits ABOVE such a line, and the P80 dry-run
+    phone trace reads NONZERO PERCLOS under its own floor.
+P3 (the droop session, the owner's, protocol below). A sustained
+    deliberate droop reads as ONE long-closure event under the
+    personal line, and the two placements disagree on duration in
+    the direction of the personal line starting the event earlier
+    or refusing it — whichever way, the pair of numbers is
+    published side by side.
+P4 (Eyeblink8). The stepped corpus is unchanged by construction:
+    no stored guided line exists on a clip, so neither consumer's
+    line moves there. Scored digit-for-digit on the owner's next
+    corpus run.
+
+THE FALSIFIERS, NAMED BEFORE THE NUMBERS
+----------------------------------------
+- If the P80 trace still reads zero PERCLOS under its own floor,
+  the premise that its zero belonged to the LINE rather than the
+  eyes is falsified, and the outcome section says so; the rule does
+  not gain an exception to rescue it.
+- If, on the sound dry-run sessions, the adoption condition fails
+  more often than it holds, k = 0.15 is too timid to matter at
+  real spans; the outcome records that verdict and any change to k
+  is a NEW dated section with its own derivation, never an edit
+  here.
+- If either placement invariant fires on a session the guided flow
+  accepted, the guided gate and this rule disagree about what a
+  sound pair is, and the disagreement is the finding.
+
+THE DROOP SESSION (owner, one recording)
+----------------------------------------
+One session on the usual laptop setup, exported and kept local as
+always: two minutes ordinary sitting, then on a cue three slow
+deliberate droops — eyes allowed to fall heavy and hover nearly
+shut for five to ten seconds each, without fully closing where
+possible — separated by normal open stretches. The session is run
+through BOTH placements (the retained CSV holds every column both
+need; the instrument is analysis/blinklab/shutline.py, one command
+in tools/shutline_compare.py), and the published outcome is the
+pair of eyes-shut shares and the pair of longest-below-line runs —
+the runs never summed, because adding them would be the dilution
+defect wearing a new column — side by side, in a dated section
+below this one. Row 12.0a ticks on that section — not on this
+rule.

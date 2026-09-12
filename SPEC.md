@@ -26,7 +26,7 @@ export type FeatureRecord = {
   baselineMm: number | null; // the 4.2 baseline, frozen at birth since 2026-08-20 (blink line)
   shutBaselineMm: number | null; // first-ready baseline (shut line); equals baselineMm since the freeze, kept for contract stability
   blinkRatePerMin: number | null;
-  lastBlinkDurationMs: number | null;
+  lastBlinkDurationMs: number | null; // closed time under the blink line, which makes it ONE of two quantities: a passive-line duration or a guided-line duration, 30-50% apart on the same eyes; blinkLineSource says which this session measured (roadmap 12.0b, ladder A9)
   lastBlinkAmplitudeMm: number | null;
   lastBlinkPeakVelocityMmPerS: number | null;
   perclos: number | null; // 0 to 1
@@ -106,6 +106,14 @@ rare.
 
 - Columns, in order: `startFrame`, `endFrame`, `atMs`, `durationMs`,
   `amplitudeMm`, `peakClosingVelocityMmPerS`, `amplitudeOverVelocityMs`.
+- `durationMs` is closed time under the session's blink line, so the
+  one column carries one of TWO quantities: a passive-line duration
+  (against the line derived from the learned baseline) or a
+  guided-line duration (against the person's own measured
+  open-to-closed midpoint), 30-50% apart on the same eyes (ladder
+  A9). The per-second file's `blinkLineSource` says which ruler this
+  session's blinks were timed against, and a duration is comparable
+  across sessions only at the same source (roadmap 12.0b).
 - **The frame numbers are the reason it exists.** A human annotator
   marks blinks BY FRAME, so a comparison against ground truth has to
   happen in frames. Milliseconds cannot substitute, because our clock
@@ -126,7 +134,7 @@ The file is written to the user's own device through the browser's download path
 ### The session metadata block
 
 Above the header of every export sits a block of `# key: value` lines.
-There are 57 keys, written by six modules under `src/core`, and this
+There are 82 keys, written by nine modules under `src/core`, and this
 table is the contract: what writes each one, when, in what format, and
 which reader on the Python side consumes it.
 
@@ -205,6 +213,9 @@ defaulting to zero.
 | `camera_resolution`              | Camera sessions                           | `WIDTHxHEIGHT`, or `unknown`                                                                            | Nothing                                                                         |
 | `clip`                           | Every export                              | The clip's filename with line breaks flattened, or `none`                                               | Nothing                                                                         |
 | `clip_duration_s`                | Every export                              | Seconds to three decimals, or `unknown` where the source carries none                                   | Nothing                                                                         |
+| `delegate_executed`              | Every export                              | `unobservable`: the vendored API reports no executed delegate (13.5)                                    | Nothing                                                                         |
+| `delegate_gpu_load`              | Every export                              | `ok`, `rejected` (the one CPU retry ran), or `unknown`                                                  | Nothing                                                                         |
+| `delegate_requested`             | Every export                              | `GPU` or `CPU`: the delegate of the load that succeeded, or `unknown`                                   | `evaluate_eyeblink8.py`                                                         |
 | `delivered_frames_read_fraction` | Camera sessions, once measurable          | `sampled_fps` over `camera_delivered_fps` to three decimals, at most 1.000                              | Nothing                                                                         |
 | `device_pixel_ratio`             | Camera sessions                           | A number, or `unknown`                                                                                  | Nothing                                                                         |
 | `face_detected_fraction`         | Every export                              | Share of records with a face, to three decimals                                                         | Nothing                                                                         |
@@ -223,6 +234,9 @@ defaulting to zero.
 | `frames_sought`                  | Stepped clips                             | Integer count of frames sought                                                                          | Nothing                                                                         |
 | `hardware_concurrency`           | Camera sessions                           | Integer core count, or `unknown`                                                                        | Nothing                                                                         |
 | `inexact_landings`               | Stepped clips                             | Integer count of seeks the browser never placed on the clip's clock                                     | Nothing                                                                         |
+| `inference_note`                 | Only when the sample cap bound            | A sentence naming the cap                                                                               | Nothing                                                                         |
+| `inference_p50_ms`               | Every export                              | Median model inference time, milliseconds to one decimal, or `unknown`                                  | Nothing                                                                         |
+| `inference_p95_ms`               | Every export                              | 95th percentile inference time, milliseconds to one decimal, or `unknown`                               | Nothing                                                                         |
 | `interruption_N_seconds`         | One row per interruption                  | Seconds to three decimals, or `unknown` where the moment was not stamped                                | Nothing                                                                         |
 | `kss_after`                      | Every export                              | `N (anchor text)` or `skipped`                                                                          | `loader.py`, `validation.py`                                                    |
 | `kss_after_at_seconds`           | Every export, once answered               | Seconds to three decimals                                                                               | Nothing                                                                         |
@@ -255,6 +269,7 @@ defaulting to zero.
 | `user_agent_form`                | Camera sessions                           | `reduced` or `full`                                                                                     | Nothing                                                                         |
 | `viewport`                       | Camera sessions                           | `WIDTHxHEIGHT`, or `unknown`                                                                            | Nothing                                                                         |
 | `visibility_changes`             | Every export                              | Integer count of tab switches during the session                                                        | `validation.py`, `round2.py`                                                    |
+| `webgl2_supported`               | Every export                              | `true`, `false`, or `unknown` when the probe itself threw                                               | Nothing                                                                         |
 
 ## Conventions
 

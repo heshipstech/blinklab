@@ -3,13 +3,13 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 9 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 12 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 9 September 2026, claims `e9b0416e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 12 September 2026, claims `aae5833e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -336,11 +336,19 @@ full hash lives in the lockfile). The landmarker is configured as:
     outputFaceBlendshapes: false
 
 "GPU" is a request, not an observation: the vendored API cannot report
-which delegate actually executed and falls back to CPU silently;
-recording discriminating evidence for the executed delegate is roadmap
-row 13.5. The model file and `src/io/landmarker.ts` are watched by the
-detector ratchet (`tools/detectorRatchet.mjs`), so changing either
-without a corpus re-measure or a dated caveat is a red build.
+which delegate actually executed and falls back to CPU silently. Since
+roadmap row 13.5 the export records everything on this side of that
+wall — `delegate_requested` names the delegate of the load that
+succeeded (with one retry as CPU when the GPU load rejects, recorded
+as `delegate_gpu_load: rejected`), `webgl2_supported` carries the
+page's own probe, and `inference_p50_ms` / `inference_p95_ms` carry
+the discriminating evidence, since the two delegates sit far apart on
+that clock. The executed delegate itself remains unobservable, and
+every export says so in its own `delegate_executed` row rather than
+leaving the request to be read as the answer. The model file and
+`src/io/landmarker.ts` are watched by the detector ratchet
+(`tools/detectorRatchet.mjs`), so changing either without a corpus
+re-measure or a dated caveat is a red build.
 
 ## The instrument that stepped the corpus
 
@@ -405,6 +413,23 @@ same scripted protocol both iPhones read about 96 ms and both Macs 149
 to 166 ms (`docs/validation-dry-run.txt`), a gap no explanation has yet
 survived. Until roadmap row 10.9 settles it, durations are comparable
 within a device and not across devices.
+
+Blink duration is also line-conditioned, and the duration column does
+not say so by itself — the export's `blinkLineSource` column does.
+Every exported duration is closed time under the session's blink line,
+and that line is one of two different rulers, so the one column
+carries one of two quantities: a **passive-line duration**, timed
+against the line derived from the session's learned baseline, or a
+**guided-line duration**, timed against the person's own measured
+open-to-closed midpoint. On the same eyes the two differ by 30 to 50
+percent, because the guided line sits above the passive one (ladder
+A9, `REMEDIATION-2026-09.md`). A duration is therefore comparable
+across sessions only at the same `blinkLineSource`. The shut side's
+base is recorded the same way: `shutBaselineMm` is the aperture
+baseline frozen the first time it reads ready, and `shutLineSource`
+names the rule that turned it into a line. Named here per roadmap
+12.0b; the adoption decision for a personal shut line is
+`decisions/ADR-0006-shut-line-adoption.md`.
 
 Every corpus number here is also true of a commit, not of the
 repository in general: since 5 September 2026 the result file names the

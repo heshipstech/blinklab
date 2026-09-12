@@ -31,6 +31,8 @@ import {
   irisAspectRatio,
   irisWidthPx,
 } from "./core/aperture";
+import { capabilityLadder } from "./core/capabilityLadder";
+import { mergedApertureMm } from "./core/crossEyeGate";
 import { toPixels, type Point2 } from "./core/geometry";
 import {
   irisSampleRegion,
@@ -148,6 +150,7 @@ import {
   deviceMetadataRows,
   driverMetadataRows,
   lightStimulusMetadataRows,
+  medianIrisWidthPx,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   featureRecordOverrunRows,
@@ -328,6 +331,12 @@ import {
   steppingWarning,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
+import { probeWebgl2 } from "./io/webgl2Probe";
+import {
+  delegateMetadataRows,
+  INFERENCE_SAMPLE_CAP,
+  type DelegateTruth,
+} from "./core/delegateTruth";
 import { installTelemetryBlock } from "./io/telemetryBlock";
 import {
   drawDots,
@@ -1198,6 +1207,10 @@ function resetSession(): void {
   framesMeasured = 0;
   deviceInfo = null;
   irisWidthSamples = [];
+  // The export's percentiles describe ONE session's inferences; the
+  // 60-sample readout window may carry across because it only ever
+  // answers "how fast now" (roadmap 13.5).
+  inferenceSessionSamplesMs = [];
   measurementFrame = null;
   sessionMarkers = [];
   // A new session has run no stimulus, and any overlay from the last
@@ -1783,6 +1796,16 @@ async function beginVideoFile(file: File): Promise<void> {
 
 let landmarker: FaceLandmarker | null = null;
 let landmarkerLoadingPromise: Promise<boolean> | null = null;
+// What the export can say about the delegate (roadmap 13.5). The
+// probe runs once at startup — whether this page can create a webgl2
+// context does not change per session — and the request fields fill
+// in when a load finishes. The executed delegate stays unobservable
+// and the export row says so itself.
+let delegateTruth: DelegateTruth = {
+  requested: null,
+  gpuRejected: null,
+  webgl2Supported: probeWebgl2(),
+};
 let lastFacePresent: boolean | null = null;
 
 // Resolves true when the model is ready, false when the download
@@ -1798,7 +1821,16 @@ async function ensureLandmarker(): Promise<boolean> {
   }
   landmarkerLoadingPromise ??= loadLandmarker()
     .then((loaded) => {
-      landmarker = loaded;
+      landmarker = loaded.landmarker;
+      // The load's own record, kept for the export (roadmap 13.5):
+      // which delegate the successful load requested and whether the
+      // one CPU retry ran. The webgl2 probe is separate evidence and
+      // keeps whatever it read at startup.
+      delegateTruth = {
+        ...delegateTruth,
+        requested: loaded.requestedDelegate,
+        gpuRejected: loaded.gpuLoadRejected,
+      };
       return true;
     })
     .catch((error: unknown) => {
@@ -2789,6 +2821,11 @@ function exportSession(): void {
     // verdict, and any resolution the ask traded away; absent on a
     // clip.
     ...negotiationMetadataRows(frameRateNegotiation),
+    // The delegate block (13.5): machine rows, so written for camera
+    // and clip alike — the executed delegate is unobservable in the
+    // vendored API, and these rows carry the request, the probe and
+    // the inference spread that stand in for it.
+    ...delegateMetadataRows(delegateTruth, inferenceSessionSamplesMs),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -2996,8 +3033,19 @@ function participantReportText(): string {
     );
   }
   const breakdown = refused ? null : scoreRecords(featureRecords);
+  const reportVerdictInputs = participantVerdictInputs();
   const inputs: ParticipantReportInputs = {
-    verdict: assessSession(participantVerdictInputs()),
+    verdict: assessSession(reportVerdictInputs),
+    // The ladder reads the SAME rounded rate the verdict reads and
+    // the SAME median the export writes, so the three surfaces
+    // cannot disagree about one setup (roadmap 13.6a).
+    ladder: capabilityLadder({
+      sampledFps: reportVerdictInputs.sampledFps,
+      irisWidthPx: (() => {
+        const median = medianIrisWidthPx(irisWidthSamples);
+        return median === null ? null : asExported(median, 1);
+      })(),
+    }),
     measured,
     score: breakdown,
     scoreWithheldReason: refused
@@ -3412,6 +3460,12 @@ let modelClock = initialModelClock;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
+// The whole session's inference record, for the export's p50/p95
+// (roadmap 13.5). Separate from the rolling window above because one
+// buffer cannot do both jobs: a 60-sample window answers "how fast
+// now" for the readout, and percentiles over it would describe the
+// last second while claiming the session.
+let inferenceSessionSamplesMs: number[] = [];
 // The mean the readout last printed, carried to the record. Null
 // until inference has run at all, which is measured absence: a row
 // written before the first detection is not a row where the model
@@ -3555,10 +3609,16 @@ function processFrame(
       if (frameSource === "camera") {
         deliveryState = noteRead(deliveryState, performance.now());
       }
+      const inferenceElapsedMs = performance.now() - inferenceStartMs;
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
-        performance.now() - inferenceStartMs,
+        inferenceElapsedMs,
         60,
+      );
+      inferenceSessionSamplesMs = pushSample(
+        inferenceSessionSamplesMs,
+        inferenceElapsedMs,
+        INFERENCE_SAMPLE_CAP,
       );
       // The page has shown the model's mean cost since the timing
       // readout landed, and the exported file never carried it
@@ -3702,8 +3762,11 @@ function processFrame(
           );
           stabilityPx =
             rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
-          stabilityMm =
-            rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+          // Roadmap 10.7b: the merge refuses when the eyes disagree
+          // past twice the measured cross-eye p95 — averaging a
+          // broken eye with a good one manufactures a plausible
+          // number, and every consumer downstream reads this value.
+          stabilityMm = mergedApertureMm(leftMm, rightMm);
 
           // The iris aspect ratio for the trace, averaged over both
           // eyes the way the aperture is. Same frame dimensions as

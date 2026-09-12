@@ -42,6 +42,7 @@ WRITERS = [
     "blinkCalibrationStamp",
     "blinkLog",
     "csv",
+    "delegateTruth",
     "frameClock",
     "frameRateNegotiation",
     "frameTrace",
@@ -72,8 +73,16 @@ ALWAYS_WRITTEN = [
     "camera",
     "clip",
     "clip_duration_s",
+    # The delegate block, roadmap 13.5: machine rows, written for
+    # camera and clip alike because the model runs the same either
+    # way. Values may read "unknown"; the ROWS are a promise.
+    "delegate_executed",
+    "delegate_gpu_load",
+    "delegate_requested",
     "face_detected_fraction",
     "frames_measured",
+    "inference_p50_ms",
+    "inference_p95_ms",
     "kss_after",
     "kss_before",
     "markers",
@@ -89,6 +98,7 @@ ALWAYS_WRITTEN = [
     "records",
     "source",
     "visibility_changes",
+    "webgl2_supported",
 ]
 
 # Written only when the thing they describe happened, each with the
@@ -135,6 +145,7 @@ CONDITIONAL = {
     "guided_separation_ratio": "a camera session with a stored guided line",
     "hardware_concurrency": "a camera session",
     "inexact_landings": "a stepped clip",
+    "inference_note": "an inference sample set that hit its cap",
     "interruption_N_seconds": "one row per interruption",
     "kss_after_at_seconds": "an after-answer that was given",
     "light_cycles": "a light-response session",
@@ -173,6 +184,7 @@ READ_BY_PYTHON = [
     "blinks_recorded",
     "calibration_samples",
     "calibration_spread_ratio",
+    "delegate_requested",
     "frames_measured",
     "kss_after",
     "kss_before",

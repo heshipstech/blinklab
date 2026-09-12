@@ -338,12 +338,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 23's five rows) is swapped
+    // The ladder's live claim (amendment 24's eight rows) is swapped
     // for a list claiming 12.7 alone, so the gate check is exercised
     // against a row whose phase forbids it whatever the real list
     // currently says.
     const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable",
+      "Rows 10.3, 11.0b, 13.10, 14.3 and 14.9a remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -523,11 +523,18 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // 13.8b's build half landed on 10 September 2026 and its marker
-    // names the corpus clause, so the ladder declares emptiness in
-    // the form amendment 21 built — a claim, not a deletion. This
-    // pins what the ladder actually says today, so changing it is a
-    // deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+    // Amendment 24's adversarially verified list, 12 September 2026:
+    // eight whole rows with every clause satisfiable here and no
+    // marker. Amendment 21's emptiness declaration is retired to past
+    // tense in the same commit, so this is the ladder's ONE live
+    // claim. This pins what the ladder actually says today, so
+    // changing it is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual([
+      "10.3",
+      "11.0b",
+      "13.10",
+      "14.3",
+      "14.9a",
+    ]);
   });
 });
