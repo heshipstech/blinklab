@@ -1,6 +1,7 @@
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
 import type { LandmarkerDelegate } from "../core/delegateTruth";
+import { cachedModelBytes } from "./modelCache";
 
 // Both the WASM runtime and the model file are served from our own
 // origin. The running app never contacts a third party server.
@@ -27,11 +28,21 @@ export async function loadLandmarker(): Promise<LandmarkerLoad> {
   const fileset = await FilesetResolver.forVisionTasks(
     `${import.meta.env.BASE_URL}mediapipe-wasm`,
   );
+  // The model as bytes from the Cache API when it can be had that way
+  // (roadmap 13.10), the same-origin URL when it cannot: identical
+  // bytes either road, from this page's own origin, so which road ran
+  // changes no measurement — only what a returning visitor re-pays.
+  const modelUrl = `${import.meta.env.BASE_URL}models/face_landmarker.task`;
+  const modelBytes = await cachedModelBytes(modelUrl);
+  const model =
+    modelBytes === null
+      ? { modelAssetPath: modelUrl }
+      : { modelAssetBuffer: modelBytes };
   try {
     return {
       landmarker: await FaceLandmarker.createFromOptions(fileset, {
         baseOptions: {
-          modelAssetPath: `${import.meta.env.BASE_URL}models/face_landmarker.task`,
+          ...model,
           delegate: "GPU",
         },
         runningMode: "VIDEO",
@@ -50,7 +61,7 @@ export async function loadLandmarker(): Promise<LandmarkerLoad> {
     return {
       landmarker: await FaceLandmarker.createFromOptions(fileset, {
         baseOptions: {
-          modelAssetPath: `${import.meta.env.BASE_URL}models/face_landmarker.task`,
+          ...model,
           delegate: "CPU",
         },
         runningMode: "VIDEO",
