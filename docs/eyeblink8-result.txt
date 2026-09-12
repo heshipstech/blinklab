@@ -838,3 +838,27 @@ DETECTOR CHANGED, not yet re-measured, declared 12 September 2026:
   face, and the glasses clip is the named candidate. Whichever way
   it lands, the owner's next corpus run scores this entry and
   retires it the way the block above was retired.
+
+DETECTOR CHANGED, not yet re-measured, declared 12 September 2026:
+
+  The GPU ask is recorded, and a rejected GPU load retries once as CPU
+  The corpus run header names the delegate, unknown where unrecoverable
+
+  src/io/landmarker.ts changes for roadmap 13.5 in two ways the
+  stepped corpus should not feel. The load's outcome now returns as
+  data beside the landmarker — which delegate the successful load
+  requested, whether the GPU load was rejected — and a load that used
+  to THROW on a rejected GPU delegate retries exactly once as CPU. On
+  every machine that ever produced a committed corpus number the GPU
+  load succeeded, because a rejected load ended the run before any
+  number existed: a corpus measured at all was measured under the
+  same GPU request as before, and the retry path can only run where
+  the old code produced nothing to compare against. The scorer
+  (analysis/tools/evaluate_eyeblink8.py) gains a Delegate line in its
+  report header, read from the run's own blink logs via the new
+  delegate_requested key and printed as "unknown, probe added after
+  this run" for runs that predate the key — a header line, no scoring
+  arithmetic touched, and the committed block above carries the same
+  line by hand for exactly that reason. Predicted corpus impact:
+  none, digit for digit. The owner's next run scores this entry and
+  retires it beside the two above.

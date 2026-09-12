@@ -331,6 +331,8 @@ import {
   steppingWarning,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
+import { probeWebgl2 } from "./io/webgl2Probe";
+import type { DelegateTruth } from "./core/delegateTruth";
 import { installTelemetryBlock } from "./io/telemetryBlock";
 import {
   drawDots,
@@ -1786,6 +1788,16 @@ async function beginVideoFile(file: File): Promise<void> {
 
 let landmarker: FaceLandmarker | null = null;
 let landmarkerLoadingPromise: Promise<boolean> | null = null;
+// What the export can say about the delegate (roadmap 13.5). The
+// probe runs once at startup — whether this page can create a webgl2
+// context does not change per session — and the request fields fill
+// in when a load finishes. The executed delegate stays unobservable
+// and the export row says so itself.
+let delegateTruth: DelegateTruth = {
+  requested: null,
+  gpuRejected: null,
+  webgl2Supported: probeWebgl2(),
+};
 let lastFacePresent: boolean | null = null;
 
 // Resolves true when the model is ready, false when the download
@@ -1801,7 +1813,16 @@ async function ensureLandmarker(): Promise<boolean> {
   }
   landmarkerLoadingPromise ??= loadLandmarker()
     .then((loaded) => {
-      landmarker = loaded;
+      landmarker = loaded.landmarker;
+      // The load's own record, kept for the export (roadmap 13.5):
+      // which delegate the successful load requested and whether the
+      // one CPU retry ran. The webgl2 probe is separate evidence and
+      // keeps whatever it read at startup.
+      delegateTruth = {
+        ...delegateTruth,
+        requested: loaded.requestedDelegate,
+        gpuRejected: loaded.gpuLoadRejected,
+      };
       return true;
     })
     .catch((error: unknown) => {
