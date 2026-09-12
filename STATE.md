@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1669 unit tests and 521 Python tests, each figure
+- **The suite:** 1673 unit tests and 521 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 297.0 kB, checked after every build.
 
