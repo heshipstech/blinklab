@@ -202,6 +202,41 @@ export function scaledCues(scale: number): { cues: Cue[]; totalMs: number } {
  * schedule, and garbage is garbage — all of them run the real thing
  * rather than a guessed variant.
  */
+/**
+ * What the overlay says at each moment of the protocol.
+ *
+ * Pure so the words are testable, and worded around one physical
+ * fact: closed eyes cannot read a screen. Every cue boundary sounds a
+ * tone (the io half's job), so the closure instructions hand their
+ * ending to the ear rather than to text nobody can see.
+ */
+export function cueOverlayText(current: Cue | "settle" | "done"): string {
+  if (current === "settle") {
+    return (
+      "Hold still and look at the screen. The cues begin once the " +
+      "baseline has learned your open eyes."
+    );
+  }
+  if (current === "done") {
+    return (
+      "Done. Press Escape or tap to close, then stop the camera and " +
+      "export the session."
+    );
+  }
+  switch (current.kind) {
+    case "blink":
+      return "Blink now";
+    case "close3":
+      return "Close your eyes until the next tone (about 3 seconds)";
+    case "close20":
+      return "Close your eyes until the next tone (about 20 seconds)";
+    case "lookAway":
+      return "Look away from the screen";
+    case "rest":
+      return "Rest. Look at the screen.";
+  }
+}
+
 export function cueTimeScale(search: string): number {
   const raw = new URLSearchParams(search).get("cueTimeScale");
   if (raw === null) {

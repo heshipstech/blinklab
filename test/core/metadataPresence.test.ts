@@ -12,6 +12,7 @@ import {
 import { kssMetadataRows, type KssRating } from "../../src/core/kss";
 import {
   calibrationMetadataRows,
+  cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
@@ -27,6 +28,7 @@ import {
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import {
   delegateMetadataRows,
   INFERENCE_SAMPLE_CAP,
@@ -164,6 +166,8 @@ type Shape = {
    * has them, camera or clip (13.5). */
   delegate: DelegateTruth;
   inferenceSamplesMs: readonly number[];
+  /** When the cued protocol started; null when it never ran (11.0b). */
+  cueProtocolStartMs: number | null;
 };
 
 /**
@@ -212,6 +216,7 @@ const MINIMAL_CAMERA: Shape = {
   // written, reading unknown, because these are promises (13.5).
   delegate: { requested: null, gpuRejected: null, webgl2Supported: null },
   inferenceSamplesMs: [],
+  cueProtocolStartMs: null,
 };
 
 /**
@@ -277,6 +282,7 @@ const FULL: Shape = {
   // At the cap, so the note row — the conditional key — appears in
   // the session where every optional thing happened.
   inferenceSamplesMs: Array.from({ length: INFERENCE_SAMPLE_CAP }, () => 7),
+  cueProtocolStartMs: 5000,
 };
 
 /**
@@ -315,6 +321,7 @@ function metadataRows(shape: Shape): string[] {
     ...driverMetadataRows(shape.cameraFrameDriver),
     ...negotiationMetadataRows(shape.frameRateNegotiation),
     ...delegateMetadataRows(shape.delegate, shape.inferenceSamplesMs),
+    ...cueMetadataRows(shape.cueProtocolStartMs, CUE_SCHEDULE, 1),
   ];
 }
 
@@ -336,6 +343,7 @@ const CALLED_HERE = [
   "driverMetadataRows",
   "negotiationMetadataRows",
   "delegateMetadataRows",
+  "cueMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {
