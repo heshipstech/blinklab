@@ -19,6 +19,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from blinklab.cue_events import cue_event_rows
 from blinklab.loader import Session, cohort_commit_line, cohort_commits
 from blinklab.pilot import InstrumentDefect, pilot_verdict_lines
 from blinklab.round2 import (
@@ -31,6 +32,7 @@ from blinklab.ruler_fit import RulerFitCrossCheck, ruler_fit_cross_check
 from blinklab.stats import wilson_interval
 from blinklab.validation import (
     PairPaths,
+    SessionPair,
     ValidationError,
     find_pairs,
     load_pair,
@@ -461,6 +463,46 @@ def round2_rule_lines(rules: list[Round2Rules]) -> list[str]:
     return lines
 
 
+def cue_event_lines(labeled: list[tuple[str, SessionPair]]) -> list[str]:
+    """The cued protocol's per-event table, roadmap 11.0b.
+
+    One table per participant whose session carries the cue block,
+    the three rate columns beside every tally because a catch rate
+    quoted without them is a number about an unknown instrument.
+    Silent when nobody ran the protocol: an empty header would imply
+    a protocol this round never asked for.
+    """
+    lines: list[str] = []
+    for label, pair in labeled:
+        blink_times = (
+            [blink.at_ms for blink in pair.blinks.blinks]
+            if pair.blinks is not None
+            else []
+        )
+        rows = cue_event_rows(pair.session.metadata, blink_times)
+        if rows is None:
+            continue
+        if not lines:
+            lines.extend(["CUED PROTOCOL, PER EVENT", ""])
+        lines.append(f"{label}:")
+        lines.append(
+            table(
+                [
+                    "cue",
+                    "kind",
+                    "at s",
+                    "tally",
+                    "delivered fps",
+                    "processing fps",
+                    "sampled fps",
+                ],
+                rows,
+            )
+        )
+        lines.append("")
+    return lines
+
+
 def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     """The whole report, and the number of participants it refused.
 
@@ -485,6 +527,7 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     # note. The sessions are kept so the report can say whether it is
     # describing one instrument.
     loaded: list[Session] = []
+    cue_pairs: list[tuple[str, SessionPair]] = []
     for paths in pairs:
         try:
             pair = load_pair(paths)
@@ -502,6 +545,7 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
             accounts.append(
                 (row.label, ruler_fit_cross_check(pair.session.frame))
             )
+            cue_pairs.append((row.label, pair))
             loaded.append(pair.session)
         except ValidationError as error:
             # Never a skip. A person missing from the table is a person
@@ -524,6 +568,7 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
         "",
         conditions_table(rows) if rows else "no readable sessions",
         "",
+        *cue_event_lines(cue_pairs),
     ]
     if refusals:
         lines += ["REFUSED", ""]

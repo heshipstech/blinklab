@@ -191,8 +191,19 @@ READ_BY_PYTHON = [
     "blinks_recorded",
     "calibration_samples",
     "calibration_spread_ratio",
+    # The cued per-event table (11.0b). The cue_N_* pair is read via
+    # an f-string the literal scan below cannot see; declared here
+    # anyway, because the declaration is the contract and the scan is
+    # only its net.
+    "camera_delivered_fps",
+    "cue_N_kind",
+    "cue_N_seconds",
+    "cue_protocol_start_ms",
+    "cue_response_window_ms",
+    "cues",
     "delegate_requested",
     "frames_measured",
+    "measured_fps",
     "kss_after",
     "kss_before",
     "light_stimulus_start_ms",
