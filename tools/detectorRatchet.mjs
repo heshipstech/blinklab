@@ -36,6 +36,7 @@ import { join } from "node:path";
  */
 export const DETECTOR_SOURCES = [
   "src/core/blink.ts",
+  "src/core/crossEyeGate.ts",
   "src/core/blinkShape.ts",
   "src/core/aperture.ts",
   "src/core/baseline.ts",

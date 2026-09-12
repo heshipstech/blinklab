@@ -816,3 +816,25 @@ DETECTOR CHANGED, re-measured on 10 September 2026, digit for digit by the run a
   how all eight baselines were born on the anchor run. Predicted
   delta: byte-identical. The next corpus run scores this beside the
   three entries above and retires all four.
+
+DETECTOR CHANGED, not yet re-measured, declared 12 September 2026:
+
+  The two eyes must agree before they average, by the measured margin
+
+  One file joins the watch list in the same commit that creates it:
+  src/core/crossEyeGate.ts, enrolled in DETECTOR_SOURCES at birth
+  because a roster cannot see a source nobody added (the metadata
+  guard's enrolment lesson, applied to this ratchet before it could
+  repeat). The change it carries is behavioral on the measurement
+  path once wired: the per-frame aperture has always been the plain
+  mean of the two eyes, and it becomes a REFUSED merge when the eyes
+  disagree by more than 1.72 mm — twice the cross-eye p95 the noise
+  floor committed (docs/aperture-noise-floor.txt, 0.860 mm), a
+  threshold derived rather than chosen and held to that document by
+  test. Predicted corpus impact: at or near zero on clean clips,
+  because honest disagreement ends at 0.86 mm by measurement and the
+  line sits at twice that; any change concentrates on frames where
+  ONE eye's landmarks degrade while the pose gate still admits the
+  face, and the glasses clip is the named candidate. Whichever way
+  it lands, the owner's next corpus run scores this entry and
+  retires it the way the block above was retired.
