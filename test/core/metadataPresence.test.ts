@@ -17,6 +17,7 @@ import {
   deviceMetadataRows,
   driverMetadataRows,
   featureRecordOverrunRows,
+  gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
@@ -28,6 +29,7 @@ import {
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import type { ProfileQuality } from "../../src/core/calibrationProfile";
 import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import {
   delegateMetadataRows,
@@ -168,6 +170,8 @@ type Shape = {
   inferenceSamplesMs: readonly number[];
   /** When the cued protocol started; null when it never ran (11.0b). */
   cueProtocolStartMs: number | null;
+  /** The gaze fit's quality; null when no profile was in force (14.9a). */
+  gazeQuality: ProfileQuality | null;
 };
 
 /**
@@ -217,6 +221,7 @@ const MINIMAL_CAMERA: Shape = {
   delegate: { requested: null, gpuRejected: null, webgl2Supported: null },
   inferenceSamplesMs: [],
   cueProtocolStartMs: null,
+  gazeQuality: null,
 };
 
 /**
@@ -283,6 +288,10 @@ const FULL: Shape = {
   // the session where every optional thing happened.
   inferenceSamplesMs: Array.from({ length: INFERENCE_SAMPLE_CAP }, () => 7),
   cueProtocolStartMs: 5000,
+  gazeQuality: {
+    horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
+    vertical: { rmsResidual: 0.03, rSquared: 0.98 },
+  },
 };
 
 /**
@@ -322,6 +331,10 @@ function metadataRows(shape: Shape): string[] {
     ...negotiationMetadataRows(shape.frameRateNegotiation),
     ...delegateMetadataRows(shape.delegate, shape.inferenceSamplesMs),
     ...cueMetadataRows(shape.cueProtocolStartMs, CUE_SCHEDULE, 1),
+    ...gazeCalibrationMetadataRows(
+      shape.source === "camera",
+      shape.gazeQuality,
+    ),
   ];
 }
 
@@ -344,6 +357,7 @@ const CALLED_HERE = [
   "negotiationMetadataRows",
   "delegateMetadataRows",
   "cueMetadataRows",
+  "gazeCalibrationMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

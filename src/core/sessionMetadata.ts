@@ -1,3 +1,8 @@
+import {
+  GAZE_R2_BOUND,
+  GAZE_RMS_BOUND,
+  type ProfileQuality,
+} from "./calibrationProfile";
 import type { CalibrationWindow } from "./calibrationWindow";
 import { CUE_RESPONSE_WINDOW_MS, type Cue } from "./cueSchedule";
 import type { DeliveryRates } from "./deliveryRate";
@@ -492,6 +497,40 @@ export function cueMetadataRows(
     rows.push(line(`cue_${index + 1}_seconds`, (cue.atMs / 1000).toFixed(3)));
     rows.push(line(`cue_${index + 1}_hold_ms`, Math.round(cue.holdMs)));
   });
+  return rows;
+}
+
+/**
+ * Whether gaze was calibrated, how well, and against what bounds
+ * (roadmap 14.9a). Camera sessions only: a clip has no gaze profile
+ * in force by construction, and rows there would invite a reader to
+ * look for a calibration that never applied. On a camera the verdict
+ * rows are written whatever they say — `false` is a fact about the
+ * session — and the bounds travel with them so a reader can judge
+ * the residuals without this repository's source. The residual rows
+ * appear only WITH a profile, because a residual of a fit that never
+ * happened is not unknown, it is nonexistent.
+ */
+export function gazeCalibrationMetadataRows(
+  cameraSession: boolean,
+  quality: ProfileQuality | null,
+): string[] {
+  if (!cameraSession) {
+    return [];
+  }
+  const rows = [
+    line("gaze_calibrated", quality === null ? "false" : "true"),
+    line("gaze_rms_bound", GAZE_RMS_BOUND),
+    line("gaze_r2_bound", GAZE_R2_BOUND),
+  ];
+  if (quality !== null) {
+    rows.push(
+      line("gaze_rms_horizontal", quality.horizontal.rmsResidual.toFixed(3)),
+      line("gaze_rms_vertical", quality.vertical.rmsResidual.toFixed(3)),
+      line("gaze_r2_horizontal", quality.horizontal.rSquared.toFixed(3)),
+      line("gaze_r2_vertical", quality.vertical.rSquared.toFixed(3)),
+    );
+  }
   return rows;
 }
 

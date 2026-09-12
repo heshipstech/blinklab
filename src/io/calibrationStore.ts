@@ -3,8 +3,9 @@ import {
   type CompletedTarget,
 } from "../core/calibrationCapture";
 import {
-  parseCalibrationProfile,
-  type CalibrationProfile,
+  parseStoredGazeProfile,
+  serializeGazeProfile,
+  type StoredGazeProfile,
 } from "../core/calibrationProfile";
 import {
   parseBlinkCalibration,
@@ -160,9 +161,9 @@ export function loadCalibrationSamples(): CompletedTarget[] | null {
   return parseCalibrationSamples(raw);
 }
 
-export function saveCalibrationProfile(profile: CalibrationProfile): boolean {
+export function saveCalibrationProfile(profile: StoredGazeProfile): boolean {
   try {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    localStorage.setItem(PROFILE_KEY, serializeGazeProfile(profile));
     return true;
   } catch (error: unknown) {
     console.warn("calibration profile could not be stored:", error);
@@ -170,7 +171,7 @@ export function saveCalibrationProfile(profile: CalibrationProfile): boolean {
   }
 }
 
-export function loadCalibrationProfile(): CalibrationProfile | null {
+export function loadCalibrationProfile(): StoredGazeProfile | null {
   let raw: string | null;
   try {
     raw = localStorage.getItem(PROFILE_KEY);
@@ -183,9 +184,11 @@ export function loadCalibrationProfile(): CalibrationProfile | null {
   }
   // The validated boundary, not a bare cast: a stored value that parses
   // but is the wrong shape used to become a mapping that returned NaN
-  // for every gaze point. parseCalibrationProfile returns null for it,
-  // and the page then simply shows as uncalibrated.
-  return parseCalibrationProfile(raw);
+  // for every gaze point. Since 14.9a the shape includes the fit
+  // quality and the conditions the profile was measured under; a v1
+  // profile without them parses as null, because an uncheckable
+  // calibration is the thing that row retires.
+  return parseStoredGazeProfile(raw);
 }
 
 /**
