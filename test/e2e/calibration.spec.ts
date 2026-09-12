@@ -86,12 +86,31 @@ test("a returning visitor's stored profile re-enables the heatmap", async ({
   // solve did. So the heatmap, and the scanpath replay behind it,
   // were unreachable on every visit after the first. The seed below
   // IS the returning visitor: a profile in storage before page load.
+  // The seed carries the full stored shape (roadmap 14.9a): a bare
+  // four-number profile now honestly parses as no profile, and the
+  // conditions are read from the live window so the admission gate
+  // sees the room it was "calibrated" in.
   await page.addInitScript(() => {
     localStorage.setItem(
       "blinklab-calibration-profile-v1",
       JSON.stringify({
         horizontal: { slope: 1, intercept: 0 },
         vertical: { slope: 1, intercept: 0 },
+        quality: {
+          horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
+          vertical: { rmsResidual: 0.03, rSquared: 0.98 },
+        },
+        conditions: {
+          pitchDeg: null,
+          yawDeg: null,
+          irisWidthPx: null,
+          viewportWidthPx: window.innerWidth,
+          viewportHeightPx: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
+          screenWidthPx: window.screen.width,
+          screenHeightPx: window.screen.height,
+          cameraLabel: null,
+        },
       }),
     );
   });
