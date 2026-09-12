@@ -333,6 +333,12 @@ import {
 import { loadLandmarker } from "./io/landmarker";
 import { probeWebgl2 } from "./io/webgl2Probe";
 import {
+  idleModelLoad,
+  modelLoadResolved,
+  modelLoadStarted,
+  modelLoadTick,
+} from "./core/modelLoad";
+import {
   delegateMetadataRows,
   INFERENCE_SAMPLE_CAP,
   type DelegateTruth,
@@ -1796,6 +1802,9 @@ async function beginVideoFile(file: File): Promise<void> {
 
 let landmarker: FaceLandmarker | null = null;
 let landmarkerLoadingPromise: Promise<boolean> | null = null;
+// The model-load clock (roadmap 13.10): src/core/modelLoad.ts holds
+// the rule, this is only its current reading.
+let modelLoadState = idleModelLoad;
 // What the export can say about the delegate (roadmap 13.5). The
 // probe runs once at startup — whether this page can create a webgl2
 // context does not change per session — and the request fields fill
@@ -1819,6 +1828,7 @@ async function ensureLandmarker(): Promise<boolean> {
   if (landmarker !== null) {
     return true;
   }
+  modelLoadState = modelLoadStarted(modelLoadState, performance.now());
   landmarkerLoadingPromise ??= loadLandmarker()
     .then((loaded) => {
       landmarker = loaded.landmarker;
@@ -1831,16 +1841,36 @@ async function ensureLandmarker(): Promise<boolean> {
         requested: loaded.requestedDelegate,
         gpuRejected: loaded.gpuLoadRejected,
       };
+      modelLoadState = modelLoadResolved(modelLoadState, true);
       return true;
     })
     .catch((error: unknown) => {
       console.error("face landmarker failed to load:", error);
+      modelLoadState = modelLoadResolved(modelLoadState, false);
       return false;
     })
     .finally(() => {
       landmarkerLoadingPromise = null;
     });
-  return landmarkerLoadingPromise;
+  // The wait wears a clock (roadmap 13.10). A download that hangs
+  // used to leave "Loading the measuring model..." on screen forever;
+  // the reducer's timeout now resolves this caller false, which is
+  // the same road a download error takes — into the visible
+  // modelFailed state with its retry button. The download itself is
+  // not cancelled: a model that arrives after the verdict still sets
+  // `landmarker`, so the retry is instant instead of 15.8 MB again.
+  const timedOut = new Promise<false>((resolve) => {
+    const interval = window.setInterval(() => {
+      modelLoadState = modelLoadTick(modelLoadState, performance.now());
+      if (modelLoadState.kind !== "loading") {
+        window.clearInterval(interval);
+        if (modelLoadState.kind === "failed") {
+          resolve(false);
+        }
+      }
+    }, 1000);
+  });
+  return Promise.race([landmarkerLoadingPromise, timedOut]);
 }
 
 startButton.addEventListener("click", () => {
