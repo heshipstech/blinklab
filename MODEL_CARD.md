@@ -9,7 +9,7 @@ that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 12 September 2026, claims `83d63008`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 12 September 2026, claims `aae5833e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -336,11 +336,19 @@ full hash lives in the lockfile). The landmarker is configured as:
     outputFaceBlendshapes: false
 
 "GPU" is a request, not an observation: the vendored API cannot report
-which delegate actually executed and falls back to CPU silently;
-recording discriminating evidence for the executed delegate is roadmap
-row 13.5. The model file and `src/io/landmarker.ts` are watched by the
-detector ratchet (`tools/detectorRatchet.mjs`), so changing either
-without a corpus re-measure or a dated caveat is a red build.
+which delegate actually executed and falls back to CPU silently. Since
+roadmap row 13.5 the export records everything on this side of that
+wall — `delegate_requested` names the delegate of the load that
+succeeded (with one retry as CPU when the GPU load rejects, recorded
+as `delegate_gpu_load: rejected`), `webgl2_supported` carries the
+page's own probe, and `inference_p50_ms` / `inference_p95_ms` carry
+the discriminating evidence, since the two delegates sit far apart on
+that clock. The executed delegate itself remains unobservable, and
+every export says so in its own `delegate_executed` row rather than
+leaving the request to be read as the answer. The model file and
+`src/io/landmarker.ts` are watched by the detector ratchet
+(`tools/detectorRatchet.mjs`), so changing either without a corpus
+re-measure or a dated caveat is a red build.
 
 ## The instrument that stepped the corpus
 
