@@ -184,6 +184,7 @@ READ_BY_PYTHON = [
     "blinks_recorded",
     "calibration_samples",
     "calibration_spread_ratio",
+    "delegate_requested",
     "frames_measured",
     "kss_after",
     "kss_before",

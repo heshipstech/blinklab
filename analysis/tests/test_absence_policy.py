@@ -34,12 +34,20 @@ test.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pytest
+
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[2] / "analysis" / "tools")
+)
+
+from evaluate_eyeblink8 import delegate_header  # noqa: E402
 
 from blinklab import round2, validation_checks, verdict
 from blinklab.blink_log import BlinkLog
@@ -306,6 +314,16 @@ READ_SITES = [
         lambda meta: meta.get("kss_after", "not asked"),
         {"kss_after": "4"},
         "not asked",
+    ),
+    ReadSite(
+        "delegate_requested",
+        "evaluate_eyeblink8.delegate_header",
+        lambda meta: delegate_header([meta.get("delegate_requested")]),
+        {"delegate_requested": "GPU"},
+        "unknown, probe added after this run",
+        # Absence is age, not damage: every run measured before
+        # roadmap 13.5 carries no such row, and the header names that
+        # condition in words rather than guessing a delegate.
     ),
 ]
 

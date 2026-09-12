@@ -15,20 +15,13 @@ export type LandmarkerLoad = {
   gpuLoadRejected: boolean;
 };
 
-async function createWith(
-  fileset: Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>>,
-  delegate: LandmarkerDelegate,
-): Promise<FaceLandmarker> {
-  return FaceLandmarker.createFromOptions(fileset, {
-    baseOptions: {
-      modelAssetPath: `${import.meta.env.BASE_URL}models/face_landmarker.task`,
-      delegate,
-    },
-    runningMode: "VIDEO",
-    numFaces: 1,
-    outputFacialTransformationMatrixes: true,
-  });
-}
+// The options are spelled out twice below on purpose. MODEL_CARD.md's
+// provenance section is held to these literals by
+// tools/modelProvenance.mjs, and a shared helper taking the delegate
+// as a parameter is exactly what hides them from that pin — the guard
+// read null the moment the first draft of this retry factored them
+// out. The FIRST delegate literal is the primary request, which is
+// what the card's configuration block states.
 
 export async function loadLandmarker(): Promise<LandmarkerLoad> {
   const fileset = await FilesetResolver.forVisionTasks(
@@ -36,7 +29,15 @@ export async function loadLandmarker(): Promise<LandmarkerLoad> {
   );
   try {
     return {
-      landmarker: await createWith(fileset, "GPU"),
+      landmarker: await FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: `${import.meta.env.BASE_URL}models/face_landmarker.task`,
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        outputFacialTransformationMatrixes: true,
+      }),
       requestedDelegate: "GPU",
       gpuLoadRejected: false,
     };
@@ -47,7 +48,15 @@ export async function loadLandmarker(): Promise<LandmarkerLoad> {
     // records which request actually loaded, so no reader mistakes
     // the retried session for the ordinary one.
     return {
-      landmarker: await createWith(fileset, "CPU"),
+      landmarker: await FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: `${import.meta.env.BASE_URL}models/face_landmarker.task`,
+          delegate: "CPU",
+        },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        outputFacialTransformationMatrixes: true,
+      }),
       requestedDelegate: "CPU",
       gpuLoadRejected: true,
     };
