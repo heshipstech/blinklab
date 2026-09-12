@@ -456,6 +456,26 @@ button:focus-visible {
   gap: 8px;
   margin-top: 14px;
 }
+/* Roadmap 14.3: the explain-this-number control. A readout row is a
+ * two-column flex under space-between, and a third child there would
+ * push the value into the middle, so a row carrying the control pushes
+ * the value right itself and lets the little button sit at the edge.
+ */
+.box p:has(> .explain) {
+  justify-content: flex-start;
+}
+.box p:has(> .explain) > .value {
+  margin-left: auto;
+}
+.explain {
+  flex: none;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: none;
+}
 label {
   display: inline-flex;
   align-items: center;

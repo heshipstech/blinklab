@@ -534,6 +534,21 @@ The guard in `tools/uiGuard.mjs` holds this list to the code. None says
 | `Ruler fit: not measuring`                              |
 | `Feature records: none yet (about one per second)`      |
 
+### 5.10 Explain-this-number provenance notes
+
+Roadmap 14.3. Every readout in the table above carries a small round `?`
+button at its right edge (accessible name `Explain this number: <label>`,
+`aria-expanded` kept true to its state). Clicking it toggles a
+`provenance-note` paragraph directly under the readout, in caveat type,
+speaking that metric's standing from the table in
+`src/core/metricProvenance.ts`: the record's taxonomy first (measured /
+convention / unvalidated / bookkeeping), then the status sentence. Every
+`docs/...` path the sentence cites renders as a link pinned to the commit
+the page was built from, through `src/core/docCitations.ts`, the apparatus
+row 14.0f2 built. `tools/provenanceGuard.mjs` holds the table's keys to the
+idle readout registry in both directions and every cited path to a file
+that exists.
+
 ## 6. Region 4: Overlays
 
 All cover the whole window and sit above everything.

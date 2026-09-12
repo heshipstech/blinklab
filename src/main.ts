@@ -173,6 +173,8 @@ import {
 } from "./core/lightSchedule";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
+import { citationSegments, docUrl } from "./core/docCitations";
+import { provenanceText } from "./core/metricProvenance";
 import {
   escapeBlocked,
   escapeCloses,
@@ -5650,10 +5652,22 @@ function sizeGraphsToBox(): void {
 // Splitting on the FIRST colon works because every readout is written
 // as "Label: value". A line with no colon is left alone rather than
 // guessed at.
+// Roadmap 14.3. The explain-this-number control each readout carries,
+// keyed by the readout element, because writeReadout rebuilds the
+// readout's children on every value and a button planted there once
+// would be wiped by the first measurement. The map is filled after
+// the idle registry below; writeReadout re-appends the control on
+// every write, so the affordance survives the rewriting the values do.
+const provenanceControls = new Map<HTMLElement, HTMLButtonElement>();
+
 function writeReadout(element: HTMLElement, text: string): void {
+  const control = provenanceControls.get(element);
   const at = text.indexOf(": ");
   if (at === -1) {
     element.textContent = text;
+    if (control !== undefined) {
+      element.append(control);
+    }
     return;
   }
   const label = document.createElement("span");
@@ -5673,6 +5687,9 @@ function writeReadout(element: HTMLElement, text: string): void {
   value.className = "value";
   value.textContent = text.slice(at + 2);
   element.replaceChildren(label, separator, value);
+  if (control !== undefined) {
+    element.append(control);
+  }
 }
 
 statusBanner.append(bannerIdle, status, modelStatus, alertBanner);
@@ -5755,6 +5772,52 @@ const idleReadoutElements: Readonly<Record<string, HTMLElement>> = {
   "Ruler fit": rulerFitLabel,
   "Feature records": featureLabel,
 };
+
+// Roadmap 14.3. Every readout gets its explain-this-number control:
+// a small button on the readout itself and a note under it speaking
+// the metric's standing from core/metricProvenance.ts, with each
+// docs/ citation turned into a link pinned to the build's own commit
+// through core/docCitations.ts — the apparatus 14.0f2 built. The
+// table throws on a label it has never heard of, so a readout added
+// to the registry without a provenance entry fails here at startup
+// rather than rendering a number with no standing.
+function attachProvenance(readout: HTMLElement, label: string): void {
+  const explainButton = document.createElement("button");
+  explainButton.textContent = "?";
+  explainButton.className = "explain";
+  explainButton.setAttribute("aria-label", `Explain this number: ${label}`);
+  explainButton.setAttribute("aria-expanded", "false");
+  const note = document.createElement("p");
+  note.className = "caveat";
+  note.dataset.testid = "provenance-note";
+  note.hidden = true;
+  const commit =
+    document
+      .querySelector('meta[name="build-commit"]')
+      ?.getAttribute("content") ?? null;
+  for (const segment of citationSegments(provenanceText(label))) {
+    if (segment.kind === "text") {
+      note.append(segment.text);
+    } else {
+      const link = document.createElement("a");
+      link.href = docUrl(segment.path, commit);
+      link.textContent = segment.path;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      note.append(link);
+    }
+  }
+  explainButton.addEventListener("click", () => {
+    note.hidden = !note.hidden;
+    explainButton.setAttribute("aria-expanded", String(!note.hidden));
+  });
+  provenanceControls.set(readout, explainButton);
+  readout.after(note);
+  readout.append(explainButton);
+}
+for (const [label, element] of Object.entries(idleReadoutElements)) {
+  attachProvenance(element, label);
+}
 
 function applyIdleReadouts(): void {
   for (const [label, value] of IDLE_READOUTS) {
