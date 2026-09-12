@@ -108,6 +108,13 @@ ALWAYS_WRITTEN = [
 CONDITIONAL = {
     "blinks_detected": "the blink log, which is a different file",
     "blinks_recorded": "the blink log, which is a different file",
+    "cue_N_hold_ms": "one row per instruction cue",
+    "cue_N_kind": "one row per instruction cue",
+    "cue_N_seconds": "one row per instruction cue",
+    "cue_protocol_start_ms": "a cued-protocol session",
+    "cue_response_window_ms": "a cued-protocol session",
+    "cue_time_scale": "a cued-protocol session",
+    "cues": "a cued-protocol session",
     "calibration_ceiling_bound": "a baseline that froze",
     "calibration_refused": "a baseline that froze",
     "calibration_samples": "a baseline that froze",
