@@ -15,6 +15,7 @@ of them is a measurement worth acting on.
 from __future__ import annotations
 
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from blinklab.blink_match import MatchResult
@@ -89,3 +90,51 @@ class TestTheSummaryCarriesItsIntervals:
 
     def test_no_clips_is_said_rather_than_summarised(self) -> None:
         assert report([]) == "No clips could be evaluated."
+
+
+class TestTheDelegateLine:
+    """Roadmap 13.5: the run header names the delegate it was asked for.
+
+    Named REQUESTED on purpose. The vendored API reports no executed
+    delegate, so a header claiming "ran on GPU" would state an
+    observation nobody made; the line carries the request the run's
+    own blink logs recorded, and for logs that predate the
+    delegate_requested key it says the only honest thing there is.
+    """
+
+    def test_a_run_that_predates_the_probe_says_so(self) -> None:
+        # The committed 2026-09-09 run has no delegate_requested key
+        # anywhere, and its header must not read as a measurement.
+        text = report([clip("corpus", 341, 67, 65)])
+        assert "Delegate   unknown, probe added after this run" in text
+
+    def test_a_recorded_request_is_printed_as_a_request(self) -> None:
+        recorded = replace(
+            clip("corpus", 341, 67, 65), delegate_requested="GPU"
+        )
+        text = report([recorded])
+        assert (
+            "Delegate   GPU requested; executed delegate unobservable" in text
+        )
+
+    def test_clips_that_disagree_are_reported_as_mixed(self) -> None:
+        # A run half measured before the key existed and half after
+        # is not a run with one delegate story, and averaging the two
+        # into either would be the dilution defect wearing new keys.
+        a = replace(clip("one", 30, 5, 2), delegate_requested="GPU")
+        b = clip("two", 40, 4, 3)
+        text = report([a, b])
+        assert (
+            "Delegate   mixed (GPU, unknown); executed delegate unobservable"
+            in text
+        )
+
+    def test_the_line_sits_in_the_header_above_the_recall(self) -> None:
+        lines = report([clip("corpus", 341, 67, 65)]).split("\n")
+        delegate_at = next(
+            i for i, line in enumerate(lines) if line.startswith("  Delegate")
+        )
+        recall_at = next(
+            i for i, line in enumerate(lines) if line.startswith("  Recall")
+        )
+        assert delegate_at < recall_at

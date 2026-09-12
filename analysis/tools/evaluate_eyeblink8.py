@@ -48,6 +48,10 @@ class ClipResult:
     result: MatchResult
     frames_measured: int | None
     frames_annotated: int
+    # The delegate the clip's own blink log recorded as requested, or
+    # None for a log that predates the key (roadmap 13.5). Defaulted
+    # so every older caller keeps meaning what it meant.
+    delegate_requested: str | None = None
 
 
 def _percent(value: float | None) -> str:
@@ -82,7 +86,27 @@ def evaluate_clip(log: BlinkLog, annotation: Annotation) -> ClipResult:
         result=match_blinks(detected, annotated),
         frames_measured=log.frames_measured,
         frames_annotated=annotation.frame_count,
+        delegate_requested=log.metadata.get("delegate_requested"),
     )
+
+
+def delegate_header(requests: list[str | None]) -> str:
+    """The run's delegate line: what was REQUESTED, never what ran.
+
+    The vendored API reports no executed delegate (roadmap 13.5), so
+    the header carries the request the run's own blink logs recorded.
+    A log that predates the delegate_requested key contributes the
+    only honest value there is — and a run whose clips disagree is
+    reported as mixed rather than averaged into one story.
+    """
+    if all(request is None for request in requests):
+        return "unknown, probe added after this run"
+    stated = sorted(
+        {"unknown" if request is None else request for request in requests}
+    )
+    if len(stated) == 1:
+        return f"{stated[0]} requested; executed delegate unobservable"
+    return f"mixed ({', '.join(stated)}); executed delegate unobservable"
 
 
 def collect(corpus: Path, measured: Path) -> list[ClipResult]:
@@ -126,6 +150,11 @@ def report(results: list[ClipResult]) -> str:
         f"{len(results)} clips, {pooled.annotated} annotated blinks, "
         f"{pooled.detected} detected"
     )
+    # Roadmap 13.5. A run's numbers are conditioned on the delegate
+    # that produced them, and the header is where a run states its
+    # conditions.
+    requests = [r.delegate_requested for r in results]
+    lines.append(f"  Delegate   {delegate_header(requests)}")
     lines.append("")
     # Roadmap 10.10c1, ladder B8. Recall and precision are counts over
     # counts, and both were published as bare percentages. 83.6% from
