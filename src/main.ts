@@ -332,7 +332,11 @@ import {
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import { probeWebgl2 } from "./io/webgl2Probe";
-import type { DelegateTruth } from "./core/delegateTruth";
+import {
+  delegateMetadataRows,
+  INFERENCE_SAMPLE_CAP,
+  type DelegateTruth,
+} from "./core/delegateTruth";
 import { installTelemetryBlock } from "./io/telemetryBlock";
 import {
   drawDots,
@@ -1203,6 +1207,10 @@ function resetSession(): void {
   framesMeasured = 0;
   deviceInfo = null;
   irisWidthSamples = [];
+  // The export's percentiles describe ONE session's inferences; the
+  // 60-sample readout window may carry across because it only ever
+  // answers "how fast now" (roadmap 13.5).
+  inferenceSessionSamplesMs = [];
   measurementFrame = null;
   sessionMarkers = [];
   // A new session has run no stimulus, and any overlay from the last
@@ -2813,6 +2821,11 @@ function exportSession(): void {
     // verdict, and any resolution the ask traded away; absent on a
     // clip.
     ...negotiationMetadataRows(frameRateNegotiation),
+    // The delegate block (13.5): machine rows, so written for camera
+    // and clip alike — the executed delegate is unobservable in the
+    // vendored API, and these rows carry the request, the probe and
+    // the inference spread that stand in for it.
+    ...delegateMetadataRows(delegateTruth, inferenceSessionSamplesMs),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -3447,6 +3460,12 @@ let modelClock = initialModelClock;
 
 let frameTimestampsMs: number[] = [];
 let inferenceSamplesMs: number[] = [];
+// The whole session's inference record, for the export's p50/p95
+// (roadmap 13.5). Separate from the rolling window above because one
+// buffer cannot do both jobs: a 60-sample window answers "how fast
+// now" for the readout, and percentiles over it would describe the
+// last second while claiming the session.
+let inferenceSessionSamplesMs: number[] = [];
 // The mean the readout last printed, carried to the record. Null
 // until inference has run at all, which is measured absence: a row
 // written before the first detection is not a row where the model
@@ -3590,10 +3609,16 @@ function processFrame(
       if (frameSource === "camera") {
         deliveryState = noteRead(deliveryState, performance.now());
       }
+      const inferenceElapsedMs = performance.now() - inferenceStartMs;
       inferenceSamplesMs = pushSample(
         inferenceSamplesMs,
-        performance.now() - inferenceStartMs,
+        inferenceElapsedMs,
         60,
+      );
+      inferenceSessionSamplesMs = pushSample(
+        inferenceSessionSamplesMs,
+        inferenceElapsedMs,
+        INFERENCE_SAMPLE_CAP,
       );
       // The page has shown the model's mean cost since the timing
       // readout landed, and the exported file never carried it

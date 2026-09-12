@@ -134,7 +134,7 @@ The file is written to the user's own device through the browser's download path
 ### The session metadata block
 
 Above the header of every export sits a block of `# key: value` lines.
-There are 57 keys, written by six modules under `src/core`, and this
+There are 82 keys, written by nine modules under `src/core`, and this
 table is the contract: what writes each one, when, in what format, and
 which reader on the Python side consumes it.
 
@@ -213,6 +213,9 @@ defaulting to zero.
 | `camera_resolution`              | Camera sessions                           | `WIDTHxHEIGHT`, or `unknown`                                                                            | Nothing                                                                         |
 | `clip`                           | Every export                              | The clip's filename with line breaks flattened, or `none`                                               | Nothing                                                                         |
 | `clip_duration_s`                | Every export                              | Seconds to three decimals, or `unknown` where the source carries none                                   | Nothing                                                                         |
+| `delegate_executed`              | Every export                              | `unobservable`: the vendored API reports no executed delegate (13.5)                                    | Nothing                                                                         |
+| `delegate_gpu_load`              | Every export                              | `ok`, `rejected` (the one CPU retry ran), or `unknown`                                                  | Nothing                                                                         |
+| `delegate_requested`             | Every export                              | `GPU` or `CPU`: the delegate of the load that succeeded, or `unknown`                                   | Nothing                                                                         |
 | `delivered_frames_read_fraction` | Camera sessions, once measurable          | `sampled_fps` over `camera_delivered_fps` to three decimals, at most 1.000                              | Nothing                                                                         |
 | `device_pixel_ratio`             | Camera sessions                           | A number, or `unknown`                                                                                  | Nothing                                                                         |
 | `face_detected_fraction`         | Every export                              | Share of records with a face, to three decimals                                                         | Nothing                                                                         |
@@ -231,6 +234,9 @@ defaulting to zero.
 | `frames_sought`                  | Stepped clips                             | Integer count of frames sought                                                                          | Nothing                                                                         |
 | `hardware_concurrency`           | Camera sessions                           | Integer core count, or `unknown`                                                                        | Nothing                                                                         |
 | `inexact_landings`               | Stepped clips                             | Integer count of seeks the browser never placed on the clip's clock                                     | Nothing                                                                         |
+| `inference_note`                 | Only when the sample cap bound            | A sentence naming the cap                                                                               | Nothing                                                                         |
+| `inference_p50_ms`               | Every export                              | Median model inference time, milliseconds to one decimal, or `unknown`                                  | Nothing                                                                         |
+| `inference_p95_ms`               | Every export                              | 95th percentile inference time, milliseconds to one decimal, or `unknown`                               | Nothing                                                                         |
 | `interruption_N_seconds`         | One row per interruption                  | Seconds to three decimals, or `unknown` where the moment was not stamped                                | Nothing                                                                         |
 | `kss_after`                      | Every export                              | `N (anchor text)` or `skipped`                                                                          | `loader.py`, `validation.py`                                                    |
 | `kss_after_at_seconds`           | Every export, once answered               | Seconds to three decimals                                                                               | Nothing                                                                         |
@@ -263,6 +269,7 @@ defaulting to zero.
 | `user_agent_form`                | Camera sessions                           | `reduced` or `full`                                                                                     | Nothing                                                                         |
 | `viewport`                       | Camera sessions                           | `WIDTHxHEIGHT`, or `unknown`                                                                            | Nothing                                                                         |
 | `visibility_changes`             | Every export                              | Integer count of tab switches during the session                                                        | `validation.py`, `round2.py`                                                    |
+| `webgl2_supported`               | Every export                              | `true`, `false`, or `unknown` when the probe itself threw                                               | Nothing                                                                         |
 
 ## Conventions
 
