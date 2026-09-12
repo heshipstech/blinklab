@@ -3965,3 +3965,27 @@ SPEC — before making it pass. A green differential guard over an
 unenrolled source is the most convincing false pass this project
 has produced, because every visible part of it is working exactly
 as designed.
+
+## A threshold derived from a distribution needs the factor, not the percentile
+
+Row 10.7b's one constant had a tempting derivation: the noise floor
+committed a cross-eye p95 of 0.86 mm, the row demanded a threshold
+"derived, not chosen", and the p95 itself is the most literal
+derivation on offer. It is also wrong, and the reason is what the
+number MEANS: a 95th percentile of honest frames is a line that
+five percent of honest frames sit past by definition. A refusal
+placed exactly there refuses one good frame in twenty forever, as
+a property of the arithmetic rather than of any eye. The damage
+the gate exists to catch — one eye's landmarks breaking while the
+other holds — sits millimetres past the tail, so the line went to
+twice the p95, the same clear-it-by-a-factor stance the shut-line
+margin and the hysteresis band already take. The derivation stays
+mechanical (a test parses the document and pins the doubling); the
+factor is where the meaning lives.
+
+The smaller habit, applied for the second time in three days: the
+new module joined the detector ratchet's watch list in the same
+commit that created it. A differential guard cannot see a source
+nobody enrolled — that was the metadata guard's lesson on 10
+September — and a ratchet is the same shape of guard wearing
+different clothes.
