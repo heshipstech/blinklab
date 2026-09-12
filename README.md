@@ -8,7 +8,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > Revised 12 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
-Read in full on 9 September 2026, claims `d4c8958c`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 9 September 2026, claims `2ba3ce1f`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
