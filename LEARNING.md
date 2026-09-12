@@ -4114,3 +4114,30 @@ choice of verbs matters: a KNOWN difference refuses, an unknown on
 either side can never convict, because a camera label the browser
 withheld is not evidence of a different camera. Null means not
 measured, applied to a comparison instead of a value.
+
+## A taxonomy is only honest if its emptiest category stays visible
+
+Row 14.3 put each rendered number's standing on the page itself, and
+the design decision worth keeping is in the taxonomy, not the
+popover. The categories are measured, convention, unvalidated and
+bookkeeping — and there is deliberately no "validated", because
+nothing in this record earns that word per person. A taxonomy that
+omits its own best category cannot flatter: the strongest thing any
+number on this page can say about itself is "a committed result file
+backs this, at cohort level", and the visitor sees exactly that
+ceiling. The temptation the design refuses is adding the aspirational
+category now and letting future work "fill it in", which is how a
+label quietly outruns its evidence.
+
+Two mechanical lessons rode along. First, a table rendered on the
+page and checked from source text has a prettier-shaped hole: the
+formatter can split a cited path across two string literals, and a
+source regex then finds FEWER citations with nothing going red — so
+the guard compares its source count against the runtime count, and
+the formatter's own habit becomes the tripwire. Second, a control
+planted inside an element that something else rebuilds is a control
+that vanishes on the first update; writeReadout rebuilds every
+readout's children per value, so the explain button lives in a map
+keyed by element and is re-appended on every write. The general
+form: before adding a child to DOM someone else owns, find out who
+calls replaceChildren on it.
