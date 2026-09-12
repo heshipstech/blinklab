@@ -16,6 +16,8 @@ import {
 } from "../../src/core/rulerFit";
 import {
   calibrationMetadataRows,
+  cueMetadataRows,
+  gazeCalibrationMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
@@ -29,6 +31,7 @@ import {
   type PoseFrameCounts,
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
+import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import { delegateMetadataRows } from "../../src/core/delegateTruth";
 import { negotiationMetadataRows } from "../../src/core/frameRateNegotiation";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
@@ -163,6 +166,8 @@ export const FIXTURE_ROW_BUILDERS = [
   "driverMetadataRows",
   "negotiationMetadataRows",
   "delegateMetadataRows",
+  "cueMetadataRows",
+  "gazeCalibrationMetadataRows",
 ];
 
 /**
@@ -220,6 +225,13 @@ export function fixtureCsv(session: FixtureSession): string {
       { requested: "GPU", gpuRejected: false, webgl2Supported: true },
       [7.2, 7.4, 7.3, 8.1, 7.5],
     ),
+    // No fixture session runs the cued protocol: the builder is
+    // called and writes nothing, the guided-line precedent.
+    ...cueMetadataRows(null, CUE_SCHEDULE, 1),
+    // Every fixture is an uncalibrated camera session: the verdict
+    // rows are written (false, and the two bounds), the residual rows
+    // are not (14.9a).
+    ...gazeCalibrationMetadataRows(true, null),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

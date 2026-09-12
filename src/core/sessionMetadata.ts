@@ -1,4 +1,10 @@
+import {
+  GAZE_R2_BOUND,
+  GAZE_RMS_BOUND,
+  type ProfileQuality,
+} from "./calibrationProfile";
 import type { CalibrationWindow } from "./calibrationWindow";
+import { CUE_RESPONSE_WINDOW_MS, type Cue } from "./cueSchedule";
 import type { DeliveryRates } from "./deliveryRate";
 import { FEATURE_RECORD_CAP, type FeatureRecord } from "./featureRecord";
 import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
@@ -449,6 +455,83 @@ export function lightStimulusMetadataRows(startMs: number | null): string[] {
     line("light_cycles", LIGHT_CYCLES),
     line("light_stimulus_start_ms", startMs),
   ];
+}
+
+/**
+ * The cued protocol's schedule, in the file it conditions (roadmap
+ * 11.0b). A null start writes no rows at all — a session without the
+ * protocol has no schedule to describe, the same absence rule the
+ * pseudonym and the light stimulus follow — and a start of zero is a
+ * start, because a protocol that began the instant the record clock
+ * did began.
+ *
+ * The rows are the WHOLE ground truth, so an analysis scores a
+ * session from its own file without this repository's code: every
+ * instruction cue with its kind, start and hold (rests are the gaps
+ * between them, so writing them would say nothing twice), the
+ * response window the tally uses, and the time scale out loud —
+ * 1.000 on every real session, smaller only on the shortened runs the
+ * end-to-end Check drives, which this row makes impossible to pass
+ * off as real.
+ */
+export function cueMetadataRows(
+  startMs: number | null,
+  cues: readonly Cue[],
+  timeScale: number,
+): string[] {
+  if (startMs === null) {
+    return [];
+  }
+  const instructions = cues.filter((cue) => cue.kind !== "rest");
+  const rows = [
+    line("cue_protocol_start_ms", startMs),
+    line("cue_time_scale", timeScale.toFixed(3)),
+    line(
+      "cue_response_window_ms",
+      Math.round(CUE_RESPONSE_WINDOW_MS * timeScale),
+    ),
+    line("cues", instructions.length),
+  ];
+  instructions.forEach((cue, index) => {
+    rows.push(line(`cue_${index + 1}_kind`, cue.kind));
+    rows.push(line(`cue_${index + 1}_seconds`, (cue.atMs / 1000).toFixed(3)));
+    rows.push(line(`cue_${index + 1}_hold_ms`, Math.round(cue.holdMs)));
+  });
+  return rows;
+}
+
+/**
+ * Whether gaze was calibrated, how well, and against what bounds
+ * (roadmap 14.9a). Camera sessions only: a clip has no gaze profile
+ * in force by construction, and rows there would invite a reader to
+ * look for a calibration that never applied. On a camera the verdict
+ * rows are written whatever they say — `false` is a fact about the
+ * session — and the bounds travel with them so a reader can judge
+ * the residuals without this repository's source. The residual rows
+ * appear only WITH a profile, because a residual of a fit that never
+ * happened is not unknown, it is nonexistent.
+ */
+export function gazeCalibrationMetadataRows(
+  cameraSession: boolean,
+  quality: ProfileQuality | null,
+): string[] {
+  if (!cameraSession) {
+    return [];
+  }
+  const rows = [
+    line("gaze_calibrated", quality === null ? "false" : "true"),
+    line("gaze_rms_bound", GAZE_RMS_BOUND),
+    line("gaze_r2_bound", GAZE_R2_BOUND),
+  ];
+  if (quality !== null) {
+    rows.push(
+      line("gaze_rms_horizontal", quality.horizontal.rmsResidual.toFixed(3)),
+      line("gaze_rms_vertical", quality.vertical.rmsResidual.toFixed(3)),
+      line("gaze_r2_horizontal", quality.horizontal.rSquared.toFixed(3)),
+      line("gaze_r2_vertical", quality.vertical.rSquared.toFixed(3)),
+    );
+  }
+  return rows;
 }
 
 /**

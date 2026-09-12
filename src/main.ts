@@ -82,9 +82,12 @@ import {
 } from "./core/calibrationCapture";
 import {
   calibratedPoint,
+  headMovedSinceCalibration,
+  profileLoadVerdict,
+  solveCalibrationOutcome,
+  type ProfileConditions,
+  type StoredGazeProfile,
   calibratedQuadrant,
-  solveCalibration,
-  type CalibrationProfile,
 } from "./core/calibrationProfile";
 import { irisOffset, type IrisOffset } from "./core/gazeOffset";
 import {
@@ -146,9 +149,11 @@ import {
 import {
   IRIS_SAMPLE_CAP,
   calibrationMetadataRows,
+  cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
+  gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   medianIrisWidthPx,
   provenanceMetadataRows,
@@ -168,6 +173,8 @@ import {
 } from "./core/lightSchedule";
 import { demoNoticeShort, demoNoticeText } from "./core/notice";
 import { IDLE_READOUTS, idleReadoutText } from "./core/idleStrings";
+import { citationSegments, docUrl } from "./core/docCitations";
+import { provenanceText } from "./core/metricProvenance";
 import {
   escapeBlocked,
   escapeCloses,
@@ -235,7 +242,7 @@ import {
   withinWindow,
   type TimedSample,
 } from "./core/sparkline";
-import { coefficientOfVariation } from "./core/statistics";
+import { coefficientOfVariation, percentile } from "./core/statistics";
 import { suspensionRefusal } from "./core/suspensionGuard";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
@@ -332,6 +339,19 @@ import {
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import { probeWebgl2 } from "./io/webgl2Probe";
+import { playCueTone } from "./io/cueTone";
+import {
+  cueAmong,
+  cueOverlayText,
+  cueTimeScale,
+  scaledCues,
+} from "./core/cueSchedule";
+import {
+  idleModelLoad,
+  modelLoadResolved,
+  modelLoadStarted,
+  modelLoadTick,
+} from "./core/modelLoad";
 import {
   delegateMetadataRows,
   INFERENCE_SAMPLE_CAP,
@@ -1122,6 +1142,7 @@ function render(): void {
   // them off here rather than waiting for a frame that will not come.
   refreshMarkButton();
   refreshLightResponseButton();
+  refreshCueProtocolButton();
   refreshReportGate();
 }
 
@@ -1217,6 +1238,8 @@ function resetSession(): void {
   // one must come down so it cannot cover the fresh session.
   lightStimulusStartMs = null;
   endLightStimulus();
+  cueProtocolStartMs = null;
+  endCueProtocol();
   visibilityChanges = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
@@ -1228,6 +1251,7 @@ function resetSession(): void {
   reportPre.textContent = "";
   refreshMarkButton();
   refreshLightResponseButton();
+  refreshCueProtocolButton();
   framesBlinkMeasurable = 0;
   lastStepSummary = null;
   currentFrameIndex = null;
@@ -1796,6 +1820,9 @@ async function beginVideoFile(file: File): Promise<void> {
 
 let landmarker: FaceLandmarker | null = null;
 let landmarkerLoadingPromise: Promise<boolean> | null = null;
+// The model-load clock (roadmap 13.10): src/core/modelLoad.ts holds
+// the rule, this is only its current reading.
+let modelLoadState = idleModelLoad;
 // What the export can say about the delegate (roadmap 13.5). The
 // probe runs once at startup — whether this page can create a webgl2
 // context does not change per session — and the request fields fill
@@ -1819,6 +1846,7 @@ async function ensureLandmarker(): Promise<boolean> {
   if (landmarker !== null) {
     return true;
   }
+  modelLoadState = modelLoadStarted(modelLoadState, performance.now());
   landmarkerLoadingPromise ??= loadLandmarker()
     .then((loaded) => {
       landmarker = loaded.landmarker;
@@ -1831,16 +1859,36 @@ async function ensureLandmarker(): Promise<boolean> {
         requested: loaded.requestedDelegate,
         gpuRejected: loaded.gpuLoadRejected,
       };
+      modelLoadState = modelLoadResolved(modelLoadState, true);
       return true;
     })
     .catch((error: unknown) => {
       console.error("face landmarker failed to load:", error);
+      modelLoadState = modelLoadResolved(modelLoadState, false);
       return false;
     })
     .finally(() => {
       landmarkerLoadingPromise = null;
     });
-  return landmarkerLoadingPromise;
+  // The wait wears a clock (roadmap 13.10). A download that hangs
+  // used to leave "Loading the measuring model..." on screen forever;
+  // the reducer's timeout now resolves this caller false, which is
+  // the same road a download error takes — into the visible
+  // modelFailed state with its retry button. The download itself is
+  // not cancelled: a model that arrives after the verdict still sets
+  // `landmarker`, so the retry is instant instead of 15.8 MB again.
+  const timedOut = new Promise<false>((resolve) => {
+    const interval = window.setInterval(() => {
+      modelLoadState = modelLoadTick(modelLoadState, performance.now());
+      if (modelLoadState.kind !== "loading") {
+        window.clearInterval(interval);
+        if (modelLoadState.kind === "failed") {
+          resolve(false);
+        }
+      }
+    }, 1000);
+  });
+  return Promise.race([landmarkerLoadingPromise, timedOut]);
 }
 
 startButton.addEventListener("click", () => {
@@ -1964,6 +2012,14 @@ const pupilLabel = document.createElement("p");
 // of variation over the last 10 seconds, side by side.
 const stabilityLabel = document.createElement("p");
 const headPoseLabel = document.createElement("p");
+// The latest pose the model produced, kept for the gaze drift check
+// (14.9a): null whenever the face or its matrix is not trusted, and
+// an unknown can never convict.
+let lastHeadPose: { pitchDeg: number; yawDeg: number; rollDeg: number } | null =
+  null;
+let capturePitchSamples: number[] = [];
+let captureYawSamples: number[] = [];
+let captureIrisSamples: number[] = [];
 const gazeLabel = document.createElement("p");
 const quadrantLabel = document.createElement("p");
 const gazeStateLabel = document.createElement("p");
@@ -1973,10 +2029,66 @@ const fixationStatsLabel = document.createElement("p");
 // click anywhere or press Esc to cancel. A profile solved in an
 // earlier visit
 // survives in local storage and works from the first frame.
-let calibrationProfile: CalibrationProfile | null = loadCalibrationProfile();
+// The room this page is loading in, read fresh at each check: the
+// camera label joins once a camera is running (null cannot convict).
+function currentGazeConditions() {
+  return {
+    viewportWidthPx: window.innerWidth,
+    viewportHeightPx: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+    screenWidthPx: window.screen.width,
+    screenHeightPx: window.screen.height,
+    cameraLabel: deviceInfo?.cameraLabel ?? null,
+  };
+}
+
+/**
+ * The stored profile, admitted only if this room matches the one it
+ * was measured in (roadmap 14.9a): a stale window refuses on load,
+ * with the reason kept for the button label rather than swallowed.
+ */
+function admitStoredProfile(): {
+  profile: StoredGazeProfile | null;
+  refusedWhy: string | null;
+} {
+  const loaded = loadCalibrationProfile();
+  if (loaded === null) {
+    return { profile: null, refusedWhy: null };
+  }
+  const verdict = profileLoadVerdict(loaded, currentGazeConditions());
+  return verdict.kind === "ok"
+    ? { profile: loaded, refusedWhy: null }
+    : { profile: null, refusedWhy: verdict.why };
+}
+
+const admitted = admitStoredProfile();
+let calibrationProfile: StoredGazeProfile | null = admitted.profile;
 const calibrateButton = document.createElement("button");
-calibrateButton.textContent =
-  calibrationProfile === null ? "Calibrate gaze" : "Recalibrate gaze";
+calibrateButton.textContent = gazeButtonLabel(
+  calibrationProfile,
+  admitted.refusedWhy,
+);
+
+/**
+ * The one composer for the gaze button's words, because the residual
+ * must ride the label (roadmap 14.9a) and three sites used to write
+ * it independently. A refused store names its reason; a calibrated
+ * profile carries its per-axis RMS where the person can see it.
+ */
+function gazeButtonLabel(
+  profile: StoredGazeProfile | null,
+  refusedWhy: string | null,
+): string {
+  if (profile !== null) {
+    const h = profile.quality.horizontal.rmsResidual.toFixed(2);
+    const v = profile.quality.vertical.rmsResidual.toFixed(2);
+    return `Recalibrate gaze (rms ${h} across, ${v} down)`;
+  }
+  if (refusedWhy !== null) {
+    return `Calibrate gaze (stored profile refused: ${refusedWhy})`;
+  }
+  return "Calibrate gaze";
+}
 calibrateButton.disabled = true;
 let calibrationRequested = false;
 let captureState: CalibrationCapture | null = null;
@@ -2515,8 +2627,27 @@ function lookingTowardMessage(offset: IrisOffset | null): string {
   if (calibrationProfile === null) {
     return `Looking toward: ${screenQuadrant(offset)} (uncalibrated)`;
   }
+  if (gazeHeadMoved()) {
+    // Nulled, not guessed (14.9a): the mapping was learned at one
+    // head position, and past the drift bounds it answers a question
+    // about a geometry that no longer holds.
+    return "Looking toward: paused, head moved since calibration";
+  }
   const point = calibratedPoint(calibrationProfile, offset);
   return `Looking toward: ${calibratedQuadrant(point)} (calibrated)`;
+}
+
+/** Whether the head has drifted past 14.9a's bounds right now. */
+function gazeHeadMoved(): boolean {
+  return (
+    calibrationProfile !== null &&
+    headMovedSinceCalibration(
+      calibrationProfile.conditions,
+      lastHeadPose?.pitchDeg ?? null,
+      lastHeadPose?.yawDeg ?? null,
+      lastLiveIrisWidthPx,
+    )
+  );
 }
 
 // Speaks only while the pose gate is refusing. Empty otherwise.
@@ -2826,6 +2957,15 @@ function exportSession(): void {
     // vendored API, and these rows carry the request, the probe and
     // the inference spread that stand in for it.
     ...delegateMetadataRows(delegateTruth, inferenceSessionSamplesMs),
+    // The cued protocol's whole ground truth (11.0b): absent unless
+    // the protocol ran, appended last like every new block.
+    ...cueMetadataRows(cueProtocolStartMs, cueProtocol.cues, cueProtocolScale),
+    // Whether gaze was calibrated, how well, against what bounds
+    // (14.9a): camera sessions only, appended last.
+    ...gazeCalibrationMetadataRows(
+      frameSource === "camera",
+      calibrationProfile?.quality ?? null,
+    ),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -3669,6 +3809,17 @@ function processFrame(
         const matrixData = result.facialTransformationMatrixes[0]?.data;
         const pose =
           matrixData === undefined ? null : eulerFromMatrix(matrixData);
+        lastHeadPose = pose;
+        // While the calibration overlay collects dots, collect the
+        // room too: the medians of these become the profile's stored
+        // conditions (roadmap 14.9a).
+        if (captureState !== null && pose !== null) {
+          capturePitchSamples.push(pose.pitchDeg);
+          captureYawSamples.push(pose.yawDeg);
+          if (lastLiveIrisWidthPx !== null) {
+            captureIrisSamples.push(lastLiveIrisWidthPx);
+          }
+        }
         writeReadout(
           headPoseLabel,
           pose === null
@@ -3977,7 +4128,11 @@ function processFrame(
       // frames add nothing, and the core grid ignores points that
       // land outside the unit square.
       if (heatmapOpen) {
-        if (smoothedGaze.smoothed !== null && calibrationProfile !== null) {
+        if (
+          smoothedGaze.smoothed !== null &&
+          calibrationProfile !== null &&
+          !gazeHeadMoved()
+        ) {
           const point = calibratedPoint(
             calibrationProfile,
             smoothedGaze.smoothed,
@@ -3997,6 +4152,9 @@ function processFrame(
 
       if (calibrationRequested) {
         captureState = startCapture(nowMs);
+        capturePitchSamples = [];
+        captureYawSamples = [];
+        captureIrisSamples = [];
         calibrationRequested = false;
         calibrationOverlay.hidden = false;
       }
@@ -4007,25 +4165,43 @@ function processFrame(
           // Solve immediately: the very next frame classifies with
           // the fresh profile. A refused solve keeps the old profile,
           // stale beats poisoned.
-          const solved = solveCalibration(captureState.completed);
+          const outcome = solveCalibrationOutcome(captureState.completed);
           // A profile that could not be stored still calibrates THIS
           // session: the in-memory profile is already active. The
           // button label is the one persistent surface next to the
           // feature, so the storage failure is written there rather
           // than lost to the console. Remediation B3.
           let profileStored = true;
-          if (solved !== null) {
-            calibrationProfile = solved;
-            profileStored = saveCalibrationProfile(solved);
+          if (outcome.kind === "solved") {
+            const conditions: ProfileConditions = {
+              pitchDeg: percentile(capturePitchSamples, 50),
+              yawDeg: percentile(captureYawSamples, 50),
+              irisWidthPx: percentile(captureIrisSamples, 50),
+              viewportWidthPx: window.innerWidth,
+              viewportHeightPx: window.innerHeight,
+              devicePixelRatio: window.devicePixelRatio,
+              screenWidthPx: window.screen.width,
+              screenHeightPx: window.screen.height,
+              cameraLabel: deviceInfo?.cameraLabel ?? null,
+            };
+            calibrationProfile = {
+              horizontal: outcome.profile.horizontal,
+              vertical: outcome.profile.vertical,
+              quality: outcome.quality,
+              conditions,
+            };
+            profileStored = saveCalibrationProfile(calibrationProfile);
           }
           captureState = null;
           calibrationOverlay.hidden = true;
           calibrateButton.textContent =
-            solved === null
+            outcome.kind === "unsolvable"
               ? "Recalibrate gaze (solver refused the samples, try again)"
-              : profileStored
-                ? "Recalibrate gaze"
-                : "Recalibrate gaze (calibrated for now, but could not be stored, so it will not survive a reload)";
+              : outcome.kind === "refused"
+                ? `Recalibrate gaze (fit refused: ${outcome.axis} axis rms ${outcome.rmsResidual.toFixed(2)}, R² ${outcome.rSquared.toFixed(2)} — the pre-stated bounds are rms 0.15, R² 0.8)`
+                : profileStored
+                  ? gazeButtonLabel(calibrationProfile, null)
+                  : `${gazeButtonLabel(calibrationProfile, null)} (calibrated for now, but could not be stored, so it will not survive a reload)`;
           refreshHeatmapButton();
           // A calibration is the only thing that puts anything in
           // storage, so this is the one moment the stored-data box can
@@ -4573,6 +4749,7 @@ function processFrame(
         // nothing to measure the reflex against until records exist.
         refreshMarkButton();
         refreshLightResponseButton();
+        refreshCueProtocolButton();
         writeReadout(
           featureLabel,
           featureRecords.length >= FEATURE_RECORD_CAP
@@ -4932,6 +5109,128 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
+// The cued protocol (roadmap 11.0b), on the light stimulus's pattern:
+// every timing decision is pure (core/cueSchedule.ts, fixed in 11.0a
+// before any camera ran), and the code here is the thin io that
+// paints the instruction, sounds the boundary tone, and reads the
+// clock. The scale is 1 except on the shortened runs the end-to-end
+// Check drives, and the export says which (cue_time_scale).
+const cueProtocolScale = cueTimeScale(window.location.search);
+const cueProtocol = scaledCues(cueProtocolScale);
+
+const cueProtocolButton = document.createElement("button");
+cueProtocolButton.textContent = "Cued protocol";
+cueProtocolButton.dataset.testid = "cued-protocol";
+cueProtocolButton.disabled = true;
+
+const cueOverlay = document.createElement("div");
+cueOverlay.dataset.testid = "cue-overlay";
+cueOverlay.hidden = true;
+Object.assign(cueOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  // Below the light stimulus (which must own the screen's luminance)
+  // and above everything else. No `display` is set, so the `hidden`
+  // attribute alone controls it — the light overlay's own lesson.
+  zIndex: "19",
+  background: "#111111",
+});
+const cueMessage = document.createElement("p");
+cueMessage.dataset.testid = "cue-message";
+Object.assign(cueMessage.style, {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  width: "80%",
+  transform: "translate(-50%, -50%)",
+  textAlign: "center",
+  color: "#eeeeee",
+  font: "28px system-ui, sans-serif",
+});
+cueOverlay.append(cueMessage);
+
+// performance.now(), sharing its origin with the records' timestampMs,
+// exactly as the light stimulus's start does — and it STAYS set after
+// the run or an early Escape, so the export records that the protocol
+// ran and when, and the scorer's session-length refusals judge an
+// abandoned run rather than this page guessing.
+let cueProtocolStartMs: number | null = null;
+let cueRafHandle: number | null = null;
+// The tone sounds at every cue BOUNDARY, because closed eyes cannot
+// read a screen: the ending of "close your eyes" belongs to the ear.
+let lastCueMark: string | null = null;
+
+function endCueProtocol(): void {
+  if (cueRafHandle !== null) {
+    cancelAnimationFrame(cueRafHandle);
+    cueRafHandle = null;
+  }
+  cueOverlay.hidden = true;
+}
+
+function startCueProtocol(): void {
+  // Running, on a camera, with a session clock: the same guards the
+  // light stimulus applies, for the same reasons (roadmap 14.0a).
+  if (
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera"
+  ) {
+    return;
+  }
+  cueProtocolStartMs = performance.now();
+  lastCueMark = null;
+  cueOverlay.hidden = false;
+  const step = (): void => {
+    if (cueProtocolStartMs === null) {
+      return;
+    }
+    const current = cueAmong(
+      cueProtocol.cues,
+      cueProtocol.totalMs,
+      performance.now() - cueProtocolStartMs,
+    );
+    const mark =
+      typeof current === "string"
+        ? current
+        : `${current.kind}@${String(current.atMs)}`;
+    if (mark !== lastCueMark) {
+      cueMessage.textContent = cueOverlayText(current);
+      cueOverlay.dataset.cue =
+        typeof current === "string" ? current : current.kind;
+      // No tone for the settle: nothing has been asked yet, and a
+      // beep with no instruction teaches the ear to ignore beeps.
+      if (lastCueMark !== null || mark !== "settle") {
+        playCueTone();
+      }
+      lastCueMark = mark;
+    }
+    if (current === "done") {
+      // Leave the finished screen up to be read; Escape or a tap
+      // closes it, the light overlay's own convention.
+      cueRafHandle = null;
+      return;
+    }
+    cueRafHandle = requestAnimationFrame(step);
+  };
+  cueRafHandle = requestAnimationFrame(step);
+}
+
+function refreshCueProtocolButton(): void {
+  cueProtocolButton.disabled =
+    state.kind !== "running" ||
+    sessionStartedAtEpochMs === null ||
+    frameSource !== "camera";
+}
+
+cueProtocolButton.addEventListener("click", startCueProtocol);
+// A tap ends it too: a phone has no Esc (roadmap 14.0b's lesson).
+cueOverlay.addEventListener("click", () => {
+  if (!cueOverlay.hidden) {
+    endCueProtocol();
+  }
+});
+
 // Roadmap 14.0f1 [E2]: one Escape handler for every screen the page
 // raises over itself.
 //
@@ -4980,6 +5279,10 @@ const OVERLAY_CONTROLS: Record<
   "light-overlay": {
     isOpen: () => !lightOverlay.hidden,
     close: endLightStimulus,
+  },
+  "cue-overlay": {
+    isOpen: () => !cueOverlay.hidden,
+    close: endCueProtocol,
   },
   // Present and never reached: the register marks it undismissible, so
   // `escapeCloses` never names it. It is here because leaving it out
@@ -5119,6 +5422,7 @@ exportRow.append(
   // session, before the exports end it, so they come first in the
   // order a person reaches for them.
   lightResponseButton,
+  cueProtocolButton,
   markButton,
   exportButton,
   exportBlinksButton,
@@ -5348,10 +5652,22 @@ function sizeGraphsToBox(): void {
 // Splitting on the FIRST colon works because every readout is written
 // as "Label: value". A line with no colon is left alone rather than
 // guessed at.
+// Roadmap 14.3. The explain-this-number control each readout carries,
+// keyed by the readout element, because writeReadout rebuilds the
+// readout's children on every value and a button planted there once
+// would be wiped by the first measurement. The map is filled after
+// the idle registry below; writeReadout re-appends the control on
+// every write, so the affordance survives the rewriting the values do.
+const provenanceControls = new Map<HTMLElement, HTMLButtonElement>();
+
 function writeReadout(element: HTMLElement, text: string): void {
+  const control = provenanceControls.get(element);
   const at = text.indexOf(": ");
   if (at === -1) {
     element.textContent = text;
+    if (control !== undefined) {
+      element.append(control);
+    }
     return;
   }
   const label = document.createElement("span");
@@ -5371,6 +5687,9 @@ function writeReadout(element: HTMLElement, text: string): void {
   value.className = "value";
   value.textContent = text.slice(at + 2);
   element.replaceChildren(label, separator, value);
+  if (control !== undefined) {
+    element.append(control);
+  }
 }
 
 statusBanner.append(bannerIdle, status, modelStatus, alertBanner);
@@ -5426,6 +5745,7 @@ app.append(
   blinkCalibrationOverlay,
   heatmapOverlay,
   lightOverlay,
+  cueOverlay,
   kssDialog,
 );
 // Every readout starts with the sentence the idle page shows, from
@@ -5452,6 +5772,52 @@ const idleReadoutElements: Readonly<Record<string, HTMLElement>> = {
   "Ruler fit": rulerFitLabel,
   "Feature records": featureLabel,
 };
+
+// Roadmap 14.3. Every readout gets its explain-this-number control:
+// a small button on the readout itself and a note under it speaking
+// the metric's standing from core/metricProvenance.ts, with each
+// docs/ citation turned into a link pinned to the build's own commit
+// through core/docCitations.ts — the apparatus 14.0f2 built. The
+// table throws on a label it has never heard of, so a readout added
+// to the registry without a provenance entry fails here at startup
+// rather than rendering a number with no standing.
+function attachProvenance(readout: HTMLElement, label: string): void {
+  const explainButton = document.createElement("button");
+  explainButton.textContent = "?";
+  explainButton.className = "explain";
+  explainButton.setAttribute("aria-label", `Explain this number: ${label}`);
+  explainButton.setAttribute("aria-expanded", "false");
+  const note = document.createElement("p");
+  note.className = "caveat";
+  note.dataset.testid = "provenance-note";
+  note.hidden = true;
+  const commit =
+    document
+      .querySelector('meta[name="build-commit"]')
+      ?.getAttribute("content") ?? null;
+  for (const segment of citationSegments(provenanceText(label))) {
+    if (segment.kind === "text") {
+      note.append(segment.text);
+    } else {
+      const link = document.createElement("a");
+      link.href = docUrl(segment.path, commit);
+      link.textContent = segment.path;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      note.append(link);
+    }
+  }
+  explainButton.addEventListener("click", () => {
+    note.hidden = !note.hidden;
+    explainButton.setAttribute("aria-expanded", String(!note.hidden));
+  });
+  provenanceControls.set(readout, explainButton);
+  readout.after(note);
+  readout.append(explainButton);
+}
+for (const [label, element] of Object.entries(idleReadoutElements)) {
+  attachProvenance(element, label);
+}
 
 function applyIdleReadouts(): void {
   for (const [label, value] of IDLE_READOUTS) {

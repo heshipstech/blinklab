@@ -26,6 +26,26 @@
       content="A browser-based eye signal laboratory. It reads a webcam locally and turns blinks, eyelid aperture in millimetres, gaze and PERCLOS into numbers you can audit. A demo, not a medical device."
     />
     <link rel="icon" href="/blinklab/favicon.svg" type="image/svg+xml" />
+    <!--
+      Roadmap 13.10. The 15.8 MB the first measurement needs (the
+      model and the wasm runtime, sizes in docs/cold-load.txt) used to
+      start downloading only when a session started, so the whole wait
+      landed between the click and the first frame. Prefetch is the
+      browser's lowest priority: these move at page idle, and a
+      visitor who clicks Start finds some or all of the bytes already
+      in the HTTP cache. The nosimd wasm is deliberately not listed —
+      only browsers without SIMD take it, and prefetching both would
+      double the largest file for everyone.
+    -->
+    <link rel="prefetch" href="/blinklab/models/face_landmarker.task" />
+    <link
+      rel="prefetch"
+      href="/blinklab/mediapipe-wasm/vision_wasm_internal.wasm"
+    />
+    <link
+      rel="prefetch"
+      href="/blinklab/mediapipe-wasm/vision_wasm_internal.js"
+    />
     <title>blinklab</title>
   </head>
   <body>

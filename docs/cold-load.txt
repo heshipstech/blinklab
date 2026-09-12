@@ -1,0 +1,127 @@
+COLD-LOAD TRUTH — what the first measurement costs, measured before
+it is bounded. Roadmap 13.10, ladder E9. Written 12 September 2026.
+
+Every number in this file is one of three kinds, and each row says
+which: a BYTE COUNT read from the built files (host-independent), a
+DERIVED transfer time (byte count over a stated bitrate, arithmetic
+and nothing else), or a TIMING measured in one place whose scope is
+named. Mixing the kinds silently is how a "page speed" number becomes
+unfalsifiable.
+
+THE CRITICAL PATH
+
+A first visit cannot measure an eye until all of this has arrived and
+run. Sizes read from the 12 September 2026 build (`npm run build`) by
+`stat`; gzip at the default level 6, stated because compressed size is
+a property of the compressor's settings as much as of the file.
+
+  file                                     raw bytes     gzip bytes
+  dist/index.html                              1,170            664
+  assets/index-*.js   (the app)              279,314         86,504
+  assets/index-*.css                           8,754          2,524
+  mediapipe-wasm/vision_wasm_internal.js     323,377         77,966
+  mediapipe-wasm/vision_wasm_internal.wasm 11,756,954      3,437,483
+  models/face_landmarker.task              3,758,596      3,332,893
+  ------------------------------------------------------------------
+  total                                   16,128,165      6,938,034
+
+The runtime and model alone are 15,838,927 bytes — the "15.8 MB first
+load" the roadmap row names, and 98% of the path. The SIMD wasm is
+listed because that is the variant a current browser takes; the nosimd
+fallback (10,960,242 bytes) substitutes on browsers without SIMD. The
+fonts (about 190 kB across the woff2 set) load in parallel and gate
+rendering, not measurement, so they are outside the path on purpose.
+
+The one fact worth staring at: gzip cuts the wasm by 71% and the app
+by 69%, and cuts the MODEL by only 11% — a .task file is mostly
+already-compressed weights. Whether any of that 9.2 MB saving is real
+depends entirely on whether the host compresses binary types, which is
+the unread condition below.
+
+DERIVED TRANSFER TIMES, UNDER STATED PROFILES
+
+Arithmetic, not measurement: bytes × 8 / bitrate, no latency, no
+packet loss, no HTTP overhead — so every figure is a FLOOR for its
+profile. Two columns because the host's compression of binary types is
+unknown (below).
+
+  profile             uncompressed 16.13 MB    gzipped 6.94 MB
+  2 Mbps  (weak 3G)              64.5 s              27.8 s
+  10 Mbps (modest 4G)            12.9 s               5.6 s
+  50 Mbps (broadband)             2.6 s                1.1 s
+
+MEASURED: THE COMPUTE FLOOR, THIS CONTAINER ONLY
+
+Scope: a Linux development container, Chromium with a fake camera,
+the built page served from localhost so network cost is approximately
+zero. These timings are a property of THIS machine and transfer to no
+other; they are here because they isolate the one part of cold load
+that no network profile touches — parsing 12 MB of wasm, initialising
+the model, and running the first inference.
+
+Three runs, 12 September 2026, milliseconds:
+
+  navigation to DOMContentLoaded:      107,   53,   54
+  Start camera to first measured
+  frame (model load + first infer):  3,786, 2,776, 2,849
+
+So on this machine, with the bytes already local, the page still needs
+roughly 3 seconds from the click to the first measured frame. That is
+the floor under every profile above: time-to-first-measurement is
+approximately DCL + transfer(runtime + model, at the profile) + this
+machine's compute floor, and only the middle term is the network's.
+
+UNREAD FROM THIS CONTAINER, RESERVED FOR THE OWNER
+
+Two headers decide which column of the transfer table is real and how
+often a returning visitor pays it again, and neither is readable from
+this container — its outbound proxy answers for the public host, so a
+reading taken here would be a measurement of the proxy. On the owner's
+machine, browser devtools (Network tab, the .wasm and .task rows) can
+read both in one visit:
+
+  content-encoding on the .wasm and .task responses
+      (gzip/br: the 6.94 MB column; absent: the 16.13 MB column)
+  cache-control on the same responses
+      (GitHub Pages is commonly reported to serve max-age=600, which
+      would mean a visitor returning after ten minutes re-validates —
+      reported, not measured, so it decides nothing until read)
+
+  Owner reading, appended when taken:
+  (empty)
+
+WHAT THIS ROW CHANGES, AND THE BOUNDED END
+
+Three improvements ship with this document, and one limit is named
+rather than worked around:
+
+1. PREFETCH AT PAGE IDLE. The 15.8 MB loads only when a session
+   starts, so the whole wait lands between the click and the first
+   frame. Prefetch hints in index.html start the runtime and model
+   moving while the visitor is still reading the page, at the
+   browser's lowest priority.
+
+2. A LOAD TIMEOUT THAT LANDS IN modelFailed. A model that never
+   arrives used to leave the page saying "Loading the measuring
+   model..." forever — a stuck state wearing a healthy idle's clothes.
+   The timeout is 120 seconds: about twice the slowest stated
+   profile's uncompressed fetch (64.5 s at 2 Mbps), so an honest slow
+   load is never killed, and a stalled one becomes the visible
+   modelFailed state, with its retry button, within two minutes.
+   `src/core/modelLoad.ts` holds the rule; timeout plus no model is
+   never healthy idle, by test.
+
+3. THE MODEL THROUGH THE CACHE API. The 3.8 MB model file is fetched
+   by this page's own code, stored in the Cache API on first load, and
+   handed to the landmarker as bytes — so a returning visitor pays for
+   it once, whatever the host's cache-control says.
+
+The bounded end: the 12 MB runtime CANNOT be cached the same way. Its
+fetch happens inside the vendored library (FilesetResolver walks its
+own URLs), and intercepting another library's fetches requires a
+service worker — a real design with its own failure modes (stale
+caches serving old code, update races), which this row does not smuggle
+in as a side effect. Until a row proposes a service worker on its own
+merits, the runtime's repeat cost is whatever the host's cache-control
+allows, which is exactly why that header is the owner's one reading
+above.

@@ -12,10 +12,12 @@ import {
 import { kssMetadataRows, type KssRating } from "../../src/core/kss";
 import {
   calibrationMetadataRows,
+  cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
   featureRecordOverrunRows,
+  gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
@@ -27,6 +29,8 @@ import {
   type SessionMarker,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import type { ProfileQuality } from "../../src/core/calibrationProfile";
+import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import {
   delegateMetadataRows,
   INFERENCE_SAMPLE_CAP,
@@ -164,6 +168,10 @@ type Shape = {
    * has them, camera or clip (13.5). */
   delegate: DelegateTruth;
   inferenceSamplesMs: readonly number[];
+  /** When the cued protocol started; null when it never ran (11.0b). */
+  cueProtocolStartMs: number | null;
+  /** The gaze fit's quality; null when no profile was in force (14.9a). */
+  gazeQuality: ProfileQuality | null;
 };
 
 /**
@@ -212,6 +220,8 @@ const MINIMAL_CAMERA: Shape = {
   // written, reading unknown, because these are promises (13.5).
   delegate: { requested: null, gpuRejected: null, webgl2Supported: null },
   inferenceSamplesMs: [],
+  cueProtocolStartMs: null,
+  gazeQuality: null,
 };
 
 /**
@@ -277,6 +287,11 @@ const FULL: Shape = {
   // At the cap, so the note row — the conditional key — appears in
   // the session where every optional thing happened.
   inferenceSamplesMs: Array.from({ length: INFERENCE_SAMPLE_CAP }, () => 7),
+  cueProtocolStartMs: 5000,
+  gazeQuality: {
+    horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
+    vertical: { rmsResidual: 0.03, rSquared: 0.98 },
+  },
 };
 
 /**
@@ -315,6 +330,11 @@ function metadataRows(shape: Shape): string[] {
     ...driverMetadataRows(shape.cameraFrameDriver),
     ...negotiationMetadataRows(shape.frameRateNegotiation),
     ...delegateMetadataRows(shape.delegate, shape.inferenceSamplesMs),
+    ...cueMetadataRows(shape.cueProtocolStartMs, CUE_SCHEDULE, 1),
+    ...gazeCalibrationMetadataRows(
+      shape.source === "camera",
+      shape.gazeQuality,
+    ),
   ];
 }
 
@@ -336,6 +356,8 @@ const CALLED_HERE = [
   "driverMetadataRows",
   "negotiationMetadataRows",
   "delegateMetadataRows",
+  "cueMetadataRows",
+  "gazeCalibrationMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

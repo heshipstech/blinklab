@@ -4072,3 +4072,105 @@ load path, with a comment saying WHY the duplication exists — the
 literals are what the card's pin reads, and a helper is exactly
 what hides them. Duplication bought auditability, and the comment
 is what stops the next tidy-minded editor from selling it back.
+
+## A speed number is three different numbers wearing one costume
+
+Row 13.10 had to say what the first load costs, and the trap in that
+sentence is the word "costs": a byte count is a property of the
+build, a transfer time is arithmetic over a bitrate somebody chose,
+and a stopwatch reading is a property of one machine on one day.
+All three end up printed in milliseconds or megabytes and read
+interchangeably, and a document that mixes them silently produces
+the classic unfalsifiable page-speed claim — wrong on every machine
+and checkable on none. docs/cold-load.txt therefore labels every
+number with its kind in the same line that states it, and the same
+split told us where the leverage was: the byte counts said gzip
+buys 71% on the wasm and 11% on the model, the derived floors said
+the network dominates every profile below broadband, and the scoped
+timing said no network improvement can beat this machine's 3-second
+compute floor.
+
+The rule's other face is refusing a number you cannot take. The two
+headers that decide which transfer column is real live on the
+public host, and this container's proxy answers for that host — so
+a reading taken here would be a measurement of the proxy wearing
+the host's name. The document reserves the space and names the one
+place the reading can come from, which costs a blank section and
+buys a file with no number in it that a reader cannot trace to its
+kind.
+
+## A shortcut the artifact itself confesses cannot be passed off
+
+Row 11.0b's Check demanded the end-to-end test drive a SHORTENED
+schedule, and the trap in every test shortcut is the same: the
+moment a system has a fast path for tests, somebody eventually
+mistakes a fast-path artifact for a real one, or worse, the fast
+path drifts from the real one and the tests keep passing. The
+answer here was to make the artifact carry its own confession. The
+export writes cue_time_scale on every cued session — 1.000 for the
+real protocol, 0.020 for the test run — so a shortened session's
+file can sit in any folder forever and still say exactly what it
+is, and the analysis scores it against its own scaled times because
+the schedule travels IN the file rather than being looked up in
+this repository's constants. One mechanism buys three properties:
+the test is honest, old files stay scorable across schedule
+changes, and no reader ever has to trust a filename.
+
+The tone decision is the small one worth keeping: closed eyes
+cannot read a screen, so the instruction "close your eyes for
+twenty seconds" is unfinishable as text — the person cannot see it
+end. Every cue boundary sounds a tone, and the words hand the
+ending to the ear. An instruction's medium has to survive the state
+the instruction puts the person in.
+
+## Least squares always answers, which is why the fit must testify
+
+Row 14.9a's core defect was not a bug, it was a property of the
+tool: least squares produces a line for ANY input, including pure
+noise, and nothing in the line itself says which it was given. The
+gaze solver had exactly that shape — a noise-only axis fit to a
+slope and an intercept, shipped as a calibration, classifying
+quadrants with confidence about nothing. The repair is not a better
+fitter but a testimony requirement: every fit now carries its RMS
+residual and R², and a fit that cannot clear bounds STATED IN THE
+ROADMAP ROW BEFORE ANY CAPTURE WAS READ refuses by name. The
+pre-statement is the load-bearing part. Bounds chosen after seeing
+residuals are bounds fitted to the answer, the same discretion the
+pre-registration documents exist to remove, so the row's own text
+is the place they were written down.
+
+The second habit, smaller: a calibration is a claim about a room.
+Slopes learned in one window through one camera at one head
+position answer a different question in any other room, so the
+profile now stores its room and the load checks it — and the
+choice of verbs matters: a KNOWN difference refuses, an unknown on
+either side can never convict, because a camera label the browser
+withheld is not evidence of a different camera. Null means not
+measured, applied to a comparison instead of a value.
+
+## A taxonomy is only honest if its emptiest category stays visible
+
+Row 14.3 put each rendered number's standing on the page itself, and
+the design decision worth keeping is in the taxonomy, not the
+popover. The categories are measured, convention, unvalidated and
+bookkeeping — and there is deliberately no "validated", because
+nothing in this record earns that word per person. A taxonomy that
+omits its own best category cannot flatter: the strongest thing any
+number on this page can say about itself is "a committed result file
+backs this, at cohort level", and the visitor sees exactly that
+ceiling. The temptation the design refuses is adding the aspirational
+category now and letting future work "fill it in", which is how a
+label quietly outruns its evidence.
+
+Two mechanical lessons rode along. First, a table rendered on the
+page and checked from source text has a prettier-shaped hole: the
+formatter can split a cited path across two string literals, and a
+source regex then finds FEWER citations with nothing going red — so
+the guard compares its source count against the runtime count, and
+the formatter's own habit becomes the tripwire. Second, a control
+planted inside an element that something else rebuilds is a control
+that vanishes on the first update; writeReadout rebuilds every
+readout's children per value, so the explain button lives in a map
+keyed by element and is re-appended on every write. The general
+form: before adding a child to DOM someone else owns, find out who
+calls replaceChildren on it.

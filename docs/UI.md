@@ -346,6 +346,7 @@ strip plus the footer below.
 | Export CSV                     | Button   | Disabled until at least one record exists                                                                                                                                                                                                                                                                                                                   |
 | Mark this moment               | Button   | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export                                                                                                                                                                  |
 | Light response                 | Button   | `Light response`. Camera sessions only, on the same record gate as the marker. Opens a full-screen stimulus overlay (fullscreen requested only where the browser offers it); its words during the settle and at the end come from `lightPhaseMessage` in `core/lightSchedule.ts` and name both exits, Esc and a tap anywhere on the overlay (roadmap 14.0b) |
+| Cued protocol                  | Button   | `Cued protocol`. Camera sessions only, same gate as the light response. Opens the cued-schedule overlay (roadmap 11.0b): instructions from `cueOverlayText` in `core/cueSchedule.ts`, a tone at every cue boundary because closed eyes cannot read a screen, and both exits — Esc and a tap — since an abandoned run records nothing false                  |
 | Export state                   | Text     | Empty until an export is attempted. See the five strings below                                                                                                                                                                                                                                                                                              |
 | Sleepiness                     | Text     | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                                                                                                                                                                                      |
 | Marks                          | Text     | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                                                                                                                                                                                              |
@@ -532,6 +533,21 @@ The guard in `tools/uiGuard.mjs` holds this list to the code. None says
 | `Personal blink threshold: not learned yet`             |
 | `Ruler fit: not measuring`                              |
 | `Feature records: none yet (about one per second)`      |
+
+### 5.10 Explain-this-number provenance notes
+
+Roadmap 14.3. Every readout in the table above carries a small round `?`
+button at its right edge (accessible name `Explain this number: <label>`,
+`aria-expanded` kept true to its state). Clicking it toggles a
+`provenance-note` paragraph directly under the readout, in caveat type,
+speaking that metric's standing from the table in
+`src/core/metricProvenance.ts`: the record's taxonomy first (measured /
+convention / unvalidated / bookkeeping), then the status sentence. Every
+`docs/...` path the sentence cites renders as a link pinned to the commit
+the page was built from, through `src/core/docCitations.ts`, the apparatus
+row 14.0f2 built. `tools/provenanceGuard.mjs` holds the table's keys to the
+idle readout registry in both directions and every cited path to a file
+that exists.
 
 ## 6. Region 4: Overlays
 

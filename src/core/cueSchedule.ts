@@ -138,10 +138,25 @@ export function blinkCues(): Cue[] {
  * not misread as one. "done" covers everything at or past the end.
  */
 export function cueAt(elapsedMs: number): Cue | "settle" | "done" {
-  if (elapsedMs < CUE_SETTLE_MS) {
+  return cueAmong(CUE_SCHEDULE, CUE_TOTAL_MS, elapsedMs);
+}
+
+/**
+ * The same walk over an arbitrary cue list — the scaled one, in
+ * practice (roadmap 11.0b). The settle boundary is the first cue's own
+ * start, which for the real schedule IS `CUE_SETTLE_MS` by
+ * construction, so `cueAt` above delegates here without moving.
+ */
+export function cueAmong(
+  cues: readonly Cue[],
+  totalMs: number,
+  elapsedMs: number,
+): Cue | "settle" | "done" {
+  const first = cues[0];
+  if (first === undefined || elapsedMs < first.atMs) {
     return "settle";
   }
-  if (elapsedMs >= CUE_TOTAL_MS) {
+  if (elapsedMs >= totalMs) {
     return "done";
   }
   // The schedule is contiguous from the settle to the end, which a
@@ -151,12 +166,84 @@ export function cueAt(elapsedMs: number): Cue | "settle" | "done" {
   // report "done" in the middle of the protocol and the overlay would
   // stop cueing, which is the worst way for this to fail.
   let current: Cue | "settle" = "settle";
-  for (const cue of CUE_SCHEDULE) {
+  for (const cue of cues) {
     if (elapsedMs >= cue.atMs) {
       current = cue;
     }
   }
   return current;
+}
+
+/**
+ * The schedule with every time multiplied by `scale` (roadmap 11.0b).
+ *
+ * The row's Check demands the end-to-end test drive a SHORTENED
+ * schedule — two minutes of real protocol is not a wiring test — and
+ * the honest way to shorten is in the open: the export's
+ * `cue_time_scale` row carries the scale, 1.000 on every real
+ * session, so a scaled run can never pass as one.
+ */
+export function scaledCues(scale: number): { cues: Cue[]; totalMs: number } {
+  return {
+    cues: CUE_SCHEDULE.map((cue) => ({
+      kind: cue.kind,
+      atMs: cue.atMs * scale,
+      holdMs: cue.holdMs * scale,
+    })),
+    totalMs: CUE_TOTAL_MS * scale,
+  };
+}
+
+/**
+ * The test hook, read from the page's own query string.
+ *
+ * 1 for anything but a finite value in (0, 1]: a scale above 1 is a
+ * longer protocol nobody pre-registered, zero and below are not a
+ * schedule, and garbage is garbage — all of them run the real thing
+ * rather than a guessed variant.
+ */
+/**
+ * What the overlay says at each moment of the protocol.
+ *
+ * Pure so the words are testable, and worded around one physical
+ * fact: closed eyes cannot read a screen. Every cue boundary sounds a
+ * tone (the io half's job), so the closure instructions hand their
+ * ending to the ear rather than to text nobody can see.
+ */
+export function cueOverlayText(current: Cue | "settle" | "done"): string {
+  if (current === "settle") {
+    return (
+      "Hold still and look at the screen. The cues begin once the " +
+      "baseline has learned your open eyes."
+    );
+  }
+  if (current === "done") {
+    return (
+      "Done. Press Escape or tap to close, then stop the camera and " +
+      "export the session."
+    );
+  }
+  switch (current.kind) {
+    case "blink":
+      return "Blink now";
+    case "close3":
+      return "Close your eyes until the next tone (about 3 seconds)";
+    case "close20":
+      return "Close your eyes until the next tone (about 20 seconds)";
+    case "lookAway":
+      return "Look away from the screen";
+    case "rest":
+      return "Rest. Look at the screen.";
+  }
+}
+
+export function cueTimeScale(search: string): number {
+  const raw = new URLSearchParams(search).get("cueTimeScale");
+  if (raw === null) {
+    return 1;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 && value <= 1 ? value : 1;
 }
 
 /**

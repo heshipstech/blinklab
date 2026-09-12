@@ -51,6 +51,11 @@ from evaluate_eyeblink8 import delegate_header  # noqa: E402
 
 from blinklab import round2, validation_checks, verdict
 from blinklab.blink_log import BlinkLog
+from blinklab.cue_events import (  # noqa: E402
+    CueError,
+    cue_event_rows,
+    session_cues,
+)
 from blinklab.light_response import LightResponseError, stimulus_start_ms
 from blinklab.loader import Session, _records_dropped
 from blinklab.validation import CameraBlinkLog, SessionPair, _refuse_clip
@@ -58,6 +63,15 @@ from blinklab.validation import CameraBlinkLog, SessionPair, _refuse_clip
 # A stand-in for "the reader raised", so a policy can name a refusal in
 # the same table as a value.
 REFUSES = object()
+
+# One instruction cue, whole: the block the cued read-sites exercise.
+CUE_BLOCK = {
+    "cue_protocol_start_ms": "10000",
+    "cue_response_window_ms": "2000",
+    "cues": "1",
+    "cue_1_kind": "blink",
+    "cue_1_seconds": "30.000",
+}
 
 
 def session(metadata: dict[str, str]) -> Session:
@@ -316,6 +330,71 @@ READ_SITES = [
         "not asked",
     ),
     ReadSite(
+        "cue_protocol_start_ms",
+        "cue_events.session_cues",
+        lambda meta: session_cues(meta),
+        dict(CUE_BLOCK),
+        None,
+        # Absence is an ordinary session: the exporter writes the cue
+        # block only when the protocol ran, so no start means no
+        # protocol and no table, never damage.
+    ),
+    ReadSite(
+        "cue_response_window_ms",
+        "cue_events.session_cues",
+        lambda meta: session_cues(meta),
+        dict(CUE_BLOCK),
+        REFUSES,
+        # The opposite judgement to the row above, on purpose: a block
+        # that carries a start has declared a protocol ran, and a
+        # tally scored against an unknown window would be a number
+        # nobody could check.
+    ),
+    ReadSite(
+        "cues",
+        "cue_events.session_cues",
+        lambda meta: session_cues(meta),
+        dict(CUE_BLOCK),
+        REFUSES,
+    ),
+    ReadSite(
+        "cue_1_kind",
+        "cue_events.session_cues",
+        lambda meta: session_cues(meta),
+        dict(CUE_BLOCK),
+        REFUSES,
+        # The markers precedent: a file that declares one cue and
+        # carries none has lost a row, and which one cannot be known.
+    ),
+    ReadSite(
+        "cue_1_seconds",
+        "cue_events.session_cues",
+        lambda meta: session_cues(meta),
+        dict(CUE_BLOCK),
+        REFUSES,
+    ),
+    ReadSite(
+        "camera_delivered_fps",
+        "cue_events.cue_event_rows",
+        lambda meta: (cue_event_rows(meta, []) or [["", "", "", "", ""]])[0][
+            4
+        ],
+        dict(CUE_BLOCK, camera_delivered_fps="29.9"),
+        "-",
+        # A dash, not a refusal: a clip or a not-yet-measurable rate
+        # is an ordinary session, and the tally still stands beside
+        # whatever rates the file does carry.
+    ),
+    ReadSite(
+        "measured_fps",
+        "cue_events.cue_event_rows",
+        lambda meta: (cue_event_rows(meta, []) or [["", "", "", "", "", ""]])[
+            0
+        ][5],
+        dict(CUE_BLOCK, measured_fps="30.00"),
+        "-",
+    ),
+    ReadSite(
         "delegate_requested",
         "evaluate_eyeblink8.delegate_header",
         lambda meta: delegate_header([meta.get("delegate_requested")]),
@@ -354,6 +433,7 @@ class TestEveryReaderStatesWhatAbsenceMeans:
                 (
                     verdict.VerdictError,
                     LightResponseError,
+                    CueError,
                 ),
             ):
                 site.read(without)
@@ -377,6 +457,10 @@ class TestThePolicyTableIsTheWholeContract:
         # The marker family is read per index; the policy is one rule.
         covered.add("marker_N_seconds")
         covered.add("marker_N_visibility_changes")
+        # The cue family sites exercise the concrete first cue; the
+        # policy is one rule per family, exactly as the markers above.
+        covered.add("cue_N_kind")
+        covered.add("cue_N_seconds")
         missing = sorted(set(READ_BY_PYTHON) - covered)
         assert missing == [], f"no stated absence policy: {missing}"
 

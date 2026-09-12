@@ -27,11 +27,18 @@ test("the camera path says the model is loading, then the score's line counts do
   test.setTimeout(120_000);
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
-  await answerOpeningQuestion(page);
   // Said on the status line while the model downloads, on the camera
-  // path as on the clip path.
+  // path as on the clip path. Asserted BEFORE the sleepiness question
+  // is answered, not after: the sentence lives only until the model is
+  // ready, the load is fired at camera start and does not wait for the
+  // dialog, and on a warm runner the model from localhost beat the
+  // dialog-answering — the status read "" with the state at running,
+  // which is exactly the model-ready state, three times in one job.
+  // The dialog being open does not matter here: a modal makes the page
+  // inert to pointers, and this is a text read.
   const status = page.locator("p[data-state]");
   await expect(status).toContainText(/Loading the measuring model/);
+  await answerOpeningQuestion(page);
   // The countdown to the first score sits under the score itself.
   await expect(page.locator("#box-alertness")).toContainText(
     /Learning your open eyes: \d+ s left/,

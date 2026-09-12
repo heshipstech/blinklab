@@ -53,6 +53,9 @@
 # webgl2_supported: true
 # inference_p50_ms: 7.4
 # inference_p95_ms: 8.1
+# gaze_calibrated: false
+# gaze_rms_bound: 0.15
+# gaze_r2_bound: 0.8
 timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,fixationMedianMs,fixating,onScreen,baselineOverResting,pupilDiameterMm,blinkLineMm,blinkLineSource,shutLineMm,shutLineSource,sampledFps,inferenceMs,sceneLum,faceLum,blinkObservedFraction,blinkCountingSuspended,irisOffsetVertical,faceSeconds
 1000,true,60,7,7.9,,,,,,,0,0,,false,true,1.1285714285714286,,,none,,none,,,,,,false,,0
 42000,true,60,7,7.9,,,,,,,0,0,,false,true,1.1285714285714286,,,none,,none,,,,,,false,,0
