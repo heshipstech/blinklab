@@ -4065,3 +4065,27 @@ the host's name. The document reserves the space and names the one
 place the reading can come from, which costs a blank section and
 buys a file with no number in it that a reader cannot trace to its
 kind.
+
+## A shortcut the artifact itself confesses cannot be passed off
+
+Row 11.0b's Check demanded the end-to-end test drive a SHORTENED
+schedule, and the trap in every test shortcut is the same: the
+moment a system has a fast path for tests, somebody eventually
+mistakes a fast-path artifact for a real one, or worse, the fast
+path drifts from the real one and the tests keep passing. The
+answer here was to make the artifact carry its own confession. The
+export writes cue_time_scale on every cued session — 1.000 for the
+real protocol, 0.020 for the test run — so a shortened session's
+file can sit in any folder forever and still say exactly what it
+is, and the analysis scores it against its own scaled times because
+the schedule travels IN the file rather than being looked up in
+this repository's constants. One mechanism buys three properties:
+the test is honest, old files stay scorable across schedule
+changes, and no reader ever has to trust a filename.
+
+The tone decision is the small one worth keeping: closed eyes
+cannot read a screen, so the instruction "close your eyes for
+twenty seconds" is unfinishable as text — the person cannot see it
+end. Every cue boundary sounds a tone, and the words hand the
+ending to the ear. An instruction's medium has to survive the state
+the instruction puts the person in.
