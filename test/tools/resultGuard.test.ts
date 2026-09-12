@@ -99,6 +99,27 @@ describe("the model card's measurement-uncertainty section", () => {
     expect(Number((stated as RegExpMatchArray)[1])).toBe(run.invented);
   });
 
+  it("the delegate's observability is stated as a limit, in both places", () => {
+    // Roadmap 13.5. The export records the request, the one CPU
+    // retry, the webgl2 probe and the inference spread; the one
+    // thing it CANNOT record is the executed delegate, and the pin
+    // holds that statement where readers look — the card's
+    // provenance section beside the configuration it conditions, and
+    // the export row the writer emits for readers of a bare CSV.
+    // Whitespace-normalised, because a hard wrap through the middle
+    // of a pinned sentence has broken a pin in this repository
+    // before (12.0b's SPEC pin).
+    const card = modelCard.replace(/\s+/g, " ");
+    expect(card).toContain(
+      "cannot report which delegate actually executed and falls back " +
+        "to CPU silently",
+    );
+    expect(card).toContain("delegate_requested");
+    expect(card).toContain("remains unobservable");
+    const writer = readRepoFile("src/core/delegateTruth.ts", root);
+    expect(writer).toContain("delegate_executed: unobservable");
+  });
+
   it("the iris constant carries its citation and spread, stated twice", () => {
     // Roadmap 10.10c4d. Every millimetre the page publishes divides
     // by IRIS_DIAMETER_MM, and until this row the 11.7 had no source
