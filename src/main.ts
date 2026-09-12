@@ -31,6 +31,7 @@ import {
   irisAspectRatio,
   irisWidthPx,
 } from "./core/aperture";
+import { mergedApertureMm } from "./core/crossEyeGate";
 import { toPixels, type Point2 } from "./core/geometry";
 import {
   irisSampleRegion,
@@ -3702,8 +3703,11 @@ function processFrame(
           );
           stabilityPx =
             rightPx === null || leftPx === null ? null : (rightPx + leftPx) / 2;
-          stabilityMm =
-            rightMm === null || leftMm === null ? null : (rightMm + leftMm) / 2;
+          // Roadmap 10.7b: the merge refuses when the eyes disagree
+          // past twice the measured cross-eye p95 — averaging a
+          // broken eye with a good one manufactures a plausible
+          // number, and every consumer downstream reads this value.
+          stabilityMm = mergedApertureMm(leftMm, rightMm);
 
           // The iris aspect ratio for the trace, averaged over both
           // eyes the way the aperture is. Same frame dimensions as
