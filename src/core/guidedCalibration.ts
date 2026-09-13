@@ -5,7 +5,10 @@ import {
   GUIDED_CALIBRATION_PHASE_MS,
   GUIDED_CALIBRATION_SETTLE_MS,
   GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION,
+  GUIDED_CALIBRATION_VERIFY_MIN_BLINKS,
+  GUIDED_CALIBRATION_VERIFY_MS,
 } from "./constants";
+import { blinkStep, initialBlinkState, type BlinkState } from "./blink";
 import {
   FACE_TIME_FRAME_CREDIT_MS,
   initialFaceTime,
@@ -23,7 +26,7 @@ import { percentile } from "./statistics";
 export const GUIDED_MIN_FACE_MS_PER_PHASE =
   GUIDED_CALIBRATION_MIN_SAMPLES * FACE_TIME_FRAME_CREDIT_MS;
 
-export { GUIDED_CALIBRATION_PHASE_MS };
+export { GUIDED_CALIBRATION_PHASE_MS, GUIDED_CALIBRATION_VERIFY_MS };
 
 // Guided blink-line calibration: measure a person's OWN open and
 // closed aperture through two held phases, then place the personal
@@ -63,7 +66,13 @@ export type GuidedCalibrationRefusal =
   // own lower tail: even a sound separation can leave the midpoint
   // inside the relaxed-open droop band, where it would arm on ordinary
   // opening. The resolve-time soundness ceiling, roadmap 11.6a.
-  | "line-above-open-floor";
+  | "line-above-open-floor"
+  // The candidate line was sound on its medians but did not catch the
+  // person's own blinks when they were asked for: fewer than
+  // GUIDED_CALIBRATION_VERIFY_MIN_BLINKS of the verification blinks
+  // crossed it. A line that misses this person's ordinary blinks is not
+  // stored, however good its midpoint looked. Roadmap 11.6a.
+  | "verification-failed";
 
 export type GuidedCalibrationResult =
   | {
@@ -338,11 +347,13 @@ export function parseBlinkCalibration(
   };
 }
 
-// The session sequences the two held phases against the clock, so the
-// DOM only has to render the phase and feed apertures. Open first,
-// then closed, each for GUIDED_CALIBRATION_PHASE_MS, then it resolves
-// once and freezes — a calibration, like the baseline, is measured and
-// then used, never re-opened mid-run.
+// The session sequences the held phases against the clock, so the DOM
+// only has to render the phase and feed apertures. Open first, then
+// closed, each for GUIDED_CALIBRATION_PHASE_MS; if those resolve to a
+// sound candidate line, a verification phase runs the detector over the
+// person's own blinks against that candidate, and the line is kept only
+// if it catches them (roadmap 11.6a). Then it freezes — a calibration,
+// like the baseline, is measured and then used, never re-opened mid-run.
 export type CalibrationSessionState =
   | {
       kind: "collecting";
@@ -354,7 +365,25 @@ export type CalibrationSessionState =
       faceTime: FaceTimeState;
       openFaceMs: number;
     }
-  | { kind: "done"; result: GuidedCalibrationResult };
+  | {
+      // The verification phase: the open/closed holds produced a sound
+      // candidate line, and now the detector is run over the person's
+      // "blink three times" against it. The candidate is carried whole
+      // so the ready result can be returned unchanged once enough blinks
+      // are caught.
+      kind: "verifying";
+      startedAtMs: number;
+      blinkState: BlinkState;
+      candidate: Extract<GuidedCalibrationResult, { kind: "ready" }>;
+    }
+  // blinksCaught is the verification count when verification ran (a
+  // ready line, or a "verification-failed" refusal), and null for a
+  // refusal that never reached it (too few samples, or an unsound line).
+  | {
+      kind: "done";
+      result: GuidedCalibrationResult;
+      blinksCaught: number | null;
+    };
 
 export function startCalibrationSession(
   nowMs: number,
@@ -379,9 +408,36 @@ export function calibrationSessionStep(
   }
   // A frame stamped before the phase began cannot lengthen it: a
   // backwards clock is ignored, state unchanged (baseline.ts's guard,
-  // remediation C3).
+  // remediation C3). Both live phases carry startedAtMs.
   if (nowMs < state.startedAtMs) {
     return state;
+  }
+  if (state.kind === "verifying") {
+    // Run the real blink detector over this frame against the CANDIDATE
+    // line — the line the holds just produced, not the one in storage —
+    // so the check measures whether that candidate would catch this
+    // person's own blinks. No settle: blinkStep counts only a completed
+    // blink shape, and the long closed-phase hold that precedes this
+    // phase is too long to be one, so a fresh blinkState cannot mistake
+    // the reopen for a blink.
+    const blinkState = blinkStep(
+      state.blinkState,
+      nowMs,
+      apertureMm,
+      state.candidate.personalLineMm,
+    );
+    if (nowMs - state.startedAtMs < GUIDED_CALIBRATION_VERIFY_MS) {
+      return { ...state, blinkState };
+    }
+    const blinksCaught = blinkState.blinkCount;
+    return {
+      kind: "done",
+      blinksCaught,
+      result:
+        blinksCaught >= GUIDED_CALIBRATION_VERIFY_MIN_BLINKS
+          ? state.candidate
+          : { kind: "refused", reason: "verification-failed" },
+    };
   }
   // The per-phase settle window (roadmap 11.6a). A phase opens with an
   // instruction to read and lids to move into the held position, so
@@ -416,12 +472,21 @@ export function calibrationSessionStep(
       openFaceMs: faceTime.faceMs,
     };
   }
+  // The closed hold has ended. Resolve the candidate line; a refusal is
+  // final and never reaches verification, while a sound candidate is
+  // carried into the verification phase rather than stored outright.
+  const candidate = resolveGuidedCalibration(
+    samples,
+    state.openFaceMs,
+    faceTime.faceMs,
+  );
+  if (candidate.kind === "refused") {
+    return { kind: "done", result: candidate, blinksCaught: null };
+  }
   return {
-    kind: "done",
-    result: resolveGuidedCalibration(
-      samples,
-      state.openFaceMs,
-      faceTime.faceMs,
-    ),
+    kind: "verifying",
+    startedAtMs: nowMs,
+    blinkState: initialBlinkState,
+    candidate,
   };
 }

@@ -187,16 +187,25 @@ describe("resolveGuidedCalibration, the soundness ceiling (roadmap 11.6a)", () =
 describe("the calibration session state machine", () => {
   // Drive a session from nowMs 0 by feeding one aperture per 33 ms
   // tick until it reaches "done", capturing the phase seen each tick.
+  // In the verification phase it dips the aperture closed for one tick
+  // every twenty (about 660 ms apart, past the refractory), producing
+  // several clean blinks against the candidate line so a sound run
+  // passes verification; otherwise it holds the eye open.
   function run(
     openMm: number,
     closedMm: number,
   ): { state: CalibrationSessionState; phasesSeen: string[] } {
     let state = startCalibrationSession(0);
     const phasesSeen: string[] = [];
-    for (let tick = 1; tick <= 400 && state.kind !== "done"; tick++) {
-      const phase = state.kind === "collecting" ? state.phase : "done";
-      phasesSeen.push(phase);
-      const mm = phase === "closed" ? closedMm : openMm;
+    for (let tick = 1; tick <= 800 && state.kind !== "done"; tick++) {
+      let mm: number;
+      if (state.kind === "collecting") {
+        phasesSeen.push(state.phase);
+        mm = state.phase === "closed" ? closedMm : openMm;
+      } else {
+        phasesSeen.push("verifying");
+        mm = tick % 20 === 0 ? closedMm : openMm;
+      }
       state = calibrationSessionStep(state, tick * 33, mm);
     }
     return { state, phasesSeen };
@@ -290,6 +299,85 @@ describe("the per-phase settle window (roadmap 11.6a)", () => {
     expect(state.kind === "collecting" && state.samples.closed).toEqual([]);
     state = calibrationSessionStep(state, closedStart + 801, 2);
     expect(state.kind === "collecting" && state.samples.closed).toEqual([2]);
+  });
+});
+
+describe("the verification phase (roadmap 11.6a)", () => {
+  const DT = 40;
+
+  // Drives a whole session: open hold at openMm, closed hold at
+  // closedMm, then the verification phase. In verification it dips the
+  // aperture closed for one frame at each of `verifyBlinks` moments,
+  // spaced 300 ms apart (well past the 150 ms refractory) and held open
+  // otherwise, so exactly `verifyBlinks` clean blinks land against the
+  // candidate line. A refusal from the holds ends the session before
+  // verification and nothing is fed to it.
+  function fullSession(
+    openMm: number,
+    closedMm: number,
+    verifyBlinks: number,
+  ): CalibrationSessionState {
+    let state = startCalibrationSession(0);
+    let t = 0;
+    while (state.kind === "collecting" && t < 100000) {
+      const mm = state.phase === "closed" ? closedMm : openMm;
+      state = calibrationSessionStep(state, t, mm);
+      t += DT;
+    }
+    if (state.kind === "verifying") {
+      const startedAtMs = state.startedAtMs;
+      let fired = 0;
+      while (state.kind === "verifying" && t < 100000) {
+        const elapsed = t - startedAtMs;
+        const fire = fired < verifyBlinks && elapsed >= (fired + 1) * 300;
+        state = calibrationSessionStep(state, t, fire ? closedMm : openMm);
+        if (fire) fired += 1;
+        t += DT;
+      }
+    }
+    return state;
+  }
+
+  it("stores a sound line that catches the person's own blinks", () => {
+    const state = fullSession(8, 2, 3);
+    expect(state.kind).toBe("done");
+    if (state.kind === "done") {
+      expect(state.result.kind).toBe("ready");
+      if (state.result.kind === "ready") {
+        expect(state.result.personalLineMm).toBe(5);
+      }
+      expect(state.blinksCaught).toBe(3);
+    }
+  });
+
+  it("refuses a sound line that misses the person's blinks", () => {
+    // The medians are sound (line 5) but only one blink lands in
+    // verification, below the floor of two, so the line is not stored.
+    const state = fullSession(8, 2, 1);
+    expect(state).toMatchObject({
+      kind: "done",
+      result: { kind: "refused", reason: "verification-failed" },
+      blinksCaught: 1,
+    });
+  });
+
+  it("runs the verification floor: two blinks pass, one does not", () => {
+    const two = fullSession(8, 2, 2);
+    const one = fullSession(8, 2, 1);
+    expect(two.kind === "done" && two.result.kind).toBe("ready");
+    expect(one.kind === "done" && one.result.kind).toBe("refused");
+  });
+
+  it("never reaches verification when the line is already unsound", () => {
+    // Closed never registered (open 8, closed 8): the candidate is
+    // refused on separation, so verification is skipped and blinksCaught
+    // stays null — a line nobody could draw is not one to blink at.
+    const state = fullSession(8, 8, 3);
+    expect(state).toMatchObject({
+      kind: "done",
+      result: { kind: "refused", reason: "closure-not-registered" },
+      blinksCaught: null,
+    });
   });
 });
 
@@ -478,6 +566,13 @@ describe("the guided face-time floors, roadmap 10.12c", () => {
     }
     for (let t = 3008; t <= 6008; t += 8) {
       session = calibrationSessionStep(session, t, 2);
+    }
+    // The holds produced a sound candidate; the verification phase now
+    // runs. Blink against the candidate line — one closed frame every
+    // 400 ms, well past the refractory — so the line is confirmed and
+    // the session resolves ready.
+    for (let t = 6016; t <= 12016; t += 8) {
+      session = calibrationSessionStep(session, t, t % 400 < 8 ? 2 : 8);
     }
     expect(session.kind).toBe("done");
     if (session.kind === "done") {

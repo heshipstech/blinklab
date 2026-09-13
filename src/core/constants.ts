@@ -233,6 +233,20 @@ export const GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85;
 // the 1.2 s GUIDED_MIN_FACE_MS_PER_PHASE floor and the 30-sample floor.
 export const GUIDED_CALIBRATION_SETTLE_MS = 800;
 
+// The verification phase (roadmap 11.6a). Once the open and closed holds
+// have produced a sound candidate line, the person is asked to "blink
+// three times, normally" and the detector is run over those frames with
+// the CANDIDATE line as its threshold: a line that cannot catch this
+// person's own ordinary blinks is not stored, however sound its
+// midpoint looked. The window runs six seconds — twice the hold phase,
+// long enough for three unhurried blinks after the cue — and the line
+// is stored only if at least two of them are caught (one may be missed
+// without failing the check, but a line that catches fewer than two is
+// not measuring this person's blinks at all). Both figures are chosen
+// for the person, before any guided data is read, not fitted to it.
+export const GUIDED_CALIBRATION_VERIFY_MS = 6000;
+export const GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2;
+
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window
 // inflates: once half the baseline exceeds the resting aperture, the

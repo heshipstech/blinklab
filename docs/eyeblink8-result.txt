@@ -955,3 +955,28 @@ DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
   constant is read by nothing else. A settle window added to a function
   the corpus never reaches cannot move a corpus number. The owner's next
   corpus run scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the guided calibration verifies its line against the person's own blinks
+
+  The same two watched files move: src/core/guidedCalibration.ts and
+  src/core/constants.ts. calibrationSessionStep gains a verification
+  phase after the closed hold: once the medians produce a sound
+  candidate line, the person is asked to blink three times and the blink
+  detector (blink.ts's blinkStep) is run over those frames against the
+  CANDIDATE line, storing the line only if at least
+  GUIDED_CALIBRATION_VERIFY_MIN_BLINKS of them are caught in the
+  GUIDED_CALIBRATION_VERIFY_MS window (the two new constants). guided-
+  Calibration.ts now imports blinkStep, but no existing constant the
+  corpus path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, by the same
+  construction as the entries above. The verification phase lives
+  entirely inside calibrationSessionStep, which the stepped corpus
+  runner never enters (it loads each clip in a fresh browser with empty
+  storage and never starts a guided calibration), and the blinkStep it
+  now calls is the same detector the corpus already runs, imported, not
+  changed. A phase the corpus never reaches cannot move a corpus number.
+  The owner's next corpus run scores this entry and retires it beside
+  the block above.
