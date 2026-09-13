@@ -4141,3 +4141,26 @@ readout's children per value, so the explain button lives in a map
 keyed by element and is re-appended on every write. The general
 form: before adding a child to DOM someone else owns, find out who
 calls replaceChildren on it.
+
+## A caveat computed from git outlives every caveat somebody remembered
+
+Row 10.3's small mechanical lesson: the DROZY staleness guard was
+built in August around the one file that had moved by August, and
+that framing quietly became the caveat's ceiling. Five more source
+files moved over the next month and the warning stayed three rows
+wide, not because anyone judged the other rows fresh but because
+nothing was asking the question per row. The repair is a map from
+each published row to the files that produce it, with the caveat's
+scope computed as "whichever rows' sources git says moved" — the
+same self-retiring shape the guard already had, one level finer.
+The general form: when a guard hard-codes the CURRENT extent of a
+problem, it inherits the month it was written in.
+
+The decision lesson is about what a null buys. Re-measuring DROZY
+would cost three hours and a rebuild of video this project promises
+to destroy, to defend verdicts that a chance-cleared bar granted on
+a sample missing its sleepiest sessions. A null defended at that
+price would still be a null — so the rows retire by a dated ruling
+instead, with the re-measure condition named (12.18's v2 read
+moving a shape feature) rather than left as "someday". Retiring a
+number is cheaper than maintaining a pretence that it might firm up.
