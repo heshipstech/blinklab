@@ -909,3 +909,29 @@ DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
   coverage takes the same path it always did; only a short or watched
   run now refuses where it used to footnote. The owner's next corpus
   run scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: a resolve-time soundness ceiling on the guided line
+
+  Two watched files move: src/core/guidedCalibration.ts and
+  src/core/constants.ts. The change is a new REFUSAL inside
+  resolveGuidedCalibration — a guided line is rejected
+  ("line-above-open-floor") when its midpoint sits at or above 0.85 of
+  the open eye's own lower tail, its tenth percentile — plus the two
+  pre-registered constants that refusal reads
+  (GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE, _SOUNDNESS_CEILING_FRACTION).
+  Nothing else in either file changes; no existing constant the corpus
+  path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, and by construction
+  rather than by argument. resolveGuidedCalibration runs only during a
+  live two-phase guided calibration; the corpus runner loads each clip
+  in a fresh browser with empty storage, so no stored guided line
+  exists, effectiveBlinkLineMm returns the passive baseline line, and
+  the guided resolver is never called on the measurement path
+  (docs/blink-line-adoption.txt, the "neutral by construction" half,
+  confirmed digit for digit on 9 September). A refusal added to a
+  function the corpus never reaches cannot move a corpus number. The
+  owner's next corpus run scores this entry and retires it beside the
+  block above.

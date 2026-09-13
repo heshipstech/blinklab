@@ -2268,6 +2268,8 @@ function blinkRefusalMessage(reason: GuidedCalibrationRefusal): string {
       return "Blink calibration needs a steady, measured view of your closed eyes and did not get enough of one. Try again, closing your eyes when the screen asks.";
     case "closure-not-registered":
       return "Your closed eyes did not read far enough below your open ones for a line to be placed. This is the same limit the corpus showed, and rather than guess a line, the calibration refuses.";
+    case "line-above-open-floor":
+      return "The line these readings produced would sit close to where your open eyes already rest, so it would count ordinary opening as a blink. Rather than place a line that high, the calibration refuses. Good, even light on the eyes helps.";
   }
 }
 

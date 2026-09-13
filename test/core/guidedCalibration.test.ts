@@ -115,15 +115,72 @@ describe("resolveGuidedCalibration, refusals", () => {
     });
   });
 
-  it("accepts a closure exactly at the separation boundary", () => {
-    // The separation floor is 30%: a closed median at exactly 70% of
-    // open is accepted, one hair above it is refused.
-    const ready = resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)));
-    expect(ready.kind).toBe("ready");
-    const refused = resolveHeld(
-      samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH)),
+  it("layers the ceiling behind the separation floor at the boundary", () => {
+    // The separation floor is 30%: a closed median ABOVE 70% of open is
+    // refused first, as an unregistered closure. Exactly AT 70% the
+    // closure clears that floor — but the line then sits at 0.85 of the
+    // (flat) open distribution, right on the soundness ceiling (11.6a),
+    // so it is refused there instead, now for the ceiling's reason. The
+    // two guards meet at the boundary and neither lets a line at 0.85 of
+    // open through.
+    expect(
+      resolveHeld(samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH))),
+    ).toEqual({ kind: "refused", reason: "closure-not-registered" });
+    expect(resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)))).toEqual(
+      { kind: "refused", reason: "line-above-open-floor" },
     );
-    expect(refused.kind).toBe("refused");
+  });
+});
+
+describe("resolveGuidedCalibration, the soundness ceiling (roadmap 11.6a)", () => {
+  // The separation floor bounds the closed median; the ceiling bounds
+  // the LINE against where the open eye actually droops — its lower
+  // tail, the 10th percentile of the open samples — so a midpoint that
+  // survives a sound separation can still be refused for sitting inside
+  // the relaxed-open band, where it would arm on ordinary opening
+  // (docs/blink-line-adoption.txt, the pre-registered droop risk).
+
+  it("passes a sound line well below the open tail", () => {
+    // line 5, tail 8, ceiling 0.85*8 = 6.8: clear. Pins the fraction —
+    // drop it far enough and this sound calibration would be refused.
+    const result = resolveHeld(samples(repeat(8, ENOUGH), repeat(2, ENOUGH)));
+    expect(result.kind).toBe("ready");
+  });
+
+  it("refuses a line at the ceiling and admits one just below it", () => {
+    // Open flat at 10, so tail = 10 and ceiling = 8.5. A closed median
+    // of 7 puts the line exactly at 8.5 — refused, the row's "a line at
+    // 0.85 of open is refused". Drop the closed median a hair and the
+    // line clears.
+    expect(resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)))).toEqual(
+      { kind: "refused", reason: "line-above-open-floor" },
+    );
+    const justBelow = resolveHeld(
+      samples(repeat(10, ENOUGH), repeat(6.9, ENOUGH)),
+    );
+    expect(justBelow.kind).toBe("ready");
+  });
+
+  it("reads the open LOWER TAIL, not the median: a droopy open eye is refused where a tight one passes", () => {
+    // Two open distributions with the SAME median (10) and the SAME
+    // closed median (5), so a median-relative check would treat them
+    // alike. The droopy one dips to 8 in its lower tail; the tight one
+    // holds near 10 throughout.
+    //
+    //   line = (10 + 5)/2 = 7.5 in both.
+    //   droopy: tail (p10) = 8,  ceiling 0.85*8 = 6.8  -> 7.5 refused.
+    //   tight:  tail (p10) = 10, ceiling 0.85*10 = 8.5 -> 7.5 ready.
+    //
+    // A tenth percentile that slid up to the median (p50) would read 10
+    // for BOTH and admit both, so this pins the percentile.
+    const droopyOpen = [...repeat(8, 4), ...repeat(10, 36)]; // p10=8, p50=10
+    const tightOpen = repeat(10, 40); // p10=p50=10
+    const closed = repeat(5, ENOUGH);
+    expect(resolveHeld(samples(droopyOpen, closed))).toEqual({
+      kind: "refused",
+      reason: "line-above-open-floor",
+    });
+    expect(resolveHeld(samples(tightOpen, closed)).kind).toBe("ready");
   });
 });
 
