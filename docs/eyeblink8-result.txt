@@ -881,3 +881,31 @@ second entry that day:
   loads the same page and takes the same bytes. Predicted corpus
   impact: none, digit for digit, scored with the two entries above on
   the owner's next run.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 10.1d slice: the Eyeblink8 evaluator refuses a partial corpus
+
+  One watched file, analysis/tools/evaluate_eyeblink8.py, gains a
+  refusal path. Coverage stops being a footnote beside a scored clip
+  and becomes a REFUSED clip: a measurement whose frame count falls
+  more than max(5, 1%) short of the annotation, or that carries no
+  frames_measured header, or that ran in any mode but stepped, is left
+  out of the pooled headline rather than diluted into it, and any
+  refusal at all exits non-zero so a partial corpus cannot publish as
+  the corpus. The per-clip scoring arithmetic is untouched: recall,
+  precision, F1 and every per-clip count are computed exactly as
+  before.
+
+  This is a scorer-refusal hardening, and its predicted corpus impact
+  is none, digit for digit — checkable from the block at the top of
+  this file rather than argued. The refusal path cannot engage on the
+  committed anchor: every clip is stepped (measurement_mode "stepped"
+  on all eight, no refusals), and the coverage gaps are 0 or 1 frame
+  against annotations in the thousands, far under the max(5, 1%) bar,
+  with the two "+1" rows the widest at a gap of one. The glasses split
+  stays computable, one clip with and seven without, so its wording
+  never moves to "not computable" either. A complete corpus with full
+  coverage takes the same path it always did; only a short or watched
+  run now refuses where it used to footnote. The owner's next corpus
+  run scores this entry and retires it beside the block above.
