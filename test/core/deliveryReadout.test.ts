@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { deliveryRateMessage } from "../../src/core/deliveryRate";
-import { deliveryMetadataRows } from "../../src/core/sessionMetadata";
+import {
+  deliveryMetadataRows,
+  framesMissedMetadataRows,
+} from "../../src/core/sessionMetadata";
 
 // What the page says about the camera's own rate, and what the export
 // carries. Both are pure, so both can be checked without a camera,
@@ -130,6 +133,35 @@ describe("what the export carries about the camera's rate", () => {
     // there is no camera and no delivery rate. Writing "unknown" there
     // would invite a reader to look for a camera that never existed.
     expect(deliveryMetadataRows(null)).toEqual([]);
+  });
+});
+
+describe("what the export carries about frames missed while busy (13.4)", () => {
+  it("writes the presented total and the missed count, in that order", () => {
+    expect(
+      framesMissedMetadataRows({ missedWhileBusy: 4, framesPresented: 3600 }),
+    ).toEqual(["# frames_presented: 3600", "# frames_missed_while_busy: 4"]);
+  });
+
+  it("writes unknown, never zero, when the count was refused or unmeasured", () => {
+    // A camera whose browser reports no presentedFrames, or whose count
+    // was refused for not advancing, still carries the rows: unknown is
+    // the honest word, and a silent omission would hide the limitation.
+    expect(
+      framesMissedMetadataRows({
+        missedWhileBusy: null,
+        framesPresented: null,
+      }),
+    ).toEqual([
+      "# frames_presented: unknown",
+      "# frames_missed_while_busy: unknown",
+    ]);
+  });
+
+  it("a clip carries no busy-frame count at all", () => {
+    // A clip is stepped from its own decoded frames and misses none, so
+    // there is nothing to count and no rows are written.
+    expect(framesMissedMetadataRows(null)).toEqual([]);
   });
 });
 

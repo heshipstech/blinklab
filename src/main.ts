@@ -153,6 +153,7 @@ import {
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
+  framesMissedMetadataRows,
   gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   medianIrisWidthPx,
@@ -195,6 +196,13 @@ import {
   noteDelivered,
   noteRead,
 } from "./core/deliveryRate";
+import {
+  emptyFramesMissed,
+  framesMissedSummary,
+  notePresented,
+  type FramesMissedState,
+  type FramesMissedSummary,
+} from "./core/framesMissed";
 import { recordDue } from "./core/recordGate";
 import {
   initialLongClosureState,
@@ -778,6 +786,19 @@ function settledDeliveryRates(): DeliveryRates | null {
   sessionDeliveryRates ??= deliveryRates(deliveryState, performance.now());
   return sessionDeliveryRates;
 }
+// The frames the compositor presented that no callback ever looked at,
+// settled once like the delivery rates and reset with the session
+// (roadmap 13.4). Null off the camera path: a clip is stepped frame by
+// frame from the decoded frames themselves and misses none.
+let sessionFramesMissed: FramesMissedSummary | null = null;
+
+function settledFramesMissed(): FramesMissedSummary | null {
+  if (frameSource !== "camera") {
+    return null;
+  }
+  sessionFramesMissed ??= framesMissedSummary(framesMissedState);
+  return sessionFramesMissed;
+}
 // How many frames the pose gate judged, and how many it passed. The
 // per-frame refusals already happened on screen; these two counts let
 // the export state the session-level fraction as a primary fact.
@@ -1218,6 +1239,9 @@ function resetSession(): void {
   // starting and stopping it there would silence the rate it is about
   // to measure; whoever changes the source owns the observer.
   deliveryState = emptyDelivery();
+  // The missed-frame count belongs to one camera session too; carrying
+  // it forward would blame the next session for this one's stalls.
+  framesMissedState = emptyFramesMissed();
   // A new source starts a new time axis. Carrying the old clock
   // forward would reject every frame of a clip that starts at zero.
   frameClock = startFrameClock();
@@ -1243,6 +1267,7 @@ function resetSession(): void {
   visibilityChanges = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
+  sessionFramesMissed = null;
   poseGateFrames = 0;
   poseValidFrames = 0;
   // A new session's report does not exist yet: the old one vanishes
@@ -1357,8 +1382,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
     if (supportsVideoFrameCallback(video)) {
       deliveryObserver = observeVideoDelivery(
         video,
-        (deliveredAtMs) => {
+        (deliveredAtMs, presentedFrames) => {
           deliveryState = noteDelivered(deliveryState, deliveredAtMs);
+          // The compositor's own frame tally, so a stall the delivery
+          // callback coalesced away is still counted (roadmap 13.4).
+          framesMissedState = notePresented(framesMissedState, presentedFrames);
         },
         () => {
           // A dead observer costs a diagnostic, not a session. The
@@ -1953,6 +1981,10 @@ let rateRiskShown = false;
 // measurement loop. Null observer means either a clip or a browser
 // without requestVideoFrameCallback, and the readout says which.
 let deliveryState = emptyDelivery();
+// The frames the compositor presented that the busy main thread never
+// looked at, counted from the same observer's presentedFrames (roadmap
+// 13.4). Belongs to one camera session like the delivery counts.
+let framesMissedState: FramesMissedState = emptyFramesMissed();
 let deliveryObserver: { stop: () => void } | null = null;
 // Since when the page has been able to receive frames: the session's
 // start, or the last return from a hidden tab. Camera silence is
@@ -2916,6 +2948,7 @@ function exportSession(): void {
       guidedConditionsMismatch(),
     ),
     ...deliveryMetadataRows(settledDeliveryRates()),
+    ...framesMissedMetadataRows(settledFramesMissed()),
     ...sessionMetadataRows(
       featureRecords,
       irisWidthSamples,

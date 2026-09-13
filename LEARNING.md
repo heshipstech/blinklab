@@ -4164,3 +4164,39 @@ price would still be a null — so the rows retire by a dated ruling
 instead, with the re-measure condition named (12.18's v2 read
 moving a shape feature) rather than left as "someday". Retiring a
 number is cheaper than maintaining a pretence that it might firm up.
+
+## The compositor keeps a count the callback cannot
+
+The concept this increment teaches is measuring a loss from the tally
+kept by the layer beneath you, not from your own attendance.
+
+The live camera loop already reported a read fraction: of the frames
+the delivery callback saw arrive, what share did the detector actually
+read. That number quietly assumed the callback saw every arrival. When
+the main thread is busy, it does not — the browser coalesces
+requestVideoFrameCallback, presenting several frames while the callback
+runs and firing it once when the thread frees. The callback undercounts
+arrivals, so the read fraction can read a healthy whole while frames
+went by unlooked-at, because it is dividing by its own undercount.
+
+The fix is to ask a counter that does not depend on the callback's
+attendance. `metadata.presentedFrames` is the compositor's running
+tally of frames presented since the element began, and it advances
+whether or not a callback fired for each one. So the gap between how far
+it jumped and how many callbacks fired is exactly the frames the busy
+thread skipped — a loss the read fraction structurally cannot see. Two
+instruments watching the same stream disagree usefully precisely when
+one of them is the thing being measured.
+
+The refusal is the other half. presentedFrames is a count that must
+strictly advance; a repeat or a backwards step is the browser (or a
+fake) breaking that contract, and the counter refuses the whole session
+by name rather than folding a bad value in as a gap of zero or, worse, a
+negative miss. A refusal is final, the same shape as a refused
+calibration: a later well-formed frame does not un-refuse a session that
+already saw a bad one. And the first value seen is only a baseline,
+never a miss — presentedFrames is cumulative, so a loop that attaches
+late inherits a large first number that is not a loss it is responsible
+for. The rows are camera-only and read `unknown` on a browser that
+carries no such field, because a silent omission would take the
+limitation out of the open on exactly the devices where it bites.
