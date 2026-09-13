@@ -8,13 +8,16 @@ import {
 } from "../../tools/resultGuard.mjs";
 import {
   CAVEAT_MARKERS,
+  FEATURE_SOURCES,
   SHAPE_FEATURE_LABELS,
   SHAPE_SOURCE,
   caveatBlock,
   commitExists,
   commitsTouchingSince,
   isAncestorOfHead,
+  missingSources,
   parseMeasuringCommit,
+  publishedFeatures,
   shapeFieldNames,
 } from "../../tools/drozyGuard.mjs";
 
@@ -97,6 +100,63 @@ describe("the shape columns the caveat is about", () => {
     expect(() => shapeFieldNames("export type Something = {}")).toThrow(
       /BlinkShape/,
     );
+  });
+});
+
+// Roadmap 10.3. The guard used to watch ONE source, blinkShape.ts,
+// because in August that was the one file that had moved. By September
+// every feature's sources had moved — the personal blink line, the
+// shut-line rule, the long-closure hysteresis — and the caveat still
+// spoke only of three rows. The map below is per feature, so the
+// caveat's scope is computed from git rather than remembered from the
+// month the guard was written.
+
+describe("every published feature names its sources", () => {
+  it("reads the feature rows out of the PRIMARY table", () => {
+    const table =
+      "PRIMARY, Spearman against KSS across sessions\n" +
+      "  feature                            n     rho\n" +
+      "  blink duration, ms                20   0.444\n" +
+      "  PERCLOS, share of the minute      20  -0.001\n" +
+      "\nNEGATIVE CONTROL, KSS shuffled\n" +
+      "  blink duration, ms                   0.444\n";
+    expect(publishedFeatures(table)).toEqual(["blink duration", "PERCLOS"]);
+  });
+
+  it("refuses a result file with no PRIMARY table", () => {
+    expect(() => publishedFeatures("DROZY, some numbers\n")).toThrow(/PRIMARY/);
+  });
+
+  it("maps every published feature to at least one source", () => {
+    // Row 10.3's Check, the failing-first half: a feature in the
+    // published table with no entry here is a row whose staleness
+    // nothing can compute.
+    const published = publishedFeatures(resultFile);
+    expect(published.length).toBe(7);
+    const unmapped = published.filter(
+      (feature) => FEATURE_SOURCES[feature] === undefined,
+    );
+    expect(unmapped, "published DROZY features with no source map").toEqual([]);
+  });
+
+  it("maps no feature the table has stopped publishing", () => {
+    const published = new Set(publishedFeatures(resultFile));
+    const fossils = Object.keys(FEATURE_SOURCES).filter(
+      (feature) => !published.has(feature),
+    );
+    expect(fossils, "mapped features absent from the published table").toEqual(
+      [],
+    );
+  });
+
+  it("every mapped source is a file this repository carries", () => {
+    for (const [feature, sources] of Object.entries(FEATURE_SOURCES)) {
+      expect(sources.length, `"${feature}" maps to nothing`).toBeGreaterThan(0);
+    }
+    expect(
+      missingSources(root),
+      "mapped sources that name no file in the repository",
+    ).toEqual([]);
   });
 });
 
