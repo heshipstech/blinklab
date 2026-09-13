@@ -1,0 +1,182 @@
+THE FALSE-ALARM CHARACTER QUESTION: WHAT DID THE DETECTOR SEE?
+=============================================================
+
+Written 13 September 2026, before the anchor run's false-alarm table
+is read. The miss autopsy (docs/miss-character.txt) asked, of the 67
+blinks a human saw and the instrument did not, what the aperture was
+doing on those frames. This is its mirror: the instrument logged 65
+blinks the human annotated NOTHING at, and the same mechanism
+treatment is owed to them. A recall deficit and a precision deficit
+are separate faults with separate fixes, and neither is understood by
+its count alone.
+
+WHY THE MECHANISM QUESTION MATTERS MORE FOR A FALSE ALARM THAN THE
+COUNT DOES. The tempting reading of 65 false alarms is that the
+detector is trigger-happy and the blink line sits too low, and the
+fix is to raise it. Since fix #114 that reading is almost certainly
+wrong, and it costs recall to act on. A blink is only LOGGED when the
+aperture plunges past the ARM line — thresholdMm * (1 -
+APERTURE_HYSTERESIS_FRACTION), i.e. 0.9 of the personal line
+(src/core/blink.ts, src/core/constants.ts: APERTURE_HYSTERESIS_FRACTION
+= 0.1) — and then reopens within MAX_BLINK_DURATION_MS (500 ms), no
+sooner than BLINK_REFRACTORY_MS (150 ms) after the last count, and
+only after the eye cleared the RE-ARM line at 1.1 of the threshold.
+Noise riding a tenth of a millimetre below the line no longer mints a
+blink; fix #114 was measured to kill exactly that. So a false alarm in
+this era is not line-riding chatter. It is a GENUINE, DEEP, BRIEF
+aperture plunge on a frame the ground truth marked empty. The
+question the count cannot answer is what made the aperture plunge
+there, and the honest possibilities point at different fixes that do
+not all cost recall.
+
+THE TABLES, committed under docs/evidence/, one row per false alarm,
+each a detection the matcher left unpaired against the annotation
+(the inverse of the miss table's unpaired annotations):
+
+    2026-08-09/tables-current-run   72 false alarms   capfix era,
+                                                       SUPERSEDED
+    the anchor run's 65-row table                      regenerated on
+                                                       the owner's
+                                                       machine, where
+                                                       the corpus and
+                                                       the measured
+                                                       folder live
+
+Only the superseded 72-row table exists in this repository, and its
+rows carry the raw per-false-alarm facts, no mechanism column: nothing
+here has classified a false alarm, so nothing here has pre-read the
+answer this file predicts. The anchor 65-row table and the per-frame
+traces the depth question needs are the owner's to produce; the
+predictions below are committed first and are not edited after that
+run scores them, in the predict-then-verify discipline this project
+keeps (docs/miss-character.txt, docs/stepper-honesty.txt).
+
+THE FACTS EACH FALSE ALARM CARRIES, from which its mechanism is read
+(the columns the table already joins, from the detection, the
+annotation, and the run's per-second seconds.csv):
+
+  framesToNearestAnnotatedBlink  frames from this detection to the
+                 closest annotated blink, 0 when they overlap. A small
+                 value means the false alarm hugs a real blink.
+  overlapsNF     whether any frame of the detection's span fell on a
+                 frame the annotation marks non-frontal ("N"). A turned
+                 head foreshortens the eye and can read shut.
+  beforeBaselineReady  whether the detection fired before the second
+                 at which the personal baseline first replaced the
+                 fixed 4 mm fallback line. An un-calibrated line is a
+                 different instrument.
+  faceDetectedAtThatSecond, apertureMmAtThatSecond,
+  baselineMmAtThatSecond  the per-second state at the detection's
+                 start second: whether a trusted face was present, and
+                 how deep the aperture sat relative to the line.
+
+THE FOUR VERDICTS the tool assigns to each false alarm, PRIORITY-
+ORDERED so a false alarm that could be told more than one story is
+named by the first that fits (the same if/elif discipline miss_autopsy
+uses). Order is a claim about which story dominates the others when
+both are present, not a ranking of severity.
+
+  near_annotation   framesToNearestAnnotatedBlink <= the refractory
+                 window in frames (150 ms at 30 fps rounds to 5). The
+                 detector fired one blink's width from a real one:
+                 either a genuine blink split into two counts, or a
+                 reopening wobble the matcher would not pair. This is a
+                 MATCHING/state-machine story, not a bad detection of
+                 nothing — the aperture that fired here belongs to a
+                 real blink next door.
+  non_frontal    overlapsNF is set (and it is not near_annotation). The
+                 aperture crossed while the head was turned, where a
+                 foreshortened eye reads shallower than it is: a POSE
+                 story, and the lever is a pose gate, not the line.
+  before_baseline  the detection fired before baselineReady (and is
+                 neither of the above). The line it crossed was the
+                 fixed fallback, not the person's own: a PREPARATION
+                 story. This is the DROPPABLE sub-question (below).
+  deep_unannotated  none of the above. A deep, brief aperture plunge on
+                 a trusted, frontal, calibrated frame the annotation
+                 left empty. The residue: either a real closure the
+                 ground truth did not record, or a real artefact that
+                 is not pose and not preparation. For this group the
+                 tool reports the aperture depth it can see —
+                 apertureMmAtThatSecond / baselineMmAtThatSecond, the
+                 per-second ratio, labelled as per-second and not the
+                 frame minimum, because the committed table carries the
+                 second and not yet the frame. A ratio near or below
+                 the arm line's 0.9 is a genuinely deep closure the
+                 annotator missed; well above it is a per-second
+                 average hiding a briefer frame-level dip, which only
+                 the trace can resolve.
+
+PREPARATION-SENSITIVITY, THE DROPPABLE SUB-QUESTION. before_baseline
+asks whether the detector mints phantom blinks in the window before
+the personal line is set, on the 4 mm fallback. It is named droppable
+on purpose: if a run's seconds tables do not carry a clean
+baselineReady second for every clip, or if the count is negligible,
+this verdict collapses into deep_unannotated and the rest of the split
+stands unharmed. The other three verdicts do not depend on it. A row
+that cannot answer its hardest sub-question should say which one it
+dropped and keep the answers it can defend, rather than fail whole.
+
+THE PREDICTIONS, over the anchor run's 65 false alarms, committed
+before that table is read:
+
+  1. deep_unannotated is the PLURALITY, at least 30 of the 65. Since
+     fix #114 the detector only fires on deep crossings, so most false
+     alarms are real deep dips the ground truth did not mark. If this
+     holds, the precision deficit is as much an annotation-
+     completeness question as a detector fault, and desensitising the
+     line to erase these would cost recall for no measured gain.
+  2. non_frontal is a real minority but not the largest single
+     mechanism: between 5 and 20 of the 65. Eyeblink8 carries labelled
+     non-frontal frames, and a turned head is a known way to read a
+     shallow eye as shut, but it is not expected to account for the
+     bulk.
+  3. near_annotation is at most 12. The re-arm gate (20 August 2026,
+     docs/blink-rearm.txt) and the 150 ms refractory already suppress
+     the reopen-wobble double count, so few false alarms should sit one
+     blink's width from a real one. If near_annotation is instead
+     large, the re-arm/refractory logic still splits blinks and the
+     lever is that state machine, not the line — the same conclusion
+     the miss autopsy reached from the other side.
+  4. before_baseline is small, at most 8, and is reported with the
+     droppable caveat above. Most clips settle the personal baseline
+     inside the first tens of seconds and false alarms distribute
+     across the whole clip, so the preparation window should hold few.
+     If it is instead large, the fallback line is mis-set for these
+     subjects and gating detection on baselineReady is a cheap,
+     recall-neutral fix — which would promote the droppable sub-
+     question to the lead.
+
+WHAT EACH OUTCOME REDIRECTS.
+
+  - Prediction 1 wrong in the LOW direction (deep_unannotated is a
+    minority): the false alarms are mostly pose, preparation, or
+    matching artefacts, each with its own recall-neutral fix, and the
+    precision work becomes a sum of small targeted gates rather than
+    one question about the line or the ground truth.
+  - Prediction 2 wrong HIGH (non_frontal dominates): a pose gate that
+    refuses an aperture reading on a non-frontal frame is the single
+    largest precision lever, and it costs no recall on frontal blinks.
+  - Prediction 3 wrong HIGH (near_annotation dominates): the detector
+    is still splitting real blinks despite the re-arm gate; the fix is
+    in the state machine and would also change the blink COUNT, so it
+    is measured against recall before it lands.
+  - Prediction 4 wrong HIGH (before_baseline dominates): the
+    preparation window is where the phantoms live, and the droppable
+    sub-question becomes the headline — gate detection until
+    baselineReady.
+
+HOW IT IS SCORED. A committed tool, built as the sibling of
+analysis/tools/write_miss_table.py (the table writer) and
+analysis/tools/miss_autopsy.py (the classifier), regenerates the
+anchor's 65-row false-alarm table from the run's annotations and blink
+logs, then assigns each row one of the four verdicts above and prints
+the split and, for deep_unannotated, the per-second depth ratios. The
+tool's tests are watched failing first, on SYNTHETIC .tag / .blinks.csv
+fixtures, because the anchor corpus and its measured folder are the
+owner's; the writer REFUSES a clip whose blink log is missing or was
+measured in any mode but stepped, rather than writing a shorter table,
+the same refusal write_miss_table.py already makes. The verdict CSV is
+committed under docs/evidence/ once the owner's run supplies the real
+table and traces, and the outcomes are appended below as a dated
+section. These predictions are not edited.
