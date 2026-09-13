@@ -4290,6 +4290,31 @@ the check has to read the tail. The margin and the percentile are chosen
 before any real calibration is read, not fitted to one, so the first
 people it meets are its test, not its training.
 
+## A measured threshold is not trusted until it catches what it measures
+
+The guided calibration measures a person's open and closed aperture and
+places a blink line between them. Two guards already checked that the
+line was well FORMED — the two medians were far enough apart, and the
+line sat clear of the open eye's droop. But a line can pass both of those
+and still fail the only thing it exists to do: catch this person's
+blinks. Landmark noise, an unusual lid, a camera angle — any of these can
+leave a numerically sound line that the detector never actually crosses.
+
+So the calibration now ends by testing the line against the very thing it
+measures. The person is asked to blink three times, and the real blink
+detector is run over those frames with the CANDIDATE line as its
+threshold — the line just measured, not the one in storage, because the
+point is to try the new line, not the old one. The line is stored only if
+it catches at least two of the blinks; a line that misses them is refused
+however good its midpoint looked. The general lesson: a threshold derived
+from a measurement is a hypothesis, and the cheapest possible test of it
+is to run the real detector against a few known-positive examples before
+trusting it. A calibration that measures but never confirms is measuring
+its own arithmetic, not the person. Reusing the detector's own step
+function for the confirmation, rather than re-deriving a lighter version,
+keeps the check honest: it passes exactly when the shipped detector
+would, because it IS the shipped detector.
+
 ## The measurement does not start the instant the cue does
 
 A cued measurement asks a person to do something — look at a dot, open

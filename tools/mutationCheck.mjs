@@ -361,6 +361,20 @@ const MUTATIONS = [
     "settle window past the phase: no frame is ever collected and every calibration refuses",
     "test/core/guidedCalibration.test.ts",
   ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 1",
+    "verification floor removed: a single accidental blink would confirm the line",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 10",
+    "verification floor bloated: a sound, well-verified line would be refused",
+    "test/core/guidedCalibration.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

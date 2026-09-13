@@ -271,6 +271,7 @@ import {
 } from "./io/calibrationStore";
 import {
   GUIDED_CALIBRATION_PHASE_MS,
+  GUIDED_CALIBRATION_VERIFY_MS,
   calibrationSessionStep,
   effectiveBlinkLineMm,
   startCalibrationSession,
@@ -2270,6 +2271,8 @@ function blinkRefusalMessage(reason: GuidedCalibrationRefusal): string {
       return "Your closed eyes did not read far enough below your open ones for a line to be placed. This is the same limit the corpus showed, and rather than guess a line, the calibration refuses.";
     case "line-above-open-floor":
       return "The line these readings produced would sit close to where your open eyes already rest, so it would count ordinary opening as a blink. Rather than place a line that high, the calibration refuses. Good, even light on the eyes helps.";
+    case "verification-failed":
+      return "The measured line did not catch your blinks when you were asked for three. A line that misses your ordinary blinks is not stored. Try again, and blink normally when the last step asks.";
   }
 }
 
@@ -4321,7 +4324,7 @@ function processFrame(
             );
           }
           blinkCalibrationStatus.hidden = false;
-        } else {
+        } else if (blinkCalibrationSession.kind === "collecting") {
           const phase = blinkCalibrationSession.phase;
           blinkCalibrationInstruction.textContent =
             phase === "open"
@@ -4337,8 +4340,21 @@ function processFrame(
           ).toFixed(1);
           blinkCalibrationProgress.textContent =
             phase === "open"
-              ? `Step 1 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
-              : `Step 2 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s.`;
+              ? `Step 1 of 3 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
+              : `Step 2 of 3 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Blinking normally comes last.`;
+        } else {
+          // The verification phase: the person blinks, and the detector
+          // is run against the candidate line. The live count is shown
+          // so they can see it registering.
+          const heldMs = nowMs - blinkCalibrationSession.startedAtMs;
+          const secondsLeft = Math.max(
+            0,
+            Math.ceil((GUIDED_CALIBRATION_VERIFY_MS - heldMs) / 1000),
+          );
+          const caught = blinkCalibrationSession.blinkState.blinkCount;
+          blinkCalibrationInstruction.textContent =
+            "Now blink three times, normally.";
+          blinkCalibrationProgress.textContent = `Step 3 of 3 · ${String(secondsLeft)} s left · ${String(caught)} caught. Click anywhere or press Esc to cancel.`;
         }
       }
 
