@@ -204,6 +204,7 @@ import {
   type FramesMissedSummary,
 } from "./core/framesMissed";
 import { recordDue } from "./core/recordGate";
+import { steppedCrashOutcome } from "./core/steppedCrash";
 import {
   initialLongClosureState,
   longClosureStep,
@@ -1822,26 +1823,32 @@ async function beginVideoFile(file: File): Promise<void> {
     // a session that no longer exists, and the state is the new
     // run's to write.
     if (runToken !== sourceRunToken) return;
-    frameSource = "camera";
-    // The display loop resumes driving the camera path here, so the
-    // model clock rebases the same way beginCamera's path does.
-    modelClock = rebaseOnNextStamp(modelClock);
-    loadedClipName = null;
     clipLoop?.stop();
     clipLoop = null;
     const reason =
       error instanceof Error ? error.message : "That file could not be read.";
     // A throw AFTER frames were measured is a mid-run measurement
-    // crash, not a broken file: the stepped driver has no loop
-    // wrapper, so its throws land here. clipFailed would frame the
-    // internal error as a file problem and, worse, force-disable the
-    // exports, silently revoking minutes of recorded data that
-    // measurementFailed keeps offered. Remediation B3, from review.
-    if (framesMeasured > 0) {
+    // crash, not a broken file: the stepped driver has no loop wrapper,
+    // so its throws land here. The disposition is decided in core
+    // (roadmap 14.0e). measurementFailed keeps the exports offered AND
+    // the FILE provenance the session was measured under — resetting the
+    // source to "camera" here, as this branch once did before the
+    // framesMeasured test, exported a crashed file run as a camera one.
+    // clipFailed would also frame the internal error as a file problem
+    // and force-disable the exports, revoking minutes of recorded data
+    // (remediation B3, from review).
+    if (steppedCrashOutcome(framesMeasured).kind === "measurementCrash") {
       console.error("the clip measurement stopped mid-run:", error);
       setState({ kind: "measurementFailed", reason });
       return;
     }
+    // A broken file: nothing was measured, so there is no session to
+    // keep and the page returns to its camera-ready state. The display
+    // loop resumes driving the camera path here, so the model clock
+    // rebases the same way beginCamera's path does.
+    frameSource = "camera";
+    modelClock = rebaseOnNextStamp(modelClock);
+    loadedClipName = null;
     setState({ kind: "clipFailed", reason });
   }
 }
