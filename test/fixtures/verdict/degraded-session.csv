@@ -22,6 +22,8 @@
 # camera_delivered_fps: unknown
 # sampled_fps: unknown
 # delivered_frames_read_fraction: unknown
+# frames_presented: unknown
+# frames_missed_while_busy: unknown
 # observed_duration_seconds: 59.000
 # records: 4
 # perclos_min_observed_ms: 15000

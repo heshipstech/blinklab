@@ -2,6 +2,7 @@ import { initialFaceTime } from "../../src/core/faceSeconds";
 import type { CalibrationWindow } from "../../src/core/calibrationWindow";
 import { serializeRecords } from "../../src/core/csv";
 import type { DeliveryRates } from "../../src/core/deliveryRate";
+import type { FramesMissedSummary } from "../../src/core/framesMissed";
 import type { FeatureRecord } from "../../src/core/featureRecord";
 import {
   coverageMetadataRows,
@@ -19,6 +20,7 @@ import {
   cueMetadataRows,
   gazeCalibrationMetadataRows,
   deliveryMetadataRows,
+  framesMissedMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
   featureRecordOverrunRows,
@@ -76,6 +78,8 @@ export type FixtureSession = {
   name: string;
   device: DeviceInfo;
   delivery: DeliveryRates;
+  /** The busy-thread frame loss this camera session carries (13.4). */
+  framesMissed: FramesMissedSummary;
   /** The rate the records carry, and the verdict's fallback evidence. */
   processingFps: number;
   /** Every record's aperture: the ruler-fit replay reads these. */
@@ -157,6 +161,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "calibrationMetadataRows",
   "guidedCalibrationMetadataRows",
   "deliveryMetadataRows",
+  "framesMissedMetadataRows",
   "sessionMetadataRows",
   "featureRecordOverrunRows",
   "kssMetadataRows",
@@ -192,6 +197,7 @@ export function fixtureCsv(session: FixtureSession): string {
     // skip would put keys in a real export the pin never sees.
     ...guidedCalibrationMetadataRows(session.guidedLine, null),
     ...deliveryMetadataRows(session.delivery),
+    ...framesMissedMetadataRows(session.framesMissed),
     ...sessionMetadataRows(
       records,
       session.irisWidths,
@@ -349,6 +355,9 @@ const GOOD: FixtureSession = {
   name: "good",
   device: CAMERA,
   delivery: { deliveredFps: 60, sampledFps: 60, readFraction: 1 },
+  // A machine keeping up: it looked at every frame the compositor
+  // presented, so nothing was missed while busy (13.4).
+  framesMissed: { missedWhileBusy: 0, framesPresented: 3600 },
   processingFps: 60,
   apertureMm: 7,
   calibration: READY_WINDOW,
@@ -393,6 +402,9 @@ export const FIXTURES: FixtureSession[] = [
     ...GOOD,
     name: "degraded",
     delivery: { deliveredFps: null, sampledFps: null, readFraction: null },
+    // The browser reports no frame callback tally either, so the miss
+    // count is unknown, the same silence its delivery rate keeps (13.4).
+    framesMissed: { missedWhileBusy: null, framesPresented: null },
     processingFps: 30,
     calibration: {
       sampleCount: 301,
@@ -430,5 +442,9 @@ export const FIXTURES: FixtureSession[] = [
     ...GOOD,
     name: "edge",
     delivery: { deliveredFps: 60, sampledFps: 24.96, readFraction: 0.416 },
+    // The slow machine's other face: busy enough that the frame
+    // callback coalesced, so most presented frames went unlooked-at
+    // (13.4).
+    framesMissed: { missedWhileBusy: 2160, framesPresented: 3600 },
   },
 ];
