@@ -4289,3 +4289,30 @@ CENTRE tells you nothing about its EDGE. If the danger lives at the tail,
 the check has to read the tail. The margin and the percentile are chosen
 before any real calibration is read, not fitted to one, so the first
 people it meets are its test, not its training.
+
+## The measurement does not start the instant the cue does
+
+A cued measurement asks a person to do something — look at a dot, open
+their eyes, close them — and then reads what they do. The mistake is to
+start reading the instant the cue appears. For the first fraction of a
+second the person is still reading the instruction and their body is
+still moving into the position asked for: an eye mid-saccade toward a
+dot, a lid halfway down toward "closed". A sample taken then is not
+noise, which averages out — it is a confident WRONG label, a
+half-closed eye recorded as "open", and it drags the very median the
+calibration is built on.
+
+The gaze capture already knew this: it counts nothing for the first
+800 ms after a dot moves. The guided blink calibration, added later, did
+not, and sampled its open and closed phases from the frame the phase
+began — so an open median could be pulled down by the frames before the
+eye was actually open. The fix is the same settle window, per phase:
+return the state untouched until the window has passed since the phase
+started, collecting neither a sample nor face time, so the measurement
+begins only once the person is in position. The general lesson: any
+cued measurement needs a settle window between the cue and the first
+reading, sized so the subject is in position, and the value belongs in
+one place the whole codebase can share rather than rediscovered per
+feature — the gaze capture had it, the guided calibration had to learn
+it separately, and the third cued measurement should not have to learn
+it a third time.

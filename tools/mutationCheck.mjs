@@ -347,6 +347,20 @@ const MUTATIONS = [
     "tail slid to the median: the spread-aware ceiling goes blind to a droopy open eye",
     "test/core/guidedCalibration.test.ts",
   ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SETTLE_MS = 800",
+    "GUIDED_CALIBRATION_SETTLE_MS = 1",
+    "settle window removed: frames taken while the person is still reading would be sampled",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SETTLE_MS = 800",
+    "GUIDED_CALIBRATION_SETTLE_MS = 5000",
+    "settle window past the phase: no frame is ever collected and every calibration refuses",
+    "test/core/guidedCalibration.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

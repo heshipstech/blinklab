@@ -3,6 +3,7 @@ import {
   GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION,
   GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE,
   GUIDED_CALIBRATION_PHASE_MS,
+  GUIDED_CALIBRATION_SETTLE_MS,
   GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION,
 } from "./constants";
 import {
@@ -380,6 +381,18 @@ export function calibrationSessionStep(
   // backwards clock is ignored, state unchanged (baseline.ts's guard,
   // remediation C3).
   if (nowMs < state.startedAtMs) {
+    return state;
+  }
+  // The per-phase settle window (roadmap 11.6a). A phase opens with an
+  // instruction to read and lids to move into the held position, so
+  // frames in this window carry a confident wrong label: nothing —
+  // neither a sample nor face time — is collected until it has passed
+  // since the phase began. State is returned untouched, so face time
+  // begins fresh at the first post-settle frame. The <= boundary
+  // matches the gaze capture's settle guard (calibrationCapture.ts), and
+  // the window (0.8 s) is far shorter than the 3 s phase, so a phase
+  // always outlives its settle and still reaches its end.
+  if (nowMs - state.startedAtMs <= GUIDED_CALIBRATION_SETTLE_MS) {
     return state;
   }
   const samples = collectCalibrationSample(
