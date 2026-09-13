@@ -935,3 +935,23 @@ DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
   function the corpus never reaches cannot move a corpus number. The
   owner's next corpus run scores this entry and retires it beside the
   block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the guided calibration settles each phase before sampling
+
+  The same two watched files move again: src/core/guidedCalibration.ts
+  and src/core/constants.ts. calibrationSessionStep now drops every
+  frame in the first GUIDED_CALIBRATION_SETTLE_MS (800 ms, the new
+  constant) of each phase — collecting neither a sample nor face time —
+  so the open and closed medians are not pulled by frames taken while
+  the person is still reading the instruction and moving their lids into
+  position. No existing constant the corpus path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, by the same
+  construction as the entry above. calibrationSessionStep runs only
+  during a live two-phase guided calibration driven by the page's
+  Calibrate flow; the corpus runner never enters it, and the new
+  constant is read by nothing else. A settle window added to a function
+  the corpus never reaches cannot move a corpus number. The owner's next
+  corpus run scores this entry and retires it beside the block above.

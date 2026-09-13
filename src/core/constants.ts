@@ -214,6 +214,25 @@ export const GUIDED_CALIBRATION_PHASE_MS = 3000;
 export const GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE = 10;
 export const GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85;
 
+// The per-phase settle window (roadmap 11.6a). A guided phase begins by
+// showing the person an instruction — "open your eyes and look at the
+// screen", then "close your eyes" — and the frames while they are still
+// reading it and moving their lids into the held position carry a
+// confident WRONG label: an open phase sampled mid-transition measures a
+// half-closed eye as "open" and drags the open median down, a closed
+// phase sampled before the lids arrive measures too high. So nothing is
+// collected until this window has passed since the phase began, the same
+// rule and the same 800 ms the gaze capture's CALIBRATION_SETTLE_MS uses
+// for the analogous "subject not yet in position" case (5.4a, the
+// LEARNING note "nothing counts during the settle window after a dot
+// moves"). Kept a SEPARATE constant, as the codebase keeps CUE_SETTLE_MS
+// and LIGHT_SETTLE_MS separate, because the guided phases and the gaze
+// targets can be re-timed independently. Safe against the per-phase
+// face-time floor by construction: the 3 s phase (GUIDED_CALIBRATION_
+// PHASE_MS) minus this 0.8 s leaves 2.2 s of sampling, comfortably over
+// the 1.2 s GUIDED_MIN_FACE_MS_PER_PHASE floor and the 30-sample floor.
+export const GUIDED_CALIBRATION_SETTLE_MS = 800;
+
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window
 // inflates: once half the baseline exceeds the resting aperture, the

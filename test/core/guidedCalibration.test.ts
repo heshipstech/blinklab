@@ -259,6 +259,40 @@ describe("the calibration session state machine", () => {
   });
 });
 
+describe("the per-phase settle window (roadmap 11.6a)", () => {
+  // A phase begins with an instruction to read and lids to move into the
+  // held position; frames during that window carry a confident wrong
+  // label, so nothing is collected until the settle window has passed
+  // since the phase began. The boundary is pinned with literals — a
+  // frame AT 800 ms is still dropped (the <= boundary the gaze capture
+  // uses), one at 801 ms is kept — so a shrunk or removed settle turns
+  // this red.
+  it("drops a frame at the settle boundary and keeps the next one", () => {
+    let state = startCalibrationSession(0);
+    state = calibrationSessionStep(state, 800, 8);
+    expect(state.kind === "collecting" && state.samples.open).toEqual([]);
+    state = calibrationSessionStep(state, 801, 8);
+    expect(state.kind === "collecting" && state.samples.open).toEqual([8]);
+  });
+
+  it("settles each phase on its own clock, not only the first", () => {
+    let state = startCalibrationSession(0);
+    // Cross into the closed phase; the transition is time-based at 3 s,
+    // so held-open frames past the open settle carry the session there.
+    for (let t = 810; t <= GUIDED_CALIBRATION_PHASE_MS; t += 30) {
+      state = calibrationSessionStep(state, t, 8);
+    }
+    expect(state.kind === "collecting" && state.phase).toBe("closed");
+    const closedStart = state.kind === "collecting" ? state.startedAtMs : -1;
+    // The closed phase has its OWN settle: a frame at its boundary is
+    // dropped, one past it is kept.
+    state = calibrationSessionStep(state, closedStart + 800, 2);
+    expect(state.kind === "collecting" && state.samples.closed).toEqual([]);
+    state = calibrationSessionStep(state, closedStart + 801, 2);
+    expect(state.kind === "collecting" && state.samples.closed).toEqual([2]);
+  });
+});
+
 describe("stored blink calibration, serialise and validated parse", () => {
   const good = aStoredLine({
     personalLineMm: 5,
