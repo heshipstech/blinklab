@@ -4258,3 +4258,34 @@ the whole history each step is the most common accidental quadratic
 there is. The check that guards it is a per-length time ceiling generous
 enough not to flake but tight enough that the quadratic scan, which on a
 long fixation is seconds, still trips it.
+
+## A line placed by two medians can still sit where the eye already is
+
+The guided calibration measures a person's open and closed aperture and
+places their blink line at the midpoint of the two. It refused when the
+closed median was not far enough below the open one — a sensible check,
+because a closure the camera barely registered gives a line drawn from a
+gap that is not there. But that check only reads the CLOSED median. It
+says nothing about where the OPEN eye actually travels.
+
+A relaxed eye does not hold perfectly still at its open aperture; it
+droops, and this project measured that droop at 45 to 50 percent of the
+resting value. A midpoint that clears the separation floor can still
+land inside that droop band, and a blink line inside the droop band arms
+on ordinary opening — counting a relaxed, blink-free eye as blinking.
+The September audit filed this as a real defect, and the adoption note
+had pre-registered the exact risk months before: "new false positives
+from a higher guided line arming on ordinary droops."
+
+The fix is a second refusal that is aware of SPREAD where the first was
+not. It compares the line not to the open median but to the open eye's
+own lower tail — its tenth percentile, the low end of where it normally
+sits — and refuses a line that reaches within a fixed margin of it. The
+median could not have caught this: a tight open eye and a wide-drooping
+one can share a median and yet need completely different lines, and a
+median-relative check would hand them the same one. The general lesson:
+when a threshold has to stay clear of a distribution, the distribution's
+CENTRE tells you nothing about its EDGE. If the danger lives at the tail,
+the check has to read the tail. The margin and the percentile are chosen
+before any real calibration is read, not fitted to one, so the first
+people it meets are its test, not its training.

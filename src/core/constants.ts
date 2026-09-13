@@ -183,6 +183,37 @@ export const GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION = 0.3;
 // without strain. Chosen for the person, not fitted to data.
 export const GUIDED_CALIBRATION_PHASE_MS = 3000;
 
+// The resolve-time soundness ceiling (roadmap 11.6a, ladder A9/A10/C3;
+// the September audit's high-severity finding G-Guided). The personal
+// line is the midpoint (open + closed)/2, and the separation floor
+// above only bounds the CLOSED median: at its boundary (closed = 0.7 of
+// open) the line sits at 0.85 of the open MEDIAN, with nothing checking
+// it against where the open eye actually droops. docs/blink-line-
+// adoption.txt pre-registered this exact risk on 2 September — "new
+// false positives from a higher guided line arming on ordinary droops"
+// — and the repo's own measurement is that a relaxed open eye droops to
+// 45-50% of baseline (longClosure.ts). A line inside that droop band
+// arms on ordinary opening.
+//
+// So a second, SPREAD-AWARE refusal: the personal line must sit clearly
+// below the open eye's own LOWER TAIL, not merely below its median. The
+// tail is the 10th percentile of the open-phase samples — the
+// conventional lower-decile marker, stable at the 30-sample floor and
+// far less outlier-sensitive than the minimum; the median (p50) would
+// be blind to the very spread this check exists to see, so a wide-
+// drooping open eye and a tight one would share a ceiling. The line
+// must sit at or below 0.85 of that tail — a 15% margin — and a line AT
+// the ceiling is refused. For a FLAT open distribution the tail equals
+// the median and this coincides with the separation boundary; it bites
+// only where the open eye has spread, which is exactly the atypical
+// low-lidded eye the guided path was built for (ROADMAP acceptance note
+// 5). Both figures are DELIBERATELY chosen before any guided data is
+// read, not fitted to it, the same stance the sample floor and
+// separation fraction take; validation round II (11.7) is their first
+// test on people they were not built from.
+export const GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE = 10;
+export const GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85;
+
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window
 // inflates: once half the baseline exceeds the resting aperture, the

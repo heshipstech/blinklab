@@ -1,7 +1,9 @@
 import {
   GUIDED_CALIBRATION_MIN_SAMPLES,
   GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION,
+  GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE,
   GUIDED_CALIBRATION_PHASE_MS,
+  GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION,
 } from "./constants";
 import {
   FACE_TIME_FRAME_CREDIT_MS,
@@ -55,7 +57,12 @@ export type GuidedCalibrationRefusal =
   // The closed median was not clearly below the open one: the
   // instrument did not register this person's deliberate closure, the
   // personal echo of the corpus recall ceiling (docs/iris-occlusion.txt).
-  | "closure-not-registered";
+  | "closure-not-registered"
+  // The line the two medians produced sits too close to the open eye's
+  // own lower tail: even a sound separation can leave the midpoint
+  // inside the relaxed-open droop band, where it would arm on ordinary
+  // opening. The resolve-time soundness ceiling, roadmap 11.6a.
+  | "line-above-open-floor";
 
 export type GuidedCalibrationResult =
   | {
@@ -97,10 +104,16 @@ export function collectCalibrationSample(
  * Resolve the two phases into a personal blink line, or a refusal.
  *
  * The line is the midpoint of the person's own open and closed
- * median. It refuses when either phase is too short, or when the
- * closed median is not at least GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION
- * below the open one — a gap too small means the closure never
- * reached the landmarks, and a line drawn from it would be a guess.
+ * median. It refuses when either phase is too short, when the closed
+ * median is not at least GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION
+ * below the open one — a gap too small means the closure never reached
+ * the landmarks, and a line drawn from it would be a guess — or, the
+ * resolve-time soundness ceiling of roadmap 11.6a, when the midpoint
+ * sits above GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION of the open
+ * eye's own lower tail. That last check is spread-aware where the
+ * separation floor is not: a midpoint can clear the closed-median floor
+ * and still land inside the relaxed-open droop band of a low-lidded
+ * eye, where it would arm on ordinary opening.
  */
 export function resolveGuidedCalibration(
   samples: GuidedCalibrationSamples,
@@ -133,11 +146,31 @@ export function resolveGuidedCalibration(
   ) {
     return { kind: "refused", reason: "closure-not-registered" };
   }
+  const personalLineMm = (openMedianMm + closedMedianMm) / 2;
+  // The resolve-time soundness ceiling (roadmap 11.6a). The separation
+  // floor above bounds the CLOSED median; this bounds the LINE against
+  // where the open eye's own lower tail sits, so a midpoint that
+  // survives a sound separation is still refused if it lands inside the
+  // relaxed-open droop band. A line AT the ceiling is refused, as the
+  // row states. openLowerTailMm cannot be null here — samples.open
+  // passed the length floor above — but a null tail is never answered
+  // with a placed line, so the branch refuses rather than guess.
+  const openLowerTailMm = percentile(
+    samples.open,
+    GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE,
+  );
+  if (
+    openLowerTailMm === null ||
+    personalLineMm >=
+      openLowerTailMm * GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION
+  ) {
+    return { kind: "refused", reason: "line-above-open-floor" };
+  }
   return {
     kind: "ready",
     openMedianMm,
     closedMedianMm,
-    personalLineMm: (openMedianMm + closedMedianMm) / 2,
+    personalLineMm,
     openSampleCount: samples.open.length,
     closedSampleCount: samples.closed.length,
   };
