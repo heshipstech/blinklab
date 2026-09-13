@@ -179,3 +179,41 @@ describe("detectFixations boundary trios", () => {
     expect(fixations[0]?.centroid.vertical).toBeCloseTo(0.005, 12);
   });
 });
+
+describe("detectFixations scans linearly, not quadratically (roadmap 13.8c)", () => {
+  it("stays under a generous ceiling on one long fixation", () => {
+    // One long fixation is the worst case for the old code: it extended
+    // the window one sample at a time and RE-SCANNED the whole window on
+    // every step, so a run of N boxed samples cost O(N^2). The fix keeps
+    // running min/max and folds only the new sample, O(N). This is the
+    // same shape as alertLatency's per-frame check: the measured figure
+    // is a few milliseconds and the ceiling is 500, so a noisy CI
+    // machine cannot turn it red while a return to the quadratic scan —
+    // which on this input is seconds — still would. The tolerance IS the
+    // check the row asks for.
+    const n = 30000;
+    const build = (): GazeSample[] => {
+      const samples: GazeSample[] = [];
+      for (let i = 0; i < n; i++) {
+        // All inside the dispersion box, so the whole run is one
+        // fixation and the extension loop runs its full length.
+        samples.push(at(0.01, 0.01, i * DT_MS));
+      }
+      return samples;
+    };
+
+    const run = (): number => {
+      const samples = build();
+      const startedAt = performance.now();
+      const fixations = detectFixations(samples);
+      const elapsed = performance.now() - startedAt;
+      // Read the result so nothing can discard the call as dead code.
+      expect(fixations.length).toBe(1);
+      return elapsed;
+    };
+
+    run(); // warm-up, so the measured pass is not paying JIT costs
+    const elapsedMs = run();
+    expect(elapsedMs).toBeLessThan(500);
+  });
+});

@@ -4230,3 +4230,31 @@ only on the file-failed side. The lesson that generalises: when a
 recovery step and a preservation step share a catch, order alone will
 eventually put one on the wrong side of the other. Naming the decision
 and testing it is cheaper than remembering the ordering.
+
+## Growing a window without re-measuring it
+
+The concept this increment teaches is keeping a running summary instead
+of re-scanning a growing window.
+
+The fixation detector groups gaze samples that stay inside a small box
+for long enough. It grew each group one sample at a time, and on every
+step it re-computed the box over the WHOLE group so far — slicing the
+array and finding the min and max on each axis from scratch. On a short
+glance that is nothing. On a long, still fixation it is the classic
+quadratic trap: a run of N boxed samples costs about N-squared work,
+because the tenth sample re-measures ten, the thousandth re-measures a
+thousand. The docs sentence about a fixed microsecond core cost quietly
+assumed this never happened.
+
+The fix is that the box is four numbers — the min and max on each axis —
+and a new sample can only widen it. So the extension keeps those four
+numbers and folds in only the one new sample, in constant time, instead
+of re-scanning. The output is identical; the work drops from N-squared
+to N. The general lesson: whenever a loop asks "what is the summary of
+everything so far" on each step, check whether the summary can be
+carried forward and updated by the new element alone. A min/max, a sum,
+a count, a running extreme — all fold in O(1), and re-deriving them from
+the whole history each step is the most common accidental quadratic
+there is. The check that guards it is a per-length time ceiling generous
+enough not to flake but tight enough that the quadratic scan, which on a
+long fixation is seconds, still trips it.
