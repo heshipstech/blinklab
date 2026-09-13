@@ -68,7 +68,16 @@ Temporal Model for Early Drowsiness Detection," CVPR Workshops 2019.
   was. The surviving count of subjects and videos is whatever that rule
   leaves, and it is printed above any accuracy, not buried beneath one. If
   the floor removes subjects unevenly across the three states, that bias is
-  stated the way DROZY's excluded-16 bias was.
+  stated the way DROZY's excluded-16 bias was. The rate the floor tests is
+  THE RATE THIS INSTRUMENT MEASURED — the median of the per-second `fps` the
+  app recorded — not the container's declared rate, which can differ when a
+  run drops frames. Roadmap 10.14b cross-checks the two: an ffprobe manifest
+  (`r_frame_rate`, `avg_frame_rate`, `nb_read_packets`, written by
+  `analysis/tools/prepare_rldd.py`) gives each clip's own frame count, and
+  `rldd.py` refuses a clip whose measured coverage falls short of that
+  container duration past a stated tolerance — so a video the instrument did
+  not fully measure is excluded against the file itself, not only the run's
+  own word.
 
 - **One example per video.** Each surviving video contributes a single
   feature vector: the seven features below, each taken as its **median over a

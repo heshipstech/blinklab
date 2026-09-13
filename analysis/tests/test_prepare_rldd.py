@@ -156,3 +156,57 @@ class TestIncompleteSubjects:
             _make(tmp_path, f"Fold1/5/{code}.mp4")
         plans, _ = plan_corpus(tmp_path, None)
         assert incomplete_subjects(plans) == {}
+
+
+class TestFfprobeManifest:
+    """Roadmap 10.14b. prepare_rldd writes one ffprobe line per clip; the
+    parse and the manifest are pure and pinned here, and the manifest is
+    round-tripped through rldd.read_manifest so the producer and the
+    consumer cannot drift. The ffprobe subprocess itself is the owner's."""
+
+    def test_parse_reads_the_three_fields_verbatim(self) -> None:
+        from tools.prepare_rldd import parse_ffprobe_output
+
+        text = (
+            "r_frame_rate=30000/1001\n"
+            "avg_frame_rate=30000/1001\n"
+            "nb_read_packets=10789\n"
+        )
+        row = parse_ffprobe_output(text, "Fold1_01_alert")
+        assert row == {
+            "clip": "Fold1_01_alert",
+            "rFrameRate": "30000/1001",
+            "avgFrameRate": "30000/1001",
+            "nbReadPackets": "10789",
+        }
+
+    def test_a_missing_field_is_blank_not_guessed(self) -> None:
+        from tools.prepare_rldd import parse_ffprobe_output
+
+        row = parse_ffprobe_output("r_frame_rate=25/1\n", "clip")
+        assert row["rFrameRate"] == "25/1"
+        assert row["nbReadPackets"] == ""
+
+    def test_the_manifest_round_trips_through_the_reader(
+        self, tmp_path: Path
+    ) -> None:
+        # The producer's write and the consumer's read are held together:
+        # what prepare_rldd writes, rldd.read_manifest must parse back to
+        # the same container facts, the fraction resolved to a float.
+        from blinklab.rldd import read_manifest
+        from tools.prepare_rldd import parse_ffprobe_output, write_manifest
+
+        rows = [
+            parse_ffprobe_output(
+                "r_frame_rate=30/1\navg_frame_rate=30/1\n"
+                "nb_read_packets=10800\n",
+                "s1_alert",
+            )
+        ]
+        manifest = tmp_path / "manifest.csv"
+        write_manifest(rows, manifest)
+        probes = read_manifest(manifest)
+        assert set(probes) == {"s1_alert"}
+        assert probes["s1_alert"].r_frame_rate == pytest.approx(30.0)
+        assert probes["s1_alert"].nb_read_packets == 10800
+        assert probes["s1_alert"].container_seconds == pytest.approx(360.0)
