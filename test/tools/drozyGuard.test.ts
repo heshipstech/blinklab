@@ -13,9 +13,9 @@ import {
   SHAPE_SOURCE,
   caveatBlock,
   commitExists,
-  commitsTouchingSince,
   isAncestorOfHead,
   missingSources,
+  movedFeatures,
   parseMeasuringCommit,
   publishedFeatures,
   shapeFieldNames,
@@ -178,11 +178,15 @@ describe("the caveat is required while git says it is true", () => {
     }
   });
 
-  it("both documents carry the caveat while the shape code has moved since", () => {
+  it("both documents name every feature whose sources moved", () => {
     if (isShallowRepo(root)) {
       return;
     }
-    const moved = commitsTouchingSince(SHAPE_SOURCE, measuringCommit, root);
+    // Roadmap 10.3: per feature, from the map, not one file. The old
+    // form of this test asked only about blinkShape.ts, so the caveat
+    // stayed three rows wide while the September work moved the
+    // sources under all seven.
+    const moved = movedFeatures(measuringCommit, root);
     if (moved.length === 0) {
       // Self-retiring: once DROZY is re-measured on current code and
       // the "built from" line is updated, nothing here is required.
@@ -195,12 +199,13 @@ describe("the caveat is required while git says it is true", () => {
       const block = caveatBlock(doc, CAVEAT_MARKERS[name] ?? "");
       expect(
         block,
-        `${name} has no caveat block, but ${SHAPE_SOURCE} has moved since ${measuringCommit} (${moved.join(", ")})`,
+        `${name} has no caveat block, but sources moved since ` +
+          `${measuringCommit} (${moved.join(", ")})`,
       ).not.toBeNull();
-      for (const label of Object.values(SHAPE_FEATURE_LABELS)) {
+      for (const feature of moved) {
         expect(
-          block?.includes(label),
-          `${name}'s caveat must name "${label}"`,
+          block?.includes(feature),
+          `${name}'s caveat must name "${feature}", whose sources moved`,
         ).toBe(true);
       }
       expect(

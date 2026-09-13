@@ -17,20 +17,23 @@ EXCLUSION BIAS, read this before the correlations
   weaker evidence than a null result on the full set.
 
 MEASURING COMMIT, read this before the correlations
+  (rewritten 13 September 2026, roadmap 10.3; the original said only
+  three rows were affected, which was true of PR #225 alone)
   measured    9 August 2026, 22:10 to 22:41
   built from  bd2a98d, whose newest code change was PR #190
   Three days later PR #225 clipped the blink shape window at the
-  previous blink. The audit called it this project's one genuine
-  arithmetic error. It changes three of the seven features below:
-  closing velocity, blink amplitude, and amplitude over velocity.
-  Blink intervals re-measure byte for byte identical, so blink
-  duration, long closures, blink rate and PERCLOS are unaffected.
-  Those three shape figures have NOT been recomputed on current
-  code, and they are the same three the verdict calls suggestive
-  and unconfirmed. Recomputing needs a re-extract from DROZY.zip
-  and about 3.1 hours, and it would recreate the derived video
-  DATASETS.md requires destroyed. Read those three rows as
-  produced by code this repository has since corrected.
+  previous blink — the audit's one genuine arithmetic error — moving
+  closing velocity, blink amplitude, and amplitude over velocity;
+  against that change alone the other four rows re-measured byte for
+  byte identical. The September work then moved the sources under
+  every remaining row: the personal blink line rewrote the detector
+  beneath blink duration and blink rate, and the shut-line rule and
+  the arming hysteresis moved PERCLOS and long closures. All seven
+  rows have therefore not been recomputed on code this repository
+  still runs, and tools/drozyGuard.mjs now computes that list per
+  feature from git instead of trusting this prose to stay current.
+  Read every row as the instrument at bd2a98d; the dated ruling on
+  whether to re-measure is below the verdict.
 
 WHAT PERCLOS MEANS HERE (added 7 September 2026, roadmap 10.10c4a,
 ladder B12). The PERCLOS row below is not the literature's PERCLOS. It
@@ -105,5 +108,19 @@ THE RATE COLUMN AND ROADMAP 10.12b, 10 September 2026
   real length — so the numbers above mean today what they meant when
   they were computed (blinklab/rederive.py's docstring records the
   same fact from the other side).
+
+THE SHAPE ROWS ARE RETIRED, NOT RE-MEASURED, 13 September 2026
+  Roadmap 10.3, decided by amendment 17. The ~3.1-hour re-measure is
+  not run, on three grounds this file already records: it would
+  re-run a null on a sample missing its sleepiest sessions (the
+  exclusion-bias block above), at a rate the stepper of that era had
+  not verified, to defend verdicts granted by a within-subject bar
+  that chance clears half the time (the 10.10c2 note above). The
+  three "suggestive and unconfirmed" verdicts retire with the rest:
+  every row above reads as history of the instrument at bd2a98d,
+  not as a live claim about the current one. The sample is
+  re-measured only if roadmap 12.18's v2 read moves a shape
+  feature; until then the caveat at the top is kept true per
+  feature by tools/drozyGuard.mjs rather than by anyone's memory.
 
 Cite: Massoz, Langohr, Francois and Verly, WACV 2016.
