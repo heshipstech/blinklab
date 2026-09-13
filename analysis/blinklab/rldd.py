@@ -50,6 +50,7 @@ from pathlib import Path
 
 import numpy as np
 
+from blinklab.column_freeze import ColumnFreezeError, check_header
 from blinklab.drozy import FEATURE_NAMES, MIN_USABLE_FPS
 
 # The window the plan medians over: a 60 s settle, then seconds 60-360.
@@ -191,6 +192,16 @@ def load_video_features(seconds_csv: str | Path) -> VideoFeatures:
         raise RldError(f"{path.name} has a label but no subject before it")
 
     rows = _rows(path)
+
+    # The column-freeze refusal (roadmap 12.17). Once the owner signs the
+    # v2-read freeze, a seconds.csv whose header has dropped a frozen
+    # column is refused here rather than silently read as a moved
+    # instrument. Unsigned, this is a no-op. Wrapped into RldError so the
+    # runner reports it as the read refusal it is.
+    try:
+        check_header(rows[0].keys())
+    except ColumnFreezeError as error:
+        raise RldError(f"{path.name}: {error}") from error
 
     fps = [v for v in (_num(r, "fps") for r in rows) if v is not None]
     if not fps:
