@@ -1,0 +1,93 @@
+THE IRIS RULER, CHECKED AGAINST A KNOWN LENGTH
+==============================================
+
+Written 13 September 2026, before any scale bar is measured. Roadmap
+10.7d, the scale-bar half of ladder B12. Every millimetre this page
+publishes comes from one conversion: the visible iris is taken as a
+ruler 11.7 mm wide, and any length in pixels becomes a length in
+millimetres by
+
+    apertureMm = openingPx * (IRIS_DIAMETER_MM / irisWidthPx)
+
+(src/core/aperture.ts, IRIS_DIAMETER_MM = 11.7 at src/core/constants.ts).
+That conversion has been checked once for its CONSTANT — the 11.7 mm
+value carries its citation and a ±4% population spread (roadmap
+10.10c4d; MODEL_CARD's measurement-uncertainty section, and the
+constant's own comment) — and never for its VALIDITY as a ruler: does a
+known physical length read back correctly through it, and does the
+reading hold as the person moves nearer and farther? A printed bar of
+known width is the first external check on the ruler itself, the way
+Eyeblink8 was the first external check on the blink detector.
+
+WHY THE POPULATION SPREAD DOES NOT ANSWER THIS. The ±4% is one number,
+the between-person variation of the real iris, and it is a BETWEEN-
+person error: it says a stranger's aperture figures may sit 4% high or
+low because their iris is not exactly 11.7 mm. It says nothing about
+whether the ruler is internally sound for ONE setup — whether a length
+the ruler did not choose reads back at its true size, and whether that
+holds across working distance. Those are separate questions, and a page
+whose every millimetre rests on this one conversion should have both
+answered and recorded side by side, so neither is mistaken for the
+other.
+
+THE MEASUREMENT, the owner's step, on the owner's physical setup. A
+scale bar of known width printed on paper — a length W_true chosen so
+it spans a clear fraction of the frame — is held flat and facing the
+camera at THREE working distances: near, typical and far for this
+setup. At each distance the app's iris ruler reads the bar's apparent
+width W_measured, from the same frames, with the same person's iris as
+the ruler. Three distances, because a ruler that is right at one and
+wrong at another is a distance-sensitive ruler, and only more than one
+distance can tell the two apart.
+
+THE RULE THE MEASUREMENT PATH MUST KEEP. Absolute-millimetre
+thresholds stay OUT of the path that reads the bar. W_measured is the
+raw ruler conversion above — pixels times 11.7 over the iris width in
+pixels — and it must not pass through any absolute-mm gate: not
+BLINK_APERTURE_THRESHOLD_MM, not the shut line, not any refusal stated
+in millimetres. A scale bar is not a blink, and a reading filtered
+through a blink threshold would be testing the threshold as much as the
+ruler. The check measures the instrument's ruler, nothing downstream of
+it.
+
+THE PREDICTION, committed before the bar is measured:
+
+    W_measured is within ±5% of W_true at ALL THREE distances.
+
+WHY ±5%, AND WHY IT IS A CHOICE NOT A DERIVATION. The ±4% population
+spread does not apply here and is not the bar: this is one setup and
+one iris measured against a length of KNOWN size, so the between-person
+variation cancels — the same iris that may sit at the population edge
+rules both the bar and every aperture beside it, and its offset divides
+out of a same-setup comparison. What ±5% bounds instead is the
+DISTANCE-and-geometry error of the ruler for this setup: whether the
+bar and the iris sit close enough to the same depth plane that they
+scale together as the person moves, plus the printing, positioning and
+pixel-reading error of the physical check itself. ±5% is stated as a
+bound the ruler should clear if the iris is a sound ruler, chosen
+before the numbers rather than fitted to them.
+
+WHAT EACH OUTCOME REDIRECTS.
+
+  - Within ±5% at all three distances: the ruler is validated for this
+    setup, and the ±4% population spread remains the dominant and
+    SEPARATE uncertainty. The two are recorded side by side so a reader
+    of the spread sees the physical check next to it and does not read
+    one as the other.
+  - A drift beyond ±5% that GROWS with distance: the bar and the iris
+    are not on the same depth plane, or foreshortening and falling
+    resolution move the iris width faster than the bar — the ruler is
+    distance-sensitive, and the lever is the working-distance proxy
+    (14.9a's pause past a tenth of the iris width), not the constant.
+  - A roughly CONSTANT offset at all three distances: the bar's printed
+    width or this person's iris departs from 11.7 mm by that factor,
+    which is exactly what the ±4% spread already allows and what
+    cancels within one person — a note about this setup's iris, not a
+    fault in the ruler.
+
+WHERE THE RESULT WILL BE WRITTEN. A dated section appended below this
+one, and the outcome carried beside the ±4% population spread in
+MODEL_CARD's measurement-uncertainty section, so the physical check on
+the ruler sits next to the population statement it complements. This
+prediction is not edited after the bar is measured; the outcome becomes
+a new dated section here.
