@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import math
 import random
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from statistics import NormalDist
 
@@ -220,4 +221,82 @@ def binomial_at_least(
         * probability**count
         * (1 - probability) ** (trials - count)
         for count in range(floor, trials + 1)
+    )
+
+
+def _percentile(sorted_values: list[float], fraction: float) -> float:
+    """The value at `fraction` of the way through a sorted list.
+
+    Linear interpolation between the two order statistics the fraction
+    falls between, the definition numpy and statistics.quantiles's
+    inclusive method both use. `sorted_values` must already be sorted
+    and non-empty; the caller guarantees both.
+    """
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    rank = fraction * (len(sorted_values) - 1)
+    low = math.floor(rank)
+    high = math.ceil(rank)
+    if low == high:
+        return sorted_values[low]
+    weight = rank - low
+    return sorted_values[low] * (1 - weight) + sorted_values[high] * weight
+
+
+@dataclass(frozen=True)
+class BootstrapInterval:
+    point: float
+    low: float
+    high: float
+
+
+def subject_bootstrap(
+    subjects: Sequence,
+    statistic: Callable[[list], float],
+    *,
+    seed: int = 20260809,
+    resamples: int = 10000,
+    confidence: float = 0.95,
+) -> BootstrapInterval:
+    """A percentile bootstrap that resamples SUBJECTS, not rows.
+
+    Roadmap 10.10c2b, ladder B10's remainder. The DROZY intervals — the
+    three-class balanced accuracy and the alertness paired bar — are
+    counted over people, and rows within one person are not independent:
+    a subject who blinks a certain way contributes a whole block of
+    correlated rows, so resampling rows would treat that block as many
+    independent draws and report an interval far too narrow. The unit of
+    resampling is therefore the SUBJECT.
+
+    `subjects` is one entry per person, and `statistic` maps a list of
+    those entries to the pooled number (balanced accuracy, a paired
+    mean, whatever the caller measures). The bootstrap never looks inside
+    an entry, so it does not guess 10.10c3's per-subject file schema: the
+    caller decides what a subject carries and how the statistic pools it.
+
+    Each of `resamples` draws takes as many subjects as were given, with
+    replacement, and records the statistic on that resample; the interval
+    is the percentile pair at the tails of `confidence`, and the point is
+    the statistic on the subjects as given. Seeded, and the seed is the
+    date fixed once, so the published number reproduces.
+    """
+    if len(subjects) == 0:
+        # A bootstrap over no subjects has nothing to resample, and an
+        # interval over nothing is not an interval.
+        raise ValueError("a subject bootstrap needs at least one subject")
+    if resamples < 1:
+        raise ValueError("a bootstrap needs at least one resample")
+    if not 0 < confidence < 1:
+        raise ValueError("confidence is a probability strictly inside 0 and 1")
+
+    pool = list(subjects)
+    rng = random.Random(seed)
+    draws = sorted(
+        statistic([rng.choice(pool) for _ in pool]) for _ in range(resamples)
+    )
+    tail = (1 - confidence) / 2
+    return BootstrapInterval(
+        point=statistic(pool),
+        low=_percentile(draws, tail),
+        high=_percentile(draws, 1 - tail),
     )

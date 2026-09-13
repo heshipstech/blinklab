@@ -13,14 +13,22 @@ from pathlib import Path
 import pytest
 
 from blinklab.stats import (
+    BootstrapInterval,
     Corrected,
     binomial_at_least,
     holm,
     permutation_p,
     ranks,
     spearman,
+    subject_bootstrap,
     wilson_interval,
 )
+
+
+def _pooled_mean(subjects: list[list[float]]) -> float:
+    """Mean over every row of every subject in the resample."""
+    rows = [value for subject in subjects for value in subject]
+    return sum(rows) / len(rows)
 
 
 class TestRanks:
@@ -286,3 +294,72 @@ class TestBinomialAtLeast:
     def test_negative_trials_are_refused(self) -> None:
         with pytest.raises(ValueError):
             binomial_at_least(1, -1, 0.5)
+
+
+class TestSubjectBootstrap:
+    """Roadmap 10.10c2b. The DROZY intervals resample by SUBJECT, not by
+    row, because rows within a person are not independent. These pin the
+    resampling unit, seed reproducibility, and the refusals — on
+    synthetic data, because the real per-subject table is 10.10c3's and
+    the owner's."""
+
+    def test_the_point_is_the_observed_statistic(self) -> None:
+        # Four correct in one subject, one wrong in another: 4 of 5.
+        result = subject_bootstrap(
+            [[1.0, 1.0, 1.0, 1.0], [0.0]], _pooled_mean, seed=1
+        )
+        assert isinstance(result, BootstrapInterval)
+        assert result.point == pytest.approx(0.8)
+
+    def test_the_same_seed_reproduces_the_interval(self) -> None:
+        args = ([[1.0, 0.0, 1.0], [0.0, 1.0], [1.0]], _pooled_mean)
+        first = subject_bootstrap(*args, seed=42)
+        second = subject_bootstrap(*args, seed=42)
+        assert first == second
+
+    def test_it_resamples_subjects_not_rows(self) -> None:
+        # Two subjects, A all-correct and B one-wrong. Resampling SUBJECTS
+        # can draw {A, A} (accuracy 1.0) or {B, B} (accuracy 0.0), each a
+        # quarter of the time, so the 95% interval spans the whole [0, 1].
+        # Resampling the five ROWS instead would cluster near 0.8 and put
+        # neither 0.0 nor 1.0 at a tail — so these bounds can only come
+        # from subject-level resampling.
+        result = subject_bootstrap(
+            [[1.0, 1.0, 1.0, 1.0], [0.0]], _pooled_mean, seed=7
+        )
+        assert result.low == 0.0
+        assert result.high == 1.0
+
+    def test_a_dominant_subject_does_not_swamp_the_interval(self) -> None:
+        # One subject carries a hundred correct rows, two carry one wrong
+        # row each. A by-ROW bootstrap sits at ~0.98 because the hundred
+        # rows drown the two, and its lower bound never falls near zero. A
+        # by-SUBJECT bootstrap drops the big subject entirely whenever the
+        # three draws miss it (about 30% of the time), so the lower bound
+        # is 0.0 — the two answers plainly differ, which is the whole
+        # reason the resampling unit is the subject.
+        subjects = [[1.0] * 100, [0.0], [0.0]]
+        result = subject_bootstrap(subjects, _pooled_mean, seed=3)
+        assert result.point == pytest.approx(100 / 102)
+        assert result.low == 0.0
+        assert result.high == pytest.approx(1.0)
+
+    def test_a_paired_difference_statistic_is_supported(self) -> None:
+        # The alertness Bar 2 use: each subject contributes its own paired
+        # differences, and the statistic is their pooled mean. The
+        # bootstrap is schema-agnostic — it never looks inside a subject.
+        subjects = [[0.5, 0.3], [0.4], [0.6, 0.2, 0.4]]
+        result = subject_bootstrap(subjects, _pooled_mean, seed=11)
+        assert result.low <= result.point <= result.high
+
+    def test_no_subjects_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="subject"):
+            subject_bootstrap([], _pooled_mean, seed=1)
+
+    def test_zero_resamples_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="resample"):
+            subject_bootstrap([[1.0]], _pooled_mean, seed=1, resamples=0)
+
+    def test_confidence_outside_zero_and_one_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="confidence"):
+            subject_bootstrap([[1.0]], _pooled_mean, seed=1, confidence=1.5)
