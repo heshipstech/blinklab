@@ -4200,3 +4200,33 @@ late inherits a large first number that is not a loss it is responsible
 for. The rows are camera-only and read `unknown` on a browser that
 carries no such field, because a silent omission would take the
 limitation out of the open on exactly the devices where it bites.
+
+## A crash keeps the name of the thing that crashed
+
+The concept this increment teaches is that an error path has provenance
+to protect, not just a message to show.
+
+A stepped clip is a loop inside an await with no per-frame crash
+wrapper, so when it throws the throw lands in the file loader's outer
+catch. That catch did a sensible-looking thing first — reset the source
+back to "camera", drop the clip name, rebase the clock — so the page
+would be ready for whatever came next. Then, further down, it noticed
+that frames had already been measured and kept the session's records
+exportable rather than discarding them as a broken file. Both halves
+were right on their own. Together they were a bug: by the time the
+export ran, the source said "camera" and the clip name was gone, so a
+file session that crashed mid-run exported as a camera session. The
+inner, per-frame crash path never had this bug, because it never reset
+the source — it just ended the session where it stood.
+
+The fix is to make the outer catch agree with the inner one, and the way
+to make two paths agree is to give them one decision to share. So the
+disposition — measurement-crash (keep the session and its file
+provenance) versus file-failed (nothing measured, return to the camera)
+— moved into a pure core function that turns on the one fact that
+matters, whether any frame was measured. The catch now asks core, keeps
+the source and clip name on the measurement-crash side, and resets them
+only on the file-failed side. The lesson that generalises: when a
+recovery step and a preservation step share a catch, order alone will
+eventually put one on the wrong side of the other. Naming the decision
+and testing it is cheaper than remembering the ordering.
