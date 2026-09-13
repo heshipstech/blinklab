@@ -1,0 +1,104 @@
+THE CAPTURE-RATE CLAIM: DOES 60 CATCH WHAT 30 MISSES?
+=====================================================
+
+Written 13 September 2026, before any 30-and-60 session is run and
+before 13.2's device day says whether any setup here can reach 60.
+Roadmap 13.3. Both branches below are committed now so that the data
+selects neither.
+
+WHAT THIS SCORES, AND WHY IT IS NOT ALREADY SCORED. docs/blink-sample-
+rate.txt established, deterministically and with no camera, that the
+sampling rate decides whether a blink is counted inside a band about
+0.4 mm wide: a firm blink is caught at every rate from 25 Hz up, a
+too-shallow one never, and between them the rate governs. Its own
+numbers, from the real detector over synthetic traces:
+
+    a 3.30 mm-minimum blink   67% of phases at 30 Hz -> 100% at 60 Hz
+    a 3.40 mm-minimum blink   48% at 30 Hz            -> 96% at 60 Hz
+    an 80 ms blink at 3.20 mm 43% at 30 Hz            -> 87% at 60 Hz
+    a firm blink (<= 2.80 mm) 100% at every rate, unchanged by 60
+
+That file was careful to say what it could NOT establish: whether real
+blinks live in the band often enough for the rate to matter in
+practice. The reason is a permanent limit on the exports — THE DATA IS
+CENSORED. A blink the detector misses writes no row, so every blink log
+is drawn from the blinks that were caught, and the population that would
+settle the question is exactly the one the instrument cannot record. No
+re-reading of a free-behaviour session gets around it.
+
+The cued protocol (11.0a/b) is what breaks the censoring, and it is why
+this row exists. Each blink cue is a REQUESTED blink at a known instant,
+so the denominator is the cues, not the detections: catch rate is
+cues-answered over cues-issued, and a missed cue is a counted zero
+rather than a silent absence. cue_events.py already scores a blink cue
+against the blink log's first event in the response window. Running that
+same protocol at 30 and at 60 frames per second, on a setup that can
+reach 60, scores the sampling prediction against a denominator the dry
+run never had.
+
+A setup counts as reaching 60 only if it is 60-CAPABLE by the condition
+13.2 committed before any device was read (docs/frame-rate-
+negotiation.txt): a negotiated rate of at least 55 fps AND the iris
+ruler holding at or above 22 pixels, so a camera that buys 60 by
+dropping resolution below the ruler's floor does not qualify — that
+would change the instrument, not just its rate.
+
+BRANCH A — A 60-CAPABLE SETUP EXISTS. The prediction, committed before
+the sessions:
+
+  1. At 60 fps the cued catch rate is HIGHER than at 30 fps on the same
+     setup and person. The gain is not uniform: it concentrates on
+     SHALLOW and QUICK cued blinks, exactly the band above, and firm
+     deliberate blinks are caught at both rates. A reader who splits the
+     answered cues by the amplitude the caught ones report should see
+     the 30-to-60 improvement sitting in the shallow tail.
+  2. The SIZE is bounded by the sweep, not free: 60 fps catches at or
+     near 100% of cued blinks whose depth reaches the band (3.40 mm and
+     below), while 30 fps sits well under that, so the per-setup gain is
+     on the order the sweep's band predicts (tens of percentage points
+     where the person's cued blinks fall shallow, near zero where they
+     do not). Each rate's catch rate is published with its Wilson
+     interval (stats.wilson_interval), because a cued session is a
+     handful of cues and a bare percentage would overstate it.
+  3. THE DEVICE-INDEPENDENCE CONTROL (15.4a). The SAME recorded clip,
+     stepped through the detector on each device, must catch its blinks
+     identically to within one frame, because a stepped run sees every
+     frame regardless of the live rate. A live 30-versus-60 difference
+     that VANISHES under stepping is the sampling effect and nothing
+     else; a difference that PERSISTS under stepping is a device-
+     measurement artefact, not the rate, and names its own next
+     instrument row rather than being read as sampling.
+
+  THE FALSIFIER, fixed here: if the 60 fps catch rate does not exceed
+  the 30 fps rate by more than their Wilson intervals overlap — that is,
+  no separable improvement — then the sampling-band mechanism does not
+  govern real cued blinks on this setup, whatever the synthetic sweep
+  shows, and the next instrument row is the aperture-depth distribution
+  of the cued blinks themselves (do real cued blinks reach the band at
+  all), not a third rate. An improvement LARGER than the sweep's ceiling
+  allows (60 fps beating 30 fps on firm blinks the sweep says are caught
+  at both) falsifies it the other way and points at the cue-scoring
+  window, not the rate.
+
+BRANCH B — NO 60-CAPABLE SETUP. If 13.2's device day finds that no owner
+camera negotiates at least 55 fps at or above the 22-pixel ruler — the
+ordinary case for a webcam and browser that cap delivery at 30 — then
+the 60 fps arm cannot be run at all here. The claim is then UNSCORED and
+recorded as a PLATFORM LIMIT, not a refutation: the sweep's mechanism
+stands as the deterministic finding it already is, the cued confirmation
+waits on hardware that can deliver 60, and this document says so rather
+than quietly reporting a 30-only session as if it had tested the rate.
+The empty set is a real, publishable outcome, and naming it in advance
+is what stops a disappointing device day from being rewritten into a
+finding.
+
+HOW THE BRANCH IS CHOSEN. By 13.2's negotiation verdict — a fact about
+the hardware, read on the owner's camera day — and by nothing in the
+catch rates. That order is the point of committing both branches today:
+whether the claim is scored (Branch A) or shelved as a platform limit
+(Branch B) is settled by what the cameras can do, before a single cue is
+answered, so the data cannot pick the flattering branch after the fact.
+
+The outcome is appended below as a dated section once the sessions run
+or the device day closes the door; this prediction is not edited after
+either.
