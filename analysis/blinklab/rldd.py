@@ -371,6 +371,50 @@ def _predict(
     return np.argmax(x @ weights + bias, axis=1)
 
 
+@dataclass(frozen=True)
+class StandardizedModel:
+    """The pre-registered softmax model fit to the WHOLE usable corpus on
+    standardised features.
+
+    `coefficients` is indexed (feature, class). Because every feature was
+    z-scored before the fit, each entry is the effect of a one-standard-
+    deviation change in that feature on that class's logit, so the
+    magnitudes are comparable across features that live in different units
+    — millimetres, milliseconds, a fraction. That comparability is the
+    whole point of a STANDARDISED coefficient, and it is what the analysis
+    plan promised and never printed."""
+
+    feature_names: tuple[str, ...]
+    labels: tuple[str, ...]
+    coefficients: np.ndarray
+
+
+def standardized_coefficients(
+    videos: list[VideoFeatures], labels: tuple[str, ...] = LABELS
+) -> StandardizedModel:
+    """The standardised coefficients of the model fit to every usable
+    video, for INTERPRETATION — which features it leans on and in which
+    direction.
+
+    This fits on the whole corpus, so it is NOT a held-out claim: it has
+    seen every subject, and reporting its accuracy would be the leak the
+    plan forbids. The held-out number stays with leave_one_subject_out;
+    this only describes the shape of the fit. Deterministic for the same
+    reason _fit is — a zero start and a fixed step — so "recomputed from
+    the records" is a byte-for-byte claim rather than a hope."""
+    usable = [v for v in videos if v.usable and v.label in labels]
+    if not usable:
+        raise RldError("no usable videos for the requested labels")
+    x, y, _subjects = _matrix(usable, labels)
+    median, scale = _prep(x)
+    weights, _bias = _fit(_apply(x, median, scale), y, len(labels))
+    return StandardizedModel(
+        feature_names=tuple(FEATURE_NAMES),
+        labels=labels,
+        coefficients=weights,
+    )
+
+
 # --- the evaluation: leave-one-subject-out ------------------------------
 
 
