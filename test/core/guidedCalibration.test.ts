@@ -393,6 +393,38 @@ describe("stored blink calibration, serialise and validated parse", () => {
     expect(parseBlinkCalibration(raw)).toEqual(good);
   });
 
+  it("carries the verification count through serialize and parse", () => {
+    const verified = aStoredLine({ blinksCaught: 2 });
+    const parsed = parseBlinkCalibration(serializeBlinkCalibration(verified));
+    expect(parsed?.blinksCaught).toBe(2);
+  });
+
+  it("reads a legacy line with no verification count as null", () => {
+    // A line stored before verification existed still loads: the count
+    // is a record about the line, not part of the ruler.
+    const legacy = JSON.parse(serializeBlinkCalibration(good)) as Record<
+      string,
+      unknown
+    >;
+    delete legacy.blinksCaught;
+    const parsed = parseBlinkCalibration(JSON.stringify(legacy));
+    expect(parsed).not.toBeNull();
+    expect(parsed?.blinksCaught).toBeNull();
+  });
+
+  it("drops a nonsense verification count to null but keeps the line", () => {
+    // A negative or non-integer count is not a measurement; it becomes
+    // null rather than rejecting the whole entry, which stays usable.
+    const tampered = JSON.parse(serializeBlinkCalibration(good)) as Record<
+      string,
+      unknown
+    >;
+    tampered.blinksCaught = -1;
+    const parsed = parseBlinkCalibration(JSON.stringify(tampered));
+    expect(parsed).not.toBeNull();
+    expect(parsed?.blinksCaught).toBeNull();
+  });
+
   it("rejects non-JSON", () => {
     expect(parseBlinkCalibration("not json {")).toBeNull();
   });

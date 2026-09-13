@@ -980,3 +980,24 @@ DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
   changed. A phase the corpus never reaches cannot move a corpus number.
   The owner's next corpus run scores this entry and retires it beside
   the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the verification count is stored with the line it confirmed
+
+  One watched file moves: src/core/guidedCalibration.ts. The
+  StoredBlinkCalibration record gains a blinksCaught field (the
+  verification count, roadmap 11.6a's first measurement), serialize
+  carries it, and parseBlinkCalibration reads it as an optional, nullable
+  integer so lines saved before verification existed still load. No
+  constant, threshold, or detection path changes; effectiveBlinkLineMm
+  still reads only personalLineMm.
+
+  Predicted corpus impact: none, digit for digit, by construction. The
+  new field is written and read only on the guided storage path, which
+  the stepped corpus runner never touches — it loads each clip in a fresh
+  browser with empty storage, parseBlinkCalibration returns null, and the
+  detector falls back to the passive baseline exactly as before. A field
+  added to a record the corpus never reads cannot move a corpus number.
+  The owner's next corpus run scores this entry and retires it beside the
+  block above.

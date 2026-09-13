@@ -20,6 +20,7 @@ export function aStoredLine(
       irisWidthPx: 40,
       recordedAtIso: "2026-09-07T00:00:00.000Z",
     },
+    blinksCaught: 3,
     ...overrides,
   };
 }

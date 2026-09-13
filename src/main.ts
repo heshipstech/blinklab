@@ -4282,6 +4282,10 @@ function processFrame(
         );
         if (blinkCalibrationSession.kind === "done") {
           const result = blinkCalibrationSession.result;
+          // The verification count, captured before the session is
+          // cleared: logged with the line as roadmap 11.6a's first
+          // measurement (guidedCalibration.ts, StoredBlinkCalibration).
+          const verificationBlinks = blinkCalibrationSession.blinksCaught;
           blinkCalibrationSession = null;
           blinkCalibrationOverlay.hidden = true;
           if (result.kind === "ready") {
@@ -4291,6 +4295,7 @@ function processFrame(
               closedMedianMm: result.closedMedianMm,
               openSampleCount: result.openSampleCount,
               closedSampleCount: result.closedSampleCount,
+              blinksCaught: verificationBlinks,
               // The conditions this line was measured under. Stored
               // with it so the camera in front of the person can be
               // checked against them later; a line nobody can judge is

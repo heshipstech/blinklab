@@ -224,6 +224,13 @@ export type StoredBlinkCalibration = {
   openSampleCount: number;
   closedSampleCount: number;
   stamp: BlinkCalibrationStampFields;
+  // How many of the three verification blinks the candidate line caught
+  // (roadmap 11.6a): the procedure's first measurement, logged with the
+  // line it confirmed. Null for a line stored before verification
+  // existed — kept nullable rather than required so those still load,
+  // since the verification GATE, not this record, is what refuses an
+  // unconfirmed new line.
+  blinksCaught: number | null;
 };
 
 export function serializeBlinkCalibration(
@@ -337,6 +344,18 @@ export function parseBlinkCalibration(
   if (stamp === null) {
     return null;
   }
+  // The verification count is optional: a finite, non-negative integer
+  // when a verified line recorded it, and null for a legacy line or any
+  // other value. A bad count does not reject the whole entry the way a
+  // bad median does, because the line is still usable — the count is a
+  // record about it, not part of the ruler.
+  const { blinksCaught } = record;
+  const verifiedBlinks =
+    typeof blinksCaught === "number" &&
+    Number.isInteger(blinksCaught) &&
+    blinksCaught >= 0
+      ? blinksCaught
+      : null;
   return {
     personalLineMm,
     openMedianMm,
@@ -344,6 +363,7 @@ export function parseBlinkCalibration(
     openSampleCount,
     closedSampleCount,
     stamp,
+    blinksCaught: verifiedBlinks,
   };
 }
 

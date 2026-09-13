@@ -27,6 +27,7 @@ const STORED = {
   openSampleCount: 90,
   closedSampleCount: 45,
   stamp: STAMP,
+  blinksCaught: 3,
 };
 
 describe("the separation the line came from", () => {

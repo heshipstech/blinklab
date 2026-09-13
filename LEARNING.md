@@ -4315,6 +4315,31 @@ function for the confirmation, rather than re-deriving a lighter version,
 keeps the check honest: it passes exactly when the shipped detector
 would, because it IS the shipped detector.
 
+## A number you gated on is usually worth keeping
+
+The verification phase counts how many of a person's blinks the new line
+caught, and uses that count to decide whether to store the line. The
+first version used the count and threw it away — the stored line said it
+was verified, but not how well. But the count is a measurement about
+this person and this camera, and the calibration record is exactly where
+their own numbers belong; a line that reads "verified: caught 3 of 3" is
+a different piece of evidence from one that barely scraped its two. So
+the count is now stored alongside the line: the decision's input becomes
+part of the record, not just its outcome.
+
+Keeping it is a schema change to a thing already saved in people's
+browsers, and the rule there is that a record ABOUT a thing is not a
+reason to reject the thing. The stored count is optional on read: a line
+saved before verification existed loads with a null count and works
+exactly as it did, because the count is a note about the line, not part
+of the ruler. That is the opposite stance from the camera stamp, which
+IS load-bearing (a line whose conditions nobody recorded cannot be
+checked against the camera in front of it) and so is required — the two
+are treated differently on purpose, by whether the missing field changes
+whether the line can be trusted. The general lesson: when you add a field
+to persisted data, ask whether its absence makes the old record unusable
+or merely undescribed, and only reject on the first.
+
 ## The measurement does not start the instant the cue does
 
 A cued measurement asks a person to do something — look at a dot, open
