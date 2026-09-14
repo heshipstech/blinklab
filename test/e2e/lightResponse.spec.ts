@@ -17,6 +17,18 @@ import { answerOpeningQuestion } from "./support/kss";
 test("the light-response stimulus starts and its schedule reaches the export", async ({
   page,
 }) => {
+  // Playwright cannot reliably drive TRUE fullscreen on macOS: entering
+  // it and leaving it strands <html> intercepting pointer events, so the
+  // export click below times out on a real display (this is green in
+  // headless CI, which never enters real fullscreen at all). This test's
+  // subject is the SCHEDULE reaching the export, not fullscreen, so it
+  // runs without real fullscreen exactly as the sibling test does; the
+  // real-fullscreen behaviour on a Mac is a manual check, because the
+  // harness cannot drive it there.
+  await page.addInitScript(() => {
+    delete (Element.prototype as { requestFullscreen?: unknown })
+      .requestFullscreen;
+  });
   await page.goto("./");
   await page.getByRole("button", { name: "Start camera" }).click();
   await answerOpeningQuestion(page);
