@@ -6,6 +6,8 @@ One or two sentences.
 
 ## Definition of done
 
+Tick each item, or mark it `n/a` with a one-line reason on the same line — an unexplained n/a is a box ticked with nothing behind it.
+
 - [ ] Does exactly one increment, nothing extra
 - [ ] Pure logic lives in `core` and imports nothing from the browser
 - [ ] New or updated automated test that would fail without this change
