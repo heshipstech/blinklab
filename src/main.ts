@@ -5093,12 +5093,22 @@ function endLightStimulus(): void {
     cancelAnimationFrame(lightRafHandle);
     lightRafHandle = null;
   }
-  lightOverlay.hidden = true;
+  // Exit fullscreen BEFORE hiding the overlay, not after. The overlay is
+  // the fullscreen element, and hiding it (display:none via `hidden`)
+  // while the document is still in fullscreen leaves macOS browsers stuck
+  // in a black fullscreen whose exit never completes: the element it was
+  // showing is gone, nothing repaints, and a later click lands on <html>
+  // rather than on the page beneath. So when we are in fullscreen, exit
+  // and let the fullscreenchange listener below hide the overlay once the
+  // exit lands; the catch hides directly if the exit is refused, so the
+  // overlay never outlives its stimulus. When we were never fullscreen (a
+  // refused request, a headless run), hide immediately.
   if (document.fullscreenElement !== null) {
     void document.exitFullscreen().catch(() => {
-      // Leaving fullscreen is best effort; a refusal here changes
-      // nothing the person can act on.
+      lightOverlay.hidden = true;
     });
+  } else {
+    lightOverlay.hidden = true;
   }
 }
 

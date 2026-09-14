@@ -4366,3 +4366,27 @@ one place the whole codebase can share rather than rediscovered per
 feature — the gaze capture had it, the guided calibration had to learn
 it separately, and the third cued measurement should not have to learn
 it a third time.
+
+## Hiding a fullscreen element before exiting fullscreen strands it on macOS
+
+The light-response overlay requests fullscreen on itself, and its end
+routine hid the overlay first and called `document.exitFullscreen()`
+after. On the owner's real Mac that order stranded the browser in a
+black fullscreen: the element it was displaying became `display:none`
+while it was still the fullscreen element, the exit never completed, and
+every later click landed on `<html>` instead of the page beneath — a
+real `npm run e2e` caught it (lightResponse.spec.ts:17, the export click
+intercepted for the full 30 s) where CI never could, because headless
+Chromium never enters real fullscreen at all.
+
+The fix is the order: exit fullscreen FIRST, and hide the overlay only
+once the exit lands — the existing `fullscreenchange` listener already
+hides it when `fullscreenElement` clears — with a direct hide on the
+paths that were never fullscreen (a refused request, a headless run).
+The lesson beyond this one bug: an element that IS the fullscreen element
+must leave fullscreen before it leaves the layout, or the browser is left
+painting a frame that no longer exists. And its guard cannot be a
+headless test by construction — real fullscreen is a real-display
+behaviour — so this class of defect is caught by a real-machine
+`npm run e2e`, not by CI, and the record has to say so rather than
+pretend a green headless run covered it.
