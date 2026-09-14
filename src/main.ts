@@ -312,6 +312,7 @@ import {
 } from "./io/camera";
 import { readDeviceInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
+import { createWakeLock } from "./io/wakeLock";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
   negotiationMetadataRows,
@@ -1359,6 +1360,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
       });
     }
     frameSource = "camera";
+    // A live session has started: ask the screen to stay awake for it
+    // (roadmap 13.1). Best effort — a refused or absent lock is recorded
+    // inside the wrapper, never thrown, and the session runs regardless.
+    wakeLockWanted = true;
+    void wakeLock.ensure();
     // Issue #221's missing half: a stepped clip may have left the
     // model's clock in the future, so the camera rebases too.
     modelClock = rebaseOnNextStamp(modelClock);
@@ -2025,6 +2031,15 @@ function stopCameraDriver(): void {
 // after the session ends because the export happens after; null on a
 // clip, which has no track to negotiate with — absence, not unknowns.
 let frameRateNegotiation: FrameRateNegotiation | null = null;
+// The screen wake lock (roadmap 13.1, ADR-0007), taken when a live
+// camera session starts and released when it ends, so a phone or a
+// laptop does not dim mid-measurement and stop the frame loop with it.
+// The lock drops on tab-hide by specification, so the visibilitychange
+// handler re-requests it while a session is still wanted. Created over
+// the real navigator once; a browser without the API records "no" and
+// nothing more.
+const wakeLock = createWakeLock(navigator);
+let wakeLockWanted = false;
 // The camera's own rate, beside the instrument's. The processing rate
 // alone cannot tell a viewer whether a faster machine would help them:
 // a machine reading 24 of 30 delivered frames is limited by itself, and
@@ -3382,6 +3397,9 @@ function endCameraSession(reason: string): void {
   } catch (stopError: unknown) {
     console.error("the camera could not be stopped:", stopError);
   }
+  // The session is over: let the screen sleep again (roadmap 13.1).
+  wakeLockWanted = false;
+  void wakeLock.release();
   askAfterQuestionOnce();
 }
 
@@ -5443,6 +5461,10 @@ document.addEventListener("visibilitychange", () => {
     // Frames could not arrive while hidden; the camera's silence is
     // measured from here, not from the last frame before the switch.
     attentiveSinceMs = performance.now();
+    // The wake lock drops when the tab hides; take it again if a
+    // session still wants it (roadmap 13.1). Idempotent when already
+    // held, so a visibility flip with no session does nothing.
+    if (wakeLockWanted) void wakeLock.ensure();
   }
   // Only a RUNNING measurement can be interrupted. Before roadmap
   // 14.0a every tab switch after Stop, or before Start, counted as an

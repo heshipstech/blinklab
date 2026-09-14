@@ -4430,3 +4430,36 @@ real display, suspect a real-OS behaviour the harness cannot automate —
 fullscreen, permissions, device pickers — BEFORE touching the app, and
 drive the test through the stub the project already uses rather than
 inventing an app change to chase a harness artifact.
+
+## A phone that dims mid-session takes the measurement with it
+
+A phone or a laptop dims and locks its screen after an idle timeout, and
+when it does the animation-frame loop stops — so an unattended run, and
+the 260-second light protocol especially, can end not because the person
+stopped but because the device went to sleep. Nothing in the app had ever
+asked the screen to stay awake. This increment is the first slice of the
+session-survival kit (roadmap 13.1, ADR-0007): a wrapper over the Screen
+Wake Lock API that asks the device to stay lit while a live camera
+session runs, and lets it sleep again when the session ends.
+
+Two habits from earlier increments carried the whole design. First, the
+wrapper is impure — it touches `navigator.wakeLock` — so it lives in
+`io` and is driven in the test against a FAKE navigator, exactly the way
+`negotiateFrameRate` is driven against a fake track: a browser that
+exposes the API, one that does not (an older iPhone Safari), and one that
+REFUSES the request each get a defined behaviour, and a refusal is
+recorded on the outcome and never thrown, because a session without the
+screen guarantee is still a session worth keeping. Second, the lock
+drops on tab-hide by specification, so it cannot be taken once and
+forgotten; the page's existing visibilitychange handler re-requests it
+whenever the tab is visible again and a session still wants it, and the
+count of those re-acquisitions is part of the record.
+
+The slice was drawn deliberately narrow. Emitting the wake-lock outcome
+into the exported file would have pulled in the whole metadata cascade —
+SPEC's key table, the presence rules, five verdict fixtures and the
+Python mirror — the way `camera_frame_driver` did. The screen staying
+awake is the value here; carrying the outcome in the export is a separate
+concern with its own guards, so it is a later slice. Keeping the two
+apart is what let this one land as one small, self-contained change with
+its behaviour proven against a fake device and nothing else disturbed.
