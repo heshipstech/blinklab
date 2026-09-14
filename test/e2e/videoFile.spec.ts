@@ -144,7 +144,9 @@ test("a file the browser cannot decode fails as a clip, not as a camera", async 
   expect(await failure.textContent()).not.toContain("camera");
 });
 
-test("stepping measures every frame of a fast clip", async ({ page }) => {
+test("stepping measures every frame of a fast clip", async ({
+  page,
+}, testInfo) => {
   // THE REGRESSION TEST. The previous version of this test used a 10
   // frames per second clip, and at 100 ms between frames nothing could
   // slip through the old play-and-pause stepper, so it passed while the
@@ -195,7 +197,40 @@ test("stepping measures every frame of a fast clip", async ({ page }) => {
   // too, and the exports stay on offer beside it.
   await expect(finished).toHaveAttribute("data-state", "ended");
   await expect(page.getByTestId("show-report")).toBeEnabled();
-  await expect(page.getByTestId("export-csv")).toBeEnabled();
+
+  // Roadmap 13.0, the build half of docs/engine-agreement.txt: this same
+  // stepped run is where the two engines are paired. Save its per-frame
+  // export named by the engine that produced it, so running the spec
+  // under --project=chromium and --project=webkit leaves the two files
+  // side by side at test-results/engine-<project>.csv for the owner to
+  // compare. The frame-count assertion above is already the coverage
+  // bound at count granularity: both engines must measure every frame,
+  // and a difference is the "coverage differs, stops the line" outcome.
+  // A clip is not a camera session, so no closing sleepiness question
+  // gates the export (askAfterQuestionOnce skips a non-camera source).
+  const exportCsv = page.getByTestId("export-csv");
+  await expect(exportCsv).toBeEnabled();
+  const downloadPromise = page.waitForEvent("download");
+  await exportCsv.click();
+  const download = await downloadPromise;
+  const outPath = `test-results/engine-${testInfo.project.name}.csv`;
+  await download.saveAs(outPath);
+  // Read it back through the download stream (the e2e config carries no
+  // node types, so no fs import) and confirm it is a real clip export.
+  const stream = await download.createReadStream();
+  const csv = await new Promise<string>((resolve, reject) => {
+    let out = "";
+    stream.on("data", (chunk: unknown) => (out += String(chunk)));
+    stream.on("end", () => resolve(out));
+    stream.on("error", reject);
+  });
+  expect(csv).toContain("# source: file");
+  console.log(
+    `13.0 engine export (${testInfo.project.name}) saved: ${outPath}`,
+  );
+
+  // Issue #303: a finished stepped run makes the participant report
+  // reachable and keeps the exports on offer beside it.
   await page.getByTestId("show-report").click();
   await expect(page.getByTestId("participant-report")).toBeVisible();
 });
