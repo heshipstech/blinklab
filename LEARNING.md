@@ -4367,26 +4367,33 @@ feature — the gaze capture had it, the guided calibration had to learn
 it separately, and the third cued measurement should not have to learn
 it a third time.
 
-## Hiding a fullscreen element before exiting fullscreen strands it on macOS
+## Playwright cannot reliably drive real fullscreen on macOS — stub it, do not guess at the app
 
-The light-response overlay requests fullscreen on itself, and its end
-routine hid the overlay first and called `document.exitFullscreen()`
-after. On the owner's real Mac that order stranded the browser in a
-black fullscreen: the element it was displaying became `display:none`
-while it was still the fullscreen element, the exit never completed, and
-every later click landed on `<html>` instead of the page beneath — a
-real `npm run e2e` caught it (lightResponse.spec.ts:17, the export click
-intercepted for the full 30 s) where CI never could, because headless
-Chromium never enters real fullscreen at all.
+A real-Mac `npm run e2e` hung for the full 30 s on
+lightResponse.spec.ts:17: the light stimulus entered TRUE fullscreen, the
+test pressed Escape, and then the export click was intercepted by
+`<html>` until timeout. It is green in headless CI, which never enters
+real fullscreen at all, so it only broke on a real display.
 
-The fix is the order: exit fullscreen FIRST, and hide the overlay only
-once the exit lands — the existing `fullscreenchange` listener already
-hides it when `fullscreenElement` clears — with a direct hide on the
-paths that were never fullscreen (a refused request, a headless run).
-The lesson beyond this one bug: an element that IS the fullscreen element
-must leave fullscreen before it leaves the layout, or the browser is left
-painting a frame that no longer exists. And its guard cannot be a
-headless test by construction — real fullscreen is a real-display
-behaviour — so this class of defect is caught by a real-machine
-`npm run e2e`, not by CI, and the record has to say so rather than
-pretend a green headless run covered it.
+**The first fix was wrong and is recorded so the mistake is not repeated.**
+The guess was that `endLightStimulus` hid the overlay before calling
+`document.exitFullscreen()`, stranding the fullscreen element; the routine
+was reordered to exit first and hide on `fullscreenchange`. It shipped,
+the owner re-ran, and the failure was IDENTICAL — because the interception
+is the browser's own fullscreen state under automation on macOS, not
+anything the app hides or shows. That reorder was reverted.
+
+**The real fix was already sitting in the sibling test.** The next test,
+"without fullscreen the stimulus still runs", passes on the same Mac in
+the same run, and it opens with
+`delete Element.prototype.requestFullscreen` so the overlay never enters
+real fullscreen. lightResponse:17's subject is the SCHEDULE reaching the
+export, not fullscreen, so it now stubs fullscreen the same way and its
+assertions are untouched. The real-fullscreen behaviour on a Mac is a
+manual check, because the harness cannot drive it there.
+
+The transferable lesson: when a test is green headless and red only on a
+real display, suspect a real-OS behaviour the harness cannot automate —
+fullscreen, permissions, device pickers — BEFORE touching the app, and
+drive the test through the stub the project already uses rather than
+inventing an app change to chase a harness artifact.
