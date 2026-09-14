@@ -29,7 +29,6 @@ whether that weakness is real.
 from __future__ import annotations
 
 import argparse
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,6 +51,71 @@ class ClipResult:
     # None for a log that predates the key (roadmap 13.5). Defaulted
     # so every older caller keeps meaning what it meant.
     delegate_requested: str | None = None
+
+
+@dataclass(frozen=True)
+class Refusal:
+    """A clip left out of the score, with why. Roadmap 10.1d: a clip is
+    refused, not footnoted, when including it would make the pooled
+    headline about a different recording than the humans annotated."""
+
+    name: str
+    reason: str
+
+
+# Roadmap 10.1d. The instrument may see slightly fewer frames than the
+# annotator counted (a dropped tail, a settle), but a materially short
+# measurement compared against a complete annotation understates recall
+# for a reason unrelated to detection. The bar is one percent, with a
+# five-frame floor so a short clip is not refused for rounding.
+COVERAGE_GAP_FLOOR = 5
+COVERAGE_GAP_FRACTION = 0.01
+
+
+def coverage_refusal(
+    frames_measured: int | None, frames_annotated: int
+) -> str | None:
+    """Why coverage refuses this clip, or None if it passes.
+
+    A missing frames_measured header is a refusal, not an "unknown": a
+    run that cannot say how many frames it saw cannot be shown to have
+    covered the annotation, and a coverage report that prints "unknown"
+    and scores the clip anyway is the footnote this row replaces."""
+    if frames_measured is None:
+        return "no frames_measured header, so coverage cannot be checked"
+    gap = abs(frames_measured - frames_annotated)
+    allowed = max(COVERAGE_GAP_FLOOR, frames_annotated * COVERAGE_GAP_FRACTION)
+    if gap > allowed:
+        return (
+            f"coverage gap of {gap} frames (measured {frames_measured}, "
+            f"annotated {frames_annotated}) exceeds the {allowed:.0f}-frame "
+            "bar (1%, floor 5)"
+        )
+    return None
+
+
+def clip_refusal(log: BlinkLog, annotation: Annotation) -> str | None:
+    """The whole per-clip verdict: why this clip is refused from the
+    pooled score, or None to include it. A watched (non-stepped) run, a
+    missing frame count, and a coverage gap past one percent each
+    disqualify a clip, because the published headline is only honest
+    over clips measured the way the published one was."""
+    if not log.measured_completely:
+        return (
+            f"SKIPPED, measured in '{log.metadata.get('measurement_mode')}' "
+            "mode rather than stepped, so not every frame was seen"
+        )
+    coverage = coverage_refusal(log.frames_measured, annotation.frame_count)
+    if coverage is not None:
+        return f"REFUSED, {coverage}"
+    return None
+
+
+def exit_code(results: list[ClipResult], refusals: list[Refusal]) -> int:
+    """Non-zero on a partial corpus. A headline pooled over a subset is
+    not the published headline, so any refusal fails the run even when
+    some clips scored — and a run that scored nothing fails too."""
+    return 0 if results and not refusals else 1
 
 
 def _percent(value: float | None) -> str:
@@ -109,37 +173,53 @@ def delegate_header(requests: list[str | None]) -> str:
     return f"mixed ({', '.join(stated)}); executed delegate unobservable"
 
 
-def collect(corpus: Path, measured: Path) -> list[ClipResult]:
+def collect(
+    corpus: Path, measured: Path
+) -> tuple[list[ClipResult], list[Refusal]]:
+    """Score every clip that can be scored, and record why each other
+    was left out. The refusals ride back with the results (roadmap
+    10.1d) so the report can print them in its body and main can fail a
+    partial run, rather than losing them to stderr where the published
+    headline reads as complete."""
     results: list[ClipResult] = []
+    refusals: list[Refusal] = []
     for tag in sorted(corpus.rglob("*.tag")):
         log_path = measured / f"{tag.stem}.blinks.csv"
         if not log_path.exists():
-            print(
-                f"  {tag.stem}: NOT MEASURED, no blink log found",
-                file=sys.stderr,
+            refusals.append(
+                Refusal(tag.stem, "NOT MEASURED, no blink log found")
             )
             continue
         log = load_blink_log(log_path)
-        if not log.measured_completely:
-            # Refused rather than included with a caveat. A partial
-            # measurement compared against a complete annotation
-            # produces a recall figure that is wrong for a reason
-            # unrelated to detection, and a caveat in a footnote does
-            # not stop that number being quoted.
-            print(
-                f"  {tag.stem}: SKIPPED, measured in "
-                f"'{log.metadata.get('measurement_mode')}' mode rather than "
-                "stepped, so not every frame was seen",
-                file=sys.stderr,
-            )
+        annotation = load_annotation(tag)
+        reason = clip_refusal(log, annotation)
+        if reason is not None:
+            refusals.append(Refusal(annotation.name, reason))
             continue
-        results.append(evaluate_clip(log, load_annotation(tag)))
-    return results
+        results.append(evaluate_clip(log, annotation))
+    return results, refusals
 
 
-def report(results: list[ClipResult]) -> str:
-    if not results:
+def _refused_section(refusals: list[Refusal] | tuple[()]) -> list[str]:
+    """The refused clips, in the report body. Roadmap 10.1d: a reader of
+    the printed report must see which clips were left out and why, so
+    these are lines in the report rather than notes to stderr."""
+    lines = [f"Refused ({len(refusals)})"]
+    for refusal in sorted(refusals, key=lambda r: r.name):
+        lines.append(f"  {refusal.name[:22]:22} {refusal.reason}")
+    return lines
+
+
+def report(
+    results: list[ClipResult], refusals: list[Refusal] | tuple[()] = ()
+) -> str:
+    if not results and not refusals:
         return "No clips could be evaluated."
+    if not results:
+        # Every clip was refused: there is no headline, only the reasons.
+        lines = ["No clips could be evaluated.", ""]
+        lines.extend(_refused_section(refusals))
+        return "\n".join(lines)
 
     lines: list[str] = []
     pooled = combine([r.result for r in results])
@@ -179,6 +259,12 @@ def report(results: list[ClipResult]) -> str:
     lines.append(f"  F1         {_percent(pooled.f1)}")
     lines.append("")
 
+    # Refused clips, above the per-clip table, so a reader sees the run
+    # is partial before reading a headline pooled over a subset.
+    if refusals:
+        lines.extend(_refused_section(refusals))
+        lines.append("")
+
     lines.append("Per clip")
     lines.append(
         f"  {'clip':22} {'gl':3} {'true':>5} {'found':>6} {'miss':>5} "
@@ -200,12 +286,12 @@ def report(results: list[ClipResult]) -> str:
     # it before, and a corpus average would bury the answer.
     with_glasses = [r for r in results if r.glasses]
     without = [r for r in results if not r.glasses]
+    lines.append("Split by glasses")
     if with_glasses and without:
         a, b = (
             combine([r.result for r in with_glasses]),
             combine([r.result for r in without]),
         )
-        lines.append("Split by glasses")
         lines.append(
             f"  with glasses    {len(with_glasses)} clip(s), "
             f"recall {_percent(a.recall)}, precision {_percent(a.precision)}"
@@ -214,7 +300,14 @@ def report(results: list[ClipResult]) -> str:
             f"  without         {len(without)} clip(s), "
             f"recall {_percent(b.recall)}, precision {_percent(b.precision)}"
         )
-        lines.append("")
+    else:
+        # Roadmap 10.1d. One side of the split is empty, so the
+        # comparison cannot be formed. Said rather than omitted: a
+        # silently missing section reads as "not asked", when the truth
+        # is "not answerable on this corpus".
+        side = "wear glasses" if with_glasses else "are without glasses"
+        lines.append(f"  not computable: all {len(results)} clip(s) {side}")
+    lines.append("")
 
     # Coverage. If the instrument saw materially fewer frames than the
     # annotator did, every number above is about a different recording
@@ -242,9 +335,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("measured", type=Path, help="Blink logs from the run")
     args = parser.parse_args(argv)
 
-    results = collect(args.corpus, args.measured)
-    print(report(results))
-    return 0 if results else 1
+    results, refusals = collect(args.corpus, args.measured)
+    print(report(results, refusals))
+    return exit_code(results, refusals)
 
 
 if __name__ == "__main__":

@@ -153,6 +153,7 @@ import {
   deliveryMetadataRows,
   deviceMetadataRows,
   driverMetadataRows,
+  framesMissedMetadataRows,
   gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   medianIrisWidthPx,
@@ -195,7 +196,15 @@ import {
   noteDelivered,
   noteRead,
 } from "./core/deliveryRate";
+import {
+  emptyFramesMissed,
+  framesMissedSummary,
+  notePresented,
+  type FramesMissedState,
+  type FramesMissedSummary,
+} from "./core/framesMissed";
 import { recordDue } from "./core/recordGate";
+import { steppedCrashOutcome } from "./core/steppedCrash";
 import {
   initialLongClosureState,
   longClosureStep,
@@ -262,6 +271,7 @@ import {
 } from "./io/calibrationStore";
 import {
   GUIDED_CALIBRATION_PHASE_MS,
+  GUIDED_CALIBRATION_VERIFY_MS,
   calibrationSessionStep,
   effectiveBlinkLineMm,
   startCalibrationSession,
@@ -778,6 +788,19 @@ function settledDeliveryRates(): DeliveryRates | null {
   sessionDeliveryRates ??= deliveryRates(deliveryState, performance.now());
   return sessionDeliveryRates;
 }
+// The frames the compositor presented that no callback ever looked at,
+// settled once like the delivery rates and reset with the session
+// (roadmap 13.4). Null off the camera path: a clip is stepped frame by
+// frame from the decoded frames themselves and misses none.
+let sessionFramesMissed: FramesMissedSummary | null = null;
+
+function settledFramesMissed(): FramesMissedSummary | null {
+  if (frameSource !== "camera") {
+    return null;
+  }
+  sessionFramesMissed ??= framesMissedSummary(framesMissedState);
+  return sessionFramesMissed;
+}
 // How many frames the pose gate judged, and how many it passed. The
 // per-frame refusals already happened on screen; these two counts let
 // the export state the session-level fraction as a primary fact.
@@ -1218,6 +1241,9 @@ function resetSession(): void {
   // starting and stopping it there would silence the rate it is about
   // to measure; whoever changes the source owns the observer.
   deliveryState = emptyDelivery();
+  // The missed-frame count belongs to one camera session too; carrying
+  // it forward would blame the next session for this one's stalls.
+  framesMissedState = emptyFramesMissed();
   // A new source starts a new time axis. Carrying the old clock
   // forward would reject every frame of a clip that starts at zero.
   frameClock = startFrameClock();
@@ -1243,6 +1269,7 @@ function resetSession(): void {
   visibilityChanges = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
+  sessionFramesMissed = null;
   poseGateFrames = 0;
   poseValidFrames = 0;
   // A new session's report does not exist yet: the old one vanishes
@@ -1357,8 +1384,11 @@ async function beginCamera(deviceId?: string): Promise<void> {
     if (supportsVideoFrameCallback(video)) {
       deliveryObserver = observeVideoDelivery(
         video,
-        (deliveredAtMs) => {
+        (deliveredAtMs, presentedFrames) => {
           deliveryState = noteDelivered(deliveryState, deliveredAtMs);
+          // The compositor's own frame tally, so a stall the delivery
+          // callback coalesced away is still counted (roadmap 13.4).
+          framesMissedState = notePresented(framesMissedState, presentedFrames);
         },
         () => {
           // A dead observer costs a diagnostic, not a session. The
@@ -1794,26 +1824,32 @@ async function beginVideoFile(file: File): Promise<void> {
     // a session that no longer exists, and the state is the new
     // run's to write.
     if (runToken !== sourceRunToken) return;
-    frameSource = "camera";
-    // The display loop resumes driving the camera path here, so the
-    // model clock rebases the same way beginCamera's path does.
-    modelClock = rebaseOnNextStamp(modelClock);
-    loadedClipName = null;
     clipLoop?.stop();
     clipLoop = null;
     const reason =
       error instanceof Error ? error.message : "That file could not be read.";
     // A throw AFTER frames were measured is a mid-run measurement
-    // crash, not a broken file: the stepped driver has no loop
-    // wrapper, so its throws land here. clipFailed would frame the
-    // internal error as a file problem and, worse, force-disable the
-    // exports, silently revoking minutes of recorded data that
-    // measurementFailed keeps offered. Remediation B3, from review.
-    if (framesMeasured > 0) {
+    // crash, not a broken file: the stepped driver has no loop wrapper,
+    // so its throws land here. The disposition is decided in core
+    // (roadmap 14.0e). measurementFailed keeps the exports offered AND
+    // the FILE provenance the session was measured under — resetting the
+    // source to "camera" here, as this branch once did before the
+    // framesMeasured test, exported a crashed file run as a camera one.
+    // clipFailed would also frame the internal error as a file problem
+    // and force-disable the exports, revoking minutes of recorded data
+    // (remediation B3, from review).
+    if (steppedCrashOutcome(framesMeasured).kind === "measurementCrash") {
       console.error("the clip measurement stopped mid-run:", error);
       setState({ kind: "measurementFailed", reason });
       return;
     }
+    // A broken file: nothing was measured, so there is no session to
+    // keep and the page returns to its camera-ready state. The display
+    // loop resumes driving the camera path here, so the model clock
+    // rebases the same way beginCamera's path does.
+    frameSource = "camera";
+    modelClock = rebaseOnNextStamp(modelClock);
+    loadedClipName = null;
     setState({ kind: "clipFailed", reason });
   }
 }
@@ -1953,6 +1989,10 @@ let rateRiskShown = false;
 // measurement loop. Null observer means either a clip or a browser
 // without requestVideoFrameCallback, and the readout says which.
 let deliveryState = emptyDelivery();
+// The frames the compositor presented that the busy main thread never
+// looked at, counted from the same observer's presentedFrames (roadmap
+// 13.4). Belongs to one camera session like the delivery counts.
+let framesMissedState: FramesMissedState = emptyFramesMissed();
 let deliveryObserver: { stop: () => void } | null = null;
 // Since when the page has been able to receive frames: the session's
 // start, or the last return from a hidden tab. Camera silence is
@@ -2229,6 +2269,10 @@ function blinkRefusalMessage(reason: GuidedCalibrationRefusal): string {
       return "Blink calibration needs a steady, measured view of your closed eyes and did not get enough of one. Try again, closing your eyes when the screen asks.";
     case "closure-not-registered":
       return "Your closed eyes did not read far enough below your open ones for a line to be placed. This is the same limit the corpus showed, and rather than guess a line, the calibration refuses.";
+    case "line-above-open-floor":
+      return "The line these readings produced would sit close to where your open eyes already rest, so it would count ordinary opening as a blink. Rather than place a line that high, the calibration refuses. Good, even light on the eyes helps.";
+    case "verification-failed":
+      return "The measured line did not catch your blinks when you were asked for three. A line that misses your ordinary blinks is not stored. Try again, and blink normally when the last step asks.";
   }
 }
 
@@ -2916,6 +2960,7 @@ function exportSession(): void {
       guidedConditionsMismatch(),
     ),
     ...deliveryMetadataRows(settledDeliveryRates()),
+    ...framesMissedMetadataRows(settledFramesMissed()),
     ...sessionMetadataRows(
       featureRecords,
       irisWidthSamples,
@@ -4237,6 +4282,10 @@ function processFrame(
         );
         if (blinkCalibrationSession.kind === "done") {
           const result = blinkCalibrationSession.result;
+          // The verification count, captured before the session is
+          // cleared: logged with the line as roadmap 11.6a's first
+          // measurement (guidedCalibration.ts, StoredBlinkCalibration).
+          const verificationBlinks = blinkCalibrationSession.blinksCaught;
           blinkCalibrationSession = null;
           blinkCalibrationOverlay.hidden = true;
           if (result.kind === "ready") {
@@ -4246,6 +4295,7 @@ function processFrame(
               closedMedianMm: result.closedMedianMm,
               openSampleCount: result.openSampleCount,
               closedSampleCount: result.closedSampleCount,
+              blinksCaught: verificationBlinks,
               // The conditions this line was measured under. Stored
               // with it so the camera in front of the person can be
               // checked against them later; a line nobody can judge is
@@ -4279,7 +4329,7 @@ function processFrame(
             );
           }
           blinkCalibrationStatus.hidden = false;
-        } else {
+        } else if (blinkCalibrationSession.kind === "collecting") {
           const phase = blinkCalibrationSession.phase;
           blinkCalibrationInstruction.textContent =
             phase === "open"
@@ -4295,8 +4345,21 @@ function processFrame(
           ).toFixed(1);
           blinkCalibrationProgress.textContent =
             phase === "open"
-              ? `Step 1 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
-              : `Step 2 of 2 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s.`;
+              ? `Step 1 of 3 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Closing your eyes comes next. Click anywhere or press Esc to cancel.`
+              : `Step 2 of 3 · ${String(secondsLeft)} s left · face seen ${phaseFaceS} s. Blinking normally comes last.`;
+        } else {
+          // The verification phase: the person blinks, and the detector
+          // is run against the candidate line. The live count is shown
+          // so they can see it registering.
+          const heldMs = nowMs - blinkCalibrationSession.startedAtMs;
+          const secondsLeft = Math.max(
+            0,
+            Math.ceil((GUIDED_CALIBRATION_VERIFY_MS - heldMs) / 1000),
+          );
+          const caught = blinkCalibrationSession.blinkState.blinkCount;
+          blinkCalibrationInstruction.textContent =
+            "Now blink three times, normally.";
+          blinkCalibrationProgress.textContent = `Step 3 of 3 · ${String(secondsLeft)} s left · ${String(caught)} caught. Click anywhere or press Esc to cancel.`;
         }
       }
 

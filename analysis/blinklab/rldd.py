@@ -50,6 +50,7 @@ from pathlib import Path
 
 import numpy as np
 
+from blinklab.column_freeze import ColumnFreezeError, check_header
 from blinklab.drozy import FEATURE_NAMES, MIN_USABLE_FPS
 
 # The window the plan medians over: a 60 s settle, then seconds 60-360.
@@ -166,14 +167,22 @@ def label_of(name: str) -> str | None:
     return None
 
 
-def load_video_features(seconds_csv: str | Path) -> VideoFeatures:
+def load_video_features(
+    seconds_csv: str | Path, probe: ClipProbe | None = None
+) -> VideoFeatures:
     """Reduce one `<subject>_<label>.seconds.csv` to one feature vector.
 
     Each feature is the MEDIAN over seconds 60-360 of its per-second
     column, except the two the plan's median did not fit cleanly and this
     module's docstring records: the amplitude/velocity ratio, computed per
     second before medianing, and the long-closure count, taken as the
-    window delta of its cumulative counter."""
+    window delta of its cumulative counter.
+
+    `probe` is this clip's ffprobe container facts, when a manifest is in
+    play (roadmap 10.14b): the instrument's measured coverage is then
+    cross-checked against the file, and a gap past the tolerance refuses
+    the clip. None (the default) runs no such check, so a corpus without a
+    manifest reads exactly as before."""
     path = Path(seconds_csv)
     stem = (
         path.name[: -len(".seconds.csv")]
@@ -192,6 +201,16 @@ def load_video_features(seconds_csv: str | Path) -> VideoFeatures:
 
     rows = _rows(path)
 
+    # The column-freeze refusal (roadmap 12.17). Once the owner signs the
+    # v2-read freeze, a seconds.csv whose header has dropped a frozen
+    # column is refused here rather than silently read as a moved
+    # instrument. Unsigned, this is a no-op. Wrapped into RldError so the
+    # runner reports it as the read refusal it is.
+    try:
+        check_header(rows[0].keys())
+    except ColumnFreezeError as error:
+        raise RldError(f"{path.name}: {error}") from error
+
     fps = [v for v in (_num(r, "fps") for r in rows) if v is not None]
     if not fps:
         raise RldError(f"{path.name} never reported a frame rate")
@@ -200,6 +219,11 @@ def load_video_features(seconds_csv: str | Path) -> VideoFeatures:
     seconds = [s for r in rows if (s := _second_of(r)) is not None]
     max_second = max(seconds) if seconds else -1
     reached_window_end = max_second >= WINDOW_END_S - 1
+
+    if probe is not None:
+        reason = coverage_refusal(max_second + 1, probe)
+        if reason is not None:
+            raise RldError(f"{path.name}: {reason}")
 
     window = [
         r
@@ -283,17 +307,141 @@ def _long_closure_delta(rows: list[dict[str, str]]) -> float | None:
     return max(end - before, 0.0)
 
 
-def load_corpus(measured_dir: str | Path) -> list[VideoFeatures]:
+def load_corpus(
+    measured_dir: str | Path, manifest: str | Path | None = None
+) -> list[VideoFeatures]:
     """Every `*.seconds.csv` under a directory as a VideoFeatures, sorted
     by name so a run is reproducible. Usable or not, all are returned;
-    the exclusion is applied visibly by the analysis, not silently here."""
+    the exclusion is applied visibly by the analysis, not silently here.
+
+    `manifest` is an optional ffprobe manifest (roadmap 10.14b): when
+    given, each clip that has an entry has its coverage cross-checked
+    against the container, and a gap refuses that clip by name. A clip
+    absent from the manifest is loaded without the check rather than
+    refused, so a partial manifest narrows the cross-check rather than
+    blocking the run. Omitted, nothing changes."""
     directory = Path(measured_dir)
+    probes = read_manifest(manifest) if manifest is not None else {}
     out = [
-        load_video_features(path)
+        load_video_features(
+            path, probes.get(path.name[: -len(".seconds.csv")])
+        )
         for path in sorted(directory.glob("*.seconds.csv"))
     ]
     if not out:
         raise RldError(f"no *.seconds.csv files in {directory}")
+    return out
+
+
+# --- the container cross-check: the exclusion against ffprobe (10.14b) ---
+
+# The coverage tolerance, stated rather than tuned. The instrument writes
+# one row per measured second, so its last measured second plus one is how
+# far into the clip it reached; the container's own duration is its packet
+# count over its nominal rate. A clip fully measured has the two within a
+# small margin — max(2 seconds, 2% of the container's duration): two
+# seconds because a per-second instrument can legitimately stop a second
+# or two short of the container's last frame, and 2% so a longer clip is
+# allowed proportionally more. A gap past it is a coverage failure — the
+# run stopped measuring before the clip ended — which is the exclusion
+# this cross-checks against the file itself rather than the run's own word.
+COVERAGE_GAP_FLOOR_S = 2.0
+COVERAGE_GAP_FRACTION = 0.02
+
+# The manifest one line per clip carries, exactly the three ffprobe fields
+# the row names. rFrameRate is stored as ffprobe writes it ("30000/1001"),
+# parsed to a float on read so nothing rounds at write time.
+MANIFEST_COLUMNS = ["clip", "rFrameRate", "avgFrameRate", "nbReadPackets"]
+
+
+def parse_frame_rate(text: str) -> float:
+    """A frame rate ffprobe wrote as a fraction ("30000/1001") or a plain
+    number, as a float. Zero for an unreadable or zero-denominator rate,
+    which the coverage check reads as an unusable container duration."""
+    text = (text or "").strip()
+    if not text:
+        return 0.0
+    if "/" in text:
+        num, _, den = text.partition("/")
+        try:
+            numerator, denominator = float(num), float(den)
+        except ValueError:
+            return 0.0
+        return numerator / denominator if denominator else 0.0
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+@dataclass(frozen=True)
+class ClipProbe:
+    """One clip's container facts from ffprobe: the rates it declares and
+    the packet count it actually holds. nb_read_packets is the true frame
+    count of the (trimmed) file, and dividing it by the nominal rate gives
+    the container's own duration, which the instrument's coverage is held
+    against."""
+
+    clip: str
+    r_frame_rate: float
+    avg_frame_rate: float
+    nb_read_packets: int
+
+    @property
+    def container_seconds(self) -> float:
+        if self.r_frame_rate <= 0:
+            return 0.0
+        return self.nb_read_packets / self.r_frame_rate
+
+
+def coverage_refusal(measured_seconds: float, probe: ClipProbe) -> str | None:
+    """Why the instrument's coverage disagrees with the container, or None.
+
+    measured_seconds is the last second the instrument measured plus one;
+    the container's duration is its packet count over its nominal rate. A
+    gap past max(2 s, 2%) means the run stopped before the clip ended —
+    the coverage failure the exclusion is meant to catch, confirmed
+    against the file rather than the run's own frame count."""
+    container = probe.container_seconds
+    gap = abs(measured_seconds - container)
+    allowed = max(COVERAGE_GAP_FLOOR_S, container * COVERAGE_GAP_FRACTION)
+    if gap > allowed:
+        return (
+            f"coverage gap of {gap:.1f} s: the instrument measured "
+            f"{measured_seconds:.0f} s but the container holds "
+            f"{container:.1f} s ({probe.nb_read_packets} frames at "
+            f"{probe.r_frame_rate:.3f} fps), past the {allowed:.1f} s bar "
+            "(2%, floor 2 s)"
+        )
+    return None
+
+
+def read_manifest(path: str | Path) -> dict[str, ClipProbe]:
+    """The ffprobe manifest as clip name -> ClipProbe, its `#` metadata
+    lines skipped like every CSV here. Raises RldError, naming the row,
+    for a line whose packet count is not a whole number."""
+    lines = [
+        line
+        for line in Path(path).read_text(encoding="utf-8").splitlines()
+        if not line.startswith("#")
+    ]
+    out: dict[str, ClipProbe] = {}
+    for row in csv.DictReader(lines):
+        clip = (row.get("clip") or "").strip()
+        packets = (row.get("nbReadPackets") or "").strip()
+        try:
+            frames = int(packets)
+        except ValueError as error:
+            raise RldError(
+                f"manifest row for {clip!r} has a non-integer frame count "
+                f"{packets!r}"
+            ) from error
+        out[clip] = ClipProbe(
+            clip=clip,
+            r_frame_rate=parse_frame_rate(row.get("rFrameRate", "")),
+            avg_frame_rate=parse_frame_rate(row.get("avgFrameRate", "")),
+            nb_read_packets=frames,
+        )
     return out
 
 
@@ -358,6 +506,50 @@ def _predict(
     x: np.ndarray, weights: np.ndarray, bias: np.ndarray
 ) -> np.ndarray:
     return np.argmax(x @ weights + bias, axis=1)
+
+
+@dataclass(frozen=True)
+class StandardizedModel:
+    """The pre-registered softmax model fit to the WHOLE usable corpus on
+    standardised features.
+
+    `coefficients` is indexed (feature, class). Because every feature was
+    z-scored before the fit, each entry is the effect of a one-standard-
+    deviation change in that feature on that class's logit, so the
+    magnitudes are comparable across features that live in different units
+    — millimetres, milliseconds, a fraction. That comparability is the
+    whole point of a STANDARDISED coefficient, and it is what the analysis
+    plan promised and never printed."""
+
+    feature_names: tuple[str, ...]
+    labels: tuple[str, ...]
+    coefficients: np.ndarray
+
+
+def standardized_coefficients(
+    videos: list[VideoFeatures], labels: tuple[str, ...] = LABELS
+) -> StandardizedModel:
+    """The standardised coefficients of the model fit to every usable
+    video, for INTERPRETATION — which features it leans on and in which
+    direction.
+
+    This fits on the whole corpus, so it is NOT a held-out claim: it has
+    seen every subject, and reporting its accuracy would be the leak the
+    plan forbids. The held-out number stays with leave_one_subject_out;
+    this only describes the shape of the fit. Deterministic for the same
+    reason _fit is — a zero start and a fixed step — so "recomputed from
+    the records" is a byte-for-byte claim rather than a hope."""
+    usable = [v for v in videos if v.usable and v.label in labels]
+    if not usable:
+        raise RldError("no usable videos for the requested labels")
+    x, y, _subjects = _matrix(usable, labels)
+    median, scale = _prep(x)
+    weights, _bias = _fit(_apply(x, median, scale), y, len(labels))
+    return StandardizedModel(
+        feature_names=tuple(FEATURE_NAMES),
+        labels=labels,
+        coefficients=weights,
+    )
 
 
 # --- the evaluation: leave-one-subject-out ------------------------------

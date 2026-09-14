@@ -16,25 +16,31 @@ import { join } from "node:path";
 // without being read, and then it is decoration.
 
 /**
- * Bytes. About 10% above the 269.8 KB measured on 7 September 2026,
- * when the line-provenance work crossed the previous line: reporting
- * which line the detector read, the conditions a stored line was
- * measured under, and the eleven metadata rows that carry them all
- * ship in the bundle because the export must be written on-device.
+ * Bytes. About 10% above the 296.2 KB measured on 14 September 2026,
+ * when the guided-calibration procedure (roadmap 11.6a) crossed the
+ * previous 297.0 KB line: the resolve-time soundness ceiling, the
+ * per-phase settle window, and the verification phase's overlay text
+ * and refusal message all ship in the bundle because the calibration
+ * runs on-device.
  *
- * Raised by the stated procedure rather than waved through. The
- * number was read, what grew was named, and the bundle was checked
- * for the failure this guard is really written against: none of the
+ * Raised by the stated procedure rather than waved through, on the
+ * owner's approval. The number was read, what grew was named, and the
+ * bundle was checked for the failure this guard is really written
+ * against: the build is still a single chunk, and none of the
  * simulation modules (poseBias, velocityBias, storageQuantum,
- * apertureNoise) appear in the built chunk, which is why the pose
- * span that module needs is a typed constant held to its simulation
- * by a test rather than an import. The headroom is kept.
+ * apertureNoise) appear in it — so the growth is the calibration UI,
+ * not a stray heavy import. The ~10% headroom is restored, because a
+ * budget tight against today's number fails on ordinary work and then
+ * gets raised without being read.
  *
- * Previous ceilings: 268 KB, 10% above the 243 KB of 29 August 2026,
- * when the participant report crossed the line; 240 KB, 10% above the
+ * Previous ceilings: 297 KB, 10% above the 269.8 KB of 7 September
+ * 2026, when the line-provenance work crossed the line (which line the
+ * detector read, a stored line's conditions, the eleven metadata rows
+ * carrying them); 268 KB, 10% above the 243 KB of 29 August 2026, when
+ * the participant report crossed the line; 240 KB, 10% above the
  * 217 KB of 15 August 2026.
  */
-export const BUNDLE_BUDGET_BYTES = 297_000;
+export const BUNDLE_BUDGET_BYTES = 326_000;
 
 /** Every built JavaScript chunk, with its size in bytes. */
 export function bundleChunks(distAssetsDir) {

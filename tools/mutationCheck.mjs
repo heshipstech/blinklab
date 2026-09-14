@@ -326,6 +326,55 @@ const MUTATIONS = [
     "guided sample floor bloated past a three second phase",
     "test/core/guidedCalibration.test.ts",
   ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85",
+    "GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 1.5",
+    "soundness ceiling lifted: a line inside the open droop band would be accepted",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85",
+    "GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.5",
+    "soundness ceiling dropped: sound calibrations would be refused",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE = 10",
+    "GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE = 50",
+    "tail slid to the median: the spread-aware ceiling goes blind to a droopy open eye",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SETTLE_MS = 800",
+    "GUIDED_CALIBRATION_SETTLE_MS = 1",
+    "settle window removed: frames taken while the person is still reading would be sampled",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_SETTLE_MS = 800",
+    "GUIDED_CALIBRATION_SETTLE_MS = 5000",
+    "settle window past the phase: no frame is ever collected and every calibration refuses",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 1",
+    "verification floor removed: a single accidental blink would confirm the line",
+    "test/core/guidedCalibration.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2",
+    "GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 10",
+    "verification floor bloated: a sound, well-verified line would be refused",
+    "test/core/guidedCalibration.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

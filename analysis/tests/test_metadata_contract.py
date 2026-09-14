@@ -137,6 +137,8 @@ CONDITIONAL = {
     "frame_rate_before": "a camera session",
     "frame_rate_declared_max": "a camera session",
     "frame_rate_resolution_change": "a camera session",
+    "frames_missed_while_busy": "a camera session",
+    "frames_presented": "a camera session",
     "frames_recorded": "the frame trace, which is a different file",
     "frames_sought": "a stepped clip",
     "gaze_calibrated": "a camera session",

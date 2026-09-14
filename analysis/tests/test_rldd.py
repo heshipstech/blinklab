@@ -16,14 +16,18 @@ import pytest
 
 from blinklab.rldd import (
     LABELS,
+    ClipProbe,
     RldError,
     ShuffleControl,
     VideoFeatures,
     balanced_accuracy,
+    coverage_refusal,
     label_of,
     leave_one_subject_out,
     load_corpus,
     load_video_features,
+    parse_frame_rate,
+    read_manifest,
     shuffle_control,
 )
 
@@ -371,3 +375,137 @@ class TestDecisionRule:
         assert control.detected is False
         assert control.suggestive is False
         assert control.verdict.startswith("null")
+
+
+class TestParseFrameRate:
+    def test_a_fraction_becomes_a_float(self) -> None:
+        rate = parse_frame_rate("30000/1001")
+        assert rate == pytest.approx(29.970, abs=0.001)
+
+    def test_a_plain_number_passes(self) -> None:
+        assert parse_frame_rate("25") == 25.0
+
+    def test_unreadable_or_zero_denominator_is_zero(self) -> None:
+        assert parse_frame_rate("") == 0.0
+        assert parse_frame_rate("5/0") == 0.0
+        assert parse_frame_rate("abc") == 0.0
+
+
+class TestCoverageRefusal:
+    """Roadmap 10.14b. The instrument's measured coverage is cross-checked
+    against the container's own frame count, and a gap past the stated
+    tolerance refuses the clip."""
+
+    def _probe(self, frames: int, rate: float = 30.0) -> ClipProbe:
+        return ClipProbe(
+            clip="c",
+            r_frame_rate=rate,
+            avg_frame_rate=rate,
+            nb_read_packets=frames,
+        )
+
+    def test_a_matching_coverage_passes(self) -> None:
+        # 10800 frames at 30 fps is 360 s; the instrument measured 360 s.
+        assert coverage_refusal(360, self._probe(10800)) is None
+
+    def test_within_the_tolerance_passes(self) -> None:
+        # 2% of 360 s is 7.2 s; a two-second short measurement is inside it.
+        assert coverage_refusal(358, self._probe(10800)) is None
+
+    def test_a_wrong_frame_count_reddens(self) -> None:
+        # The row's own Check: a manifest whose frame count is wrong for a
+        # 360 s measurement reddens. 6000 frames at 30 fps is 200 s.
+        reason = coverage_refusal(360, self._probe(6000))
+        assert reason is not None
+        assert "coverage gap" in reason
+
+    def test_a_short_measurement_against_a_full_container_reddens(
+        self,
+    ) -> None:
+        # The instrument stopped at 200 s but the container holds 360 s.
+        reason = coverage_refusal(200, self._probe(10800))
+        assert reason is not None
+        assert "coverage gap" in reason
+
+
+class TestContainerCrossCheckWiring:
+    """The check wired into the loader, the column_freeze pattern: a
+    manifest present refuses a short clip; absent, nothing changes."""
+
+    def test_no_probe_runs_no_check(self, tmp_path: Path) -> None:
+        # The default path is untouched: a clip loads without a manifest
+        # exactly as before, whatever its coverage.
+        path = tmp_path / "s1_alert.seconds.csv"
+        _write_csv(path, _rows(last_second=359))
+        video = load_video_features(path)
+        assert video.subject == "s1"
+
+    def test_a_matching_probe_loads(self, tmp_path: Path) -> None:
+        path = tmp_path / "s1_alert.seconds.csv"
+        _write_csv(path, _rows(last_second=359))
+        probe = ClipProbe("s1_alert", 30.0, 30.0, 10800)
+        assert load_video_features(path, probe).subject == "s1"
+
+    def test_a_short_clip_against_its_container_refuses(
+        self, tmp_path: Path
+    ) -> None:
+        # Measured only to second 199, container holds 360 s: refused.
+        path = tmp_path / "s1_alert.seconds.csv"
+        _write_csv(path, _rows(last_second=199))
+        probe = ClipProbe("s1_alert", 30.0, 30.0, 10800)
+        with pytest.raises(RldError, match="coverage gap"):
+            load_video_features(path, probe)
+
+    def test_load_corpus_cross_checks_against_a_manifest(
+        self, tmp_path: Path
+    ) -> None:
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        _write_csv(measured / "s1_alert.seconds.csv", _rows(last_second=359))
+        # A manifest whose frame count claims a 360 s container the clip
+        # does reach passes; change it to a longer container and it fails.
+        good = tmp_path / "good.csv"
+        good.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "s1_alert,30/1,30/1,10800\n",
+            encoding="utf-8",
+        )
+        assert len(load_corpus(measured, good)) == 1
+        bad = tmp_path / "bad.csv"
+        bad.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "s1_alert,30/1,30/1,36000\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(RldError, match="coverage gap"):
+            load_corpus(measured, bad)
+
+    def test_a_clip_absent_from_the_manifest_is_not_checked(
+        self, tmp_path: Path
+    ) -> None:
+        # A partial manifest narrows the cross-check; a clip with no entry
+        # loads without it rather than being refused.
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        _write_csv(measured / "s1_alert.seconds.csv", _rows(last_second=100))
+        manifest = tmp_path / "m.csv"
+        manifest.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "other_alert,30/1,30/1,10800\n",
+            encoding="utf-8",
+        )
+        assert len(load_corpus(measured, manifest)) == 1
+
+
+class TestReadManifest:
+    def test_a_non_integer_frame_count_is_refused(
+        self, tmp_path: Path
+    ) -> None:
+        path = tmp_path / "m.csv"
+        path.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "s1_alert,30/1,30/1,not-a-number\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(RldError, match="frame count"):
+            read_manifest(path)

@@ -6,6 +6,7 @@ import {
 import type { CalibrationWindow } from "./calibrationWindow";
 import { CUE_RESPONSE_WINDOW_MS, type Cue } from "./cueSchedule";
 import type { DeliveryRates } from "./deliveryRate";
+import type { FramesMissedSummary } from "./framesMissed";
 import { FEATURE_RECORD_CAP, type FeatureRecord } from "./featureRecord";
 import { LIGHT_CYCLES, LIGHT_PHASE_MS, LIGHT_SETTLE_MS } from "./lightSchedule";
 import { PERCLOS_MIN_OBSERVED_MS, PERCLOS_MIN_SAMPLES } from "./perclos";
@@ -210,6 +211,37 @@ export function deliveryMetadataRows(rates: DeliveryRates | null): string[] {
       "delivered_frames_read_fraction",
       rates.readFraction === null ? null : rates.readFraction.toFixed(3),
     ),
+  ];
+}
+
+/**
+ * The frames the instrument was too busy to look at, from the
+ * compositor's presentedFrames tally (roadmap 13.4, src/core/framesMissed.ts).
+ *
+ * This is a loss the read fraction above cannot see: when the main
+ * thread is busy enough that the delivery callback itself coalesces, the
+ * observer under-counts arrivals, so the fraction of arrivals it read
+ * still looks whole while frames went by unlooked-at. presentedFrames is
+ * the compositor's own count, not the callback's, so the gap catches it.
+ *
+ * Both rows are written whatever they say once a camera was observed: an
+ * unknown is the honest word for a browser whose callback carries no
+ * such field, or a count refused because presentedFrames did not
+ * strictly advance, and a silent omission would take that limitation out
+ * of the open. Null (not a summary) means no camera delivery was
+ * observed at all — a clip session, or a browser with no frame callback
+ * — and then no rows are written, exactly as deliveryMetadataRows stays
+ * silent there.
+ */
+export function framesMissedMetadataRows(
+  summary: FramesMissedSummary | null,
+): string[] {
+  if (summary === null) {
+    return [];
+  }
+  return [
+    line("frames_presented", summary.framesPresented),
+    line("frames_missed_while_busy", summary.missedWhileBusy),
   ];
 }
 

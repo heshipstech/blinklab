@@ -4174,3 +4174,228 @@ readout's children per value, so the explain button lives in a map
 keyed by element and is re-appended on every write. The general
 form: before adding a child to DOM someone else owns, find out who
 calls replaceChildren on it.
+
+## A caveat computed from git outlives every caveat somebody remembered
+
+Row 10.3's small mechanical lesson: the DROZY staleness guard was
+built in August around the one file that had moved by August, and
+that framing quietly became the caveat's ceiling. Five more source
+files moved over the next month and the warning stayed three rows
+wide, not because anyone judged the other rows fresh but because
+nothing was asking the question per row. The repair is a map from
+each published row to the files that produce it, with the caveat's
+scope computed as "whichever rows' sources git says moved" — the
+same self-retiring shape the guard already had, one level finer.
+The general form: when a guard hard-codes the CURRENT extent of a
+problem, it inherits the month it was written in.
+
+The decision lesson is about what a null buys. Re-measuring DROZY
+would cost three hours and a rebuild of video this project promises
+to destroy, to defend verdicts that a chance-cleared bar granted on
+a sample missing its sleepiest sessions. A null defended at that
+price would still be a null — so the rows retire by a dated ruling
+instead, with the re-measure condition named (12.18's v2 read
+moving a shape feature) rather than left as "someday". Retiring a
+number is cheaper than maintaining a pretence that it might firm up.
+
+## The compositor keeps a count the callback cannot
+
+The concept this increment teaches is measuring a loss from the tally
+kept by the layer beneath you, not from your own attendance.
+
+The live camera loop already reported a read fraction: of the frames
+the delivery callback saw arrive, what share did the detector actually
+read. That number quietly assumed the callback saw every arrival. When
+the main thread is busy, it does not — the browser coalesces
+requestVideoFrameCallback, presenting several frames while the callback
+runs and firing it once when the thread frees. The callback undercounts
+arrivals, so the read fraction can read a healthy whole while frames
+went by unlooked-at, because it is dividing by its own undercount.
+
+The fix is to ask a counter that does not depend on the callback's
+attendance. `metadata.presentedFrames` is the compositor's running
+tally of frames presented since the element began, and it advances
+whether or not a callback fired for each one. So the gap between how far
+it jumped and how many callbacks fired is exactly the frames the busy
+thread skipped — a loss the read fraction structurally cannot see. Two
+instruments watching the same stream disagree usefully precisely when
+one of them is the thing being measured.
+
+The refusal is the other half. presentedFrames is a count that must
+strictly advance; a repeat or a backwards step is the browser (or a
+fake) breaking that contract, and the counter refuses the whole session
+by name rather than folding a bad value in as a gap of zero or, worse, a
+negative miss. A refusal is final, the same shape as a refused
+calibration: a later well-formed frame does not un-refuse a session that
+already saw a bad one. And the first value seen is only a baseline,
+never a miss — presentedFrames is cumulative, so a loop that attaches
+late inherits a large first number that is not a loss it is responsible
+for. The rows are camera-only and read `unknown` on a browser that
+carries no such field, because a silent omission would take the
+limitation out of the open on exactly the devices where it bites.
+
+## A crash keeps the name of the thing that crashed
+
+The concept this increment teaches is that an error path has provenance
+to protect, not just a message to show.
+
+A stepped clip is a loop inside an await with no per-frame crash
+wrapper, so when it throws the throw lands in the file loader's outer
+catch. That catch did a sensible-looking thing first — reset the source
+back to "camera", drop the clip name, rebase the clock — so the page
+would be ready for whatever came next. Then, further down, it noticed
+that frames had already been measured and kept the session's records
+exportable rather than discarding them as a broken file. Both halves
+were right on their own. Together they were a bug: by the time the
+export ran, the source said "camera" and the clip name was gone, so a
+file session that crashed mid-run exported as a camera session. The
+inner, per-frame crash path never had this bug, because it never reset
+the source — it just ended the session where it stood.
+
+The fix is to make the outer catch agree with the inner one, and the way
+to make two paths agree is to give them one decision to share. So the
+disposition — measurement-crash (keep the session and its file
+provenance) versus file-failed (nothing measured, return to the camera)
+— moved into a pure core function that turns on the one fact that
+matters, whether any frame was measured. The catch now asks core, keeps
+the source and clip name on the measurement-crash side, and resets them
+only on the file-failed side. The lesson that generalises: when a
+recovery step and a preservation step share a catch, order alone will
+eventually put one on the wrong side of the other. Naming the decision
+and testing it is cheaper than remembering the ordering.
+
+## Growing a window without re-measuring it
+
+The concept this increment teaches is keeping a running summary instead
+of re-scanning a growing window.
+
+The fixation detector groups gaze samples that stay inside a small box
+for long enough. It grew each group one sample at a time, and on every
+step it re-computed the box over the WHOLE group so far — slicing the
+array and finding the min and max on each axis from scratch. On a short
+glance that is nothing. On a long, still fixation it is the classic
+quadratic trap: a run of N boxed samples costs about N-squared work,
+because the tenth sample re-measures ten, the thousandth re-measures a
+thousand. The docs sentence about a fixed microsecond core cost quietly
+assumed this never happened.
+
+The fix is that the box is four numbers — the min and max on each axis —
+and a new sample can only widen it. So the extension keeps those four
+numbers and folds in only the one new sample, in constant time, instead
+of re-scanning. The output is identical; the work drops from N-squared
+to N. The general lesson: whenever a loop asks "what is the summary of
+everything so far" on each step, check whether the summary can be
+carried forward and updated by the new element alone. A min/max, a sum,
+a count, a running extreme — all fold in O(1), and re-deriving them from
+the whole history each step is the most common accidental quadratic
+there is. The check that guards it is a per-length time ceiling generous
+enough not to flake but tight enough that the quadratic scan, which on a
+long fixation is seconds, still trips it.
+
+## A line placed by two medians can still sit where the eye already is
+
+The guided calibration measures a person's open and closed aperture and
+places their blink line at the midpoint of the two. It refused when the
+closed median was not far enough below the open one — a sensible check,
+because a closure the camera barely registered gives a line drawn from a
+gap that is not there. But that check only reads the CLOSED median. It
+says nothing about where the OPEN eye actually travels.
+
+A relaxed eye does not hold perfectly still at its open aperture; it
+droops, and this project measured that droop at 45 to 50 percent of the
+resting value. A midpoint that clears the separation floor can still
+land inside that droop band, and a blink line inside the droop band arms
+on ordinary opening — counting a relaxed, blink-free eye as blinking.
+The September audit filed this as a real defect, and the adoption note
+had pre-registered the exact risk months before: "new false positives
+from a higher guided line arming on ordinary droops."
+
+The fix is a second refusal that is aware of SPREAD where the first was
+not. It compares the line not to the open median but to the open eye's
+own lower tail — its tenth percentile, the low end of where it normally
+sits — and refuses a line that reaches within a fixed margin of it. The
+median could not have caught this: a tight open eye and a wide-drooping
+one can share a median and yet need completely different lines, and a
+median-relative check would hand them the same one. The general lesson:
+when a threshold has to stay clear of a distribution, the distribution's
+CENTRE tells you nothing about its EDGE. If the danger lives at the tail,
+the check has to read the tail. The margin and the percentile are chosen
+before any real calibration is read, not fitted to one, so the first
+people it meets are its test, not its training.
+
+## A measured threshold is not trusted until it catches what it measures
+
+The guided calibration measures a person's open and closed aperture and
+places a blink line between them. Two guards already checked that the
+line was well FORMED — the two medians were far enough apart, and the
+line sat clear of the open eye's droop. But a line can pass both of those
+and still fail the only thing it exists to do: catch this person's
+blinks. Landmark noise, an unusual lid, a camera angle — any of these can
+leave a numerically sound line that the detector never actually crosses.
+
+So the calibration now ends by testing the line against the very thing it
+measures. The person is asked to blink three times, and the real blink
+detector is run over those frames with the CANDIDATE line as its
+threshold — the line just measured, not the one in storage, because the
+point is to try the new line, not the old one. The line is stored only if
+it catches at least two of the blinks; a line that misses them is refused
+however good its midpoint looked. The general lesson: a threshold derived
+from a measurement is a hypothesis, and the cheapest possible test of it
+is to run the real detector against a few known-positive examples before
+trusting it. A calibration that measures but never confirms is measuring
+its own arithmetic, not the person. Reusing the detector's own step
+function for the confirmation, rather than re-deriving a lighter version,
+keeps the check honest: it passes exactly when the shipped detector
+would, because it IS the shipped detector.
+
+## A number you gated on is usually worth keeping
+
+The verification phase counts how many of a person's blinks the new line
+caught, and uses that count to decide whether to store the line. The
+first version used the count and threw it away — the stored line said it
+was verified, but not how well. But the count is a measurement about
+this person and this camera, and the calibration record is exactly where
+their own numbers belong; a line that reads "verified: caught 3 of 3" is
+a different piece of evidence from one that barely scraped its two. So
+the count is now stored alongside the line: the decision's input becomes
+part of the record, not just its outcome.
+
+Keeping it is a schema change to a thing already saved in people's
+browsers, and the rule there is that a record ABOUT a thing is not a
+reason to reject the thing. The stored count is optional on read: a line
+saved before verification existed loads with a null count and works
+exactly as it did, because the count is a note about the line, not part
+of the ruler. That is the opposite stance from the camera stamp, which
+IS load-bearing (a line whose conditions nobody recorded cannot be
+checked against the camera in front of it) and so is required — the two
+are treated differently on purpose, by whether the missing field changes
+whether the line can be trusted. The general lesson: when you add a field
+to persisted data, ask whether its absence makes the old record unusable
+or merely undescribed, and only reject on the first.
+
+## The measurement does not start the instant the cue does
+
+A cued measurement asks a person to do something — look at a dot, open
+their eyes, close them — and then reads what they do. The mistake is to
+start reading the instant the cue appears. For the first fraction of a
+second the person is still reading the instruction and their body is
+still moving into the position asked for: an eye mid-saccade toward a
+dot, a lid halfway down toward "closed". A sample taken then is not
+noise, which averages out — it is a confident WRONG label, a
+half-closed eye recorded as "open", and it drags the very median the
+calibration is built on.
+
+The gaze capture already knew this: it counts nothing for the first
+800 ms after a dot moves. The guided blink calibration, added later, did
+not, and sampled its open and closed phases from the frame the phase
+began — so an open median could be pulled down by the frames before the
+eye was actually open. The fix is the same settle window, per phase:
+return the state untouched until the window has passed since the phase
+started, collecting neither a sample nor face time, so the measurement
+begins only once the person is in position. The general lesson: any
+cued measurement needs a settle window between the cue and the first
+reading, sized so the subject is in position, and the value belongs in
+one place the whole codebase can share rather than rediscovered per
+feature — the gaze capture had it, the guided calibration had to learn
+it separately, and the third cued measurement should not have to learn
+it a third time.

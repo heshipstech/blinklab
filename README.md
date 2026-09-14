@@ -8,7 +8,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > Revised 12 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
-Read in full on 9 September 2026, claims `f6c35f5b`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 9 September 2026, claims `67869dd1`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -522,19 +522,24 @@ commit, with no results in it.
 | blink rate              | −0.07                       | nothing          |
 | PERCLOS                 | −0.00                       | nothing          |
 
-**Three of these rows were measured by code that has since changed.** The
-run is from 9 August 2026, built from commit `bd2a98d`. On 12 August, pull
-request #225 corrected how the blink shape window is measured, which is the
-only genuine arithmetic error the August audit found. That correction moves
-closing velocity, blink amplitude, and amplitude over velocity. It does not
-move blink duration, long closures, blink rate or PERCLOS, because those
-depend only on when a blink starts and ends, and re-measuring returns those
-byte for byte identical. The three affected rows have not been recomputed.
-Recomputing them would mean rebuilding video this project deletes on
-purpose, so the honest thing is to say which rows are old rather than
-quietly leave them standing. **The null result does not change either
-way**: nothing cleared the correction bar before, and these three were the
-closest to clearing it.
+**All seven of these rows were measured by code that has since changed.**
+The run is from 9 August 2026, built from commit `bd2a98d`. Pull request
+#225 first moved closing velocity, blink amplitude, and
+amplitude over velocity — the August audit's one genuine arithmetic
+error — and
+against that change alone the other four rows re-measured byte for byte
+identical. The September work then moved the sources under every remaining
+row: the personal blink line rewrote the detector beneath blink duration
+and blink rate, and the shut-line rule and arming hysteresis moved PERCLOS
+and long closures. None of the seven has been recomputed, and the rows have
+not been recomputed on purpose: by the dated ruling in
+[docs/drozy-result.txt](docs/drozy-result.txt) (roadmap 10.3) they are
+retired rather than re-measured, because the ~3-hour rebuild would re-run a
+null on a sample missing its sleepiest sessions to defend verdicts a
+chance-cleared bar granted, and would recreate video this project deletes
+on purpose. A guard computes per feature which rows' sources have moved, so
+this paragraph's scope is checked rather than remembered. **The null result
+does not change either way**: nothing cleared the correction bar before.
 
 Seven tests on twenty sessions will turn up something that looks
 interesting by chance, so the correction is not optional. **Nothing
@@ -665,7 +670,7 @@ One exception, found by the August 2026 audit and stated here because it was cla
 
 ## Status
 
-Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1756 unit tests, 44 end to end tests of which 42 run on every pull request in Chromium and on a 375-wide phone viewport and 2 rerun locally in WebKit, and 563 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
+Phases 0 through 9 are complete: foundations, pixels, landmarks, measurement, blinks, gaze and attention, the rolling state with the demo score, the honest evaluation track (a Python analysis folder, a session loader and plots, a licensing gate, video upload mode so a recorded clip runs through the same pipeline as the live camera, and the classifier evaluations summarised above), the public-durability work, and pupillometry with the light response and the learned-model question. That sentence is held to [ROADMAP.md](ROADMAP.md) by a test, which counts the run of phases whose rows are all settled rather than trusting the number written here. That is 1792 unit tests, 44 end to end tests of which 42 run on every pull request in Chromium and on a 375-wide phone viewport and 2 rerun locally in WebKit, and 654 Python tests of which 2 skip, all green. Both the unit and the Python figures are what their runners collect, not counts of the calls or functions in the source.
 
 **The licensing gate failed, and that is written down rather than hidden.** [DATASETS.md](DATASETS.md) records about twenty public datasets, from a wider search of roughly forty, assessed against four requirements: face video, a real drowsiness label, per-clip subject identity, and a licence a solo maintainer can rely on in a public repository. None clears all four. The failure turned out to be structural: the openly licensed drowsiness data is physiological traces, still images or synthetic renders, while every video corpus carrying a real sleepiness label is behind a signed agreement, an institutional email check, a non-commercial clause, or no licence at all. Face video is personal data, and the anonymisation that would let a team release it freely is exactly what destroys the per-subject identity a leave one subject out split needs.
 

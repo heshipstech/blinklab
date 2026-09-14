@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { describeCalibrationWindow } from "../../src/core/calibrationWindow";
 import type { DeliveryRates } from "../../src/core/deliveryRate";
 import type { FeatureRecord } from "../../src/core/featureRecord";
+import type { FramesMissedSummary } from "../../src/core/framesMissed";
 import {
   coverageMetadataRows,
   sourceMetadataRows,
@@ -17,6 +18,7 @@ import {
   deviceMetadataRows,
   driverMetadataRows,
   featureRecordOverrunRows,
+  framesMissedMetadataRows,
   gazeCalibrationMetadataRows,
   lightStimulusMetadataRows,
   provenanceMetadataRows,
@@ -147,6 +149,8 @@ type Shape = {
   calibrationSamples: readonly number[];
   calibrationRefused: boolean;
   delivery: DeliveryRates | null;
+  /** The busy-thread frame loss; null off the camera path (13.4). */
+  framesMissed: FramesMissedSummary | null;
   records: readonly FeatureRecord[];
   irisWidths: readonly number[];
   markers: readonly SessionMarker[];
@@ -195,6 +199,9 @@ const MINIMAL_CAMERA: Shape = {
   calibrationSamples: [],
   calibrationRefused: false,
   delivery: null,
+  // A thin camera still carries the two rows, reading unknown: the
+  // observer attached but has measured nothing yet (13.4).
+  framesMissed: { missedWhileBusy: null, framesPresented: null },
   records: [],
   irisWidths: [],
   markers: [],
@@ -238,6 +245,9 @@ const MINIMAL_CLIP: Shape = {
   device: null,
   cameraFrameDriver: null,
   frameRateNegotiation: null,
+  // A clip is stepped from its own decoded frames and misses none, so
+  // no summary and no rows (13.4).
+  framesMissed: null,
 };
 
 /** A session where every optional thing happened at least once. */
@@ -259,6 +269,7 @@ const FULL: Shape = {
   calibrationSamples: Array.from({ length: 301 }, () => 7),
   calibrationRefused: false,
   delivery: { deliveredFps: 60, sampledFps: 59.9, readFraction: 0.998 },
+  framesMissed: { missedWhileBusy: 4, framesPresented: 3600 },
   records: [record(0), record(1000)],
   irisWidths: Array.from({ length: 2000 }, () => 30),
   markers: [
@@ -314,6 +325,7 @@ function metadataRows(shape: Shape): string[] {
     ),
     ...guidedCalibrationMetadataRows(shape.guidedLine, null),
     ...deliveryMetadataRows(shape.delivery),
+    ...framesMissedMetadataRows(shape.framesMissed),
     ...sessionMetadataRows(
       shape.records,
       shape.irisWidths,
@@ -347,6 +359,7 @@ const CALLED_HERE = [
   "calibrationMetadataRows",
   "guidedCalibrationMetadataRows",
   "deliveryMetadataRows",
+  "framesMissedMetadataRows",
   "sessionMetadataRows",
   "featureRecordOverrunRows",
   "kssMetadataRows",

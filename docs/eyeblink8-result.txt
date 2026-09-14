@@ -881,3 +881,123 @@ second entry that day:
   loads the same page and takes the same bytes. Predicted corpus
   impact: none, digit for digit, scored with the two entries above on
   the owner's next run.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 10.1d slice: the Eyeblink8 evaluator refuses a partial corpus
+
+  One watched file, analysis/tools/evaluate_eyeblink8.py, gains a
+  refusal path. Coverage stops being a footnote beside a scored clip
+  and becomes a REFUSED clip: a measurement whose frame count falls
+  more than max(5, 1%) short of the annotation, or that carries no
+  frames_measured header, or that ran in any mode but stepped, is left
+  out of the pooled headline rather than diluted into it, and any
+  refusal at all exits non-zero so a partial corpus cannot publish as
+  the corpus. The per-clip scoring arithmetic is untouched: recall,
+  precision, F1 and every per-clip count are computed exactly as
+  before.
+
+  This is a scorer-refusal hardening, and its predicted corpus impact
+  is none, digit for digit — checkable from the block at the top of
+  this file rather than argued. The refusal path cannot engage on the
+  committed anchor: every clip is stepped (measurement_mode "stepped"
+  on all eight, no refusals), and the coverage gaps are 0 or 1 frame
+  against annotations in the thousands, far under the max(5, 1%) bar,
+  with the two "+1" rows the widest at a gap of one. The glasses split
+  stays computable, one clip with and seven without, so its wording
+  never moves to "not computable" either. A complete corpus with full
+  coverage takes the same path it always did; only a short or watched
+  run now refuses where it used to footnote. The owner's next corpus
+  run scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: a resolve-time soundness ceiling on the guided line
+
+  Two watched files move: src/core/guidedCalibration.ts and
+  src/core/constants.ts. The change is a new REFUSAL inside
+  resolveGuidedCalibration — a guided line is rejected
+  ("line-above-open-floor") when its midpoint sits at or above 0.85 of
+  the open eye's own lower tail, its tenth percentile — plus the two
+  pre-registered constants that refusal reads
+  (GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE, _SOUNDNESS_CEILING_FRACTION).
+  Nothing else in either file changes; no existing constant the corpus
+  path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, and by construction
+  rather than by argument. resolveGuidedCalibration runs only during a
+  live two-phase guided calibration; the corpus runner loads each clip
+  in a fresh browser with empty storage, so no stored guided line
+  exists, effectiveBlinkLineMm returns the passive baseline line, and
+  the guided resolver is never called on the measurement path
+  (docs/blink-line-adoption.txt, the "neutral by construction" half,
+  confirmed digit for digit on 9 September). A refusal added to a
+  function the corpus never reaches cannot move a corpus number. The
+  owner's next corpus run scores this entry and retires it beside the
+  block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the guided calibration settles each phase before sampling
+
+  The same two watched files move again: src/core/guidedCalibration.ts
+  and src/core/constants.ts. calibrationSessionStep now drops every
+  frame in the first GUIDED_CALIBRATION_SETTLE_MS (800 ms, the new
+  constant) of each phase — collecting neither a sample nor face time —
+  so the open and closed medians are not pulled by frames taken while
+  the person is still reading the instruction and moving their lids into
+  position. No existing constant the corpus path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, by the same
+  construction as the entry above. calibrationSessionStep runs only
+  during a live two-phase guided calibration driven by the page's
+  Calibrate flow; the corpus runner never enters it, and the new
+  constant is read by nothing else. A settle window added to a function
+  the corpus never reaches cannot move a corpus number. The owner's next
+  corpus run scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the guided calibration verifies its line against the person's own blinks
+
+  The same two watched files move: src/core/guidedCalibration.ts and
+  src/core/constants.ts. calibrationSessionStep gains a verification
+  phase after the closed hold: once the medians produce a sound
+  candidate line, the person is asked to blink three times and the blink
+  detector (blink.ts's blinkStep) is run over those frames against the
+  CANDIDATE line, storing the line only if at least
+  GUIDED_CALIBRATION_VERIFY_MIN_BLINKS of them are caught in the
+  GUIDED_CALIBRATION_VERIFY_MS window (the two new constants). guided-
+  Calibration.ts now imports blinkStep, but no existing constant the
+  corpus path reads was touched.
+
+  Predicted corpus impact: none, digit for digit, by the same
+  construction as the entries above. The verification phase lives
+  entirely inside calibrationSessionStep, which the stepped corpus
+  runner never enters (it loads each clip in a fresh browser with empty
+  storage and never starts a guided calibration), and the blinkStep it
+  now calls is the same detector the corpus already runs, imported, not
+  changed. A phase the corpus never reaches cannot move a corpus number.
+  The owner's next corpus run scores this entry and retires it beside
+  the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
+
+  Row 11.6a slice: the verification count is stored with the line it confirmed
+
+  One watched file moves: src/core/guidedCalibration.ts. The
+  StoredBlinkCalibration record gains a blinksCaught field (the
+  verification count, roadmap 11.6a's first measurement), serialize
+  carries it, and parseBlinkCalibration reads it as an optional, nullable
+  integer so lines saved before verification existed still load. No
+  constant, threshold, or detection path changes; effectiveBlinkLineMm
+  still reads only personalLineMm.
+
+  Predicted corpus impact: none, digit for digit, by construction. The
+  new field is written and read only on the guided storage path, which
+  the stepped corpus runner never touches — it loads each clip in a fresh
+  browser with empty storage, parseBlinkCalibration returns null, and the
+  detector falls back to the passive baseline exactly as before. A field
+  added to a record the corpus never reads cannot move a corpus number.
+  The owner's next corpus run scores this entry and retires it beside the
+  block above.

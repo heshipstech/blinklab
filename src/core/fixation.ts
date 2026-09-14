@@ -85,17 +85,49 @@ export function detectFixations(
       }
       end++;
     }
-    const seed = samples.slice(start, end + 1);
-    const seedDispersion = dispersionOffset(seed);
-    if (seedDispersion !== null && seedDispersion <= dispersionThreshold) {
+    // Running min/max over the seed [start..end], kept as four numbers
+    // rather than re-scanned: extending the window then folds only the
+    // NEW sample in, so the whole scan is linear rather than quadratic.
+    // The dispersion is (maxH - minH) + (maxV - minV), the same figure
+    // dispersionOffset computes over a whole slice (roadmap 13.8c).
+    let minH = Infinity;
+    let maxH = -Infinity;
+    let minV = Infinity;
+    let maxV = -Infinity;
+    for (let i = start; i <= end; i++) {
+      const sample = samples[i];
+      if (sample === undefined) {
+        break;
+      }
+      minH = Math.min(minH, sample.offset.horizontal);
+      maxH = Math.max(maxH, sample.offset.horizontal);
+      minV = Math.min(minV, sample.offset.vertical);
+      maxV = Math.max(maxV, sample.offset.vertical);
+    }
+    const seedDispersion = maxH - minH + (maxV - minV);
+    if (seedDispersion <= dispersionThreshold) {
       // The seed fits the box: extend while it still fits, then the
       // whole stretch is one fixation and the search continues after
-      // it. Exactly at the threshold still counts as boxed.
+      // it. Exactly at the threshold still counts as boxed. Each step
+      // folds one sample into the running min/max — O(1), not a re-scan
+      // of the growing window.
       while (end + 1 < samples.length) {
-        const extended = dispersionOffset(samples.slice(start, end + 2));
-        if (extended === null || extended > dispersionThreshold) {
+        const next = samples[end + 1];
+        if (next === undefined) {
           break;
         }
+        const nextMinH = Math.min(minH, next.offset.horizontal);
+        const nextMaxH = Math.max(maxH, next.offset.horizontal);
+        const nextMinV = Math.min(minV, next.offset.vertical);
+        const nextMaxV = Math.max(maxV, next.offset.vertical);
+        const extended = nextMaxH - nextMinH + (nextMaxV - nextMinV);
+        if (extended > dispersionThreshold) {
+          break;
+        }
+        minH = nextMinH;
+        maxH = nextMaxH;
+        minV = nextMinV;
+        maxV = nextMaxV;
         end++;
       }
       const window = samples.slice(start, end + 1);

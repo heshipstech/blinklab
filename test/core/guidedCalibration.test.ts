@@ -115,31 +115,97 @@ describe("resolveGuidedCalibration, refusals", () => {
     });
   });
 
-  it("accepts a closure exactly at the separation boundary", () => {
-    // The separation floor is 30%: a closed median at exactly 70% of
-    // open is accepted, one hair above it is refused.
-    const ready = resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)));
-    expect(ready.kind).toBe("ready");
-    const refused = resolveHeld(
-      samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH)),
+  it("layers the ceiling behind the separation floor at the boundary", () => {
+    // The separation floor is 30%: a closed median ABOVE 70% of open is
+    // refused first, as an unregistered closure. Exactly AT 70% the
+    // closure clears that floor — but the line then sits at 0.85 of the
+    // (flat) open distribution, right on the soundness ceiling (11.6a),
+    // so it is refused there instead, now for the ceiling's reason. The
+    // two guards meet at the boundary and neither lets a line at 0.85 of
+    // open through.
+    expect(
+      resolveHeld(samples(repeat(10, ENOUGH), repeat(7.01, ENOUGH))),
+    ).toEqual({ kind: "refused", reason: "closure-not-registered" });
+    expect(resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)))).toEqual(
+      { kind: "refused", reason: "line-above-open-floor" },
     );
-    expect(refused.kind).toBe("refused");
+  });
+});
+
+describe("resolveGuidedCalibration, the soundness ceiling (roadmap 11.6a)", () => {
+  // The separation floor bounds the closed median; the ceiling bounds
+  // the LINE against where the open eye actually droops — its lower
+  // tail, the 10th percentile of the open samples — so a midpoint that
+  // survives a sound separation can still be refused for sitting inside
+  // the relaxed-open band, where it would arm on ordinary opening
+  // (docs/blink-line-adoption.txt, the pre-registered droop risk).
+
+  it("passes a sound line well below the open tail", () => {
+    // line 5, tail 8, ceiling 0.85*8 = 6.8: clear. Pins the fraction —
+    // drop it far enough and this sound calibration would be refused.
+    const result = resolveHeld(samples(repeat(8, ENOUGH), repeat(2, ENOUGH)));
+    expect(result.kind).toBe("ready");
+  });
+
+  it("refuses a line at the ceiling and admits one just below it", () => {
+    // Open flat at 10, so tail = 10 and ceiling = 8.5. A closed median
+    // of 7 puts the line exactly at 8.5 — refused, the row's "a line at
+    // 0.85 of open is refused". Drop the closed median a hair and the
+    // line clears.
+    expect(resolveHeld(samples(repeat(10, ENOUGH), repeat(7, ENOUGH)))).toEqual(
+      { kind: "refused", reason: "line-above-open-floor" },
+    );
+    const justBelow = resolveHeld(
+      samples(repeat(10, ENOUGH), repeat(6.9, ENOUGH)),
+    );
+    expect(justBelow.kind).toBe("ready");
+  });
+
+  it("reads the open LOWER TAIL, not the median: a droopy open eye is refused where a tight one passes", () => {
+    // Two open distributions with the SAME median (10) and the SAME
+    // closed median (5), so a median-relative check would treat them
+    // alike. The droopy one dips to 8 in its lower tail; the tight one
+    // holds near 10 throughout.
+    //
+    //   line = (10 + 5)/2 = 7.5 in both.
+    //   droopy: tail (p10) = 8,  ceiling 0.85*8 = 6.8  -> 7.5 refused.
+    //   tight:  tail (p10) = 10, ceiling 0.85*10 = 8.5 -> 7.5 ready.
+    //
+    // A tenth percentile that slid up to the median (p50) would read 10
+    // for BOTH and admit both, so this pins the percentile.
+    const droopyOpen = [...repeat(8, 4), ...repeat(10, 36)]; // p10=8, p50=10
+    const tightOpen = repeat(10, 40); // p10=p50=10
+    const closed = repeat(5, ENOUGH);
+    expect(resolveHeld(samples(droopyOpen, closed))).toEqual({
+      kind: "refused",
+      reason: "line-above-open-floor",
+    });
+    expect(resolveHeld(samples(tightOpen, closed)).kind).toBe("ready");
   });
 });
 
 describe("the calibration session state machine", () => {
   // Drive a session from nowMs 0 by feeding one aperture per 33 ms
   // tick until it reaches "done", capturing the phase seen each tick.
+  // In the verification phase it dips the aperture closed for one tick
+  // every twenty (about 660 ms apart, past the refractory), producing
+  // several clean blinks against the candidate line so a sound run
+  // passes verification; otherwise it holds the eye open.
   function run(
     openMm: number,
     closedMm: number,
   ): { state: CalibrationSessionState; phasesSeen: string[] } {
     let state = startCalibrationSession(0);
     const phasesSeen: string[] = [];
-    for (let tick = 1; tick <= 400 && state.kind !== "done"; tick++) {
-      const phase = state.kind === "collecting" ? state.phase : "done";
-      phasesSeen.push(phase);
-      const mm = phase === "closed" ? closedMm : openMm;
+    for (let tick = 1; tick <= 800 && state.kind !== "done"; tick++) {
+      let mm: number;
+      if (state.kind === "collecting") {
+        phasesSeen.push(state.phase);
+        mm = state.phase === "closed" ? closedMm : openMm;
+      } else {
+        phasesSeen.push("verifying");
+        mm = tick % 20 === 0 ? closedMm : openMm;
+      }
       state = calibrationSessionStep(state, tick * 33, mm);
     }
     return { state, phasesSeen };
@@ -202,6 +268,119 @@ describe("the calibration session state machine", () => {
   });
 });
 
+describe("the per-phase settle window (roadmap 11.6a)", () => {
+  // A phase begins with an instruction to read and lids to move into the
+  // held position; frames during that window carry a confident wrong
+  // label, so nothing is collected until the settle window has passed
+  // since the phase began. The boundary is pinned with literals — a
+  // frame AT 800 ms is still dropped (the <= boundary the gaze capture
+  // uses), one at 801 ms is kept — so a shrunk or removed settle turns
+  // this red.
+  it("drops a frame at the settle boundary and keeps the next one", () => {
+    let state = startCalibrationSession(0);
+    state = calibrationSessionStep(state, 800, 8);
+    expect(state.kind === "collecting" && state.samples.open).toEqual([]);
+    state = calibrationSessionStep(state, 801, 8);
+    expect(state.kind === "collecting" && state.samples.open).toEqual([8]);
+  });
+
+  it("settles each phase on its own clock, not only the first", () => {
+    let state = startCalibrationSession(0);
+    // Cross into the closed phase; the transition is time-based at 3 s,
+    // so held-open frames past the open settle carry the session there.
+    for (let t = 810; t <= GUIDED_CALIBRATION_PHASE_MS; t += 30) {
+      state = calibrationSessionStep(state, t, 8);
+    }
+    expect(state.kind === "collecting" && state.phase).toBe("closed");
+    const closedStart = state.kind === "collecting" ? state.startedAtMs : -1;
+    // The closed phase has its OWN settle: a frame at its boundary is
+    // dropped, one past it is kept.
+    state = calibrationSessionStep(state, closedStart + 800, 2);
+    expect(state.kind === "collecting" && state.samples.closed).toEqual([]);
+    state = calibrationSessionStep(state, closedStart + 801, 2);
+    expect(state.kind === "collecting" && state.samples.closed).toEqual([2]);
+  });
+});
+
+describe("the verification phase (roadmap 11.6a)", () => {
+  const DT = 40;
+
+  // Drives a whole session: open hold at openMm, closed hold at
+  // closedMm, then the verification phase. In verification it dips the
+  // aperture closed for one frame at each of `verifyBlinks` moments,
+  // spaced 300 ms apart (well past the 150 ms refractory) and held open
+  // otherwise, so exactly `verifyBlinks` clean blinks land against the
+  // candidate line. A refusal from the holds ends the session before
+  // verification and nothing is fed to it.
+  function fullSession(
+    openMm: number,
+    closedMm: number,
+    verifyBlinks: number,
+  ): CalibrationSessionState {
+    let state = startCalibrationSession(0);
+    let t = 0;
+    while (state.kind === "collecting" && t < 100000) {
+      const mm = state.phase === "closed" ? closedMm : openMm;
+      state = calibrationSessionStep(state, t, mm);
+      t += DT;
+    }
+    if (state.kind === "verifying") {
+      const startedAtMs = state.startedAtMs;
+      let fired = 0;
+      while (state.kind === "verifying" && t < 100000) {
+        const elapsed = t - startedAtMs;
+        const fire = fired < verifyBlinks && elapsed >= (fired + 1) * 300;
+        state = calibrationSessionStep(state, t, fire ? closedMm : openMm);
+        if (fire) fired += 1;
+        t += DT;
+      }
+    }
+    return state;
+  }
+
+  it("stores a sound line that catches the person's own blinks", () => {
+    const state = fullSession(8, 2, 3);
+    expect(state.kind).toBe("done");
+    if (state.kind === "done") {
+      expect(state.result.kind).toBe("ready");
+      if (state.result.kind === "ready") {
+        expect(state.result.personalLineMm).toBe(5);
+      }
+      expect(state.blinksCaught).toBe(3);
+    }
+  });
+
+  it("refuses a sound line that misses the person's blinks", () => {
+    // The medians are sound (line 5) but only one blink lands in
+    // verification, below the floor of two, so the line is not stored.
+    const state = fullSession(8, 2, 1);
+    expect(state).toMatchObject({
+      kind: "done",
+      result: { kind: "refused", reason: "verification-failed" },
+      blinksCaught: 1,
+    });
+  });
+
+  it("runs the verification floor: two blinks pass, one does not", () => {
+    const two = fullSession(8, 2, 2);
+    const one = fullSession(8, 2, 1);
+    expect(two.kind === "done" && two.result.kind).toBe("ready");
+    expect(one.kind === "done" && one.result.kind).toBe("refused");
+  });
+
+  it("never reaches verification when the line is already unsound", () => {
+    // Closed never registered (open 8, closed 8): the candidate is
+    // refused on separation, so verification is skipped and blinksCaught
+    // stays null — a line nobody could draw is not one to blink at.
+    const state = fullSession(8, 8, 3);
+    expect(state).toMatchObject({
+      kind: "done",
+      result: { kind: "refused", reason: "closure-not-registered" },
+      blinksCaught: null,
+    });
+  });
+});
+
 describe("stored blink calibration, serialise and validated parse", () => {
   const good = aStoredLine({
     personalLineMm: 5,
@@ -212,6 +391,38 @@ describe("stored blink calibration, serialise and validated parse", () => {
   it("round-trips a ready calibration", () => {
     const raw = serializeBlinkCalibration(good);
     expect(parseBlinkCalibration(raw)).toEqual(good);
+  });
+
+  it("carries the verification count through serialize and parse", () => {
+    const verified = aStoredLine({ blinksCaught: 2 });
+    const parsed = parseBlinkCalibration(serializeBlinkCalibration(verified));
+    expect(parsed?.blinksCaught).toBe(2);
+  });
+
+  it("reads a legacy line with no verification count as null", () => {
+    // A line stored before verification existed still loads: the count
+    // is a record about the line, not part of the ruler.
+    const legacy = JSON.parse(serializeBlinkCalibration(good)) as Record<
+      string,
+      unknown
+    >;
+    delete legacy.blinksCaught;
+    const parsed = parseBlinkCalibration(JSON.stringify(legacy));
+    expect(parsed).not.toBeNull();
+    expect(parsed?.blinksCaught).toBeNull();
+  });
+
+  it("drops a nonsense verification count to null but keeps the line", () => {
+    // A negative or non-integer count is not a measurement; it becomes
+    // null rather than rejecting the whole entry, which stays usable.
+    const tampered = JSON.parse(serializeBlinkCalibration(good)) as Record<
+      string,
+      unknown
+    >;
+    tampered.blinksCaught = -1;
+    const parsed = parseBlinkCalibration(JSON.stringify(tampered));
+    expect(parsed).not.toBeNull();
+    expect(parsed?.blinksCaught).toBeNull();
   });
 
   it("rejects non-JSON", () => {
@@ -387,6 +598,13 @@ describe("the guided face-time floors, roadmap 10.12c", () => {
     }
     for (let t = 3008; t <= 6008; t += 8) {
       session = calibrationSessionStep(session, t, 2);
+    }
+    // The holds produced a sound candidate; the verification phase now
+    // runs. Blink against the candidate line — one closed frame every
+    // 400 ms, well past the refractory — so the line is confirmed and
+    // the session resolves ready.
+    for (let t = 6016; t <= 12016; t += 8) {
+      session = calibrationSessionStep(session, t, t % 400 < 8 ? 2 : 8);
     }
     expect(session.kind).toBe("done");
     if (session.kind === "done") {

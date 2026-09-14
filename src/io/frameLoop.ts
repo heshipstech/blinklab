@@ -38,7 +38,7 @@ export function startFrameLoop(
 //
 // So a clip is driven by the frames themselves.
 
-type VideoFrameMetadata = { mediaTime: number };
+type VideoFrameMetadata = { mediaTime: number; presentedFrames: number };
 type VideoFrameCallback = (nowMs: number, metadata: VideoFrameMetadata) => void;
 export type VideoWithFrameCallback = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: VideoFrameCallback) => number;
@@ -77,19 +77,25 @@ export type VideoFrameLoop = {
  * steers: nothing here touches the detector, and if it dies the
  * session keeps measuring with its delivery rate reported as unknown,
  * which is the honest outcome rather than a lost session.
+ *
+ * It hands on `metadata.presentedFrames` beside the timestamp (roadmap
+ * 13.4): that count is the compositor's own tally of frames presented,
+ * so the gap between it and the number of callbacks that fired is the
+ * frames the main thread was too busy to look at. The counting is
+ * src/core/framesMissed.ts's; this only carries the number across.
  */
 export function observeVideoDelivery(
   video: VideoWithFrameCallback,
-  onDelivered: (nowMs: number) => void,
+  onDelivered: (nowMs: number, presentedFrames: number) => void,
   onCrash: (error: unknown) => void,
 ): VideoFrameLoop {
   let stopped = false;
   let handle: number | null = null;
 
-  function tick(nowMs: number): void {
+  function tick(nowMs: number, metadata: VideoFrameMetadata): void {
     if (stopped) return;
     try {
-      onDelivered(nowMs);
+      onDelivered(nowMs, metadata.presentedFrames);
     } catch (error: unknown) {
       stopped = true;
       onCrash(error);

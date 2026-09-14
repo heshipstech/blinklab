@@ -10,6 +10,18 @@ export const SHAPE_SOURCE: string;
 /** The published feature label for each field of BlinkShape. */
 export const SHAPE_FEATURE_LABELS: Record<string, string>;
 
+/** Every published DROZY feature and the sources that produce it. */
+export const FEATURE_SOURCES: Record<string, string[]>;
+
+/** The feature names out of the PRIMARY table, in row order. Throws if gone. */
+export function publishedFeatures(resultText: string): string[];
+
+/** The features whose sources moved since the given commit. */
+export function movedFeatures(sinceSha: string, root: string): string[];
+
+/** Mapped sources naming no file in the repository, as "feature -> source". */
+export function missingSources(root: string): string[];
+
 /** Where each document's caveat block begins. */
 export const CAVEAT_MARKERS: Record<string, string>;
 

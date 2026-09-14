@@ -183,6 +183,70 @@ export const GUIDED_CALIBRATION_MIN_SEPARATION_FRACTION = 0.3;
 // without strain. Chosen for the person, not fitted to data.
 export const GUIDED_CALIBRATION_PHASE_MS = 3000;
 
+// The resolve-time soundness ceiling (roadmap 11.6a, ladder A9/A10/C3;
+// the September audit's high-severity finding G-Guided). The personal
+// line is the midpoint (open + closed)/2, and the separation floor
+// above only bounds the CLOSED median: at its boundary (closed = 0.7 of
+// open) the line sits at 0.85 of the open MEDIAN, with nothing checking
+// it against where the open eye actually droops. docs/blink-line-
+// adoption.txt pre-registered this exact risk on 2 September — "new
+// false positives from a higher guided line arming on ordinary droops"
+// — and the repo's own measurement is that a relaxed open eye droops to
+// 45-50% of baseline (longClosure.ts). A line inside that droop band
+// arms on ordinary opening.
+//
+// So a second, SPREAD-AWARE refusal: the personal line must sit clearly
+// below the open eye's own LOWER TAIL, not merely below its median. The
+// tail is the 10th percentile of the open-phase samples — the
+// conventional lower-decile marker, stable at the 30-sample floor and
+// far less outlier-sensitive than the minimum; the median (p50) would
+// be blind to the very spread this check exists to see, so a wide-
+// drooping open eye and a tight one would share a ceiling. The line
+// must sit at or below 0.85 of that tail — a 15% margin — and a line AT
+// the ceiling is refused. For a FLAT open distribution the tail equals
+// the median and this coincides with the separation boundary; it bites
+// only where the open eye has spread, which is exactly the atypical
+// low-lidded eye the guided path was built for (ROADMAP acceptance note
+// 5). Both figures are DELIBERATELY chosen before any guided data is
+// read, not fitted to it, the same stance the sample floor and
+// separation fraction take; validation round II (11.7) is their first
+// test on people they were not built from.
+export const GUIDED_CALIBRATION_OPEN_TAIL_PERCENTILE = 10;
+export const GUIDED_CALIBRATION_SOUNDNESS_CEILING_FRACTION = 0.85;
+
+// The per-phase settle window (roadmap 11.6a). A guided phase begins by
+// showing the person an instruction — "open your eyes and look at the
+// screen", then "close your eyes" — and the frames while they are still
+// reading it and moving their lids into the held position carry a
+// confident WRONG label: an open phase sampled mid-transition measures a
+// half-closed eye as "open" and drags the open median down, a closed
+// phase sampled before the lids arrive measures too high. So nothing is
+// collected until this window has passed since the phase began, the same
+// rule and the same 800 ms the gaze capture's CALIBRATION_SETTLE_MS uses
+// for the analogous "subject not yet in position" case (5.4a, the
+// LEARNING note "nothing counts during the settle window after a dot
+// moves"). Kept a SEPARATE constant, as the codebase keeps CUE_SETTLE_MS
+// and LIGHT_SETTLE_MS separate, because the guided phases and the gaze
+// targets can be re-timed independently. Safe against the per-phase
+// face-time floor by construction: the 3 s phase (GUIDED_CALIBRATION_
+// PHASE_MS) minus this 0.8 s leaves 2.2 s of sampling, comfortably over
+// the 1.2 s GUIDED_MIN_FACE_MS_PER_PHASE floor and the 30-sample floor.
+export const GUIDED_CALIBRATION_SETTLE_MS = 800;
+
+// The verification phase (roadmap 11.6a). Once the open and closed holds
+// have produced a sound candidate line, the person is asked to "blink
+// three times, normally" and the detector is run over those frames with
+// the CANDIDATE line as its threshold: a line that cannot catch this
+// person's own ordinary blinks is not stored, however sound its
+// midpoint looked. The window runs six seconds — twice the hold phase,
+// long enough for three unhurried blinks after the cue — and the line
+// is stored only if at least two of them are caught (one may be missed
+// without failing the check, but a line that catches fewer than two is
+// not measuring this person's blinks at all). Both figures are chosen
+// for the person, before any guided data is read, not fitted to it.
+export const GUIDED_CALIBRATION_VERIFY_MS = 6000;
+export const GUIDED_CALIBRATION_VERIFY_MIN_BLINKS = 2;
+
 // The birth ceiling, fix #126, tightened by the round. The baseline
 // is a p90, and a p90 is exactly what a surprised learning window
 // inflates: once half the baseline exceeds the resting aperture, the

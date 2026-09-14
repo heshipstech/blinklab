@@ -47,12 +47,16 @@ ffmpeg on PATH otherwise, so a plain `brew install ffmpeg` also works.
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import re
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from blinklab.rldd import MANIFEST_COLUMNS
 
 VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"})
 
@@ -281,6 +285,90 @@ def remux_window(ffmpeg: str, plan: ClipPlan, target: Path) -> None:
     )
 
 
+# The three container facts the manifest carries, cross-checked against
+# the instrument's coverage in rldd.py (roadmap 10.14b). Named exactly as
+# ffprobe reports them so the -show_entries request and the parse agree.
+_PROBE_FIELDS = ("r_frame_rate", "avg_frame_rate", "nb_read_packets")
+
+
+def ffprobe_path() -> str:
+    """A system ffprobe. Unlike ffmpeg, imageio-ffmpeg does not bundle
+    ffprobe, so this needs a real install (`brew install ffmpeg` ships
+    both). Owner's machine only; nothing here runs it."""
+    system = shutil.which("ffprobe")
+    if system is None:
+        raise SystemExit(
+            "No ffprobe. It ships with ffmpeg — `brew install ffmpeg` or "
+            "your platform's ffmpeg package."
+        )
+    return system
+
+
+def parse_ffprobe_output(text: str, clip: str) -> dict[str, str]:
+    """One clip's ffprobe `key=value` lines as a manifest row.
+
+    ffprobe is asked for the three stream fields with
+    `-of default=noprint_wrappers=1`, so its output is one `key=value`
+    per line; this reads them verbatim (the frame rate as the fraction
+    ffprobe writes, e.g. "30000/1001", so nothing rounds before rldd.py
+    parses it). A missing field is left blank rather than guessed."""
+    values: dict[str, str] = {}
+    for line in text.splitlines():
+        key, sep, value = line.strip().partition("=")
+        if sep and key in _PROBE_FIELDS:
+            values[key] = value.strip()
+    return {
+        "clip": clip,
+        "rFrameRate": values.get("r_frame_rate", ""),
+        "avgFrameRate": values.get("avg_frame_rate", ""),
+        "nbReadPackets": values.get("nb_read_packets", ""),
+    }
+
+
+def probe_clip(ffprobe: str, clip: str, target: Path) -> dict[str, str]:
+    """Run ffprobe over one prepared clip and return its manifest row.
+
+    `-count_packets` makes nb_read_packets the true frame count of the
+    trimmed file, which is the number the instrument should have measured.
+    Owner's machine only."""
+    result = subprocess.run(
+        [
+            ffprobe,
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-count_packets",
+            "-show_entries",
+            "stream=" + ",".join(_PROBE_FIELDS),
+            "-of",
+            "default=noprint_wrappers=1",
+            str(target),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return parse_ffprobe_output(result.stdout, clip)
+
+
+def render_manifest(rows: list[dict[str, str]]) -> str:
+    """The manifest as CSV text, one line per clip in the given order,
+    the columns rldd.read_manifest reads."""
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=MANIFEST_COLUMNS)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({column: row.get(column, "") for column in row})
+    return buffer.getvalue()
+
+
+def write_manifest(rows: list[dict[str, str]], path: Path) -> None:
+    """Write the manifest so rldd.read_manifest can cross-check coverage.
+    newline="" so the csv writer's terminators are written verbatim."""
+    path.write_text(render_manifest(rows), encoding="utf-8", newline="")
+
+
 def _summarise(plans: list[ClipPlan]) -> str:
     labels: dict[str, int] = {}
     for plan in plans:
@@ -352,11 +440,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     ffmpeg = ffmpeg_path()
+    ffprobe = ffprobe_path()
+    manifest_rows: list[dict[str, str]] = []
     for index, plan in enumerate(plans, start=1):
         target = args.output / plan.output_name
         print(f"[{index}/{len(plans)}] {plan.output_name}")
         remux_window(ffmpeg, plan, target)
-    print(f"\n{len(plans)} clips prepared in {args.output}.")
+        # The manifest clip name is the flat stem, which the runner turns
+        # into <stem>.seconds.csv and rldd.load_corpus keys on.
+        manifest_rows.append(probe_clip(ffprobe, target.stem, target))
+    manifest = args.output / "manifest.csv"
+    write_manifest(manifest_rows, manifest)
+    print(
+        f"\n{len(plans)} clips prepared in {args.output}, "
+        f"container manifest in {manifest}."
+    )
     return 0
 
 

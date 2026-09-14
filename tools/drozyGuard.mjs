@@ -1,4 +1,6 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 // The DROZY correlations were measured on 9 August 2026 and three days
 // later PR #225 changed how the blink shape window is measured. Blink
@@ -43,6 +45,83 @@ export const SHAPE_FEATURE_LABELS = {
   peakClosingVelocityMmPerS: "closing velocity",
   amplitudeOverVelocityMs: "amplitude over velocity",
 };
+
+/**
+ * Every published DROZY feature and the sources that produce it,
+ * roadmap 10.3.
+ *
+ * The guard above watched ONE source, blinkShape.ts, because in
+ * August that was the one file that had moved since the measuring
+ * commit. By September every feature's sources had moved — the
+ * personal blink line rewrote blink.ts, the shut-line work touched
+ * perclos.ts and longClosure.ts — and the caveat still spoke only of
+ * three rows. This map makes the caveat's scope computable: a
+ * feature is stale exactly when git says one of ITS sources moved,
+ * and the test next door holds the keys to the published table in
+ * both directions so a new row cannot ship unmapped.
+ *
+ * blink.ts rides under every event-derived feature on purpose: the
+ * detector decides which blinks exist at all, so moving it moves the
+ * population every downstream column is computed over.
+ */
+export const FEATURE_SOURCES = {
+  "blink duration": ["src/core/blink.ts"],
+  "closing velocity": ["src/core/blinkShape.ts", "src/core/blink.ts"],
+  "amplitude over velocity": ["src/core/blinkShape.ts", "src/core/blink.ts"],
+  "blink amplitude": ["src/core/blinkShape.ts", "src/core/blink.ts"],
+  "long closures": ["src/core/longClosure.ts"],
+  "blink rate": ["src/core/blinkRate.ts", "src/core/blink.ts"],
+  PERCLOS: ["src/core/perclos.ts"],
+};
+
+/**
+ * The feature names out of the result file's PRIMARY table, in row
+ * order: the text before the first comma of each two-space-indented
+ * row. The header row carries no comma and excludes itself. Throws
+ * when the table is gone, because a result file that stopped
+ * publishing its rows is the defect, not a case to skip.
+ */
+export function publishedFeatures(resultText) {
+  const start = resultText.indexOf("PRIMARY,");
+  if (start === -1) {
+    throw new Error(
+      "drozy result file: could not find the PRIMARY feature table",
+    );
+  }
+  const rest = resultText.slice(start);
+  const block = rest.slice(0, rest.indexOf("\n\n"));
+  return [...block.matchAll(/^ {2}([A-Za-z][A-Za-z ]*?),/gm)].map(
+    (match) => match[1],
+  );
+}
+
+/**
+ * The mapped sources that name no file in this repository, as
+ * "feature -> source" strings. Here rather than in the test because
+ * the test tsconfig has no node types and cannot touch the disk —
+ * the same split as every other guard.
+ */
+export function missingSources(root) {
+  return Object.entries(FEATURE_SOURCES).flatMap(([feature, sources]) =>
+    sources
+      .filter((source) => !existsSync(join(root, source)))
+      .map((source) => `${feature} -> ${source}`),
+  );
+}
+
+/**
+ * The features whose sources git says moved since `sinceSha`: the
+ * rows the caveat must name, computed rather than remembered.
+ */
+export function movedFeatures(sinceSha, root) {
+  return Object.entries(FEATURE_SOURCES)
+    .filter(([, sources]) =>
+      sources.some(
+        (source) => commitsTouchingSince(source, sinceSha, root).length > 0,
+      ),
+    )
+    .map(([feature]) => feature);
+}
 
 /**
  * Where each document's caveat begins.

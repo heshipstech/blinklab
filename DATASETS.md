@@ -285,6 +285,20 @@ reason they stand is that the people in these recordings agreed to be filmed
 by a university laboratory, and no author can grant rights over somebody's
 face beyond what its owner allowed.
 
+#### The shape rows are retired, not re-measured, 13 September 2026
+
+Roadmap 10.3, decided by amendment 17. The three DROZY shape correlations —
+the rows [docs/drozy-result.txt](docs/drozy-result.txt) calls suggestive and
+unconfirmed — are retired rather than re-measured. The roughly 3-hour
+re-measure would re-run a null on a sample missing its sleepiest sessions,
+at a rate the stepper of that era had not verified, to defend verdicts
+granted by a within-subject bar that chance clears half the time — and it
+would recreate the derived video this document requires destroyed, which is
+not a cost a null pays for. `tools/drozyGuard.mjs` computes per feature
+which published rows' sources have moved since the measuring commit, so the
+staleness statement is checked from git rather than remembered. The sample
+is re-measured only if roadmap 12.18's v2 read moves a shape feature.
+
 ### NITYMED, University of the Peloponnese
 
 Real in-car night video, and it fails on subject identity rather than on licence.
