@@ -1,0 +1,90 @@
+ENGINE AGREEMENT ON A FIXED CLIP: THE THREE OUTCOMES, WRITTEN FIRST
+===================================================================
+
+Written 14 September 2026, before the two engines are paired on one
+machine, in the predict-then-verify discipline. Roadmap row 13.0,
+briefs C10, D17 and B6's measurement half.
+
+THE GAP THIS CLOSES
+-------------------
+Every blink-detection number in this repository has been measured by
+one browser engine. The corpus runner launches WebKit and nothing
+else (tools/measure_corpus.mjs), and the 25 and 26 August cross-
+machine reproductions were WebKit to WebKit — the results block says
+so in as many words: "no engine other than WebKit has measured this
+corpus, and roadmap row 13.0 is the measurement that would change
+that" (README.md, tools/resultsBlock.mjs). This row is that
+measurement: the SAME prepared clip stepped through the SAME code in
+two engines, WebKit and Chromium, on one machine, and the two per-
+frame exports compared.
+
+WHY THE STEPPED PATH IS THE RIGHT SUBJECT
+-----------------------------------------
+The stepped clip path reads frames off the media element's own clock,
+one seek per frame, not off the display refresh — so it is the one
+path whose coverage (which frames are measured) should not depend on
+the engine's rendering cadence at all. If two engines disagree on
+which frames a fixed clip yields, that is a decode/capture-chain
+difference the person exporting could never see, and it is exactly
+the kind of silent divergence this project refuses to ship over. The
+live camera path is not the subject here: it rides real delivery and
+would confound an engine difference with a timing one.
+
+THE CLIP
+--------
+test/fixtures/clip-60fps-60frames.mp4 — the committed 60-fps,
+60-frame fixture both engines can decode. One clip, one commit, one
+machine, run twice: once under the Chromium Playwright project and
+once under the WebKit project.
+
+THE THREE OUTCOME CLASSES, FIXED NOW
+------------------------------------
+The exports carry, per frame, the coverage (which frames were
+measured) and the blink detections. Comparing the two engine exports
+lands in exactly one of three classes:
+
+1. IDENTICAL. Coverage identical AND blink count/timing identical.
+   The engines agree completely on this clip: the strongest result,
+   and the one that lets the results-block caveat retire in full.
+
+2. COVERAGE IDENTICAL, BLINKS MOVE. The two engines measure the SAME
+   frames, but the blink detections differ. This is still the cross-
+   engine bound the project does not have today: agreement on WHAT is
+   measured is the capture-chain claim, and a blink-timing difference
+   inside identical coverage is the face tracker's own state
+   nondeterminism — the same transient already on the record (one run
+   of six diverged at a byte-identical commit, docs/eyeblink8-
+   result.txt), not an engine disagreement. The bound is recorded
+   with the observed blink delta named.
+
+3. COVERAGE DIFFERS AT ALL. The two engines measure DIFFERENT frames
+   of the same clip. This STOPS THE LINE: it is a real engine-level
+   discrepancy in the decode/step chain, and it is written up as a
+   defect to chase rather than a result to ship. No cross-engine
+   claim is made and 13.0 does not tick until it is understood.
+
+THE PREDICTION
+--------------
+Outcome 1 or 2, and most likely 1. The stepped path seeks each frame
+by index off the media clock, so coverage is predicted IDENTICAL
+across the two engines on this fixture. Blink detections are predicted
+identical too, because the fixture is short and synthetic and the
+tracker-state transient has only ever been observed on a long natural
+clip; a small blink delta (outcome 2) would not surprise and would not
+stop the line, but any coverage difference (outcome 3) would.
+
+If outcome 3 occurs, the prediction is WRONG and that is the finding:
+it would mean the stepped instrument is engine-dependent in what it
+measures, which no number published here currently accounts for.
+
+WHAT LANDS BEFORE THE RUN, AND WHAT AFTER
+-----------------------------------------
+Before the owner's run (the build half): this prediction; the clip-
+mode export made to name its engine (user_agent and the webgl2 probe
+written for a clip session, not only a camera one, so each of the two
+exports says which engine produced it); and the stepped frame-count
+assertion made a mandatory local test of the WebKit Playwright
+project. After the run (the owner pairs the engines): the two exports
+are compared against the classes above, the results-block prose is
+updated to what the pairing found, and 13.0 ticks — which is the
+precondition amendment 25 named for 13.1's phone rows.
