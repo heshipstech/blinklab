@@ -103,3 +103,38 @@ opt-in and this section records why.
 Whichever way the device day lands, its outcome becomes a dated
 section below, and row 13.2 ticks on that section — not on this
 build.
+
+THE DEVICE DAY, 14 SEPTEMBER 2026
+---------------------------------
+One owned camera was read: the MacBook Pro built-in, on a live
+37-second session at app_commit 1686901 (Chrome 153 on macOS,
+1920x1080). The six recorded rows:
+
+  declared maximum:   30 fps
+  asked:              60 fps (ideal)
+  negotiated before:  30 fps
+  negotiated after:   30 fps
+  applyConstraints:   ok (no throw, stream unbroken; delivered 29.8,
+                      sampled 29.8)
+  resolution change:  none (held 1920x1080)
+  median iris width:  32.8 px, above the 22 px floor
+
+VERDICT: this camera is NOT 60-capable — 30 fps negotiated is below the
+55 fps bar — and the owner confirmed on 14 September 2026 that the
+built-in is the only camera in play. So the honest conclusion is the one
+the adoption condition named for the no-owned-60-camera case: LIVE
+ACCURACY ON OWNED HARDWARE IS CAPPED AT 30 FRAMES PER SECOND, and the
+60 fps branch of the sampling model stays a model. That outcome is as
+publishable as a 60 would have been.
+
+Against the predictions: P3 is CONFIRMED — the built-in camera holds 30
+at 1080p, resolution unchanged. P1 and P2 are NOT EXERCISED: they
+predicted an owned camera (the Sony rig through the Cam Link) declaring
+or negotiating 60, and no such camera was run this day, so whether one
+exists on this owner's hardware is left open rather than claimed either
+way; if a faster camera is ever added, its row lands here and the
+verdict is revisited. None of the falsifiers fired: the capabilities
+read agreed with the negotiated rate (declared 30, got 30), no
+resolution moved silently, and asking for 60 did not break the stream.
+The ask therefore ships unconditionally, exactly as built — it costs
+nothing on a 30 fps camera and would take the gain on a faster one.
