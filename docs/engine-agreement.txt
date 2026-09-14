@@ -88,3 +88,56 @@ project. After the run (the owner pairs the engines): the two exports
 are compared against the classes above, the results-block prose is
 updated to what the pairing found, and 13.0 ticks — which is the
 precondition amendment 25 named for 13.1's phone rows.
+
+THE RESULT, 14 SEPTEMBER 2026
+-----------------------------
+The owner ran the harness on a Mac under both projects in one pass
+(chromium and webkit stepping test/fixtures/clip-60fps-60frames.mp4),
+and the two per-frame exports were diffed. OUTCOME 1 on the terms the
+Check names: the two engines stepped the fixture IDENTICALLY. Both
+measured every frame (the frame-count assertion passed in each), and
+the per-second coverage and every blink, aperture and PERCLOS field are
+byte-identical between engine-chromium.csv and engine-webkit.csv.
+Outcome 3 — coverage differing — is refuted: the line does not stop.
+The prediction is CONFIRMED.
+
+Three fields differed, and all three are named rather than smoothed
+over:
+
+- inferenceMs on the first record (Chromium 2860, WebKit 134) and the
+  inference_p50/p95_ms metadata (Chromium 7.9/8.6, WebKit 4.0/5.0).
+  This is INFERENCE TIME — how long the model took, not what it
+  measured. The 2860 is the first frame's model warm-up; the p50s are
+  the steady state. Engine performance is expected to differ and is not
+  a measurement disagreement.
+- sceneLum (Chromium 0.484, WebKit 0.543). This is a REAL cross-engine
+  difference and the one finding worth keeping: the two engines' video
+  decoders turn the same mp4 into frames of measurably different average
+  brightness, about 12% apart here. No landmark measurement reads
+  luminance, so it changes none of the blink or aperture numbers above —
+  but any luminance-dependent reading (a future light-sensitive feature,
+  or pupil work) would inherit this decoder difference, and it is
+  recorded here so a later row does not rediscover it as a surprise.
+
+TWO LIMITS OF THIS RUN, STATED SO THE TICK IS NOT READ AS MORE THAN IT
+IS:
+
+1. The committed fixture has NO FACE, so the landmarker returns no face
+   and every blink/aperture field is empty in both exports. "Blinks
+   identical" is therefore trivially true, and this run does NOT
+   exercise blink-DETECTION agreement across engines — it establishes
+   COVERAGE agreement (which frames are measured) and pipeline agreement
+   on everything the fixture can drive. Cross-engine blink agreement on
+   a real face remains a further check, on a face clip (the owner's
+   corpus, not committed here); the owner chose to tick on the coverage
+   result and record this limit rather than run a face clip now.
+2. The corpus itself (Eyeblink8) is still measured on WebKit alone. This
+   fixed-clip pairing does not change that, and the results block is
+   updated to say exactly that: the corpus numbers remain a single-
+   engine result.
+
+The engine is named on each export by the harness FILENAME
+(engine-<project>.csv), which is how "an export can name its engine" was
+met in practice; writing user_agent into a clip export itself was left
+unbuilt as an unneeded belt-and-suspenders once the filename carried the
+fact.

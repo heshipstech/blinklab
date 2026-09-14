@@ -29,6 +29,9 @@ public/mediapipe-wasm/
 # Playwright output
 test-results/
 playwright-report/
+# Roadmap 13.0 engine-agreement exports (saved outside test-results/ so
+# the two --project runs do not wipe each other; see videoFile.spec.ts).
+engine-exports/
 
 # The analysis virtual environment. The lockfile is committed, the
 # resolved packages are not.
