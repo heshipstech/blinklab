@@ -6,7 +6,7 @@ blinklab is a research and learning project: a browser demo that measures
 blinks from a webcam, plus the analysis code behind its published numbers. It
 is **not a medical device** and is not used to make decisions about anyone.
 
-Read in full on 7 September 2026, claims `4470daba`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 10 September 2026, claims `2a4d3f74`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the first on 7 September, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 Two properties shape what a vulnerability means here:
 
@@ -52,9 +52,14 @@ take a few days.
   section said the absence of a Content-Security-Policy was "not a defect this
   repository can fix", which was wrong: a policy can be delivered as a
   `<meta http-equiv="Content-Security-Policy">` tag in the page itself, and
-  roadmap row 10.2b is that work. `X-Frame-Options` has no meta equivalent and
-  remains a genuine hosting limit. Corrected 7 September 2026, by the first
-  full read under the stamp at the top of this file.
+  since 10 September 2026 it is — the page carries `connect-src 'self'` that
+  way (roadmap row 10.2b), the network-layer refusal beneath the telemetry
+  wrapper ADR-0004 records, held word for word to `src/core/pageIdentity.ts`.
+  `X-Frame-Options` has no meta equivalent and remains a genuine hosting
+  limit, and `frame-ancestors` is one of the directives a meta policy is
+  defined to ignore, so framing protection stays out of reach on this host.
+  Corrected 7 September 2026, by the first full read under the stamp at the
+  top of this file; the shipped policy recorded 10 September 2026.
 - Automated scanner output with no demonstrated impact.
 - The accuracy of the published measurements. That is not a security question —
   it is the subject of the audit and remediation documents, and corrections are

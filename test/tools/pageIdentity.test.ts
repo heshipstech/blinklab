@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { citedDocs } from "../../src/core/docCitations";
 import {
   BRAND_INK,
+  CONTENT_SECURITY_POLICY,
   EYE_OUTLINE_PATH,
   PAGE_DESCRIPTION,
   REPOSITORY_URL,
@@ -106,6 +107,29 @@ describe("the page says what it is", () => {
 
   it("still carries the demo notice, which is not dropped for length", () => {
     expect(PAGE_DESCRIPTION).toContain("not a medical device");
+  });
+});
+
+describe("the page carries its network policy in its own head", () => {
+  // Roadmap 10.2b [D9]. GitHub Pages serves a fixed header set, so the
+  // Content-Security-Policy is delivered as a meta tag in the page
+  // itself — the one delivery this repository controls. The policy is
+  // held to core the same way the description is, so the tag cannot
+  // drift from the module that documents why each source is allowed.
+
+  it("ships the Content-Security-Policy core owns, word for word", () => {
+    expect(indexHtml).toContain('http-equiv="Content-Security-Policy"');
+    expect(indexHtml).toContain(CONTENT_SECURITY_POLICY);
+  });
+
+  it("restricts connections, and connections only", () => {
+    // connect-src alone, starting at 'self': scripts, styles, media
+    // and workers keep their defaults, because the residual this row
+    // closes is the NETWORK CALL (ADR-0004's telemetry attempt), and
+    // a directive wider than its evidence would be a guess shipped to
+    // real Safari users before the WebKit run that would catch it.
+    expect(CONTENT_SECURITY_POLICY).toMatch(/^connect-src 'self'/);
+    expect(CONTENT_SECURITY_POLICY).not.toContain(";");
   });
 });
 

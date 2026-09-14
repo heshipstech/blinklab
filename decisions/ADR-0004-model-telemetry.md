@@ -114,3 +114,42 @@ evidence the guard works, not evidence the library stayed quiet.
   written. Blocking the call does not license a fresh "sends nothing"
   sentence anywhere; the retired phrases are still retired, and the
   disclosure still names the dependency's attempt.
+
+## The declarative layer, 10 September 2026: the rejected option, run
+
+The section above set the Content Security Policy candidate aside on
+two predictions: that `connect-src` "collides with the same-origin WASM
+load", and that a policy, being declarative, cannot hand the caller a
+synthetic success, so a fire-and-forget POST could stall. Roadmap row
+10.2b ran the option instead of predicting about it, and the first
+prediction did not survive the run: under
+`connect-src 'self'` — delivered as a
+`<meta http-equiv="Content-Security-Policy">` tag, because GitHub Pages
+serves a fixed header set — the vendored model and its WASM runtime
+load and measure exactly as before. They are served from this origin,
+which is what 'self' means; no `blob:` exception was needed. The
+collision was an expectation, not a measurement, and it was wrong.
+
+The second concern stands and is answered by ORDER rather than
+disproved: the wrapper above installs before anything else runs and
+answers the matched hosts first with its synthetic success, so on every
+transport it wraps, the policy never even sees the telemetry attempt.
+What the policy adds is the layer beneath: a transport this wrapper
+does not wrap — a future MediaPipe reaching for something new, or a
+compromised dependency calling anywhere else — now meets a refusal at
+the network boundary instead of an open wire. On that unwrapped path a
+refusal is a refusal, with no synthetic success; that residual is
+accepted, and the sixty-second live test remains the tripwire either
+way.
+
+Scope, stated plainly: one directive. Scripts, styles, media and
+workers keep their browser defaults, because the residual this row
+closes is the network call and a policy wider than its evidence would
+be a guess. Verified so far in Chromium — the full deterministic and
+live telemetry proofs, model load and a measuring session under the
+policy — and per this repository's own rule (the row's marker, and
+`playwright.config.ts`'s recorded decision), the policy is not merged
+to the deployed page until `npm run e2e` has passed under it on a Mac,
+where WebKit runs. A policy verified in one engine and shipped to real
+Safari users would be the kind of unverified change this project
+refuses.

@@ -3966,6 +3966,39 @@ unenrolled source is the most convincing false pass this project
 has produced, because every visible part of it is working exactly
 as designed.
 
+## An option rejected on a prediction stays rejected until someone runs it
+
+ADR-0004's blocking increment considered a Content Security Policy
+in September and set it aside with a reason that sounded like a
+measurement: connect-src "collides with the same-origin WASM load".
+Row 10.2b finally ran the option, and there is no collision — the
+model and its WASM runtime are vendored on this origin, which is
+exactly what 'self' permits, and the whole suite this container can
+run passes under the policy, both telemetry proofs included, with
+no blob: exception needed. The sentence was an expectation written
+in the grammar of a result, and it sat unchallenged in a decision
+record for five days while the option it condemned was the cheap,
+declarative, second layer the wrapper had always wanted underneath
+it.
+
+The habit: when a decision record rejects an option "because X",
+ask whether X was measured or predicted, and label it. A predicted
+rejection is a to-do, not a verdict — it costs one run to upgrade
+into a fact, and this one turned out to be the other fact.
+
+The same increment named a second, quieter drift. This container's
+end-to-end runs have said "33 passed" for days and 33 had been
+read, and published once, as ALL — but the suite is 39, and six
+clip specs fail here with or without any change under test, because
+this container's browser cannot decode the mp4 fixtures at all. A
+local pass is a pass of what the environment can run, and until the
+ceiling has a NUMBER beside it ("33 of 39, and here is why"), a
+green that means "everything possible here" is indistinguishable
+from a green that means "everything". The check that caught it is
+worth keeping too: rerun the failures on a clean tree before
+blaming the change — six failures that reproduce identically
+without the diff are the environment's, not the code's.
+
 ## A threshold derived from a distribution needs the factor, not the percentile
 
 Row 10.7b's one constant had a tempting derivation: the noise floor
