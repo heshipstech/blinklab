@@ -202,18 +202,22 @@ test("stepping measures every frame of a fast clip", async ({
   // stepped run is where the two engines are paired. Save its per-frame
   // export named by the engine that produced it, so running the spec
   // under --project=chromium and --project=webkit leaves the two files
-  // side by side at test-results/engine-<project>.csv for the owner to
-  // compare. The frame-count assertion above is already the coverage
-  // bound at count granularity: both engines must measure every frame,
-  // and a difference is the "coverage differs, stops the line" outcome.
-  // A clip is not a camera session, so no closing sleepiness question
-  // gates the export (askAfterQuestionOnce skips a non-camera source).
+  // side by side at engine-exports/engine-<project>.csv for the owner to
+  // compare. It is written OUTSIDE test-results/ on purpose: Playwright
+  // wipes its output directory at the start of every invocation, so a
+  // file saved there by one --project run is deleted by the next; a
+  // sibling directory survives across the two runs. The frame-count
+  // assertion above is already the coverage bound at count granularity:
+  // both engines must measure every frame, and a difference is the
+  // "coverage differs, stops the line" outcome. A clip is not a camera
+  // session, so no closing sleepiness question gates the export
+  // (askAfterQuestionOnce skips a non-camera source).
   const exportCsv = page.getByTestId("export-csv");
   await expect(exportCsv).toBeEnabled();
   const downloadPromise = page.waitForEvent("download");
   await exportCsv.click();
   const download = await downloadPromise;
-  const outPath = `test-results/engine-${testInfo.project.name}.csv`;
+  const outPath = `engine-exports/engine-${testInfo.project.name}.csv`;
   await download.saveAs(outPath);
   // Read it back through the download stream (the e2e config carries no
   // node types, so no fs import) and confirm it is a real clip export.
