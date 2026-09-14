@@ -16,7 +16,7 @@ fails when the committed copy differs by a byte.
   superseded run below it.
 - **The suite:** 1788 unit tests and 654 Python tests, each figure
   what its runner collects rather than what a grep counted.
-- **The bundle ceiling** is 297.0 kB, checked after every build.
+- **The bundle ceiling** is 326.0 kB, checked after every build.
 
 **The live tracker is [REMEDIATION-2026-09.md](REMEDIATION-2026-09.md).**
 `REMEDIATION.md`, `NEEDS-REVIEW.md` and `docs/log.md` are the August

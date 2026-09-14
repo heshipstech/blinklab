@@ -34,13 +34,15 @@ describe("the bundle budget", () => {
   it("sums every chunk rather than judging the largest", () => {
     // A budget that looked only at the biggest file would be satisfied
     // by splitting one oversized bundle in two, which changes what the
-    // browser downloads not at all.
+    // browser downloads not at all. An explicit budget pins the summing
+    // independent of the production ceiling: 300 kB total exceeds the
+    // 250 kB passed here, though no single chunk does.
     const split = [
       { name: "a.js", bytes: 150_000 },
       { name: "b.js", bytes: 150_000 },
     ];
-    expect(budgetVerdict(split).ok).toBe(false);
-    expect(budgetVerdict(split).total).toBe(300_000);
+    expect(budgetVerdict(split, 250_000).ok).toBe(false);
+    expect(budgetVerdict(split, 250_000).total).toBe(300_000);
   });
 
   it("treats an empty dist as a failure, not a pass", () => {
