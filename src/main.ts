@@ -275,6 +275,7 @@ import {
   GUIDED_CALIBRATION_PHASE_MS,
   GUIDED_CALIBRATION_VERIFY_MS,
   calibrationSessionStep,
+  calibrationSuppressesReducers,
   effectiveBlinkLineMm,
   startCalibrationSession,
   type CalibrationSessionState,
@@ -4309,6 +4310,14 @@ function processFrame(
       // trusted readings resolves to a refusal rather than a guessed
       // line. Nothing here touches the blink reducer below, so a corpus
       // run, which never starts a session, is byte-for-byte unaffected.
+      // Whether a guided calibration is running this frame, so the four
+      // measurement reducers below are fed null through it (roadmap
+      // 11.6a): its instructed open stare, deliberate 3 s closed hold and
+      // three verification blinks are not the spontaneous behaviour they
+      // measure, and the closed hold would land as a false long closure
+      // and a false 3 s blink. Set before the session is stepped so the
+      // frame a verification blink completes on is suppressed too.
+      let calibrationActiveThisFrame = false;
       if (blinkCalibrationRequested) {
         blinkCalibrationSession = startCalibrationSession(nowMs);
         blinkCalibrationRequested = false;
@@ -4316,6 +4325,9 @@ function processFrame(
         blinkCalibrationStatus.hidden = true;
       }
       if (blinkCalibrationSession !== null) {
+        calibrationActiveThisFrame = calibrationSuppressesReducers(
+          blinkCalibrationSession,
+        );
         blinkCalibrationSession = calibrationSessionStep(
           blinkCalibrationSession,
           nowMs,
@@ -4488,7 +4500,10 @@ function processFrame(
       // blinks against a line the instrument just said it cannot vouch
       // for. A guided line lifts that — it IS a line the instrument
       // vouches for — so a calibrated person keeps counting.
-      const fedApertureMm = blinkMeasurable && !withheld ? stabilityMm : null;
+      const fedApertureMm =
+        blinkMeasurable && !withheld && !calibrationActiveThisFrame
+          ? stabilityMm
+          : null;
       // The fact of what was compared, not a reconstruction of it: the
       // fallback constant counts as the line only on a frame that
       // actually compared something against it.
@@ -4638,7 +4653,11 @@ function processFrame(
       longClosureState = longClosureStep(
         longClosureState,
         nowMs,
-        frozenShutBaselineMm !== null && blinkMeasurable ? stabilityMm : null,
+        frozenShutBaselineMm !== null &&
+          blinkMeasurable &&
+          !calibrationActiveThisFrame
+          ? stabilityMm
+          : null,
         frozenShutBaselineMm !== null
           ? longClosureThresholdMm(frozenShutBaselineMm)
           : 0,
@@ -4703,7 +4722,7 @@ function processFrame(
       perclosState = perclosStep(
         perclosState,
         nowMs,
-        blinkMeasurable ? stabilityMm : null,
+        blinkMeasurable && !calibrationActiveThisFrame ? stabilityMm : null,
         frozenShutBaselineMm,
       );
       const perclos = perclosValue(perclosState, nowMs);
