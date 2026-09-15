@@ -4657,3 +4657,25 @@ With this, every clause of roadmap 11.6a is built and held by a test:
 the settle window, the soundness ceiling, the verification phase, the
 verification count in the export, the reducers fed null, and now the
 marker. The row ticks.
+
+## Thinness is a verdict on a passed test, and it gets its own words
+
+Roadmap 11.6b begins with the sentence a person reads after a guided
+calibration succeeds. The resolver already refuses a run that misses
+its floors — too few readings, too little separation — but a run that
+cleared a floor by one frame looks exactly as settled, on the page, as
+one that cleared it three times over. The new pure module
+`guidedCalibrationText.ts` says how comfortably: every stored line now
+comes with the numbers it stood on (n_open, n_closed, the separation
+as a percentage), and a run within a third above any floor is called
+thin, by name, with "consider running it again" attached.
+
+Two decisions worth recording. The thin margin is ONE factor over both
+floors rather than a hand-picked number per quantity, and it lives in
+the wording module, not constants.ts — deliberately, because
+constants.ts is a detector source under the ratchet and this factor
+moves no threshold the detector reads, only when a sentence appears.
+And a null separation is never called thin: null means not measured,
+and thinness is a verdict on a measurement, the same rule that keeps
+zeros out of empty export cells. The wiring into the overlay is the
+next increment; this one is the words and their pins.
