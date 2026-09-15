@@ -9,6 +9,23 @@
 
 let context: AudioContext | null = null;
 
+/**
+ * One short pulse in the hand at the same boundaries the tone marks
+ * (roadmap 11.6b). Phones are where the guided calibration is hardest
+ * to follow — the screen is small and often below the face — and a
+ * palm can feel "next step" with the eyes shut. navigator.vibrate
+ * exists on Android Chrome, is absent on iOS Safari and desktops, and
+ * some engines throw without user activation; losing the buzz must
+ * never lose the session, the tone's own rule.
+ */
+export function vibrateCue(): void {
+  try {
+    navigator.vibrate(100);
+  } catch {
+    // A still phone still cues on screen and on the ear.
+  }
+}
+
 export function playCueTone(): void {
   try {
     context ??= new AudioContext();

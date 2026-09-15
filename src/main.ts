@@ -355,7 +355,7 @@ import {
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import { probeWebgl2 } from "./io/webgl2Probe";
-import { playCueTone } from "./io/cueTone";
+import { playCueTone, vibrateCue } from "./io/cueTone";
 import {
   cueAmong,
   cueOverlayText,
@@ -2242,6 +2242,13 @@ let blinkCalibrationSession: CalibrationSessionState | null = null;
 // the export must say so (calibrationWindowMetadataRows).
 let guidedCalibrationSpans: GuidedCalibrationSpan[] = [];
 let guidedCalibrationStartMs: number | null = null;
+// Which guided phase the person was last cued into, so each phase TURN
+// — and only the turn — lands on the ear and in the hand (roadmap
+// 11.6b). The person a phase tells to close their eyes cannot read the
+// next instruction, the cued protocol's own reasoning. A cancel resets
+// this silently: the escape is the person's own act, not a boundary
+// they need announcing.
+let lastGuidedPhase: "open" | "closed" | "verify" | null = null;
 blinkCalibrateButton.addEventListener("click", () => {
   blinkCalibrationRequested = true;
 });
@@ -4392,6 +4399,13 @@ function processFrame(
           stabilityMm,
         );
         if (blinkCalibrationSession.kind === "done") {
+          // The resolve is a boundary too — the moment stored-or-refused
+          // exists is exactly when eyes that followed instructions are
+          // shut or mid-blink, so it lands on the ear and in the hand
+          // like the phase turns above.
+          playCueTone();
+          vibrateCue();
+          lastGuidedPhase = null;
           const result = blinkCalibrationSession.result;
           // The verification count, captured before the session is
           // cleared: logged with the line as roadmap 11.6a's first
@@ -4458,6 +4472,11 @@ function processFrame(
           blinkCalibrationStatus.hidden = false;
         } else if (blinkCalibrationSession.kind === "collecting") {
           const phase = blinkCalibrationSession.phase;
+          if (lastGuidedPhase !== phase) {
+            playCueTone();
+            vibrateCue();
+            lastGuidedPhase = phase;
+          }
           blinkCalibrationInstruction.textContent =
             phase === "open"
               ? "Keep your eyes OPEN and look at the screen."
@@ -4484,6 +4503,11 @@ function processFrame(
             Math.ceil((GUIDED_CALIBRATION_VERIFY_MS - heldMs) / 1000),
           );
           const caught = blinkCalibrationSession.blinkState.blinkCount;
+          if (lastGuidedPhase !== "verify") {
+            playCueTone();
+            vibrateCue();
+            lastGuidedPhase = "verify";
+          }
           blinkCalibrationInstruction.textContent =
             "Now blink three times, normally.";
           blinkCalibrationProgress.textContent = `Step 3 of 3 · ${String(secondsLeft)} s left · ${String(caught)} caught. Click anywhere or press Esc to cancel.`;
@@ -5490,6 +5514,9 @@ const OVERLAY_CONTROLS: Record<
       }
       blinkCalibrationSession = null;
       blinkCalibrationRequested = false;
+      // Silently: the cancel is the person's own act, not a boundary
+      // they need announcing.
+      lastGuidedPhase = null;
       // .close(), never `hidden`: hiding an open modal leaves the page
       // inert behind an invisible dialog, the exact defect the KSS
       // dialog's uiGuard pin documents. Closing re-fires the close
