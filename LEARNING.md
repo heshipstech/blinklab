@@ -4702,3 +4702,25 @@ diagnosis that fires on ordinary jank teaches people to distrust it.
 The wiring that counts fed frames and snapshots the closed trace is
 the next slice; guidedCalibration.ts, a detector source, stays
 untouched by design.
+
+## The way out of a dialog says what it costs
+
+A guided calibration could always be cancelled — click anywhere,
+press Escape — but nothing said so on the overlay, and nothing
+afterwards said what a cancel had done. This slice adds the explicit
+way out and its receipt: a Cancel button whose label says on its face
+what a cancel costs ("nothing is stored"), and a status line after
+any cancel path saying nothing was stored and the detector's line is
+unchanged — because an overlay that just vanished could mean stored
+or discarded, and that difference is exactly what the person needed.
+The instruction element becomes an assertive live region for the same
+reason the cued protocol got tones: the person this overlay tells to
+CLOSE their eyes cannot read the next instruction.
+
+One scope decision recorded: the row says `role=dialog`, but 14.0f1
+already learned that a div wearing role=dialog and aria-modal is "the
+hand-rolled imitation" — the words without the focus trap or the
+inert page. Shipping that imitation here to tick a clause would
+repeat the exact defect that row documented, so the dialog conversion
+(native <dialog>, showModal, the Escape register routed through its
+cancel event) is its own next slice rather than a checkbox.
