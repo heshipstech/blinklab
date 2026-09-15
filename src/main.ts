@@ -294,8 +294,14 @@ import {
 import {
   conditionsMismatch,
   guidedCalibrationMetadataRows,
+  separationRatio,
   type ConditionsMismatch,
 } from "./core/blinkCalibrationStamp";
+import {
+  blinkRefusalDetail,
+  calibrationResultLine,
+  calibrationThinNote,
+} from "./core/guidedCalibrationText";
 import {
   STORED_ITEMS,
   eraseButtonLabel,
@@ -2249,6 +2255,20 @@ let guidedCalibrationStartMs: number | null = null;
 // this silently: the escape is the person's own act, not a boundary
 // they need announcing.
 let lastGuidedPhase: "open" | "closed" | "verify" | null = null;
+// What the run saw, for the refusal detail (roadmap 11.6b): how many
+// frames each hold was fed, how many of those carried no measured
+// aperture, and the closed hold's collected trace. Counted here rather
+// than inside the session, because guidedCalibration.ts is a detector
+// source and these facts move no threshold — they only decide whether
+// a refusal gets a second sentence.
+const emptyGuidedRunFacts = () => ({
+  openFedFrames: 0,
+  openNullFrames: 0,
+  closedFedFrames: 0,
+  closedNullFrames: 0,
+  closedApertures: [] as readonly number[],
+});
+let guidedRunFacts = emptyGuidedRunFacts();
 blinkCalibrateButton.addEventListener("click", () => {
   blinkCalibrationRequested = true;
 });
@@ -4383,6 +4403,7 @@ function processFrame(
       if (blinkCalibrationRequested) {
         blinkCalibrationSession = startCalibrationSession(nowMs);
         guidedCalibrationStartMs = nowMs;
+        guidedRunFacts = emptyGuidedRunFacts();
         blinkCalibrationRequested = false;
         if (!blinkCalibrationOverlay.open) {
           blinkCalibrationOverlay.showModal();
@@ -4393,11 +4414,32 @@ function processFrame(
         calibrationActiveThisFrame = calibrationSuppressesReducers(
           blinkCalibrationSession,
         );
+        // Counted on the PRE-step phase — the hold this frame's
+        // aperture was fed into — and snapshotted after, since each
+        // step rebuilds the samples immutably so the last reference IS
+        // the closed hold's trace in arrival order.
+        if (blinkCalibrationSession.kind === "collecting") {
+          if (blinkCalibrationSession.phase === "open") {
+            guidedRunFacts.openFedFrames += 1;
+            if (stabilityMm === null) {
+              guidedRunFacts.openNullFrames += 1;
+            }
+          } else {
+            guidedRunFacts.closedFedFrames += 1;
+            if (stabilityMm === null) {
+              guidedRunFacts.closedNullFrames += 1;
+            }
+          }
+        }
         blinkCalibrationSession = calibrationSessionStep(
           blinkCalibrationSession,
           nowMs,
           stabilityMm,
         );
+        if (blinkCalibrationSession.kind === "collecting") {
+          guidedRunFacts.closedApertures =
+            blinkCalibrationSession.samples.closed;
+        }
         if (blinkCalibrationSession.kind === "done") {
           // The resolve is a boundary too — the moment stored-or-refused
           // exists is exactly when eyes that followed instructions are
@@ -4456,18 +4498,43 @@ function processFrame(
             // its failure is reported in the status rather than lost.
             storedBlinkCalibration = line;
             const persisted = saveBlinkCalibration(line);
-            blinkCalibrationStatus.textContent = persisted
-              ? `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm, the midpoint of your ${result.openMedianMm.toFixed(1)} mm open and ${result.closedMedianMm.toFixed(1)} mm closed aperture. Your detector uses it now and on your next visit.`
-              : `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm. Your detector uses it now, but this browser refused the write, so it will not survive a reload.`;
+            // What the line stood on, beside the line itself (roadmap
+            // 11.6b): n_open, n_closed and the separation, with the
+            // thin warning when a floor was cleared with little to
+            // spare — a run with no margin should not look as settled
+            // as a comfortable one.
+            const reading = {
+              openSampleCount: result.openSampleCount,
+              closedSampleCount: result.closedSampleCount,
+              separationRatio: separationRatio(
+                result.openMedianMm,
+                result.closedMedianMm,
+              ),
+            };
+            const thin = calibrationThinNote(reading);
+            blinkCalibrationStatus.textContent = [
+              persisted
+                ? `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm, the midpoint of your ${result.openMedianMm.toFixed(1)} mm open and ${result.closedMedianMm.toFixed(1)} mm closed aperture. Your detector uses it now and on your next visit.`
+                : `Blink line calibrated at ${result.personalLineMm.toFixed(1)} mm. Your detector uses it now, but this browser refused the write, so it will not survive a reload.`,
+              calibrationResultLine(reading),
+              ...(thin === null ? [] : [thin]),
+            ].join(" ");
             blinkCalibrateButton.textContent = "Recalibrate blinks";
             // A calibration is the only thing that can put this key in
             // storage while the page is open, so the stored-data box is
             // re-probed here the same way the gaze flow does it.
             refreshStoredBox();
           } else {
-            blinkCalibrationStatus.textContent = blinkRefusalMessage(
-              result.reason,
-            );
+            // The flat sentence names the rule that refused; the
+            // detail, when the run's own record supports one, names
+            // what the run looked like — an unmeasured view versus
+            // eyes that closed late. True non-separation gets no
+            // detail, deliberately (guidedCalibrationText.ts).
+            const detail = blinkRefusalDetail(result.reason, guidedRunFacts);
+            blinkCalibrationStatus.textContent = [
+              blinkRefusalMessage(result.reason),
+              ...(detail === null ? [] : [detail]),
+            ].join(" ");
           }
           blinkCalibrationStatus.hidden = false;
         } else if (blinkCalibrationSession.kind === "collecting") {
@@ -5515,8 +5582,10 @@ const OVERLAY_CONTROLS: Record<
       blinkCalibrationSession = null;
       blinkCalibrationRequested = false;
       // Silently: the cancel is the person's own act, not a boundary
-      // they need announcing.
+      // they need announcing. The run facts go with it — a cancelled
+      // run diagnoses nothing.
       lastGuidedPhase = null;
+      guidedRunFacts = emptyGuidedRunFacts();
       // .close(), never `hidden`: hiding an open modal leaves the page
       // inert behind an invisible dialog, the exact defect the KSS
       // dialog's uiGuard pin documents. Closing re-fires the close

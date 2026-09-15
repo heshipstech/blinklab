@@ -49,6 +49,12 @@ test("the blink calibration opens, runs the phases, and refuses with no face", a
   const status = page.getByTestId("blink-calibration-status");
   await expect(status).toBeVisible({ timeout: 20_000 });
   await expect(status).toContainText("did not get enough");
+  // The refusal detail, read from what the run saw (roadmap 11.6b):
+  // the fake camera has no face, so EVERY fed frame carried no
+  // measured aperture, and the detail must blame the view rather than
+  // the eyes. This is the wiring pin — the sentence itself is
+  // unit-pinned in guidedCalibrationText.test.ts.
+  await expect(status).toContainText("no measured view");
   await expect(overlay).toBeHidden();
 
   // A refusal is not a line: nothing reached storage, and the button
