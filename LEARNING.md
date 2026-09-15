@@ -4638,3 +4638,22 @@ write while the presence and fixture pins bind to main.ts, which this
 increment does not touch. The wiring is the next increment, not a
 forgotten half: a declared key nothing emits yet is a promise with a
 named follow-through, merged minutes apart.
+
+## The marker is wired at both exits, because a cancel is also a gap
+
+The calibration marker's builder landed one merge ago; this increment
+wires it. main.ts now remembers when a guided calibration started, and
+closes its span at BOTH exits: the frame the session resolves — ready or
+refused alike, on the frame clock — and the overlay's cancel path, where
+Esc or a click ends the calibration between frames. The cancel matters
+because a cancelled calibration still fed the reducers null while it
+ran; forgetting it would recreate exactly the ambiguity the marker
+exists to close, for exactly the sessions where something went wrong.
+The cancel has no frame clock of its own, so it stamps the record clock
+the way the mark button does, clamped so a span can never run backwards
+when a calibration is cancelled inside its first second.
+
+With this, every clause of roadmap 11.6a is built and held by a test:
+the settle window, the soundness ceiling, the verification phase, the
+verification count in the export, the reducers fed null, and now the
+marker. The row ticks.

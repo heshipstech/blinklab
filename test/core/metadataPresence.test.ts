@@ -13,6 +13,7 @@ import {
 import { kssMetadataRows, type KssRating } from "../../src/core/kss";
 import {
   calibrationMetadataRows,
+  calibrationWindowMetadataRows,
   cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
@@ -27,6 +28,7 @@ import {
   wakeLockMetadataRows,
   type CameraFrameDriver,
   type DeviceInfo,
+  type GuidedCalibrationSpan,
   type MeasurementFrame,
   type PoseFrameCounts,
   type SessionMarker,
@@ -163,6 +165,8 @@ type Shape = {
   orientationFlips: number;
   /** What the wake lock did; null off the camera (13.1). */
   wakeLock: WakeLockOutcome | null;
+  /** Guided calibrations run mid-session; empty when none ran (11.6a). */
+  calibrationSpans: readonly GuidedCalibrationSpan[];
   recordsDropped: number;
   kssBefore: KssRating | null;
   kssAfter: KssRating | null;
@@ -226,6 +230,8 @@ const MINIMAL_CAMERA: Shape = {
     reacquisitions: 0,
     lastError: null,
   },
+  // A thin session never opened the Calibrate flow: no span, no rows.
+  calibrationSpans: [],
   recordsDropped: 0,
   kssBefore: null,
   kssAfter: null,
@@ -311,6 +317,9 @@ const FULL: Shape = {
     reacquisitions: 2,
     lastError: null,
   },
+  // One guided calibration ran mid-session, so the marker rows appear
+  // in the session where every optional thing happened (11.6a).
+  calibrationSpans: [{ startMs: 30_000, endMs: 43_500 }],
   recordsDropped: 12,
   kssBefore: 3,
   kssAfter: 4,
@@ -381,6 +390,7 @@ function metadataRows(shape: Shape): string[] {
       shape.gazeQuality,
     ),
     ...wakeLockMetadataRows(shape.wakeLock),
+    ...calibrationWindowMetadataRows(shape.calibrationSpans),
   ];
 }
 
@@ -406,6 +416,7 @@ const CALLED_HERE = [
   "cueMetadataRows",
   "gazeCalibrationMetadataRows",
   "wakeLockMetadataRows",
+  "calibrationWindowMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

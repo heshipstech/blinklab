@@ -17,6 +17,7 @@ import {
 } from "../../src/core/rulerFit";
 import {
   calibrationMetadataRows,
+  calibrationWindowMetadataRows,
   cueMetadataRows,
   gazeCalibrationMetadataRows,
   deliveryMetadataRows,
@@ -175,6 +176,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "cueMetadataRows",
   "gazeCalibrationMetadataRows",
   "wakeLockMetadataRows",
+  "calibrationWindowMetadataRows",
 ];
 
 /**
@@ -254,6 +256,11 @@ export function fixtureCsv(session: FixtureSession): string {
       reacquisitions: 0,
       lastError: null,
     }),
+    // No fixture session runs a guided calibration mid-stream, so the
+    // marker builder is called with nothing and writes nothing — the
+    // guided-line precedent: called anyway so the order cannot drift
+    // from the page, and the committed bytes stay unchanged (11.6a).
+    ...calibrationWindowMetadataRows([]),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);
