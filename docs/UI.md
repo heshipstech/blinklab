@@ -402,7 +402,8 @@ It was a panel until 16 August, and because the export waits on its answer, a
 card that can run past the fold plus a question that gave no sign of itself
 produced a report that Export CSV was broken when it was only waiting.
 
-Since roadmap 14.0f1 it is a **native `<dialog>`** opened with `showModal()`.
+Since roadmap 14.0f1 it is a **native `<dialog>`** (`kss-dialog`) opened with
+`showModal()`.
 It was a div carrying `role="dialog"` and `aria-modal="true"`, which is the
 hand-rolled imitation: the words were right and none of the behaviour came with
 them, so the page behind stayed reachable by Tab and a keyboard could walk out
@@ -563,7 +564,7 @@ may close it, and `tools/uiGuard.mjs` holds that register to `src/main.ts` in
 both directions. The sleepiness dialog is the one entry marked undismissible,
 for the reason given in its own section above.
 
-### Calibration overlay
+### Calibration overlay (`calibration-overlay`)
 
 Opens on Calibrate gaze. Closes on any click, on Escape, or on completion.
 
@@ -572,7 +573,7 @@ Opens on Calibrate gaze. Closes on any click, on Escape, or on completion.
 | Dot      | Moves through nine positions at 10%, 50%, 90% of each axis     |
 | Progress | `Follow the dot (N/9). Click anywhere or press Esc to cancel.` |
 
-### Heatmap overlay
+### Heatmap overlay (`heatmap-overlay`)
 
 Opens on Gaze heatmap. Requires a calibration profile. Closes on any click or
 on Escape.
@@ -583,6 +584,64 @@ on Escape.
 | Caption in card | `Look at the shapes, hold on each. Click anywhere or press Esc to close.` |
 | Caption         | `Gaze heatmap accumulating over a test image`                             |
 | Scanpath slider | Visible only after samples exist. Shows `Replay at X s of Y s`            |
+
+### Blink calibration dialog (`blink-calibration-overlay`)
+
+Opens on Calibrate blinks, in the Blinks box. A **native `<dialog>`** opened
+with `showModal()` (roadmap 11.6b): focus stays inside it and the page behind
+is inert until it closes. The run has three phases — an instructed open stare,
+a deliberate closed hold, then three verification blinks — and every phase
+turn lands as a cue tone and, where the device vibrates, a buzz, because the
+person this dialog instructs to close their eyes cannot read the next
+instruction. The instruction line is an assertive live region for the same
+reason. The result never renders in the dialog: stored line, refusal detail
+or cancellation notice all land in the Blinks box status line, where they
+survive the dialog's closing.
+
+| Element     | Content                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Instruction | The current phase's words, `blink-calibration-instruction`, spoken by screen readers as they change |
+| Progress    | The phase's remaining need, including the caught-blink count in the verification phase              |
+| Cancel      | `Cancel — nothing is stored`, `cancel-blink-calibration`                                            |
+
+Closes four ways, all funnelled through one closer so the session, its run
+facts and the dialog can never drift apart: the Cancel button, Escape, a click
+on the backdrop, and its own resolve. A reset — a new source starting — goes
+through the same closer (roadmap 14.0e), so a calibration can never survive
+into the next session, and the person is told nothing was stored.
+
+### Light stimulus overlay (`light-overlay`)
+
+Opens on Light response. Refused unless a camera session is running and
+recording (roadmap 14.0a): a stimulus whose response cannot reach an export
+would be a flash with no record. The overlay IS the stimulus — its background
+is the schedule's phase colour, it sits above every other overlay because it
+must own the screen's luminance, and fullscreen is requested where the
+browser allows it. Text renders only in the phases it cannot corrupt:
+
+| Phase    | On screen                                                                                            |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| `settle` | `Keep still and look at the screen. The test begins in a moment. Tap anywhere or press Esc to stop.` |
+| `dark`   | A flat dark screen, no text                                                                          |
+| `bright` | A flat bright screen, no text                                                                        |
+| `done`   | `Finished. Tap anywhere or press Esc, then export your session.`                                     |
+
+A tap anywhere or Escape ends it — a phone has no Esc, and the overlay's own
+words promise the exit (roadmap 14.0b).
+
+### Cue protocol overlay (`cue-overlay`)
+
+Opens on Cued protocol, under the same running-and-recording guards as the
+light stimulus. A dark screen with one large centred instruction
+(`cue-message`) that walks the 11.0a/b cue schedule; a tone sounds at every
+cue boundary except the opening settle, because closed eyes cannot read a
+screen and a beep with no instruction teaches the ear to ignore beeps. The
+settle reads `Hold still and look at the screen. The cues begin once the
+baseline has learned your open eyes.`, and the end reads `Done. Press Escape
+or tap to close, then stop the camera and export the session.`; the cue texts
+between them come from `src/core/cueSchedule.ts`, which owns every string. A
+tap anywhere or Escape ends it, and the start time stays recorded either way,
+so the export can say the protocol ran even for an abandoned run.
 
 ---
 
@@ -596,6 +655,10 @@ on Escape.
 | `running`                                       | Everything                                                   |
 | Calibrating                                     | Everything, plus the calibration overlay on top              |
 | Heatmap open                                    | Everything, plus the heatmap overlay on top                  |
+| Blink calibrating                               | Everything, plus the blink calibration dialog, page inert    |
+| Sleepiness question up                          | Everything, plus the sleepiness dialog, page inert           |
+| Light stimulus running                          | The light overlay owns the whole screen                      |
+| Cue protocol running                            | The cue overlay, under the light overlay's layer             |
 
 ---
 
