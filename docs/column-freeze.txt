@@ -14,7 +14,7 @@ field out lifts its constraint without deleting its history.
 
 How to sign
 -----------
-One field per line, inside the SIGNATURES block below, in exactly this
+One field per line, inside the signatures block at the end, in exactly this
 shape (the guard parses nothing outside that block):
 
   fieldName | signed in 20 September 2026
