@@ -8,7 +8,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > Revised 15 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
-Read in full on 9 September 2026, claims `67869dd1`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 15 September 2026, claims `df5a7f00`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 **Live demo: https://heshipstech.github.io/blinklab/**. It is republished automatically once continuous integration passes on main, and only then: since 6 September 2026 the deploy waits for the CI run to finish and publishes the exact commit that run tested. You need a webcam and a browser that allows camera access.
 
@@ -698,6 +698,31 @@ npm run dev
 Open the local URL that Vite prints, then allow camera access.
 
 `npm test` runs the unit tests. `npm run e2e` runs the end to end tests, which drive the built app in a headless browser with a fake camera; the first run needs `npx playwright install chromium`.
+
+### Reproduce the exact page
+
+Every export from the deployed page names the commit that built it,
+twice: a `# app_commit:` line in the file's own header, and a
+`build-commit` meta tag in the page it came from. To stand in front
+of exactly that page again:
+
+```
+git checkout <app_commit>
+npm ci
+npm run build
+npm run preview
+```
+
+`npm ci` installs the locked dependency tree rather than resolving a
+fresh one, and `npm run preview` serves the built `dist` the way the
+deployed site does. One honesty about the stamp itself: it is written
+into the page at build time from the commit CI built, so your local
+rebuild's own exports will say `dev` rather than repeat the hash —
+the provenance of a rebuild is the checkout you made, not a stamp the
+local build could only copy without checking. When a run becomes
+published evidence its commit is also tagged (roadmap 11.8a), and a
+guard holds every plan that names a build to a tag that exists, so
+`<app_commit>` in any frozen plan is a name `git tag` can verify.
 
 ## How this repo works
 
