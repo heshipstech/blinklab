@@ -6,6 +6,7 @@ import {
 } from "../../src/core/constants";
 import {
   GUIDED_CALIBRATION_THIN_FACTOR,
+  blinkRefusalDetail,
   calibrationResultLine,
   calibrationThinNote,
 } from "../../src/core/guidedCalibrationText";
@@ -106,5 +107,121 @@ describe("the thin note", () => {
     // could not be computed gets the unknown wording in the result
     // line, not a thinness verdict it never earned.
     expect(calibrationThinNote({ ...solid, separationRatio: null })).toBeNull();
+  });
+});
+
+describe("the refusal detail, read from what the run saw", () => {
+  // Roadmap 11.6b's conditional refusals: the flat sentence names the
+  // rule that refused; this detail names what the RUN looked like —
+  // a view the camera rarely measured (pose rejections, bad light)
+  // versus eyes that closed late versus true non-separation, which
+  // keeps the flat sentence because there is nothing more to say.
+  const quiet = {
+    openFedFrames: 90,
+    openNullFrames: 0,
+    closedFedFrames: 90,
+    closedNullFrames: 0,
+    closedApertures: Array.from({ length: 60 }, () => 1),
+  };
+
+  it("blames the unmeasured view when most open-step frames had none", () => {
+    const detail = blinkRefusalDetail("not-enough-open", {
+      ...quiet,
+      openFedFrames: 90,
+      openNullFrames: 46,
+    });
+    expect(detail).toContain("open step");
+    expect(detail).toContain("no measured view");
+  });
+
+  it("stays silent at exactly half unmeasured, and speaks just past it", () => {
+    // The boundary is a strict majority: half the frames unmeasured is
+    // common on a struggling machine and not yet evidence about the
+    // face, so the flat sentence stands there.
+    expect(
+      blinkRefusalDetail("not-enough-open", {
+        ...quiet,
+        openFedFrames: 90,
+        openNullFrames: 45,
+      }),
+    ).toBeNull();
+    expect(
+      blinkRefusalDetail("not-enough-closed", {
+        ...quiet,
+        closedFedFrames: 90,
+        closedNullFrames: 46,
+      }),
+    ).toContain("closed step");
+  });
+
+  it("reads a falling closed trace as eyes that closed late", () => {
+    const late = Array.from({ length: 30 }, () => 8).concat(
+      Array.from({ length: 30 }, () => 1),
+    );
+    const detail = blinkRefusalDetail("closure-not-registered", {
+      ...quiet,
+      closedApertures: late,
+    });
+    expect(detail).toContain("closed late");
+    expect(detail).toContain("as soon as the screen asks");
+  });
+
+  it("pins the late-closure boundary on the halves' medians", () => {
+    // Second-half median at exactly half the first's is not yet "far
+    // below"; a hair under is. The factor is a strict comparison so
+    // the boundary cannot drift silently.
+    const at = Array.from({ length: 30 }, () => 8).concat(
+      Array.from({ length: 30 }, () => 4),
+    );
+    const under = Array.from({ length: 30 }, () => 8).concat(
+      Array.from({ length: 30 }, () => 3.99),
+    );
+    expect(
+      blinkRefusalDetail("closure-not-registered", {
+        ...quiet,
+        closedApertures: at,
+      }),
+    ).toBeNull();
+    expect(
+      blinkRefusalDetail("closure-not-registered", {
+        ...quiet,
+        closedApertures: under,
+      }),
+    ).toContain("closed late");
+  });
+
+  it("says nothing for true non-separation: a flat closed trace", () => {
+    // The flat refusal sentence already names non-separation honestly;
+    // a detail invented on top of it would be this module guessing.
+    expect(
+      blinkRefusalDetail("closure-not-registered", {
+        ...quiet,
+        closedApertures: Array.from({ length: 60 }, () => 6),
+      }),
+    ).toBeNull();
+  });
+
+  it("says nothing on an empty closed trace, rather than diagnosing nothing", () => {
+    expect(
+      blinkRefusalDetail("closure-not-registered", {
+        ...quiet,
+        closedApertures: [],
+      }),
+    ).toBeNull();
+  });
+
+  it("adds nothing to reasons whose sentence already says it all", () => {
+    expect(
+      blinkRefusalDetail("line-above-open-floor", {
+        ...quiet,
+        openNullFrames: 89,
+      }),
+    ).toBeNull();
+    expect(
+      blinkRefusalDetail("verification-failed", {
+        ...quiet,
+        closedApertures: [8, 8, 1, 1],
+      }),
+    ).toBeNull();
   });
 });
