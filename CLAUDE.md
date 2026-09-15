@@ -36,6 +36,17 @@ still running, each check-in re-arms itself at +5; merge the moment it
 is green. Never one long timer per cycle — the merge should land within
 minutes of CI finishing, not whenever a generous timer happens to fire.
 
+**Maximise the contribution yield of every increment** (owner
+directive, 15 September 2026). A rebase merge lands every commit of a
+PR on `main`, and each authored commit there counts, so an increment is
+split into as many honest, coherent commits as it naturally divides
+into — the pure module, its tests, the SPEC/contract rows, the docs and
+count cascade — each with its own real subject, all in the one PR. Only
+the PR head must pass the guards; the intermediate commits need only be
+honest. Merges stay rebase (a merge commit would add one count but
+break the linear history the guards and branch resets lean on), and an
+issue is filed when a real follow-up exists — never to farm the graph.
+
 ## The floor under "smallest"
 
 An increment cannot be smaller than what the guards hold together in
