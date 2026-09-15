@@ -32,6 +32,7 @@ from blinklab.drozy import (
     SessionFeatures,
     load_all,
 )
+from blinklab.loader import cohort_commit_line
 from blinklab.stats import (
     binomial_at_least,
     holm,
@@ -130,11 +131,11 @@ def _shuffled_null(
     return seen[-1], seen[len(seen) // 2]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("measured_dir")
     parser.add_argument("kss_file")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     every = load_all(args.measured_dir, args.kss_file)
     usable = [s for s in every if s.usable]
@@ -149,6 +150,13 @@ def main() -> int:
         f"   below {MIN_USABLE_FPS} fps, issue #192"
     )
     print(f"  analysed            {len(usable)}")
+    # Roadmap 11.8a: the correlations below average across sessions, so
+    # the report says whether one build recorded them. STATED, never
+    # refused, in this analyser: the published corpus predates the
+    # build stamp, and a refusal here would break re-derivation of the
+    # published result.
+    commits = sorted({s.app_commit for s in every if s.app_commit is not None})
+    print(f"  {cohort_commit_line(commits)}")
     if not usable:
         print("\nNothing usable. Stopping rather than reporting on nothing.")
         return 1
