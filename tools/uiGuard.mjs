@@ -197,3 +197,26 @@ export function resetSessionBody(mainSource) {
   if (end === -1) return null;
   return mainSource.slice(start, end + 2);
 }
+
+/**
+ * Every overlay or dialog handle docs/UI.md mentions in backticks,
+ * once each.
+ *
+ * Roadmap 14.0c. Section 6 described two overlays while the escape
+ * register carried six: four screens the page raises had no section,
+ * and nothing could redden when the next one went missing too. The
+ * document now writes each screen's handle into its section, and this
+ * reads them back so the test next door can hold the document to
+ * `overlayHandles` in both directions — a screen with no section is
+ * undocumented, and a documented handle the page no longer raises is
+ * a fossil. Mentions anywhere in the document count, deliberately:
+ * the sleepiness dialog is documented inside the Session card's own
+ * section rather than under Region 4, and a reader that only accepted
+ * one heading shape would force a restructure to satisfy a guard.
+ */
+export function documentedOverlayIds(uiDoc) {
+  const found = [...uiDoc.matchAll(/`([a-z0-9-]+-(?:overlay|dialog))`/g)].map(
+    (m) => m[1],
+  );
+  return [...new Set(found)];
+}

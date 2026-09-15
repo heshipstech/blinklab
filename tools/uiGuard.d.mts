@@ -44,3 +44,6 @@ export function missingRepoFiles(
 
 /** The body of main.ts's resetSession, or null when it is not declared. */
 export function resetSessionBody(mainSource: string): string | null;
+
+/** Every overlay or dialog handle docs/UI.md mentions in backticks, once each. */
+export function documentedOverlayIds(uiDoc: string): string[];

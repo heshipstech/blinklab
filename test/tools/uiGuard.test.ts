@@ -5,6 +5,7 @@ import {
   boxHeadings,
   buttonStrings,
   documentedBoxes,
+  documentedOverlayIds,
   fossils,
   hiddenAssignments,
   idleStrings,
@@ -202,6 +203,42 @@ describe("the dialog is closed, never hidden", () => {
   it("still sees the ordinary elements that ARE hidden", () => {
     // So the check above cannot pass because the reader broke.
     expect(hiddenAssignments(main)).toContain("alertBanner");
+  });
+});
+
+// Roadmap 14.0c: docs/UI.md claims to describe every screen the page
+// raises over itself, and its Region 4 described two while the escape
+// register carried six. The document now writes each screen's handle
+// into its section, and this holds the two sets to each other the way
+// the boxes, buttons and idle strings already are.
+
+describe("every raised screen has its section in docs/UI.md", () => {
+  it("reads the handles the document mentions, once each", () => {
+    const doc =
+      "### Calibration overlay (`calibration-overlay`)\n" +
+      "prose about `kss-dialog`, and `calibration-overlay` again\n";
+    expect(documentedOverlayIds(doc)).toEqual([
+      "calibration-overlay",
+      "kss-dialog",
+    ]);
+  });
+
+  it("ignores backticks that are not screen handles", () => {
+    expect(
+      documentedOverlayIds("uses `overlayEscape.ts` and `calibration-dot`"),
+    ).toEqual([]);
+  });
+
+  it("holds the document and the page to each other", () => {
+    // Both directions: a screen the page raises with no mention in
+    // the document is undocumented, and a documented handle the page
+    // no longer raises is a fossil that reads as current.
+    const onThePage = [...overlayHandles(main)].sort();
+    const documented = [...documentedOverlayIds(uiDoc)].sort();
+    expect(
+      documented,
+      "screens docs/UI.md documents versus screens main.ts raises",
+    ).toEqual(onThePage);
   });
 });
 
