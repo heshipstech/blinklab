@@ -205,6 +205,9 @@ export function fixtureCsv(session: FixtureSession): string {
       session.interruptionTimesMs,
       session.measurementFrame,
       session.poseFrames,
+      // No fixture session rotated the screen, so every one carries the
+      // orientation_flips row reading 0 — the unconditional key's floor.
+      0,
     ),
     ...featureRecordOverrunRows(0),
     ...kssMetadataRows(session.kssBefore, session.kssAfter, null),

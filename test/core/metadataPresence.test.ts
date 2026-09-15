@@ -157,6 +157,8 @@ type Shape = {
   interruptionTimesMs: readonly (number | null)[];
   measurementFrame: MeasurementFrame | null;
   poseFrames: PoseFrameCounts;
+  /** Screen-orientation changes counted during the session (13.1). */
+  orientationFlips: number;
   recordsDropped: number;
   kssBefore: KssRating | null;
   kssAfter: KssRating | null;
@@ -208,6 +210,9 @@ const MINIMAL_CAMERA: Shape = {
   interruptionTimesMs: [],
   measurementFrame: null,
   poseFrames: { gated: 0, valid: 0 },
+  // A thin session where the phone never rotated: the row is still
+  // written, reading 0, because orientation_flips is unconditional.
+  orientationFlips: 0,
   recordsDropped: 0,
   kssBefore: null,
   kssAfter: null,
@@ -279,6 +284,9 @@ const FULL: Shape = {
   interruptionTimesMs: [12_000],
   measurementFrame: { widthPx: 1280, heightPx: 720 },
   poseFrames: { gated: 100, valid: 98 },
+  // The phone rotated twice mid-session: the count is non-zero in the
+  // session where every optional thing happened at least once.
+  orientationFlips: 2,
   recordsDropped: 12,
   kssBefore: 3,
   kssAfter: 4,
@@ -333,6 +341,7 @@ function metadataRows(shape: Shape): string[] {
       shape.interruptionTimesMs,
       shape.measurementFrame,
       shape.poseFrames,
+      shape.orientationFlips,
     ),
     ...featureRecordOverrunRows(shape.recordsDropped),
     ...kssMetadataRows(shape.kssBefore, shape.kssAfter, shape.kssAfterAtMs),

@@ -339,6 +339,12 @@ export function sessionMetadataRows(
   interruptionTimesMs: readonly (number | null)[],
   measurementFrame: MeasurementFrame | null,
   poseFrames: PoseFrameCounts,
+  // A session-scoped count of screen-orientation changes ("flips"),
+  // counted in main.ts and passed in because the reading touches
+  // `screen.orientation`. Required rather than defaulted: a session that
+  // rotated must not read as 0 flips because the wiring lapsed — the
+  // absent-versus-zero distinction this export keeps everywhere else.
+  orientationFlips: number,
 ): string[] {
   const duration = observedDurationSeconds(records);
   const median = medianIrisWidthPx(irisWidths);
@@ -382,6 +388,11 @@ export function sessionMetadataRows(
     // from the one array, so they cannot disagree — the same argument
     // that keeps the derived verdict out of the export.
     line("visibility_changes", interruptionTimesMs.length),
+    // A phone that rotated mid-session says so, beside the visibility
+    // count it mirrors (roadmap 13.1). A flip moves the frame the
+    // measurement sits in, so a reader who finds one knows the geometry
+    // changed under the session rather than staying still.
+    line("orientation_flips", orientationFlips),
   ];
   if (irisWidths.length >= IRIS_SAMPLE_CAP) {
     // The blink log's WARNING precedent: a truncated record says so in

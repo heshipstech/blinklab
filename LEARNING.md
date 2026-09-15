@@ -4490,3 +4490,39 @@ whole of the wiring — no repaint to arrange. The real rear-camera
 behaviour stays a manual check on a phone, because that is the one place
 a `facingMode` of "environment" actually arrives; what ships here is the
 rule that will be right when it does.
+
+## A phone that rotates mid-session says so in the export
+
+`screen.orientation` was read once, at session start, and written into
+the export as a single `orientation` word. But a phone can turn while a
+measurement runs, and a rotation moves the frame the whole measurement
+sits in — the same geometry the iris ruler and the on-screen check are
+expressed against — so a session that began in portrait and ended in
+landscape carried one orientation word and hid the fact that it changed.
+This increment (roadmap 13.1, the orientation-flip slice of the survival
+kit) counts those changes and carries the count into the file as a new
+`orientation_flips` key, the visibility-counter's twin.
+
+The design mirrors the visibility counter exactly. A module-level
+variable in main.ts is zeroed on session start and incremented by one
+listener on `screen.orientation`'s "change" event, installed once at
+module init; the export's row builder in core turns the number it is
+handed into a row placed right beside `visibility_changes`. Two habits
+carried it. The listener is impure — it touches `screen`, which older
+Safari does not expose — so it lives in main.ts and is guarded so it
+never throws: a browser with no `screen.orientation` simply reports no
+flips, the true statement rather than a gap, the same silence deviceInfo
+already keeps for the `orientation` field. And the count is passed into
+the core builder as a REQUIRED argument rather than defaulted, so a
+session that rotated can never read as 0 flips because the wiring lapsed
+— the absent-versus-zero distinction this export keeps everywhere else.
+
+Adding an unconditional export key is never one edit. `orientation_flips`
+is written by every export, so it cascaded through SPEC's key table and
+its when-written column, the presence test's three sessions, the five
+verdict-fixture CSVs (regenerated from the builder, not hand-typed), and
+the Python contract's always-written list — the same cascade
+`camera_frame_driver` and the visibility counter each walked before it.
+Nothing reads the key yet, which is honest: it is a fact recorded for a
+reader, like `orientation` itself, and the analysis track will read it
+the day a claim needs it.

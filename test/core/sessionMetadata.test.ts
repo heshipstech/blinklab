@@ -204,6 +204,7 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# observed_duration_seconds: 2.000");
     expect(rows).toContain("# records: 3");
@@ -225,6 +226,7 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# markers: 2");
     expect(rows).toContain("# marker_1_seconds: 42.000");
@@ -247,6 +249,7 @@ describe("session rows", () => {
       [43000, 50000],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# marker_1_visibility_changes: 0");
     expect(rows).toContain("# marker_2_visibility_changes: 2");
@@ -263,6 +266,7 @@ describe("session rows", () => {
       [12500, 80000],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# visibility_changes: 2");
     expect(rows).toContain("# interruption_1_seconds: 12.500");
@@ -274,6 +278,7 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(quiet).toContain("# visibility_changes: 0");
     expect(quiet).not.toContain("interruption_");
@@ -291,6 +296,7 @@ describe("session rows", () => {
       [null, 80000],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# visibility_changes: 2");
     expect(rows).toContain("# interruption_1_seconds: unknown");
@@ -298,11 +304,48 @@ describe("session rows", () => {
     expect(rows).not.toContain("interruption_1_seconds: 0.000");
   });
 
+  it("carries the orientation flip count it was handed (roadmap 13.1)", () => {
+    // A phone that rotated mid-session says so in the file, beside the
+    // visibility count it mirrors. The count is measured in main.ts
+    // because the reading touches screen.orientation; the builder just
+    // writes the number it is given.
+    const rotated = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+      3,
+    ).join("\n");
+    expect(rotated).toContain("# orientation_flips: 3");
+    // Unconditional, and 0 is a real answer rather than an absent row: a
+    // session where the screen never turned still carries it.
+    const still = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [],
+      FRAME,
+      NO_POSE,
+      0,
+    ).join("\n");
+    expect(still).toContain("# orientation_flips: 0");
+  });
+
   it("reports the pose-valid fraction, and absence is unknown, never zero", () => {
-    const rows = sessionMetadataRows(records, [30], [], [], FRAME, {
-      gated: 4,
-      valid: 3,
-    }).join("\n");
+    const rows = sessionMetadataRows(
+      records,
+      [30],
+      [],
+      [],
+      FRAME,
+      {
+        gated: 4,
+        valid: 3,
+      },
+      0,
+    ).join("\n");
     expect(rows).toContain("# pose_valid_fraction: 0.750");
     const ungated = sessionMetadataRows(
       records,
@@ -311,6 +354,7 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     // A gate that never ran judged nothing. Rendering that as 0.000
     // would read as "every frame failed", the exact opposite.
@@ -330,11 +374,12 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("median_iris_width_note");
     expect(rows).toContain("not sampled");
     expect(
-      sessionMetadataRows(records, [30], [], [], FRAME, NO_POSE).join("\n"),
+      sessionMetadataRows(records, [30], [], [], FRAME, NO_POSE, 0).join("\n"),
     ).not.toContain("median_iris_width_note");
   });
 
@@ -351,6 +396,7 @@ describe("session rows", () => {
       [],
       FRAME,
       NO_POSE,
+      0,
     ).join("\n");
     expect(rows).toContain("# measurement_frame: 1920x1080");
     expect(rows).toContain("# median_iris_width_px: 26.0");
@@ -358,12 +404,14 @@ describe("session rows", () => {
 
   it("says the frame is unknown rather than guessing at the canvas", () => {
     expect(
-      sessionMetadataRows(records, [26], [], [], null, NO_POSE).join("\n"),
+      sessionMetadataRows(records, [26], [], [], null, NO_POSE, 0).join("\n"),
     ).toContain("# measurement_frame: unknown");
   });
 
   it("survives a session that recorded nothing", () => {
-    const rows = sessionMetadataRows([], [], [], [], null, NO_POSE).join("\n");
+    const rows = sessionMetadataRows([], [], [], [], null, NO_POSE, 0).join(
+      "\n",
+    );
     expect(rows).toContain("# observed_duration_seconds: unknown");
     expect(rows).toContain("# records: 0");
     expect(rows).toContain("# median_iris_width_px: unknown");
