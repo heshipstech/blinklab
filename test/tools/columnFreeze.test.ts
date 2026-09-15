@@ -10,7 +10,7 @@ import {
   readManifest,
   signatureBlock,
 } from "../../tools/columnFreeze.mjs";
-import { repoRoot } from "../../tools/resultGuard.mjs";
+import { readRepoFile, repoRoot } from "../../tools/resultGuard.mjs";
 
 // Roadmap 12.17, the column-freeze manifest for the v2 corpus read.
 // The tool and this test land now; the freeze itself is the OWNER's
@@ -127,6 +127,19 @@ describe("the reader itself", () => {
     // thing, so a reshaped CSV_COLUMNS literal cannot quietly empty
     // the watch and leave every verdict vacuously green.
     expect(liveColumns(root)).toEqual([...CSV_COLUMNS]);
+  });
+});
+
+describe("the corpus runner is wired to the freeze", () => {
+  it("asks for the verdict before anything expensive, and refuses on it", () => {
+    // The verdict function is tested above; this pins that the runner
+    // actually CALLS it, read from the runner's own source the way the
+    // model-provenance pins read the engine — a guard the runner does
+    // not consult is a manifest nobody enforces.
+    const runner = readRepoFile("tools/measure_corpus.mjs", root);
+    expect(runner).toContain('from "./columnFreeze.mjs"');
+    expect(runner).toContain("freezeVerdict(readManifest(");
+    expect(runner).toContain("console.error(freeze.why)");
   });
 });
 
