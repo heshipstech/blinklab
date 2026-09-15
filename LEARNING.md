@@ -4724,3 +4724,25 @@ inert page. Shipping that imitation here to tick a clause would
 repeat the exact defect that row documented, so the dialog conversion
 (native <dialog>, showModal, the Escape register routed through its
 cancel event) is its own next slice rather than a checkbox.
+
+## The second dialog inherits the first one's scars
+
+The blink calibration overlay is now the page's second native
+<dialog>, and the conversion is mostly a catalogue of what the first
+one (the KSS question, 14.0f1) already learned. showModal() brings
+the focus trap and the inert page, which is what the roadmap's
+role=dialog clause meant: mid-calibration, Tab cannot wander onto the
+export button behind a screen telling you to close your eyes. The
+uiGuard rule that a dialog is closed with .close() and never `hidden`
+— because a hidden open modal leaves the page inert behind an
+invisible element — now pins this element too, in the same test.
+
+The one new piece of design: every way the dialog can close funnels
+through the one closer in OVERLAY_CONTROLS, including the browser's
+own close watcher via the dialog's close event. Without that route, a
+close the page did not perform would leave the calibration session
+stepping behind a vanished overlay, resolving later into a status
+nobody is looking at. The closer is safe to re-enter — its span,
+status and session writes are all guarded on state the first entry
+clears — so the done path closing the dialog cannot stamp a
+cancellation on top of a result.
