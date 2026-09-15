@@ -2250,19 +2250,40 @@ const blinkCalibrationStatus = document.createElement("p");
 blinkCalibrationStatus.dataset.testid = "blink-calibration-status";
 blinkCalibrationStatus.hidden = true;
 
-const blinkCalibrationOverlay = document.createElement("div");
+// A native <dialog>, the 14.0f1 lesson applied to this screen: a div
+// wearing role="dialog" is the hand-rolled imitation — the words
+// without the focus trap or the inert page. showModal() brings both,
+// which is what the row's dialog clause MEANT: mid-calibration, Tab
+// cannot wander onto the export button behind a screen telling you to
+// close your eyes. The UA centers a dialog and sizes it to fit, so the
+// full-screen shape is stated explicitly below.
+const blinkCalibrationOverlay = document.createElement("dialog");
 blinkCalibrationOverlay.dataset.testid = "blink-calibration-overlay";
-blinkCalibrationOverlay.hidden = true;
-// No inline `display` here on purpose: an inline display would beat the
-// [hidden] rule, so a "hidden" overlay would keep covering the page and
-// swallowing clicks. The gaze overlay learned this; the centering lives
-// on the inner element instead.
+blinkCalibrationOverlay.setAttribute("aria-label", "Guided blink calibration");
 Object.assign(blinkCalibrationOverlay.style, {
   position: "fixed",
   inset: "0",
+  width: "100%",
+  height: "100%",
+  maxWidth: "none",
+  maxHeight: "none",
+  margin: "0",
+  border: "none",
+  padding: "0",
   background: "rgba(0, 0, 0, 0.88)",
   zIndex: "10",
   cursor: "pointer",
+});
+// EVERY way this dialog closes funnels through the one closer: the
+// click, the Cancel button, the Escape register, and — this listener —
+// the browser's own close watcher, should it win the race with the
+// register. Without it a close the page did not perform would leave
+// the session stepping behind a vanished overlay, resolving later into
+// a status nobody is looking at. The closer is safe to re-enter: its
+// span, status and session writes are all guarded on state that the
+// first entry clears.
+blinkCalibrationOverlay.addEventListener("close", () => {
+  OVERLAY_CONTROLS["blink-calibration-overlay"].close();
 });
 const blinkCalibrationInner = document.createElement("div");
 Object.assign(blinkCalibrationInner.style, {
@@ -4356,7 +4377,9 @@ function processFrame(
         blinkCalibrationSession = startCalibrationSession(nowMs);
         guidedCalibrationStartMs = nowMs;
         blinkCalibrationRequested = false;
-        blinkCalibrationOverlay.hidden = false;
+        if (!blinkCalibrationOverlay.open) {
+          blinkCalibrationOverlay.showModal();
+        }
         blinkCalibrationStatus.hidden = true;
       }
       if (blinkCalibrationSession !== null) {
@@ -4384,8 +4407,14 @@ function processFrame(
             ];
             guidedCalibrationStartMs = null;
           }
+          // Session nulled BEFORE the close: closing fires the dialog's
+          // close event, which re-enters the one closer, and the closer
+          // reads the null as "nothing in flight" — so a RESOLVED run
+          // never gets the cancellation status on top of its result.
           blinkCalibrationSession = null;
-          blinkCalibrationOverlay.hidden = true;
+          if (blinkCalibrationOverlay.open) {
+            blinkCalibrationOverlay.close();
+          }
           if (result.kind === "ready") {
             const line: StoredBlinkCalibration = {
               personalLineMm: result.personalLineMm,
@@ -5428,7 +5457,7 @@ const OVERLAY_CONTROLS: Record<
     },
   },
   "blink-calibration-overlay": {
-    isOpen: () => !blinkCalibrationOverlay.hidden,
+    isOpen: () => blinkCalibrationOverlay.open,
     close: () => {
       // A cancelled calibration still fed the reducers null while it
       // ran, so its span is closed and marked like a finished one. On
@@ -5461,7 +5490,14 @@ const OVERLAY_CONTROLS: Record<
       }
       blinkCalibrationSession = null;
       blinkCalibrationRequested = false;
-      blinkCalibrationOverlay.hidden = true;
+      // .close(), never `hidden`: hiding an open modal leaves the page
+      // inert behind an invisible dialog, the exact defect the KSS
+      // dialog's uiGuard pin documents. Closing re-fires the close
+      // event into this closer once; every write above is guarded on
+      // state this first pass has already cleared.
+      if (blinkCalibrationOverlay.open) {
+        blinkCalibrationOverlay.close();
+      }
     },
   },
   "heatmap-overlay": {

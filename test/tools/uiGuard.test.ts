@@ -189,6 +189,13 @@ describe("the dialog is closed, never hidden", () => {
       hiddenAssignments(main),
       "kssDialog must be closed with .close(), never hidden",
     ).not.toContain("kssDialog");
+    // The blink calibration overlay became the page's second native
+    // dialog (roadmap 11.6b), so it inherits the same rule the moment
+    // it inherits the element.
+    expect(
+      hiddenAssignments(main),
+      "blinkCalibrationOverlay must be closed with .close(), never hidden",
+    ).not.toContain("blinkCalibrationOverlay");
   });
 
   it("still sees the ordinary elements that ARE hidden", () => {
