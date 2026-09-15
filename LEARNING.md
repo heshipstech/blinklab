@@ -4746,3 +4746,23 @@ nobody is looking at. The closer is safe to re-enter — its span,
 status and session writes are all guarded on state the first entry
 clears — so the done path closing the dialog cannot stamp a
 cancellation on top of a result.
+
+## The boundary lands in the hand as well as on the ear
+
+The guided calibration's phase turns now beep and buzz. The reasoning
+is the cued protocol's own, extended one sense further: the person a
+phase tells to close their eyes cannot read the next instruction, and
+on a phone — where the screen is small and often below the face — a
+palm can feel "next step" with the eyes shut. vibrateCue lives beside
+playCueTone in io and inherits its whole discipline: navigator.vibrate
+exists on Android Chrome, is absent on iOS Safari and desktops, and
+some engines throw without user activation, so every failure is
+swallowed — both cues are aids, and a silent, still device still cues
+on screen. The tone's own no-AudioContext guard, born in 11.0b, got
+its pin the day a second caller started relying on it.
+
+The cue fires on the TURN, tracked per phase, not per frame — open,
+closed, verify, and the resolve itself, because the moment
+stored-or-refused exists is exactly when obedient eyes are shut or
+mid-blink. A cancel resets the tracker silently: the escape is the
+person's own act, not a boundary they need announcing.
