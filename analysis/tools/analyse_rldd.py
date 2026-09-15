@@ -29,6 +29,7 @@ import sys
 from dataclasses import dataclass
 
 from blinklab.drozy import MIN_USABLE_FPS
+from blinklab.loader import cohort_commit_line
 from blinklab.rldd import (
     BINARY_LABELS,
     LABELS,
@@ -68,6 +69,11 @@ class AnalysisResult:
     total: int
     usable: list[VideoFeatures]
     excluded: list[tuple[VideoFeatures, str]]
+    # The distinct builds that recorded the corpus, unstamped files
+    # left out (roadmap 11.8a). The report STATES this set rather than
+    # refusing a mix: the published corpus predates the build stamp,
+    # and a refusal here would break re-derivation of that result.
+    commits: list[str]
     three_class: LosoResult
     three_control: ShuffleControl
     binary: LosoResult
@@ -104,6 +110,9 @@ def run_analysis(
         total=len(corpus),
         usable=usable,
         excluded=excluded,
+        commits=sorted(
+            {v.app_commit for v in corpus if v.app_commit is not None}
+        ),
         three_class=three_class,
         three_control=three_control,
         binary=binary,
@@ -183,6 +192,7 @@ def format_report(result: AnalysisResult) -> str:
     lines.append(f"  analysed          {len(result.usable)}")
     lines.append(f"  subjects          {len(subjects)}")
     lines.append(f"  class balance     {_class_counts(result.usable, LABELS)}")
+    lines.append(f"  {cohort_commit_line(result.commits)}")
     lines.append("")
 
     floor = 1.0 / len(LABELS)
