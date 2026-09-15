@@ -1,0 +1,31 @@
+COLUMN FREEZE MANIFEST for the v2 corpus read (roadmap 12.17)
+
+What this file is
+-----------------
+The v2 read (12.18) will be measured against a fixed set of per-second
+CSV columns. This manifest is where that set is frozen: one line per
+field, signed in by the OWNER with a date, and later signed out by the
+owner with a date if a field retires. The freeze protects a signed
+field from being renamed or removed while a read depends on it — the
+columnFreeze guard (tools/columnFreeze.mjs) compares every signed-in
+field below against the live CSV_COLUMNS in src/core/csv.ts and goes
+red if one is gone. Self-retiring on the drozyGuard pattern: signing a
+field out lifts its constraint without deleting its history.
+
+How to sign
+-----------
+One field per line, inside the SIGNATURES block below, in exactly this
+shape (the guard parses nothing outside that block):
+
+  fieldName | signed in 20 September 2026
+  fieldName | signed in 20 September 2026 | signed out 3 October 2026
+
+Only the owner signs. Nothing here was signed by the tool that created
+the file: per roadmap 12.17 the manifest and its guard land first, and
+the owner-signed freeze is dated after 12.16's and 14.9a's columns
+exist and before 12.18a's plan is committed. Until the first sign-in,
+nothing is frozen and the guard holds no constraint.
+
+SIGNATURES
+----------
+(no fields signed in yet)
