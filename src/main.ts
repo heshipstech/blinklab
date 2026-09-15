@@ -1248,6 +1248,16 @@ function resetSession(): void {
   captureState = null;
   calibrationRequested = false;
   calibrationOverlay.hidden = true;
+  // The guided blink calibration is a calibration too (roadmap
+  // 14.0e): before this line a reset cleared the gaze capture above
+  // while a guided run survived it — the session, its run facts and
+  // the open modal dialog all crossed into the next source, and the
+  // span start below was nulled out from under a session still
+  // stepping. Through the ONE closer, never field by field, so the
+  // person also gets its "nothing was stored" notice; every write in
+  // the closer is guarded, making this a no-op when nothing is in
+  // flight.
+  OVERLAY_CONTROLS["blink-calibration-overlay"].close();
   heatmapOpen = false;
   heatmapOverlay.hidden = true;
   heatmapGrid = emptyGrid();

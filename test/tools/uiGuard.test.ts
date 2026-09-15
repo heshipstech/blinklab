@@ -9,6 +9,7 @@ import {
   hiddenAssignments,
   idleStrings,
   overlayHandles,
+  resetSessionBody,
   undocumented,
   undocumentedStrings,
 } from "../../tools/uiGuard.mjs";
@@ -201,5 +202,35 @@ describe("the dialog is closed, never hidden", () => {
   it("still sees the ordinary elements that ARE hidden", () => {
     // So the check above cannot pass because the reader broke.
     expect(hiddenAssignments(main)).toContain("alertBanner");
+  });
+});
+
+// Roadmap 14.0e's second Check clause. resetSession is the one
+// function every new session runs, and it cleared the GAZE calibration
+// while a GUIDED blink calibration survived it: the session object,
+// its run facts, its phase and the open modal dialog all crossed into
+// the next source, and the reset nulled the suppressed-frames span's
+// start while the session kept stepping, so a run resolved after a
+// reset would have recorded no span at all.
+
+describe("a reset leaves no calibration in flight", () => {
+  it("extracts the function body, and null for a renamed function", () => {
+    const source = "function resetSession(): void {\n  a = null;\n}\nrest";
+    expect(resetSessionBody(source)).toContain("a = null;");
+    expect(resetSessionBody(source)?.endsWith("\n}")).toBe(true);
+    expect(resetSessionBody("function somethingElse(): void {\n}")).toBeNull();
+  });
+
+  it("clears the gaze calibration and funnels the guided one", () => {
+    const body = resetSessionBody(main);
+    expect(body, "main.ts no longer declares resetSession").not.toBeNull();
+    expect(body).toContain("captureState = null;");
+    expect(body).toContain("calibrationRequested = false;");
+    // Through the ONE closer, never field by field: the closer is
+    // where the session, its facts, the dialog and the person's
+    // "nothing was stored" notice are kept from drifting apart.
+    expect(body).toContain(
+      'OVERLAY_CONTROLS["blink-calibration-overlay"].close()',
+    );
   });
 });

@@ -175,3 +175,25 @@ export function linkHrefs(mainSource) {
 export function missingRepoFiles(paths, root) {
   return paths.filter((path) => !existsSync(join(root, path)));
 }
+
+/**
+ * The body of main.ts's resetSession — the one function every new
+ * session runs — or null when the file no longer spells it that way.
+ *
+ * Roadmap 14.0e. resetSession is DOM-bound, so "a reset leaves no
+ * calibration in flight" cannot be a call-it-and-look unit test; it
+ * is held the way every rule about what main.ts says is held here —
+ * read from disk, pinned by the test next door. The slice is
+ * structural: a prettier-formatted top-level function closes at the
+ * first brace back on column zero. Null rather than "" for a renamed
+ * or deleted function, because an empty string would pass every
+ * not-contains check and fail every contains check confusingly, while
+ * null lets the test say which of the two happened.
+ */
+export function resetSessionBody(mainSource) {
+  const start = mainSource.indexOf("function resetSession(): void {");
+  if (start === -1) return null;
+  const end = mainSource.indexOf("\n}", start);
+  if (end === -1) return null;
+  return mainSource.slice(start, end + 2);
+}
