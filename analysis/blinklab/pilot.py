@@ -17,7 +17,7 @@ Three commitments from docs/assessment-pilot-plan.md, in code:
 
 from __future__ import annotations
 
-from blinklab.loader import load_session
+from blinklab.loader import cohort_commit_line, cohort_commits, load_session
 from blinklab.validation import PairPaths
 from blinklab.verdict import derive_verdict
 
@@ -44,6 +44,17 @@ class InstrumentDefect(RuntimeError):
 
     Neither side can be trusted over the other, so the cohort
     analysis stops rather than averaging over a disagreement.
+    """
+
+
+class MixedBuildCohort(RuntimeError):
+    """The cohort's sessions were recorded by more than one build.
+
+    Roadmap 11.8a: a pilot cohort is measured by ONE instrument, and
+    a table spanning two builds is the same class of unaverageable as
+    an InstrumentDefect, so it stops the same way — before any row
+    prints. Unstamped sessions do not trigger this: they predate the
+    stamp, which is age rather than a mix.
     """
 
 
@@ -87,9 +98,16 @@ def pilot_verdict_lines(pairs: list[PairPaths]) -> list[str]:
     Raises InstrumentDefect before printing anything when any
     session's exported report disagrees with the re-derivation.
     """
+    loaded = [(paths, load_session(paths.session_path)) for paths in pairs]
+    commits = cohort_commits([session for _, session in loaded])
+    if len(commits) > 1:
+        raise MixedBuildCohort(
+            cohort_commit_line(commits)
+            + " A pilot cohort is measured by one instrument, so the "
+            "analysis stops here (roadmap 11.8a)."
+        )
     rows: list[str] = []
-    for paths in pairs:
-        session = load_session(paths.session_path)
+    for paths, session in loaded:
         verdict = derive_verdict(session)
         agreement = _check_report_agrees(paths, verdict)
         counts: dict[str, int] = {}

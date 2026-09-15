@@ -23,6 +23,7 @@ from blinklab.loader import load_session
 from blinklab.pilot import (
     REPORT_PREFIX,
     InstrumentDefect,
+    MixedBuildCohort,
     pilot_verdict_lines,
     verdict_section_lines,
 )
@@ -50,6 +51,50 @@ def stage_good_pair(tmp_path: Path, with_report: bool = True) -> Path:
     if with_report:
         shutil.copy(GOOD_REPORT, tmp_path / f"blinklab-report-{STAMP}.txt")
     return tmp_path
+
+
+def stage_stamped_pair(tmp_path: Path, stamp: str, commit: str) -> None:
+    """One pair whose session names the build that recorded it."""
+    import re
+
+    text = GOOD_SESSION.read_text(encoding="utf-8")
+    text, replaced = re.subn(
+        r"^# app_commit: dev$",
+        f"# app_commit: {commit}",
+        text,
+        count=1,
+        flags=re.M,
+    )
+    assert replaced == 1, "the fixture no longer carries an app_commit line"
+    (tmp_path / f"blinklab-session-{stamp}.csv").write_text(
+        text, encoding="utf-8"
+    )
+    (tmp_path / f"blinklab-blinks-{stamp}.csv").write_text(
+        "\r\n".join(["# source: camera", BLINK_HEADER, ",,5000,120,4.2,95,44"])
+        + "\r\n",
+        encoding="utf-8",
+    )
+
+
+class TestAMixedCohortStopsThePilot:
+    def test_two_builds_stop_the_cohort_by_name(self, tmp_path: Path) -> None:
+        # Roadmap 11.8a: a pilot cohort is measured by ONE instrument.
+        # The InstrumentDefect precedent already stops the analysis
+        # when the page and the re-derivation disagree; a cohort
+        # spanning two builds is the same class of unaverageable, so
+        # it stops the same way, before any row prints.
+        stage_stamped_pair(tmp_path, "2026-08-30T10-00-00-000", "abc1234")
+        stage_stamped_pair(tmp_path, "2026-08-30T11-00-00-000", "def5678")
+        with pytest.raises(MixedBuildCohort) as caught:
+            pilot_verdict_lines(find_pairs(tmp_path, pilot_reports=True))
+        assert "abc1234" in str(caught.value)
+        assert "def5678" in str(caught.value)
+
+    def test_one_build_passes(self, tmp_path: Path) -> None:
+        stage_stamped_pair(tmp_path, "2026-08-30T10-00-00-000", "abc1234")
+        stage_stamped_pair(tmp_path, "2026-08-30T11-00-00-000", "abc1234")
+        lines = pilot_verdict_lines(find_pairs(tmp_path, pilot_reports=True))
+        assert len(lines) > 0
 
 
 class TestTheStrayPolicyStaysFrozen:
