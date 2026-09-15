@@ -4786,3 +4786,36 @@ these facts move no threshold — they only decide whether a sentence
 appears. The refusal e2e gained the wiring pin for free, because the
 fake camera's faceless run is exactly the majority-unmeasured case:
 the status must now blame the view, not the eyes, in CI's own browser.
+
+## A reset that forgets one calibration and not the other
+
+resetSession is the one function every new session runs, and its own
+comment says why it exists: a reset that is right for one source and
+half-applied to the other is exactly the bug that once carried a
+blink duration across sessions. It cleared the gaze calibration by
+hand — capture state, request flag, overlay — and the guided blink
+calibration survived it whole: the session object, its run facts, its
+phase tracker and the open modal dialog would all have crossed into
+the next source, while the reset nulled the suppressed-frames span's
+START out from under a session still stepping, so a run resolved
+after a reset would have recorded no span at all.
+
+The fix is one line, and the line is the lesson: the reset goes
+through the ONE closer the dialog already funnels every exit through,
+never field by field. The closer is where the session, its facts, the
+dialog and the person's "nothing was stored" notice are kept from
+drifting apart, and a second copy of that list inside resetSession
+would be the next drift. Every write in the closer is guarded, so the
+call is a no-op on the sessions that had nothing in flight.
+
+The pin is a source read, not a call: resetSession is DOM-bound, so
+tools/uiGuard.mjs gained resetSessionBody and the test next door
+holds the body to the closer call — the same arrangement every rule
+about what main.ts says already uses. And the crash branch got its
+missing e2e half: measurementFailed.spec.ts proved a CAMERA throw
+stops visibly, but the branch that once relabelled a crashed FILE run
+as a camera one had no test on the stepped path, so a new spec throws
+on the fifteenth drawn frame of the committed clip — armed before the
+clip loads, because a patch that waits for progress races a 60-frame
+clip a fast machine can finish first — and asserts the per-frame
+trace still exports with `# source: file` and the clip's name.
