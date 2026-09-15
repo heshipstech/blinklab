@@ -2281,20 +2281,40 @@ Object.assign(blinkCalibrationInner.style, {
 });
 const blinkCalibrationInstruction = document.createElement("p");
 blinkCalibrationInstruction.dataset.testid = "blink-calibration-instruction";
+// Assertive, because the person this overlay instructs to CLOSE their
+// eyes cannot read the next instruction (roadmap 11.6b): a screen
+// reader must speak each phase change the moment it happens, not
+// whenever the queue gets to it.
+blinkCalibrationInstruction.setAttribute("aria-live", "assertive");
 Object.assign(blinkCalibrationInstruction.style, {
   fontSize: "1.6rem",
   fontWeight: "600",
 });
 const blinkCalibrationProgress = document.createElement("p");
 Object.assign(blinkCalibrationProgress.style, { fontSize: "1rem" });
+// The explicit way out (roadmap 11.6b), saying on its face what a
+// cancel costs: nothing, because nothing is stored until the final
+// phase resolves. Click-anywhere and Escape stay; this button is for
+// the person who won't gamble on what a stray click does.
+const blinkCalibrationCancel = document.createElement("button");
+blinkCalibrationCancel.dataset.testid = "cancel-blink-calibration";
+blinkCalibrationCancel.textContent = "Cancel — nothing is stored";
+blinkCalibrationCancel.addEventListener("click", (event) => {
+  // The overlay behind it closes on any click; without this the one
+  // closer would run twice for a single press.
+  event.stopPropagation();
+  OVERLAY_CONTROLS["blink-calibration-overlay"].close();
+});
 blinkCalibrationInner.append(
   blinkCalibrationInstruction,
   blinkCalibrationProgress,
+  blinkCalibrationCancel,
 );
 blinkCalibrationOverlay.append(blinkCalibrationInner);
 // Click anywhere or press Esc to cancel, the same escape hatch as the
-// gaze overlay. A cancelled run stores nothing. Both paths run the one
-// closer in OVERLAY_CONTROLS below.
+// gaze overlay. A cancelled run stores nothing. All three paths — the
+// click, the Escape register, and the Cancel button above — run the
+// one closer in OVERLAY_CONTROLS below.
 blinkCalibrationOverlay.addEventListener("click", () => {
   OVERLAY_CONTROLS["blink-calibration-overlay"].close();
 });
@@ -5427,6 +5447,17 @@ const OVERLAY_CONTROLS: Record<
           },
         ];
         guidedCalibrationStartMs = null;
+      }
+      // Said out loud, not just done (roadmap 11.6b): the overlay
+      // vanishing could mean stored or discarded, and the difference
+      // is exactly what a person mid-calibration needs to know. Only
+      // when a run was actually in flight — the Escape register can
+      // close screens generically, and announcing a cancellation
+      // nobody made would be this status inventing an event.
+      if (blinkCalibrationSession !== null) {
+        blinkCalibrationStatus.textContent =
+          "Blink calibration cancelled. Nothing was stored; your detector's line is unchanged.";
+        blinkCalibrationStatus.hidden = false;
       }
       blinkCalibrationSession = null;
       blinkCalibrationRequested = false;

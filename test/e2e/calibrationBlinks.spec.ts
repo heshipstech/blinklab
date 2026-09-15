@@ -73,11 +73,35 @@ test("clicking to cancel a blink calibration stores nothing", async ({
   const overlay = page.getByTestId("blink-calibration-overlay");
   await expect(overlay).toBeVisible();
 
-  // One click anywhere on the overlay cancels, the gaze flow's escape
-  // hatch. A cancelled run leaves no trace.
+  // The instruction is an assertive live region (roadmap 11.6b): the
+  // person it tells to CLOSE their eyes cannot read the next phase, so
+  // a screen reader must speak it the moment it changes.
+  await expect(
+    page.getByTestId("blink-calibration-instruction"),
+  ).toHaveAttribute("aria-live", "assertive");
+
+  // The explicit Cancel says on its face what a cancel costs, and the
+  // status afterwards says what happened: nothing stored, the line
+  // unchanged. An overlay that just vanished could mean either.
+  const cancel = page.getByTestId("cancel-blink-calibration");
+  await expect(cancel).toHaveText("Cancel — nothing is stored");
+  await cancel.click();
+  await expect(overlay).toBeHidden();
+  const status = page.getByTestId("blink-calibration-status");
+  await expect(status).toBeVisible();
+  await expect(status).toContainText("Nothing was stored");
+  await expect(calibrate).toHaveText("Calibrate blinks");
+  expect(
+    await page.evaluate((k) => localStorage.getItem(k), BLINK_KEY),
+  ).toBeNull();
+
+  // The click-anywhere escape hatch survives beside the button: a
+  // second run cancelled by a click on the backdrop also stores
+  // nothing.
+  await calibrate.click();
+  await expect(overlay).toBeVisible();
   await overlay.click();
   await expect(overlay).toBeHidden();
-  await expect(calibrate).toHaveText("Calibrate blinks");
   expect(
     await page.evaluate((k) => localStorage.getItem(k), BLINK_KEY),
   ).toBeNull();
