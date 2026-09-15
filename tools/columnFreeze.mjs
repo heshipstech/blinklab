@@ -29,7 +29,7 @@ export const MANIFEST_PATH = "docs/column-freeze.txt";
 
 /** Only lines below this heading are read as signatures, so the prose
  * explaining the format can show example lines without signing them. */
-const SIGNATURES_HEADING = "SIGNATURES";
+const SIGNATURES_HEADING = /^SIGNATURES\s*$/m;
 
 /** One signature line: `field | signed in <date>` with an optional
  * ` | signed out <date>` tail. Dates are kept as the owner wrote them
@@ -44,8 +44,12 @@ const ENTRY =
  * a deleted heading reddens there rather than silently unfreezing.
  */
 export function signatureBlock(manifestText) {
-  const at = manifestText.indexOf(SIGNATURES_HEADING);
-  return at === -1 ? "" : manifestText.slice(at);
+  // Matched as a LINE, not a substring: the manifest's own prose
+  // mentions the signatures block by name, and an indexOf would anchor
+  // on that mention and swallow the how-to example lines below it —
+  // this file's first local run caught exactly that.
+  const at = manifestText.match(SIGNATURES_HEADING);
+  return at === null ? "" : manifestText.slice(at.index ?? 0);
 }
 
 /** Every signature entry, as {field, signedIn, signedOut|null}. */
