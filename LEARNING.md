@@ -4679,3 +4679,26 @@ And a null separation is never called thin: null means not measured,
 and thinness is a verdict on a measurement, the same rule that keeps
 zeros out of empty export cells. The wiring into the overlay is the
 next increment; this one is the words and their pins.
+
+## A refusal can say what it saw, but only what it actually saw
+
+The guided calibration's refusals were honest and flat: "did not get
+enough of a measured view", whatever the run looked like. Roadmap
+11.6b's second slice gives each refusal a second sentence read from
+the run's own record — and, just as deliberately, withholds it when
+the record supports nothing more. A phase where a strict majority of
+frames carried no measured aperture blames the VIEW (a turned or
+badly lit face), because that is what pose rejections look like from
+inside. A closed hold whose later readings sit far below its early
+ones is eyes that closed LATE, told apart from true non-separation by
+the halves' medians so a single blink-sized dip cannot fake it. True
+non-separation adds nothing: the flat sentence already says it, and a
+detail invented on top would be the module guessing.
+
+Both thresholds are strict comparisons pinned at their boundaries —
+exactly half the frames unmeasured stays silent, because a struggling
+machine drops that many without the face being turned, and a
+diagnosis that fires on ordinary jank teaches people to distrust it.
+The wiring that counts fed frames and snapshots the closed trace is
+the next slice; guidedCalibration.ts, a detector source, stays
+untouched by design.
