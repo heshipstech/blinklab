@@ -65,6 +65,11 @@ class SessionFeatures:
     amplitude_over_velocity_ms: float | None
     perclos: float | None
     long_closures: int | None
+    # Which build recorded this session, or None for a file that
+    # predates the stamp — age, not damage (roadmap 11.8a, the
+    # loader's own rule in blinklab/loader.py). Defaulted so the
+    # dataclass stays constructible from the older tests and callers.
+    app_commit: str | None = None
 
     @property
     def usable(self) -> bool:
@@ -135,6 +140,20 @@ def load_kss(path: str | Path) -> dict[tuple[int, int], int]:
     if not ratings:
         raise DrozyError("KSS.txt held no ratings at all")
     return ratings
+
+
+def header_app_commit(text: str) -> str | None:
+    """The `# app_commit:` stamp in an export's metadata, or None.
+
+    Roadmap 11.8a. A table that averages across sessions is a table
+    about one instrument, and this is how a CSV-reading analyser learns
+    which build measured each file. None means the export predates the
+    stamp, which is age rather than damage — the same rule the pandas
+    loader applies (blinklab/loader.py)."""
+    for line in text.splitlines():
+        if line.startswith("# app_commit:"):
+            return line.split(":", 1)[1].strip() or None
+    return None
 
 
 def _mean_or_none(values: list[float]) -> float | None:
@@ -233,6 +252,7 @@ def load_session_features(
         amplitude_over_velocity_ms=_mean_or_none(ratios),
         perclos=perclos,
         long_closures=long_closures,
+        app_commit=header_app_commit(text),
     )
 
 

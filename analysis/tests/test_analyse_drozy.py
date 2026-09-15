@@ -120,3 +120,51 @@ class TestPerclosSaysWhatItIncludes:
         # would be testing the wrapping.
         text = " ".join(RESULT.read_text(encoding="utf-8").split())
         assert "part droop and part blink rate" in text
+
+
+# --- roadmap 11.8a: the report names the builds that measured it --------
+
+_SECONDS_HEADER = (
+    "timestampMs,faceDetected,fps,apertureMm,baselineMm,shutBaselineMm,"
+    "blinkRatePerMin,lastBlinkDurationMs,lastBlinkAmplitudeMm,"
+    "lastBlinkPeakVelocityMmPerS,perclos,longClosureCount,fixationCount,"
+    "fixationMedianMs,fixating,onScreen"
+)
+
+
+def _stage_session(directory: Path, name: str, commit: str | None) -> None:
+    """One synthetic session below the fps floor, stamped or not. Below
+    the floor on purpose: the test is about the cohort line, and an
+    all-excluded corpus reaches it without running any statistic."""
+    stamp = f"# app_commit: {commit}\n" if commit else ""
+    body = "\n".join(f"{i * 1000},true,15,,,,,,,,,,,,," for i in range(3))
+    (directory / f"{name}.seconds.csv").write_text(
+        "# measurement_mode: stepped\n"
+        + stamp
+        + _SECONDS_HEADER
+        + "\n"
+        + body
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+class TestTheReportNamesTheCohortsBuilds:
+    """Roadmap 11.8a. The correlations average across sessions, so the
+    report must say whether one build recorded them. STATED, not
+    refused: this analyser's published corpus predates the build stamp,
+    and a refusal here would break re-derivation of that result."""
+
+    def test_two_builds_are_named_not_refused(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        from tools.analyse_drozy import main
+
+        (tmp_path / "KSS.txt").write_text("3 6 7\n", encoding="utf-8")
+        _stage_session(tmp_path, "1-1", "aaa1111")
+        _stage_session(tmp_path, "1-2", "bbb2222")
+        _stage_session(tmp_path, "1-3", None)
+        main([str(tmp_path), str(tmp_path / "KSS.txt")])
+        out = capsys.readouterr().out
+        assert "2 different builds (aaa1111, bbb2222)" in out
+        assert "REFUSED" not in out

@@ -31,12 +31,19 @@ BLINKS_HEADER = (
 )
 
 
-def write_seconds(path: Path, rows: list[str], fps: str = "30") -> None:
+def write_seconds(
+    path: Path,
+    rows: list[str],
+    fps: str = "30",
+    commit: str | None = None,
+) -> None:
     body = "\n".join(
         f"{i * 1000},true,{fps},{row}" for i, row in enumerate(rows)
     )
+    stamp = f"# app_commit: {commit}\n" if commit else ""
     path.write_text(
         "# source: file\n# measurement_mode: stepped\n"
+        + stamp
         + SECONDS_HEADER
         + "\n"
         + body
@@ -153,6 +160,26 @@ class TestSessionFeatures:
         seconds.write_text("# only comments\n", encoding="utf-8")
         with pytest.raises(DrozyError):
             load_session_features(seconds, None, 5, 1, 3)
+
+
+class TestTheBuildStamp:
+    """Roadmap 11.8a. A table that averages across sessions is a table
+    about one instrument, so the loader reads which build recorded each
+    file and the report says whether the set is one."""
+
+    def test_the_stamp_is_read(self, tmp_path: Path) -> None:
+        seconds = tmp_path / "1-1.seconds.csv"
+        write_seconds(seconds, [",,,,,,,0.02,0,,,,"] * 3, commit="abc1234")
+        f = load_session_features(seconds, None, 1, 1, 3)
+        assert f.app_commit == "abc1234"
+
+    def test_no_stamp_is_age_not_damage(self, tmp_path: Path) -> None:
+        # Exports before the build stamp carry no such line. None and
+        # never a guess — the loader's own rule (blinklab/loader.py).
+        seconds = tmp_path / "1-1.seconds.csv"
+        write_seconds(seconds, [",,,,,,,0.02,0,,,,"] * 3)
+        f = load_session_features(seconds, None, 1, 1, 3)
+        assert f.app_commit is None
 
 
 class TestLoadAll:
