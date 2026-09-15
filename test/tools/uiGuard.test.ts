@@ -6,11 +6,13 @@ import {
   buttonStrings,
   documentedBoxes,
   documentedOverlayIds,
+  documentedStates,
   fossils,
   hiddenAssignments,
   idleStrings,
   overlayHandles,
   resetSessionBody,
+  stateKinds,
   undocumented,
   undocumentedStrings,
 } from "../../tools/uiGuard.mjs";
@@ -239,6 +241,42 @@ describe("every raised screen has its section in docs/UI.md", () => {
       documented,
       "screens docs/UI.md documents versus screens main.ts raises",
     ).toEqual(onThePage);
+  });
+});
+
+// Roadmap 14.0c: docs/UI.md section 2 said the page state "has seven
+// values" for as long as the union had twelve — ended, both kept
+// crashes, the model failure and the clip load all arrived after the
+// table was written, and nothing could redden as each one landed.
+
+describe("section 2 documents every state the page can be in", () => {
+  const cameraStateSource = readRepoFile("src/core/cameraState.ts", root);
+
+  it("reads the kind literals out of the state file, once each", () => {
+    const source =
+      '| { kind: "idle" }\n| { kind: "failed"; reason: string };\n' +
+      'return { kind: "idle" };';
+    expect(stateKinds(source)).toEqual(["idle", "failed"]);
+  });
+
+  it("reads only section 2's own table, not the quick reference", () => {
+    const doc =
+      "## 2. What drives visibility\n\n| `idle` | Nothing |\n| `running` | A source |\n\n" +
+      "## 7. Quick reference\n\n| `denied` / `failed` | reasons |\n";
+    expect(documentedStates(doc)).toEqual(["idle", "running"]);
+    expect(documentedStates("no such section")).toEqual([]);
+  });
+
+  it("holds the table and the union to each other", () => {
+    // Both directions: a state the page can enter with no row is a
+    // state whose screen nobody described, and a documented state the
+    // union no longer has is a fossil that reads as current.
+    const shipped = [...stateKinds(cameraStateSource)].sort();
+    const documented = [...documentedStates(uiDoc)].sort();
+    expect(
+      documented,
+      "states docs/UI.md section 2 documents versus the CameraState union",
+    ).toEqual(shipped);
   });
 });
 

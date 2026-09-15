@@ -79,20 +79,38 @@ footer of Live signals.
 
 ## 2. What drives visibility
 
-One state variable governs almost everything. It has seven values.
+One state variable governs almost everything. It has twelve values, and
+this table is held to the `CameraState` union in `src/core/cameraState.ts`
+by `stateKinds` in `tools/uiGuard.mjs`, both directions — it said "seven
+values" for as long as the union had twelve, because the five states below
+the line arrived one repair at a time and nothing could redden here as
+each one landed.
 
-| State        | Meaning                                  |
-| ------------ | ---------------------------------------- |
-| `idle`       | Nothing started                          |
-| `requesting` | Waiting for the camera permission prompt |
-| `running`    | A camera or clip is active               |
-| `denied`     | Camera permission refused                |
-| `noCamera`   | No camera on the device                  |
-| `failed`     | Camera failed for another reason         |
-| `clipFailed` | A video file could not be used           |
+| State               | Meaning                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `idle`              | Nothing started                                                                                              |
+| `requesting`        | Waiting for the camera permission prompt                                                                     |
+| `running`           | A camera or clip is active                                                                                   |
+| `denied`            | Camera permission refused                                                                                    |
+| `noCamera`          | No camera on the device                                                                                      |
+| `failed`            | Camera failed for another reason                                                                             |
+| `clipFailed`        | A video file could not be used — its own state, so nobody is sent to camera permissions to fix a broken file |
+| `loadingClip`       | A clip is being read and decoded, which on a large recording is long enough to deserve its own sentence      |
+| `modelFailed`       | The measuring model failed to load; the fix is the retry button, not permission settings (remediation B2)    |
+| `measurementFailed` | The measurement loop itself threw, with the reason; everything recorded before the stop is kept (B3, 14.0e)  |
+| `ended`             | The session is over — from Stop or a clip's end — and its exports and report stay on offer (roadmap 14.0a)   |
+| `cameraStopped`     | The camera stopped delivering mid-session, named as such; the record it left is kept (roadmap 14.0d)         |
 
-**The rule: everything except the Source box is hidden unless the state is
-`running`.** Whole boxes are hidden, not individual readouts.
+**The rule: boxes show while a session RUNS or while a finished one's record
+is kept.** `sessionOver` in `cameraState.ts` names the kept endings — `ended`,
+`measurementFailed`, `cameraStopped` — and the page shows the picture, the
+traces and the readouts for `running` or any of those three, so a real
+recording never vanishes behind its own ending. Outside `running`, the
+live-only controls come off: the rate lines empty rather than reporting the
+display's refresh as the instrument's, and the calibrate buttons disable.
+This paragraph said "everything except the Source box is hidden unless the
+state is `running`" until 15 September 2026, which had been false since
+14.0a let an ended session keep its exports on screen.
 
 A second variable, the frame source, is `camera` or `file`, and changes
 three things: the resolution line's wording, whether the sleepiness
@@ -647,18 +665,21 @@ so the export can say the protocol ran even for an abandoned run.
 
 ## 7. Quick reference: what is on screen in each state
 
-| State                                           | Visible                                                      |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `idle`                                          | Notice, title, Source box                                    |
-| `requesting`                                    | Notice, title, Source box (Start camera hidden)              |
-| `denied` / `noCamera` / `failed` / `clipFailed` | Notice, title, Source box with the reason in the status line |
-| `running`                                       | Everything                                                   |
-| Calibrating                                     | Everything, plus the calibration overlay on top              |
-| Heatmap open                                    | Everything, plus the heatmap overlay on top                  |
-| Blink calibrating                               | Everything, plus the blink calibration dialog, page inert    |
-| Sleepiness question up                          | Everything, plus the sleepiness dialog, page inert           |
-| Light stimulus running                          | The light overlay owns the whole screen                      |
-| Cue protocol running                            | The cue overlay, under the light overlay's layer             |
+| State                                           | Visible                                                                                                  |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `idle`                                          | Notice, title, Source box                                                                                |
+| `requesting`                                    | Notice, title, Source box (Start camera hidden)                                                          |
+| `denied` / `noCamera` / `failed` / `clipFailed` | Notice, title, Source box with the reason in the status line                                             |
+| `loadingClip`                                   | Notice, title, Source box with the loading sentence                                                      |
+| `modelFailed`                                   | Notice, title, Source box with the retry offer                                                           |
+| `running`                                       | Everything                                                                                               |
+| `ended` / `measurementFailed` / `cameraStopped` | Everything a session kept — picture, traces, readouts, exports, report — with the live-only controls off |
+| Calibrating                                     | Everything, plus the calibration overlay on top                                                          |
+| Heatmap open                                    | Everything, plus the heatmap overlay on top                                                              |
+| Blink calibrating                               | Everything, plus the blink calibration dialog, page inert                                                |
+| Sleepiness question up                          | Everything, plus the sleepiness dialog, page inert                                                       |
+| Light stimulus running                          | The light overlay owns the whole screen                                                                  |
+| Cue protocol running                            | The cue overlay, under the light overlay's layer                                                         |
 
 ---
 

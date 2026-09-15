@@ -220,3 +220,40 @@ export function documentedOverlayIds(uiDoc) {
   );
   return [...new Set(found)];
 }
+
+/**
+ * Every state name src/core/cameraState.ts spells, once each.
+ *
+ * Roadmap 14.0c. docs/UI.md section 2 said the page state "has seven
+ * values" for as long as the union had twelve: ended, the two kept
+ * crashes, the model failure and the clip load all arrived after the
+ * table was written, and nothing could redden as each one landed. The
+ * kind literals are read from the whole file rather than the type
+ * alone, deliberately: a value literal like `{ kind: "denied" }` must
+ * name a member of the union or the file does not compile, so the
+ * deduplicated set IS the state vocabulary, and a reader anchored on
+ * the union's layout would go quiet the day prettier reflowed it.
+ */
+export function stateKinds(cameraStateSource) {
+  const found = [...cameraStateSource.matchAll(/\bkind: "([a-zA-Z]+)"/g)].map(
+    (m) => m[1],
+  );
+  return [...new Set(found)];
+}
+
+/**
+ * Every state name section 2's table documents, in table order.
+ *
+ * Bounded to the section between its own heading and the next `## `,
+ * so the quick-reference table in section 7 — which legitimately
+ * groups several refusal states into one row — is not read as the
+ * claim. Section 2 is the claim: one row per state, each name in
+ * backticks in the first column.
+ */
+export function documentedStates(uiDoc) {
+  const start = uiDoc.indexOf("## 2. What drives visibility");
+  if (start === -1) return [];
+  const end = uiDoc.indexOf("\n## ", start);
+  const section = uiDoc.slice(start, end === -1 ? undefined : end);
+  return [...section.matchAll(/^\| `([a-zA-Z]+)`/gm)].map((m) => m[1]);
+}
