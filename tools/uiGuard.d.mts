@@ -41,3 +41,6 @@ export function missingRepoFiles(
   paths: readonly string[],
   root: string,
 ): string[];
+
+/** The body of main.ts's resetSession, or null when it is not declared. */
+export function resetSessionBody(mainSource: string): string | null;
