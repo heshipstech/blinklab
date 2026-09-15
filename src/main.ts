@@ -149,6 +149,7 @@ import {
 import {
   IRIS_SAMPLE_CAP,
   calibrationMetadataRows,
+  calibrationWindowMetadataRows,
   cueMetadataRows,
   deliveryMetadataRows,
   deviceMetadataRows,
@@ -163,6 +164,7 @@ import {
   sessionMetadataRows,
   wakeLockMetadataRows,
   type CameraFrameDriver,
+  type GuidedCalibrationSpan,
   type DeviceInfo,
   type MeasurementFrame,
   type SessionMarker,
@@ -1279,6 +1281,8 @@ function resetSession(): void {
   visibilityChanges = 0;
   orientationFlips = 0;
   interruptionTimesMs = [];
+  guidedCalibrationSpans = [];
+  guidedCalibrationStartMs = null;
   sessionDeliveryRates = null;
   sessionFramesMissed = null;
   poseGateFrames = 0;
@@ -2232,6 +2236,12 @@ blinkCalibrateButton.textContent =
 blinkCalibrateButton.disabled = true;
 let blinkCalibrationRequested = false;
 let blinkCalibrationSession: CalibrationSessionState | null = null;
+// The marker's raw material (11.6a): each guided calibration's span in
+// the record clock, closed when the session resolves or is cancelled,
+// because either way its frames were fed null to the four reducers and
+// the export must say so (calibrationWindowMetadataRows).
+let guidedCalibrationSpans: GuidedCalibrationSpan[] = [];
+let guidedCalibrationStartMs: number | null = null;
 blinkCalibrateButton.addEventListener("click", () => {
   blinkCalibrationRequested = true;
 });
@@ -3050,6 +3060,10 @@ function exportSession(): void {
     ...wakeLockMetadataRows(
       frameSource === "camera" ? wakeLock.outcome() : null,
     ),
+    // The calibration marker (11.6a): the spans the four reducers were
+    // fed null through, so a reader can tell a deliberate calibration
+    // from a data gap; absent when none ran. Appended last.
+    ...calibrationWindowMetadataRows(guidedCalibrationSpans),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -4320,6 +4334,7 @@ function processFrame(
       let calibrationActiveThisFrame = false;
       if (blinkCalibrationRequested) {
         blinkCalibrationSession = startCalibrationSession(nowMs);
+        guidedCalibrationStartMs = nowMs;
         blinkCalibrationRequested = false;
         blinkCalibrationOverlay.hidden = false;
         blinkCalibrationStatus.hidden = true;
@@ -4339,6 +4354,16 @@ function processFrame(
           // cleared: logged with the line as roadmap 11.6a's first
           // measurement (guidedCalibration.ts, StoredBlinkCalibration).
           const verificationBlinks = blinkCalibrationSession.blinksCaught;
+          // Close the marker span at the frame the session resolved,
+          // ready or refused alike: either way these frames were fed
+          // null to the four reducers, and the export must say so.
+          if (guidedCalibrationStartMs !== null) {
+            guidedCalibrationSpans = [
+              ...guidedCalibrationSpans,
+              { startMs: guidedCalibrationStartMs, endMs: nowMs },
+            ];
+            guidedCalibrationStartMs = null;
+          }
           blinkCalibrationSession = null;
           blinkCalibrationOverlay.hidden = true;
           if (result.kind === "ready") {
@@ -5385,6 +5410,24 @@ const OVERLAY_CONTROLS: Record<
   "blink-calibration-overlay": {
     isOpen: () => !blinkCalibrationOverlay.hidden,
     close: () => {
+      // A cancelled calibration still fed the reducers null while it
+      // ran, so its span is closed and marked like a finished one. On
+      // the record clock, the mark button's precedent; max() because
+      // the last record can predate a calibration cancelled within
+      // its first second, and a span must not run backwards.
+      if (guidedCalibrationStartMs !== null) {
+        guidedCalibrationSpans = [
+          ...guidedCalibrationSpans,
+          {
+            startMs: guidedCalibrationStartMs,
+            endMs: Math.max(
+              guidedCalibrationStartMs,
+              lastRecordAtMs ?? guidedCalibrationStartMs,
+            ),
+          },
+        ];
+        guidedCalibrationStartMs = null;
+      }
       blinkCalibrationSession = null;
       blinkCalibrationRequested = false;
       blinkCalibrationOverlay.hidden = true;
