@@ -47,3 +47,9 @@ export function resetSessionBody(mainSource: string): string | null;
 
 /** Every overlay or dialog handle docs/UI.md mentions in backticks, once each. */
 export function documentedOverlayIds(uiDoc: string): string[];
+
+/** Every state name src/core/cameraState.ts spells, once each. */
+export function stateKinds(cameraStateSource: string): string[];
+
+/** Every state name docs/UI.md section 2's table documents, in table order. */
+export function documentedStates(uiDoc: string): string[];
