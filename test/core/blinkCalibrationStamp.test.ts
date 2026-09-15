@@ -103,6 +103,7 @@ describe("the metadata rows a guided session carries", () => {
       "# guided_iris_width_px: 40.0",
       "# guided_recorded_at: 2026-09-07T00:00:00.000Z",
       "# guided_conditions_match: true",
+      "# guided_blinks_caught: 3",
     ]);
   });
 
@@ -124,6 +125,23 @@ describe("the metadata rows a guided session carries", () => {
       null,
     );
     expect(rows).toContain("# guided_camera: unknown");
+  });
+
+  it("carries the verification count, and unknown for a pre-verification line", () => {
+    // Roadmap 11.6a's first measurement: how many of the three
+    // "blink three times" blinks the stored line caught. A number when
+    // the procedure ran, and unknown — never 0 — for a line stored
+    // before verification existed, because that count genuinely does
+    // not exist and 0 would read as "caught none".
+    expect(guidedCalibrationMetadataRows(STORED, null)).toContain(
+      "# guided_blinks_caught: 3",
+    );
+    expect(
+      guidedCalibrationMetadataRows({ ...STORED, blinksCaught: 0 }, null),
+    ).toContain("# guided_blinks_caught: 0");
+    expect(
+      guidedCalibrationMetadataRows({ ...STORED, blinksCaught: null }, null),
+    ).toContain("# guided_blinks_caught: unknown");
   });
 });
 

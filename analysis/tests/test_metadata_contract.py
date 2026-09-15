@@ -149,6 +149,7 @@ CONDITIONAL = {
     "gaze_rms_bound": "a camera session",
     "gaze_rms_horizontal": "a camera session with a gaze profile",
     "gaze_rms_vertical": "a camera session with a gaze profile",
+    "guided_blinks_caught": "a camera session with a stored guided line",
     "guided_camera": "a camera session with a stored guided line",
     "guided_closed_median_mm": "a camera session with a stored guided line",
     "guided_closed_samples": "a camera session with a stored guided line",
