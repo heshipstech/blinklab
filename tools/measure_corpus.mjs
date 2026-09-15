@@ -46,11 +46,26 @@ import { fileURLToPath } from "node:url";
 import { webkit } from "@playwright/test";
 
 import { checkBundle } from "./bundleGuard.mjs";
+import { freezeVerdict, liveColumns, readManifest } from "./columnFreeze.mjs";
 import { selectClips } from "./corpusGuard.mjs";
 
 const [, , clipsDir, outDir] = process.argv;
 if (!clipsDir || !outDir) {
   console.error("usage: node tools/measure_corpus.mjs <clips-dir> <out-dir>");
+  process.exit(1);
+}
+
+// The column freeze, first because it is the cheapest refusal here
+// (roadmap 12.17): a corpus measured while a signed-in column is
+// missing from the live header would publish numbers against a
+// contract the owner froze, and twenty minutes of stepping cannot fix
+// that afterwards. The manifest carries no signatures until the
+// owner's first dated sign-in, and until then this passes with the
+// verdict's own "no constraint yet" reason.
+const repoDir = fileURLToPath(new globalThis.URL("..", import.meta.url));
+const freeze = freezeVerdict(readManifest(repoDir), liveColumns(repoDir));
+if (!freeze.ok) {
+  console.error(freeze.why);
   process.exit(1);
 }
 

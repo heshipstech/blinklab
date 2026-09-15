@@ -1024,3 +1024,24 @@ DETECTOR CHANGED, not yet re-measured, declared 15 September 2026:
   reducer is fed exactly what it was before. A suppression that can never
   engage on the corpus path cannot move a corpus number. The owner's next
   corpus run scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 15 September 2026:
+
+  Row 12.17 slice: the corpus runner refuses on a freeze mismatch
+
+  One watched file moves: tools/measure_corpus.mjs. Before its existing
+  startup refusals (the bundle guard, the clip selection) it now asks
+  tools/columnFreeze.mjs for the column-freeze verdict and exits
+  non-zero printing the verdict's own reason when a signed-in column is
+  missing from the live header. No stepping, seeking, scoring or
+  serialisation code changes — the addition runs before a browser is
+  launched and touches nothing after it.
+
+  Predicted corpus impact: none, digit for digit, by construction. The
+  committed manifest (docs/column-freeze.txt) carries no signatures —
+  signing is the owner's dated act, still owed — so the verdict is the
+  "no constraint yet" pass and the new check is a no-op on every run
+  until the owner signs; and even once signed, a check that either
+  passes silently or stops the run before any clip is opened cannot
+  move a number a completed run publishes. The owner's next corpus run
+  scores this entry and retires it beside the block above.
