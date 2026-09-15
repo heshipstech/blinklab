@@ -4615,3 +4615,26 @@ the user-placed marker stream — is wrong: those marks carry the
 validation protocol's own ground truth ("ten deliberate blinks between
 marker 1 and marker 2"), and a calibration marker mixed in would corrupt
 it. A dedicated marker is its own small decision, left for next.
+
+## A deliberate gap must say so, or it reads as a broken one
+
+While a guided calibration runs, the session's four reducers are fed
+null, so in the exported file those seconds look exactly like a lost
+face or a covered lens. The marker rows close that ambiguity: a
+`calibration_windows` count and one `calibration_window_N_seconds`
+span per calibration, in the same clock as every other timestamp, so a
+reader knows the gap was an instructed procedure and exactly where it
+sat. Both come from the one array, so the count and the spans cannot
+disagree — the same argument the user-marker rows made.
+
+Two small choices carried it. The span type is named
+`GuidedCalibrationSpan`, not a "window", because `CalibrationWindow`
+already means the baseline's learning window and one word serving two
+rulers is how exports get misread. And this increment lands the pure
+builder, its SPEC rows and the Python contract WITHOUT the main.ts
+wiring — the smallest-increments ritual's first real split — which the
+guards permit because the key scan reads what a writer module CAN
+write while the presence and fixture pins bind to main.ts, which this
+increment does not touch. The wiring is the next increment, not a
+forgotten half: a declared key nothing emits yet is a promise with a
+named follow-through, merged minutes apart.

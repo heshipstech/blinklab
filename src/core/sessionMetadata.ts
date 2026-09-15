@@ -380,6 +380,52 @@ export function wakeLockMetadataRows(
   ];
 }
 
+/**
+ * One guided calibration's span in the session clock (roadmap 11.6a):
+ * from the frame the overlay opened to the frame the session resolved.
+ * Named a SPAN, not a window, because `CalibrationWindow` already means
+ * the baseline's learning window (calibrationWindow.ts) and one word
+ * carrying two rulers is how exports get misread.
+ */
+export type GuidedCalibrationSpan = {
+  startMs: number;
+  endMs: number;
+};
+
+/**
+ * The guided calibration's marker in the export, roadmap 11.6a's "with
+ * a marker written". While a calibration runs, the session's four
+ * reducers are fed null (main.ts, `calibrationSuppressesReducers`), so
+ * without a marker that span is indistinguishable from an ordinary data
+ * gap — a lost face, a covered lens. These rows say the gap was a
+ * deliberate, instructed calibration and exactly where it sat, in the
+ * same clock as `timestampMs` and the `marker_N_seconds` family.
+ *
+ * Deliberately NOT the user-placed markers stream: those marks are the
+ * validation protocol's own ground truth ("ten blinks between marker 1
+ * and marker 2"), and a calibration entry mixed in would corrupt it.
+ *
+ * Absence when no calibration ran — the pseudonym rule, not a 0 row: a
+ * session that never calibrated has no suppressed span to explain.
+ */
+export function calibrationWindowMetadataRows(
+  spans: readonly GuidedCalibrationSpan[],
+): string[] {
+  if (spans.length === 0) {
+    return [];
+  }
+  const rows = [line("calibration_windows", spans.length)];
+  spans.forEach((span, position) => {
+    rows.push(
+      line(
+        `calibration_window_${position + 1}_seconds`,
+        `${(span.startMs / 1000).toFixed(3)}-${(span.endMs / 1000).toFixed(3)}`,
+      ),
+    );
+  });
+  return rows;
+}
+
 export function sessionMetadataRows(
   records: readonly FeatureRecord[],
   irisWidths: readonly number[],

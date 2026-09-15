@@ -120,6 +120,8 @@ CONDITIONAL = {
     "calibration_refused": "a baseline that froze",
     "calibration_samples": "a baseline that froze",
     "calibration_spread_ratio": "a baseline that froze",
+    "calibration_window_N_seconds": "one row per guided calibration run",
+    "calibration_windows": "a session that ran a guided calibration",
     "camera_declared_fps": "a camera session",
     "camera_delivered_fps": "a camera session with a measurable rate",
     "camera_frame_driver": "a camera session",

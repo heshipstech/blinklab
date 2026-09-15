@@ -13,6 +13,7 @@ import {
   featureRecordOverrunRows,
   medianIrisWidthPx,
   observedDurationSeconds,
+  calibrationWindowMetadataRows,
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
@@ -508,6 +509,38 @@ describe("the wake-lock rows (roadmap 13.1, ADR-0007)", () => {
     // device to stay awake, so it has no wake-lock story — the pseudonym
     // rule, not four rows of `false`.
     expect(wakeLockMetadataRows(null)).toEqual([]);
+  });
+});
+
+describe("the guided calibration's marker rows (roadmap 11.6a)", () => {
+  it("marks each suppressed span beside a count, in the record clock", () => {
+    // While a calibration runs, the four reducers are fed null, so
+    // without these rows that span reads as an ordinary data gap — a
+    // lost face, a covered lens — instead of the deliberate, instructed
+    // procedure it was. The count and the per-index spans come from the
+    // one array, so they cannot disagree, the markers' own argument.
+    expect(
+      calibrationWindowMetadataRows([{ startMs: 12_000, endMs: 25_400 }]),
+    ).toEqual([
+      "# calibration_windows: 1",
+      "# calibration_window_1_seconds: 12.000-25.400",
+    ]);
+    expect(
+      calibrationWindowMetadataRows([
+        { startMs: 12_000, endMs: 25_400 },
+        { startMs: 60_500, endMs: 74_020 },
+      ]),
+    ).toEqual([
+      "# calibration_windows: 2",
+      "# calibration_window_1_seconds: 12.000-25.400",
+      "# calibration_window_2_seconds: 60.500-74.020",
+    ]);
+  });
+
+  it("writes nothing at all when no calibration ran", () => {
+    // Absence, never a 0 row: a session that never calibrated has no
+    // suppressed span to explain — the pseudonym rule.
+    expect(calibrationWindowMetadataRows([])).toEqual([]);
   });
 });
 
