@@ -4557,3 +4557,30 @@ rather than always-written. `wake_lock_error` reads `none` when nothing
 was refused, a definite statement rather than `unknown`, on the
 `frame_rate_resolution_change` precedent. Nothing reads the keys yet: a
 fact recorded for a reader, like `orientation`, until a claim needs it.
+
+## The guided line's confirmation is a measurement, so it rides the export
+
+A guided blink calibration ends with a check the earlier passive baseline
+never had: after measuring the person's open and closed aperture and
+placing the line at their midpoint, it asks them to "blink three times,
+normally" and runs the real detector over those blinks against the
+candidate line. The line is stored only if it caught enough of them — a
+midpoint that looks sound on its medians but misses this person's ordinary
+blinks is refused, not kept.
+
+That verification count was already stored with the line, but only in the
+browser's local storage, where an analysis of the exported file could
+never see it. Roadmap 11.6a calls it "the procedure's first measurement,"
+and a measurement that never reaches the file is not one an analysis can
+use. So the count now rides the export as `guided_blinks_caught`, beside
+the other `guided_*` rows a calibrated session already carries.
+
+Two small honesty choices came with it. A line stored before verification
+existed has no count, and its row reads `unknown` rather than 0 — because
+0 would say "caught none of three," a claim about a procedure that never
+ran, and the absent-versus-zero rule holds here as everywhere. And the row
+is written only for a session with a stored guided line, the same absence
+rule the rest of the guided block follows: a passive session did not run
+the procedure, so it carries none of its rows. Nothing reads the key yet;
+it is recorded for the reader, and the analysis will read it the day a
+claim about calibration quality needs it.

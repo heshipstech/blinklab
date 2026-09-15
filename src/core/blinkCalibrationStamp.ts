@@ -140,5 +140,17 @@ export function guidedCalibrationMetadataRows(
       "guided_conditions_match",
       mismatch === null ? "true" : `false (${mismatch})`,
     ),
+    // The verification outcome, roadmap 11.6a's "first measurement": how
+    // many of the three "blink three times, normally" blinks the stored
+    // line actually caught. The gate that refuses an unverified line
+    // lives in the resolver; this carries the caught count into the file
+    // so the line's confirmation is a recorded measurement, not just a
+    // localStorage detail. `unknown` for a line stored before
+    // verification existed — the count genuinely does not exist there,
+    // which is not the same as zero blinks caught.
+    line(
+      "guided_blinks_caught",
+      stored.blinksCaught === null ? "unknown" : stored.blinksCaught,
+    ),
   ];
 }
