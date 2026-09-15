@@ -6,7 +6,7 @@ A browser based eye signal laboratory. It reads your webcam locally. It turns wh
 
 > **Demo, not a safety or medical device. It is not for clinical, workplace or safety use, its numbers are not diagnostic, and it has not been validated against any medical standard. Your video and your measurements never leave your browser. The face model this page bundles tries to send anonymous usage statistics to Google, and this page intercepts the request before it leaves the browser.** This is a learning project. The sentence above is quoted from `src/core/notice.ts`, the one place the page's own notice lives, and a test holds this copy to it word for word.
 
-> Revised 12 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
+> Revised 15 September 2026, against the state of `main` on that date. When this file changes, this stamp changes with it; a test enforces that.
 
 Read in full on 9 September 2026, claims `67869dd1`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
