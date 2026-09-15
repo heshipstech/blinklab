@@ -30,6 +30,12 @@ The loop, per increment:
 One branch, one open PR at a time: the next increment starts only after
 the previous one merges.
 
+**CI is watched on a ~5-minute cadence** (owner directive, 15 September
+2026): after pushing a PR, arm a check-in at +5 minutes; while CI is
+still running, each check-in re-arms itself at +5; merge the moment it
+is green. Never one long timer per cycle — the merge should land within
+minutes of CI finishing, not whenever a generous timer happens to fire.
+
 ## The floor under "smallest"
 
 An increment cannot be smaller than what the guards hold together in
