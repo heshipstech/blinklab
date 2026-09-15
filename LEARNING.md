@@ -4463,3 +4463,30 @@ awake is the value here; carrying the outcome in the export is a separate
 concern with its own guards, so it is a later slice. Keeping the two
 apart is what let this one land as one small, self-contained change with
 its behaviour proven against a fake device and nothing else disturbed.
+
+## A rear camera should not be mirrored, and the default can say so
+
+Mirror is on by default because a person watching their own face expects
+it — a bathroom mirror flips left and right, and a front webcam feels
+wrong without that flip. But a phone's rear ("environment") camera frames
+the world in front of the person, not their face, and mirroring that
+flips the whole scene: any text in view reads backwards, and a gesture to
+the left appears on the right. A loaded video clip already defaults
+Mirror off for the same reason (issue #301) — recorded footage is not a
+face looking at itself. This increment (roadmap 13.1, the environment-
+camera piece of the survival kit) gives the live camera the same
+sensitivity: `mirrorDefaultForFacingMode` returns the mirror default from
+the track's facingMode, off for "environment" and on for everything else.
+
+Two small design choices carried it. First, the decision is a PURE
+function of one string, so it is proven without a camera — the browser
+cannot hand a Linux test runner a rear camera, but the rule that reads
+its label needs no camera to check. Second, the default is set on camera
+start (true, the safe front-camera assumption) and then CORRECTED once
+`readDeviceInfo` reads facingMode a few lines later; a front or unknown
+camera is untouched, and only an environment camera flips. The display
+loop reads the mirror flag every frame, so setting the variable is the
+whole of the wiring — no repaint to arrange. The real rear-camera
+behaviour stays a manual check on a phone, because that is the one place
+a `facingMode` of "environment" actually arrives; what ships here is the
+rule that will be right when it does.

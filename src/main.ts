@@ -204,6 +204,7 @@ import {
   type FramesMissedSummary,
 } from "./core/framesMissed";
 import { recordDue } from "./core/recordGate";
+import { mirrorDefaultForFacingMode } from "./core/mirrorDefault";
 import { steppedCrashOutcome } from "./core/steppedCrash";
 import {
   initialLongClosureState,
@@ -1441,6 +1442,13 @@ async function beginCamera(deviceId?: string): Promise<void> {
     // to end test caught it by finding the whole device block missing
     // from a camera export.
     deviceInfo = readDeviceInfo(video);
+    // Roadmap 13.1: now that facingMode is known, set the Mirror default
+    // for this camera. A front camera keeps the mirror set on camera
+    // start above; an environment (rear) camera frames the world, not
+    // the person's face, so it defaults off — the display loop reads
+    // `mirrored` each frame, so the next painted frame reflects this.
+    mirrored = mirrorDefaultForFacingMode(deviceInfo.facingMode);
+    mirrorToggle.checked = mirrored;
     askKss("Before you begin: how sleepy do you feel?", (rating) => {
       kssBefore = rating;
       kssBeforeAsked = true;
