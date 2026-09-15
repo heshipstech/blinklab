@@ -58,9 +58,13 @@ def _write_video(
     *,
     fps: float = 30.0,
     last_second: int = 400,
+    commit: str | None = None,
 ) -> None:
     rate, duration, perclos = SIGNATURE[label]
-    lines = ["# measurement_mode: stepped", ",".join(COLUMNS)]
+    lines = ["# measurement_mode: stepped"]
+    if commit:
+        lines.append(f"# app_commit: {commit}")
+    lines.append(",".join(COLUMNS))
     for second in range(last_second + 1):
         row: dict[str, object] = {
             "timestampMs": second * 1000,
@@ -183,3 +187,24 @@ class TestRunAnalysis:
         _write_video(tmp_path, "s0", "alert", fps=15.0)
         with pytest.raises(RldError):
             run_analysis(load_corpus(tmp_path), shuffles=10)
+
+
+class TestTheReportNamesTheCohortsBuilds:
+    """Roadmap 11.8a. The evaluation pools across videos, so the report
+    must say whether one build recorded them. STATED, not refused: this
+    analyser's published corpus predates the build stamp, and a refusal
+    here would break re-derivation of that result."""
+
+    def test_two_builds_are_named_not_refused(self, tmp_path: Path) -> None:
+        for i, commit in enumerate(("aaa1111", "bbb2222")):
+            for label in SIGNATURE:
+                _write_video(tmp_path, f"s{i}", label, commit=commit)
+        result = run_analysis(load_corpus(tmp_path), shuffles=5)
+        report = format_report(result)
+        assert "2 different builds (aaa1111, bbb2222)" in report
+        assert "REFUSED" not in report
+
+    def test_unstamped_files_predate_the_stamp(self, tmp_path: Path) -> None:
+        _corpus_dir(tmp_path, n_subjects=2)
+        result = run_analysis(load_corpus(tmp_path), shuffles=5)
+        assert "predate the build stamp" in format_report(result)

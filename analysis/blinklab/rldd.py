@@ -51,7 +51,7 @@ from pathlib import Path
 import numpy as np
 
 from blinklab.column_freeze import ColumnFreezeError, check_header
-from blinklab.drozy import FEATURE_NAMES, MIN_USABLE_FPS
+from blinklab.drozy import FEATURE_NAMES, MIN_USABLE_FPS, header_app_commit
 
 # The window the plan medians over: a 60 s settle, then seconds 60-360.
 # A video whose recording does not reach the end of this window has
@@ -112,6 +112,11 @@ class VideoFeatures:
     amplitude_over_velocity_ms: float | None
     perclos: float | None
     long_closures: float | None
+    # Which build recorded this video, or None for a file that
+    # predates the stamp — age, not damage (roadmap 11.8a, the rule
+    # blinklab/loader.py states). Defaulted so the dataclass stays
+    # constructible from the older tests and callers.
+    app_commit: str | None = None
 
     @property
     def usable(self) -> bool:
@@ -281,6 +286,10 @@ def load_video_features(
         amplitude_over_velocity_ms=ratio,
         perclos=perclos,
         long_closures=long_closures,
+        # A second read of a small file, taken over widening _rows's
+        # rows-only contract: the metadata lines it strips are exactly
+        # where the stamp lives.
+        app_commit=header_app_commit(path.read_text(encoding="utf-8")),
     )
 
 

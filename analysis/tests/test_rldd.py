@@ -52,8 +52,15 @@ COLUMNS = [
 ]
 
 
-def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
-    lines = ["# measurement_mode: stepped", ",".join(COLUMNS)]
+def _write_csv(
+    path: Path,
+    rows: list[dict[str, object]],
+    commit: str | None = None,
+) -> None:
+    lines = ["# measurement_mode: stepped"]
+    if commit:
+        lines.append(f"# app_commit: {commit}")
+    lines.append(",".join(COLUMNS))
     for row in rows:
         lines.append(",".join(str(row.get(c, "")) for c in COLUMNS))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -186,6 +193,24 @@ class TestFeatureExtraction:
         assert video.blink_duration_ms is None
         assert video.perclos == 0.05
         assert video.long_closures == 0
+
+
+class TestTheBuildStamp:
+    """Roadmap 11.8a. The evaluation pools across videos, so the loader
+    reads which build recorded each one and the report says whether the
+    corpus is one instrument."""
+
+    def test_the_stamp_is_read(self, tmp_path: Path) -> None:
+        path = tmp_path / "s1_alert.seconds.csv"
+        _write_csv(path, _rows(), commit="abc1234")
+        assert load_video_features(path).app_commit == "abc1234"
+
+    def test_no_stamp_is_age_not_damage(self, tmp_path: Path) -> None:
+        # Exports before the build stamp carry no such line. None and
+        # never a guess — the loader's own rule (blinklab/loader.py).
+        path = tmp_path / "s1_alert.seconds.csv"
+        _write_csv(path, _rows())
+        assert load_video_features(path).app_commit is None
 
 
 class TestNaming:
