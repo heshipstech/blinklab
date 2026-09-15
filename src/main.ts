@@ -767,6 +767,12 @@ let irisWidthSamples: number[] = [];
 let measurementFrame: MeasurementFrame | null = null;
 let sessionMarkers: SessionMarker[] = [];
 let visibilityChanges = 0;
+// A session-scoped count of screen-orientation changes ("flips"), the
+// visibility counter's twin (roadmap 13.1). Reset on session start and
+// incremented by the module-level orientation listener installed further
+// down; it rides the export as `orientation_flips`, so a phone that
+// rotated mid-session says so in the file.
+let orientationFlips = 0;
 // When each visibility change happened, on the record clock. The
 // export's count row derives from this array's length so the two can
 // never disagree; the counter above stays for the suspension guard.
@@ -1269,6 +1275,7 @@ function resetSession(): void {
   cueProtocolStartMs = null;
   endCueProtocol();
   visibilityChanges = 0;
+  orientationFlips = 0;
   interruptionTimesMs = [];
   sessionDeliveryRates = null;
   sessionFramesMissed = null;
@@ -2991,6 +2998,7 @@ function exportSession(): void {
       interruptionTimesMs,
       measurementFrame,
       { gated: poseGateFrames, valid: poseValidFrames },
+      orientationFlips,
     ),
     // Only when the hour-long buffer overran: the file says how many
     // of its oldest seconds are missing rather than looking complete
@@ -5487,6 +5495,23 @@ document.addEventListener("visibilitychange", () => {
   // export writes exactly that rather than a literal zero.
   interruptionTimesMs = [...interruptionTimesMs, lastRecordAtMs];
 });
+
+// The screen-orientation counter (roadmap 13.1). A phone rotated
+// mid-session moves the frame the measurement sits in, so each change is
+// counted and rides the export as `orientation_flips`. Installed once at
+// module init, like the visibilitychange listener above; the counter is
+// zeroed on session start, so a rotation before a session is wiped when
+// that session begins. Older Safari has no `screen.orientation`, so the
+// read is guarded and never throws: a browser without it reports no
+// flips, the same silence deviceInfo keeps for the `orientation` field.
+try {
+  window.screen.orientation?.addEventListener("change", () => {
+    orientationFlips += 1;
+  });
+} catch {
+  // No screen.orientation here; the count stays 0, the true statement
+  // for a device that cannot report a rotation.
+}
 
 // Roadmap 10.0a2, ladder B2. What an exported file carries beside the
 // records, said where the person exporting can read it, and the one

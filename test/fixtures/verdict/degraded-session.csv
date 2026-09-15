@@ -32,6 +32,7 @@
 # measurement_frame: 1280x720
 # median_iris_width_px: 30.0
 # visibility_changes: 2
+# orientation_flips: 0
 # markers: 2
 # marker_1_seconds: 42.000
 # marker_2_seconds: 55.500

@@ -91,6 +91,7 @@ ALWAYS_WRITTEN = [
     "measurement_mode",
     "median_iris_width_px",
     "observed_duration_seconds",
+    "orientation_flips",
     "perclos_min_observed_ms",
     "perclos_min_samples",
     "pose_valid_fraction",
