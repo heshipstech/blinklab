@@ -28,6 +28,7 @@ import {
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
+  wakeLockMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
   type PoseFrameCounts,
@@ -173,6 +174,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "delegateMetadataRows",
   "cueMetadataRows",
   "gazeCalibrationMetadataRows",
+  "wakeLockMetadataRows",
 ];
 
 /**
@@ -241,6 +243,17 @@ export function fixtureCsv(session: FixtureSession): string {
     // rows are written (false, and the two bounds), the residual rows
     // are not (14.9a).
     ...gazeCalibrationMetadataRows(true, null),
+    // The wake lock on the ordinary machine (13.1): supported, taken
+    // once and held — no tab-hide re-request, no refusal — stated once
+    // and stable for the pin, the delegate block's precedent. The
+    // wake lock does not enter the verdict, so one shared outcome keeps
+    // the committed bytes stable without widening what the pin tests.
+    ...wakeLockMetadataRows({
+      supported: true,
+      acquired: true,
+      reacquisitions: 0,
+      lastError: null,
+    }),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

@@ -18,21 +18,15 @@
 // metadata-step precedent src/core/frameRateNegotiation.ts set — a
 // session without the screen guarantee is a session worth keeping.
 
-/** The record of what the wake lock did, for the export (wired in a
- * later slice) and for the controller's own idempotence. */
-export type WakeLockOutcome = {
-  /** navigator.wakeLock existed. "no" is a true statement about the
-   * browser, never a failure. */
-  supported: boolean;
-  /** At least one request succeeded. */
-  acquired: boolean;
-  /** Successful requests AFTER the first — each one a lock the browser
-   * had dropped (tab hidden) or the caller released, then re-taken. */
-  reacquisitions: number;
-  /** The last refusal's message, recorded rather than thrown. Null
-   * when nothing has been refused. */
-  lastError: string | null;
-};
+import type { WakeLockOutcome } from "../core/sessionMetadata";
+
+// The record of what the wake lock did (WakeLockOutcome) is pure data,
+// so it lives in core beside the builder that writes it into the export
+// — sessionMetadata.ts's wakeLockMetadataRows — the same split
+// DeviceInfo keeps from this file's sibling io/deviceInfo.ts. It is
+// re-exported here so a caller driving the controller imports the type
+// from the module that produces it.
+export type { WakeLockOutcome };
 
 type WakeLockSentinelLike = {
   release: () => Promise<void>;

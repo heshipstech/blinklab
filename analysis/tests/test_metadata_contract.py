@@ -180,6 +180,10 @@ CONDITIONAL = {
     "user_agent": "a camera session",
     "user_agent_form": "a camera session",
     "viewport": "a camera session",
+    "wake_lock_acquired": "a camera session",
+    "wake_lock_error": "a camera session",
+    "wake_lock_reacquisitions": "a camera session",
+    "wake_lock_supported": "a camera session",
 }
 
 # The two kinds together are the whole contract.

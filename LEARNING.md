@@ -4526,3 +4526,34 @@ the Python contract's always-written list — the same cascade
 Nothing reads the key yet, which is honest: it is a fact recorded for a
 reader, like `orientation` itself, and the analysis track will read it
 the day a claim needs it.
+
+## What the screen wake lock did rides the export, on a camera only
+
+The wake lock (ADR-0007) has kept the screen awake since its first slice;
+until now nothing in the exported file said whether it worked. A session
+that ran the 260-second light protocol on a browser that refuses the wake
+lock, and slept halfway through, looked in its CSV exactly like one that
+stayed awake. So the controller's record — supported, acquired, how many
+times the lock was re-taken after a tab-hide drop, and any refusal's own
+message — now travels as four `wake_lock_*` rows.
+
+The row builder is pure and lives in core beside the other metadata
+builders; the controller that fills its record touches
+`navigator.wakeLock` and stays in `io/wakeLock.ts`. That meant moving the
+record's TYPE, `WakeLockOutcome`, out of io and into core, so the pure
+builder can name what it consumes without core importing io — the same
+split `DeviceInfo` already keeps, defined in core and filled by
+`io/deviceInfo.ts`. io re-exports the type so a caller driving the
+controller still finds it where the controller is.
+
+Unlike the orientation counter next door, these rows are camera-only: a
+clip is stepped from its own decoded frames and never asks the device to
+stay awake, so it has no wake-lock story and writes no row at all — the
+pseudonym rule, not four rows of `false`. That one classification decides
+the whole cascade: SPEC's when-written column reads "Camera sessions",
+the presence test's clip session drops the keys while both camera
+sessions carry them, and the Python contract files them under conditional
+rather than always-written. `wake_lock_error` reads `none` when nothing
+was refused, a definite statement rather than `unknown`, on the
+`frame_rate_resolution_change` precedent. Nothing reads the keys yet: a
+fact recorded for a reader, like `orientation`, until a claim needs it.

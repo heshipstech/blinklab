@@ -24,11 +24,13 @@ import {
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
+  wakeLockMetadataRows,
   type CameraFrameDriver,
   type DeviceInfo,
   type MeasurementFrame,
   type PoseFrameCounts,
   type SessionMarker,
+  type WakeLockOutcome,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
 import type { ProfileQuality } from "../../src/core/calibrationProfile";
@@ -159,6 +161,8 @@ type Shape = {
   poseFrames: PoseFrameCounts;
   /** Screen-orientation changes counted during the session (13.1). */
   orientationFlips: number;
+  /** What the wake lock did; null off the camera (13.1). */
+  wakeLock: WakeLockOutcome | null;
   recordsDropped: number;
   kssBefore: KssRating | null;
   kssAfter: KssRating | null;
@@ -213,6 +217,15 @@ const MINIMAL_CAMERA: Shape = {
   // A thin session where the phone never rotated: the row is still
   // written, reading 0, because orientation_flips is unconditional.
   orientationFlips: 0,
+  // A thin camera session still carries the wake-lock block: the API
+  // was there and the lock was taken, so the four rows are written —
+  // camera-only, so a clip drops them (13.1).
+  wakeLock: {
+    supported: true,
+    acquired: true,
+    reacquisitions: 0,
+    lastError: null,
+  },
   recordsDropped: 0,
   kssBefore: null,
   kssAfter: null,
@@ -253,6 +266,9 @@ const MINIMAL_CLIP: Shape = {
   // A clip is stepped from its own decoded frames and misses none, so
   // no summary and no rows (13.4).
   framesMissed: null,
+  // A clip never asks the device to stay awake, so it has no wake-lock
+  // story and writes no row (13.1).
+  wakeLock: null,
 };
 
 /** A session where every optional thing happened at least once. */
@@ -287,6 +303,14 @@ const FULL: Shape = {
   // The phone rotated twice mid-session: the count is non-zero in the
   // session where every optional thing happened at least once.
   orientationFlips: 2,
+  // A session that dropped the lock on a tab-hide and re-took it: the
+  // reacquisition count is non-zero where every optional thing happened.
+  wakeLock: {
+    supported: true,
+    acquired: true,
+    reacquisitions: 2,
+    lastError: null,
+  },
   recordsDropped: 12,
   kssBefore: 3,
   kssAfter: 4,
@@ -356,6 +380,7 @@ function metadataRows(shape: Shape): string[] {
       shape.source === "camera",
       shape.gazeQuality,
     ),
+    ...wakeLockMetadataRows(shape.wakeLock),
   ];
 }
 
@@ -380,6 +405,7 @@ const CALLED_HERE = [
   "delegateMetadataRows",
   "cueMetadataRows",
   "gazeCalibrationMetadataRows",
+  "wakeLockMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

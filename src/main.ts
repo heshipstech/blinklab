@@ -161,6 +161,7 @@ import {
   pseudonymMetadataRows,
   featureRecordOverrunRows,
   sessionMetadataRows,
+  wakeLockMetadataRows,
   type CameraFrameDriver,
   type DeviceInfo,
   type MeasurementFrame,
@@ -3041,6 +3042,12 @@ function exportSession(): void {
     ...gazeCalibrationMetadataRows(
       frameSource === "camera",
       calibrationProfile?.quality ?? null,
+    ),
+    // What the screen wake lock did (13.1, ADR-0007): camera sessions
+    // only, appended last — a clip is stepped and never asks the device
+    // to stay awake, so it has no wake-lock story (src/io/wakeLock.ts).
+    ...wakeLockMetadataRows(
+      frameSource === "camera" ? wakeLock.outcome() : null,
     ),
   ]);
   if (csv === null) {
