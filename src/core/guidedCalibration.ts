@@ -418,6 +418,31 @@ export function startCalibrationSession(
   };
 }
 
+/**
+ * Whether a guided calibration in progress should suppress the session's
+ * four measurement reducers this frame (roadmap 11.6a).
+ *
+ * A guided calibration is instructed behaviour, not the spontaneous
+ * behaviour blink, PERCLOS, long closure and blink rate measure: the
+ * person stares open on command, holds their eyes shut for three seconds,
+ * and blinks three times to order. The deliberate closed hold in
+ * particular would land as a false long closure and a false three-second
+ * blink in a session that happened to run a calibration mid-stream. So
+ * while a calibration is collecting or verifying, those reducers are fed
+ * null — the same nothing they get on a frame with no trusted face.
+ *
+ * A finished (`done`) session suppresses nothing: its result has been
+ * read, the overlay is gone, and the next frame is an ordinary one. Null,
+ * no calibration at all, suppresses nothing. The caller reads this BEFORE
+ * stepping the session, so the frame a verification blink completes on is
+ * still suppressed rather than counted.
+ */
+export function calibrationSuppressesReducers(
+  state: CalibrationSessionState | null,
+): boolean {
+  return state !== null && state.kind !== "done";
+}
+
 export function calibrationSessionStep(
   state: CalibrationSessionState,
   nowMs: number,

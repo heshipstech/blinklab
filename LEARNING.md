@@ -4584,3 +4584,34 @@ rule the rest of the guided block follows: a passive session did not run
 the procedure, so it carries none of its rows. Nothing reads the key yet;
 it is recorded for the reader, and the analysis will read it the day a
 claim about calibration quality needs it.
+
+## A guided calibration is not behaviour the session should count
+
+When a person runs the guided blink calibration mid-session, they do
+three instructed things: stare open on command, hold their eyes shut for
+three seconds, and blink three times to order. None of that is the
+spontaneous behaviour the session's four measurement reducers — blink,
+blink rate, PERCLOS and the long-closure detector — exist to measure. The
+deliberate three-second closed hold is the worst offender: to a detector
+watching for eyes-shut it is a textbook long closure and a very long
+blink, so a session that happened to calibrate mid-stream would report one
+of each that never happened.
+
+The fix is to feed those four reducers nothing while a calibration is
+running — the same null they already get on a frame with no trusted face,
+so the calibration window simply does not exist to them. A tiny pure
+predicate decides it (`calibrationSuppressesReducers`: true while the
+session is collecting or verifying, false once it is done or absent), and
+the frame loop reads it BEFORE it steps the session, so the frame a
+verification blink completes on is suppressed rather than counted. The
+baseline learner and the on-screen aperture trace are deliberately left
+alone: the baseline is not one of the four, and a calibrated person's
+guided line overrides the passive baseline anyway.
+
+What is NOT done yet is the other half of the same idea: writing a marker
+so a reader of the export can tell the suppressed window from an ordinary
+data gap. That is a separate slice, and the tempting shortcut — reusing
+the user-placed marker stream — is wrong: those marks carry the
+validation protocol's own ground truth ("ten deliberate blinks between
+marker 1 and marker 2"), and a calibration marker mixed in would corrupt
+it. A dedicated marker is its own small decision, left for next.

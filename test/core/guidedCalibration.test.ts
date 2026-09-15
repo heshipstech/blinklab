@@ -9,6 +9,7 @@ import {
   resolveGuidedCalibration,
   startCalibrationSession,
   calibrationSessionStep,
+  calibrationSuppressesReducers,
   serializeBlinkCalibration,
   parseBlinkCalibration,
   type CalibrationSessionState,
@@ -378,6 +379,31 @@ describe("the verification phase (roadmap 11.6a)", () => {
       result: { kind: "refused", reason: "closure-not-registered" },
       blinksCaught: null,
     });
+  });
+});
+
+describe("calibrationSuppressesReducers (roadmap 11.6a)", () => {
+  it("suppresses the session's reducers while a calibration is in progress", () => {
+    // A calibration collecting or verifying is instructed behaviour, not
+    // the spontaneous behaviour the four reducers measure: its 3 s closed
+    // hold would land as a false long closure and a false blink, so those
+    // frames are fed null through it.
+    expect(calibrationSuppressesReducers(startCalibrationSession(0))).toBe(
+      true,
+    );
+  });
+
+  it("suppresses nothing once the session is done, or when there is none", () => {
+    // A finished session's result is already applied and the overlay is
+    // gone, so the next frame is ordinary; and no calibration at all is
+    // the ordinary case. Neither is fed null.
+    const done: CalibrationSessionState = {
+      kind: "done",
+      result: { kind: "refused", reason: "not-enough-open" },
+      blinksCaught: null,
+    };
+    expect(calibrationSuppressesReducers(done)).toBe(false);
+    expect(calibrationSuppressesReducers(null)).toBe(false);
   });
 });
 

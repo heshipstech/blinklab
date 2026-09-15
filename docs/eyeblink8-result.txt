@@ -1001,3 +1001,26 @@ DETECTOR CHANGED, not yet re-measured, declared 13 September 2026:
   added to a record the corpus never reads cannot move a corpus number.
   The owner's next corpus run scores this entry and retires it beside the
   block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 15 September 2026:
+
+  Row 11.6a slice: a guided calibration is fed null to the session reducers
+
+  One watched file moves: src/core/guidedCalibration.ts, which gains a
+  pure calibrationSuppressesReducers predicate (true while a guided
+  calibration is collecting or verifying, false once done or absent).
+  main.ts reads it to feed the four session reducers — blink, blink rate,
+  PERCLOS and long closure — null through a live guided calibration, so
+  its instructed open stare, deliberate 3 s closed hold and three
+  verification blinks do not land as a false long closure, a false 3 s
+  blink or a rate spike. No constant, threshold or detection arithmetic
+  changes.
+
+  Predicted corpus impact: none, digit for digit, by construction. The
+  predicate is only ever true during a live two-phase guided calibration,
+  which the stepped corpus runner never starts — it loads each clip in a
+  fresh browser with empty storage and no Calibrate flow — so the
+  per-frame calibrationActiveThisFrame is always false there and every
+  reducer is fed exactly what it was before. A suppression that can never
+  engage on the corpus path cannot move a corpus number. The owner's next
+  corpus run scores this entry and retires it beside the block above.
