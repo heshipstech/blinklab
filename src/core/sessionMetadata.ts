@@ -329,6 +329,57 @@ export function driverMetadataRows(driver: CameraFrameDriver | null): string[] {
   return driver === null ? [] : [line("camera_frame_driver", driver)];
 }
 
+/**
+ * What the screen wake lock did over a session (roadmap 13.1, brief E8;
+ * decisions/ADR-0007-session-survival.md). The controller that fills
+ * this touches navigator.wakeLock and so lives in io/wakeLock.ts; the
+ * record shape is pure data and lives here beside the builder that
+ * writes it, the same split DeviceInfo keeps from io/deviceInfo.ts.
+ */
+export type WakeLockOutcome = {
+  /** navigator.wakeLock existed. `false` is a true statement about the
+   * browser — an older iPhone Safari — never a failure. */
+  supported: boolean;
+  /** At least one request succeeded. */
+  acquired: boolean;
+  /** Successful requests AFTER the first — each one a lock the browser
+   * had dropped (tab hidden) or the caller released, then re-taken. */
+  reacquisitions: number;
+  /** The last refusal's message, recorded rather than thrown; null when
+   * nothing has been refused. */
+  lastError: string | null;
+};
+
+/**
+ * The wake-lock record as export rows, or nothing off a live camera.
+ *
+ * Null for a clip: a stepped file is driven off its own decoded frames
+ * and never asks the device to stay awake, so it has no wake-lock story
+ * and writes no row — the pseudonym rule, not four rows of `false`. On a
+ * camera every row is written whatever it says: `wake_lock_supported:
+ * false` is the fact that explains a screen that slept, and a session
+ * run without the screen guarantee is precisely the one an analysis must
+ * be able to find (io/wakeLock.ts records a refusal rather than throwing
+ * it, for the same reason).
+ *
+ * `wake_lock_error` reads `none` when nothing was refused — a definite
+ * statement, not `unknown` — on frame_rate_resolution_change's `none`
+ * precedent; a refusal carries the browser's own message.
+ */
+export function wakeLockMetadataRows(
+  outcome: WakeLockOutcome | null,
+): string[] {
+  if (outcome === null) {
+    return [];
+  }
+  return [
+    line("wake_lock_supported", outcome.supported ? "true" : "false"),
+    line("wake_lock_acquired", outcome.acquired ? "true" : "false"),
+    line("wake_lock_reacquisitions", outcome.reacquisitions),
+    line("wake_lock_error", outcome.lastError ?? "none"),
+  ];
+}
+
 export function sessionMetadataRows(
   records: readonly FeatureRecord[],
   irisWidths: readonly number[],

@@ -16,6 +16,7 @@ import {
   provenanceMetadataRows,
   pseudonymMetadataRows,
   sessionMetadataRows,
+  wakeLockMetadataRows,
   type DeviceInfo,
   type MeasurementFrame,
 } from "../../src/core/sessionMetadata";
@@ -456,6 +457,57 @@ describe("the camera driver row (roadmap 13.8b)", () => {
     // frames by construction, so on a clip there is no camera driver
     // to name — the same absence rule the pseudonym row follows.
     expect(driverMetadataRows(null)).toEqual([]);
+  });
+});
+
+describe("the wake-lock rows (roadmap 13.1, ADR-0007)", () => {
+  it("records what the screen guarantee did, and is absent off the camera", () => {
+    // The 260-second light protocol and any unattended run outlive the
+    // idle timer, so a session that dropped its wake lock is one an
+    // analysis must be able to find. Every row is written on a camera,
+    // whatever it says.
+    expect(
+      wakeLockMetadataRows({
+        supported: true,
+        acquired: true,
+        reacquisitions: 2,
+        lastError: null,
+      }),
+    ).toEqual([
+      "# wake_lock_supported: true",
+      "# wake_lock_acquired: true",
+      "# wake_lock_reacquisitions: 2",
+      // `none`, not `unknown`: nothing was refused is a definite fact,
+      // on frame_rate_resolution_change's precedent.
+      "# wake_lock_error: none",
+    ]);
+  });
+
+  it("carries a refusal's own message rather than throwing it", () => {
+    // io/wakeLock.ts records the browser's refusal instead of throwing;
+    // an unsupported browser (an older iPhone Safari) is a fact about
+    // the browser, and `wake_lock_supported: false` is the row that
+    // explains a screen that slept.
+    expect(
+      wakeLockMetadataRows({
+        supported: false,
+        acquired: false,
+        reacquisitions: 0,
+        lastError: "NotAllowedError: wake lock refused",
+      }),
+    ).toEqual([
+      "# wake_lock_supported: false",
+      "# wake_lock_acquired: false",
+      "# wake_lock_reacquisitions: 0",
+      "# wake_lock_error: NotAllowedError: wake lock refused",
+    ]);
+  });
+
+  it("writes nothing at all off a live camera", () => {
+    // A clip is stepped from its own decoded frames and never asks the
+    // device to stay awake, so it has no wake-lock story — the pseudonym
+    // rule, not four rows of `false`.
+    expect(wakeLockMetadataRows(null)).toEqual([]);
   });
 });
 
