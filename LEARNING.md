@@ -4766,3 +4766,23 @@ closed, verify, and the resolve itself, because the moment
 stored-or-refused exists is exactly when obedient eyes are shut or
 mid-blink. A cancel resets the tracker silently: the escape is the
 person's own act, not a boundary they need announcing.
+
+## The page finally says the sentences core has been rehearsing
+
+Three slices of pure wording landed over the last hours; this one
+puts them in front of the person. main.ts now counts what each hold
+was fed — frames, and frames with no measured aperture — and keeps
+the closed hold's trace, counted on the PRE-step phase (the hold this
+frame's aperture actually fed) and snapshotted from the immutable
+post-step state, so the reference IS the trace in arrival order. At
+resolve, a refusal appends blinkRefusalDetail's second sentence when
+the record supports one, and a stored line appends what it stood on —
+n_open, n_closed, the separation — with the thin warning when a floor
+was cleared with little to spare.
+
+The counters live in main.ts and not in the session deliberately:
+guidedCalibration.ts is a detector source under the ratchet, and
+these facts move no threshold — they only decide whether a sentence
+appears. The refusal e2e gained the wiring pin for free, because the
+fake camera's faceless run is exactly the majority-unmeasured case:
+the status must now blame the view, not the eyes, in CI's own browser.
