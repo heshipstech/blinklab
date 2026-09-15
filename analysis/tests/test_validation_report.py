@@ -70,9 +70,34 @@ class TestTheCohortSaysWhichInstrumentItIs:
         stage(tmp_path, "2026-08-30T11-00-00-000", "def5678")
         lines, _ = report(tmp_path)
         mixed = [line for line in lines if "different builds" in line]
-        assert len(mixed) == 1
+        # Two lines since roadmap 11.8a: the caption above the tables
+        # (this test's original pin) and the REFUSED line at the end.
+        assert len(mixed) == 2
         assert "abc1234" in mixed[0] and "def5678" in mixed[0]
         assert "not one instrument" in mixed[0]
+        assert mixed[1].startswith("REFUSED")
+
+    def test_a_mixed_cohort_reddens_the_run(self, tmp_path: Path) -> None:
+        # Roadmap 11.8a: stating the mix was 10.1f2's floor, and the
+        # pinned-build row raises it — a round is measured by ONE
+        # instrument, so an intake spanning two builds is refused, not
+        # merely captioned. The sentence stays for the reader; the
+        # exit code is for the machine that would have published it.
+        stage(tmp_path, "2026-08-30T10-00-00-000", "abc1234")
+        stage(tmp_path, "2026-08-30T11-00-00-000", "def5678")
+        lines, refused = report(tmp_path)
+        assert refused > 0
+        refusal = [line for line in lines if line.startswith("REFUSED")]
+        assert len(refusal) == 1
+        assert "abc1234" in refusal[0] and "def5678" in refusal[0]
+
+    def test_unstamped_files_do_not_redden(self, tmp_path: Path) -> None:
+        # Round I predates the stamp entirely: no session names a
+        # build, which is age rather than a mix, and refusing it would
+        # make the historical round unreadable by its own tool.
+        stage(tmp_path, "2026-08-30T10-00-00-000")
+        _, refused = report(tmp_path)
+        assert refused == 0
 
     def test_files_predating_the_stamp_say_so(self, tmp_path: Path) -> None:
         # The committed fixtures carry no app_commit, which is what

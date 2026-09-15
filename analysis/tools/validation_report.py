@@ -553,11 +553,20 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
             # naming who and why.
             refusals.append((paths, str(error)))
 
+    # Roadmap 11.8a. Stating the mix (10.1f2) told the reader; the
+    # pinned-build row also tells the MACHINE: a round is measured by
+    # one instrument, so a cohort spanning two builds is a refusal
+    # that reddens the run, not a caption under a table that should
+    # never have been averaged. Unstamped sessions stay out of the
+    # set — round I predates the stamp, which is age, not a mix.
+    cohort = cohort_commits(loaded)
+    mixed_builds = len(cohort) > 1
+
     noun = "participant" if len(pairs) == 1 else "participants"
     lines = [
         f"Validation round: {len(pairs)} {noun} in {directory}",
         f"Ground truth between the two marks: {EXPECTED_BLINKS} blinks.",
-        cohort_commit_line(cohort_commits(loaded)),
+        cohort_commit_line(cohort),
         "",
         *calibration_refused_lines(calibration_refusals),
         "CHECKS",
@@ -592,7 +601,14 @@ def report(directory: Path, rules: str = "round1") -> tuple[list[str], int]:
     if pilot_lines:
         lines += ["", *pilot_lines]
     lines += page_account_lines(accounts)
-    return lines, len(refusals)
+    if mixed_builds:
+        lines += [
+            "",
+            "REFUSED: " + cohort_commit_line(cohort) + " A round is "
+            "measured by one instrument, so this folder is refused "
+            "rather than averaged (roadmap 11.8a).",
+        ]
+    return lines, len(refusals) + (1 if mixed_builds else 0)
 
 
 def main() -> int:
