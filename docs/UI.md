@@ -688,9 +688,13 @@ so the export can say the protocol ran even for an abandoned run.
 The things that will break a layout, in order of how likely they are to
 surprise you.
 
-1. **The blink log grows to 50 entries** and is the tallest element on the
-   page. Everything below it moves down. Consider a fixed height with
-   internal scrolling.
+1. **The blink log grows to 50 entries** (`BLINK_LOG_DISPLAY_CAP`), and it
+   used to be the tallest element on the page, pushing everything below it
+   down. That advice shipped: `.blink-table-scroll` holds it to 150 px —
+   about five rows — and scrolls past that, sideways too on a phone so the
+   card never widens the page. This item said "consider a fixed height with
+   internal scrolling" until 15 September 2026, offering as an idea what
+   the stylesheet had already done.
 2. **The pose gate message appears without warning** whenever the head
    turns too far, adding about two lines to the Gaze box mid-session.
 3. **The sleepiness panel's option 9** is 58 characters and sets the
