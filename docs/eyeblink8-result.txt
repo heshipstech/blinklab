@@ -1045,3 +1045,23 @@ DETECTOR CHANGED, not yet re-measured, declared 15 September 2026:
   passes silently or stops the run before any clip is opened cannot
   move a number a completed run publishes. The owner's next corpus run
   scores this entry and retires it beside the block above.
+
+DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
+
+  chore(deps): typescript-eslint 8.70.0 and vite 8.3.0, the minors
+
+  One watched file moves: package-lock.json, under the two minor
+  bumps Dependabot offered as pull request #528, landed by hand so
+  this caveat could ride the same commit and name its own subject.
+  typescript-eslint is lint tooling and runs in no measurement path.
+  vite builds the bundle the corpus runner drives, so it is exactly
+  the class the lock file was put under watch for: a builder change
+  can move a stepped measurement with no line of this repository's
+  own code changing.
+
+  Predicted corpus impact: none — vite 8.3.0 is a minor of the same
+  builder already anchored, its changelog is build performance and
+  fixes in paths this bundle does not exercise — but that prediction
+  is the owner's next corpus run's to score, not this note's to
+  assert. That run scores this entry and retires it beside the
+  blocks above.
