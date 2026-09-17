@@ -130,3 +130,20 @@ in the build; the evaluator does not read longClosureCount, so no
 corpus closure count is claimed either way — what is claimed is
 what was predicted: this change cost the blink measurement nothing.
 Roadmap row 10.11 ticks on this section.
+
+SUPERSEDED IN PART, 17 SEPTEMBER 2026 (ISSUE #115)
+--------------------------------------------------
+Written after the fact, as a dated addition: nothing above is
+edited. "A long closure still ENDS the frame the aperture reaches
+the shut line" and "Nothing about endings changes" described the
+detector until the depth-qualified episode redesign, whose own
+prediction was committed first in docs/depth-qualified-episodes.txt.
+The episode boundary is now the blink line: the clock runs from that
+crossing, endings sit at that line, and reaching the shut line is
+the depth qualification. What this file introduced carries over
+re-anchored — the re-arm fraction, the bounded untrusted gap and the
+one-fire rule are unchanged in form, against the new boundary. The
+hover traces above were re-run against the redesign before it merged
+and still collapse to one event each at both rates: the whole hover
+band sits below the new boundary, so it is one episode that dips
+below the shut line.

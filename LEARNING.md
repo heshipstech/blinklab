@@ -4819,3 +4819,36 @@ on the fifteenth drawn frame of the committed clip — armed before the
 clip loads, because a patch that waits for progress races a 60-frame
 clip a fast machine can finish first — and asserts the per-frame
 trace still exports with `# source: file` and the clip's name.
+
+## The band between the lines finally pays into the closure
+
+Amendment 5 split one line into two and its postscript admitted the
+cost on the spot: a slow descent spends time in the droop band
+before reaching shut, and that time counted toward nothing. The
+verified consequence sat in issue #115 for six weeks — 300 ms of
+droop plus 400 ms fully shut, a genuinely shut closure of 700 ms,
+refused by the blink counter as too long and refused by the long
+closure detector because the truly-shut span alone stayed under the
+line. Every rule was locally right and the partition still leaked,
+because the two detectors clocked the same closure from different
+crossings.
+
+The redesign is the issue's own sentence run as code: the episode
+begins where blink.ts says a closure begins — the identical
+per-frame line value, guided fallback and all, handed in by main.ts
+— and reaching the shut line is no longer where the clock starts but
+what makes the episode count. Fix #126's constraint got its answer
+in writing before any clock moved: with both clocks on one crossing,
+at-or-under the maximum is the blink's bin and strictly beyond is
+this one's, so one closure cannot land in both, and a closure past
+the maximum that never reached shut is nobody's event on purpose —
+depth, not patience, is what makes a long closure.
+
+What carried over is as deliberate as what moved: 10.11's re-arm
+fraction and bounded gap re-anchored to the new boundary with
+blink.ts's own expressions, the frozen shut baseline still shared
+with PERCLOS, longClosureCount still the only exported key. The
+corridor caveat is stated, tested and unpaid: a guided blink line at
+or below the frozen shut line degrades the machine to the
+single-line design, honestly and pinned, and the cure is #113's
+personal shut floor, not this increment's.

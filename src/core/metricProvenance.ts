@@ -98,8 +98,10 @@ export const METRIC_PROVENANCE: Readonly<Record<string, MetricProvenance>> = {
   "Long closures": {
     kind: "convention",
     status:
-      "Counted under an arming hysteresis whose rule was committed " +
-      "before the code changed, in docs/long-closure-hysteresis.txt.",
+      "Counted as depth-qualified episodes whose rule was committed " +
+      "before the code changed (docs/depth-qualified-episodes.txt), " +
+      "under the arming hysteresis committed the same way in " +
+      "docs/long-closure-hysteresis.txt.",
   },
   "Iris offset": {
     kind: "unvalidated",
