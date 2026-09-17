@@ -318,4 +318,14 @@ describe("a reset leaves no calibration in flight", () => {
     expect(body, "main.ts no longer declares resetSession").not.toBeNull();
     expect(body).toContain("alertFiredTimesMs = [];");
   });
+
+  it("clears the gaze gap clock with the buffer it serves", () => {
+    // Roadmap 14.9b: the blink-length bridge reads the last sample's
+    // moment, so a reset that cleared the buffer but kept the clock
+    // would let a new session's first blink bridge to the LAST
+    // session's stillness — one fixation spanning two people.
+    const body = resetSessionBody(main);
+    expect(body, "main.ts no longer declares resetSession").not.toBeNull();
+    expect(body).toContain("lastGazeSampleMs = null;");
+  });
 });
