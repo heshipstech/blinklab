@@ -4940,3 +4940,25 @@ The Escape register did its job the way 14.0f designed it: adding
 OVERLAY_CONTROLS, and uiGuard refused the pull request until docs/UI.md
 documented both the button and the screen. Nothing about that needed
 remembering.
+
+## 14.4 Parity by construction still needs parity by test
+
+The report card is the third second-surface this phase (the podium,
+then the card), and it repeats the rule: the card owns nothing. Every
+line it prints is built by participantReport's own exported functions
+— renderReportValue, statusWord, and scoreLine, extracted rather than
+re-spoken, so there is no second template to drift.
+
+But construction alone breaks silently. The day someone edits
+sectionTwo's finding template and not the card's copy of it, the two
+surfaces disagree and no compiler notices, because both templates are
+valid strings. That is what the parity test is for: it renders the
+card and the report from the same inputs and requires every card line
+to appear in the report verbatim, a subset relation checked line for
+line. Construction makes drift unlikely; the test makes it loud.
+
+The inverse rule got its own pin. One sentence on the card is
+deliberately NOT in the report — the sentence saying what the card
+leaves out — and the test asserts it is absent from the report, so
+the exception list has length one and a reader of the test knows the
+whole story.
