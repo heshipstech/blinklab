@@ -29,11 +29,20 @@ const committed = parseCollectedCount(
 
 // --run so the listing is printed and the process exits rather than
 // watching. stdio is captured; a non-zero exit throws by itself.
+//
+// --staticParse=false because vitest 5 made `list` parse files
+// statically by default, and a static parse counts REGISTRATIONS the
+// way the retired grep counted calls: on this suite it reads 1836
+// where the runner runs 1869, the 10.0b1 defect wearing the runner's
+// own name. The published figure is defined as what the runner
+// collects by loading every file, so the guard must keep asking for
+// exactly that.
 const listing = execFileSync(
   process.execPath,
   [
     new URL("../node_modules/vitest/vitest.mjs", import.meta.url).pathname,
     "list",
+    "--staticParse=false",
   ],
   { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
 );
