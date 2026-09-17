@@ -255,6 +255,24 @@ export function calibratedPoint(
   };
 }
 
+/**
+ * One definition of on-window (roadmap 14.9b; the audit's
+ * two-definitions finding). The export column used to judge the RAW
+ * offset against the guessed zero-centred threshold while the
+ * heatmap judged the CALIBRATED point against the unit square, so a
+ * frame could leave the screen by one rule and dwell on it by the
+ * other. With a profile the boundary is the window itself — the
+ * exact bound accumulate always enforced — and every consumer reads
+ * it from here. "Window" not "screen": viewport fractions describe
+ * the browser window the calibration targets were shown in, and a
+ * page must not claim to know where the physical screen ends.
+ * Exactly 1.0 is still the window's far edge, accumulate's own
+ * boundary convention.
+ */
+export function pointWithinWindow(point: ScreenPoint): boolean {
+  return point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1;
+}
+
 // Viewport fractions read in the user's own language: smaller x is
 // the user's left, smaller y is the top. Boundary convention:
 // exactly the centre counts as top and as left.
