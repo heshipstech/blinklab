@@ -5007,3 +5007,23 @@ fixation. The defect was never the caution; it was that the rule
 could not tell a lid from an absence, so it paid for the caution
 with a split fixation on every blink. The fix keeps the caution
 (long gaps still clear) and adds only the discrimination.
+
+## 14.9b (wiring) The gate goes where the value is born, not where it is used
+
+The blink-gaze gate had five possible homes — the quadrant readout,
+the on-screen assignment, the smoother's input, the buffer push, the
+heatmap's accumulate — and wiring it at any of them would have left
+the other four reading the lid as a glance. The right site was none
+of the consumers: it is the line where meanIrisOffset lands, because
+that is where the value is born, and a refusal applied at birth is
+inherited by construction instead of enforced five times.
+
+The line the gate reads posed the second question: reuse the
+detector's blinkLineMm (computed later in the frame) or derive it
+fresh? Hoisting the detector's computation would have moved WHEN the
+detector sees a newly adopted guided line — a behavior change smuggled
+into a wiring commit. Deriving fresh costs one duplicate call to a
+pure function and admits one honest asymmetry: for the single frame
+where a calibration is adopted mid-frame, the gaze side holds the
+older line. On this side that can only withhold a glance, never
+invent one, which is the direction this codebase always errs.
