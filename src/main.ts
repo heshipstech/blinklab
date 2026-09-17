@@ -257,6 +257,12 @@ import {
 } from "./core/sparkline";
 import { coefficientOfVariation, percentile } from "./core/statistics";
 import { suspensionRefusal } from "./core/suspensionGuard";
+import {
+  closureTimesMs,
+  timelineScoreSamples,
+  timelineScoreSegments,
+  timelineTickXs,
+} from "./core/timelineStrip";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
 import { frameTransform } from "./core/transform";
@@ -1109,6 +1115,7 @@ function render(): void {
   sparkCanvas.hidden = !showing;
   gazeTraceHorizontalCanvas.hidden = !showing;
   gazeTraceVerticalCanvas.hidden = !showing;
+  timelineCanvas.hidden = !showing;
 
   // Left alone this reports the DISPLAY's refresh rate as though it
   // were the instrument's, which is a wrong number rather than a
@@ -1217,6 +1224,11 @@ function resetSession(): void {
   frozenShutBaselineMm = null;
   lastLiveIrisWidthPx = null;
   alertState = initialAlertState;
+  // The strip's own state goes with the session it drew: the alert
+  // moments, and the pixels — a new session must not open under the
+  // last one's timeline.
+  alertFiredTimesMs = [];
+  timelineContext?.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
   featureRecords = [];
   featureRecordsDropped = 0;
   lastRecordAtMs = null;
@@ -3768,6 +3780,85 @@ const emptyGazeTraces = (): GazeTraces => ({
 });
 let gazeTraces = emptyGazeTraces();
 
+// Roadmap 14.1: the session event timeline strip. Unlike the three
+// rolling traces above, its left edge is the SESSION START: blinks,
+// closures and alerts as ticks in three bands, the score as a line,
+// and every unmeasured second a visible gap. Every rule lives in
+// src/core/timelineStrip.ts; this canvas only paints what the model
+// returns, and it publishes the drawn counts as data attributes so a
+// test can read the same numbers the pixels show.
+const timelineCanvas = document.createElement("canvas");
+timelineCanvas.width = 640;
+timelineCanvas.height = 72;
+timelineCanvas.hidden = true;
+timelineCanvas.setAttribute(
+  "aria-label",
+  "Session timeline: blinks, closures, alerts and score over the whole session",
+);
+timelineCanvas.setAttribute("data-testid", "timeline-strip");
+const timelineContext = timelineCanvas.getContext("2d");
+
+// When each alert actually FIRED. The governor's state counts how
+// many; the strip needs when, and nothing else records the moments.
+// Bounded like the records it draws beside, cleared with them.
+let alertFiredTimesMs: number[] = [];
+
+// Painted once per feature record rather than per frame: the strip
+// is a per-second instrument, and repainting at the camera rate
+// would spend frame budget re-deriving an unchanged picture.
+function drawTimelineStrip(nowMs: number): void {
+  const context = timelineContext;
+  if (context === null || sessionStartMs === null) {
+    return;
+  }
+  const span = { startMs: sessionStartMs, endMs: nowMs };
+  const width = timelineCanvas.width;
+  const height = timelineCanvas.height;
+  const samples = timelineScoreSamples(featureRecords);
+  const segments = timelineScoreSegments(samples, span, width, height);
+  const blinkXs = timelineTickXs(
+    blinkEvents.map((event) => event.atMs),
+    span,
+    width,
+  );
+  const closureXs = timelineTickXs(closureTimesMs(featureRecords), span, width);
+  const alertXs = timelineTickXs(alertFiredTimesMs, span, width);
+  context.clearRect(0, 0, width, height);
+  const drawTicks = (
+    xs: readonly number[],
+    fromY: number,
+    toY: number,
+    color: string,
+  ): void => {
+    context.strokeStyle = color;
+    context.lineWidth = 1.5;
+    for (const x of xs) {
+      context.beginPath();
+      context.moveTo(x, fromY);
+      context.lineTo(x, toY);
+      context.stroke();
+    }
+  };
+  // Bands bottom-up by severity: blinks lowest and quietest, alerts
+  // tallest, the score line over the full height on the sparkline's
+  // own color. A score of zero draws AT the bottom edge; an unscored
+  // second draws nothing at all — core's null-never-zero geometry.
+  drawTicks(blinkXs, height - 16, height - 2, "#9e9e9e");
+  drawTicks(closureXs, height - 34, height - 2, "#ff9800");
+  drawTicks(alertXs, 2, height - 2, "#f44336");
+  for (const segment of segments) {
+    drawPolyline(context, segment, 1.5, "#00b0ff");
+  }
+  timelineCanvas.setAttribute("data-blink-ticks", String(blinkXs.length));
+  timelineCanvas.setAttribute("data-closure-ticks", String(closureXs.length));
+  timelineCanvas.setAttribute("data-alert-ticks", String(alertXs.length));
+  timelineCanvas.setAttribute(
+    "data-score-points",
+    String(segments.reduce((sum, segment) => sum + segment.length, 0)),
+  );
+  timelineCanvas.setAttribute("data-score-segments", String(segments.length));
+}
+
 // The 5.7 fixation buffer: smoothed samples since the last gap,
 // capped to the same 10 second window as the traces.
 let gazeSamples: GazeSample[] = [];
@@ -4855,6 +4946,13 @@ function processFrame(
       alertState = alertResult.state;
       if (alertResult.fires) {
         alertBanner.textContent = `Alert: long eye closure (alerts: ${String(alertState.firedCount)}, suppressed: ${String(alertState.suppressedCount)})`;
+        // The moment, for the timeline strip's alert lane: the
+        // governor's counts say how many, this says when.
+        alertFiredTimesMs = pushBounded(
+          alertFiredTimesMs,
+          nowMs,
+          FEATURE_RECORD_CAP,
+        );
       }
       alertBanner.hidden = !alertVisible(alertState, nowMs);
       if (calibrationRefused) {
@@ -5041,6 +5139,7 @@ function processFrame(
         // silently, so both truths reach the label. Durations come
         // from timestamps, never from row counts.
         sessionStartedAtEpochMs ??= Date.now();
+        drawTimelineStrip(nowMs);
         exportButton.disabled = featureRecords.length === 0;
         exportBlinksButton.disabled = blinkEvents.length === 0;
         exportFramesButton.disabled = frameTraceRows.length === 0;
@@ -5213,6 +5312,7 @@ graphStrip.append(
   sparkCanvas,
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
+  timelineCanvas,
 );
 
 // Everything else lives in one centred column. On a wide monitor the
@@ -5998,6 +6098,7 @@ function sizeGraphsToBox(): void {
     sparkCanvas,
     gazeTraceHorizontalCanvas,
     gazeTraceVerticalCanvas,
+    timelineCanvas,
   ]) {
     if (graph.width !== width) {
       graph.width = width;
