@@ -4962,3 +4962,27 @@ deliberately NOT in the report — the sentence saying what the card
 leaves out — and the test asserts it is absent from the report, so
 the exception list has length one and a reader of the test knows the
 whole story.
+
+## 14.4 (page) A surface with no screen presence still needs its gates in three places
+
+The card is the first surface this page ships that a user never sees
+on screen: the print dialog is its only viewport. That shape has a
+trap — an invisible element feels harmless, so nothing seems to need
+gating. But print is an output like any other, and a stale card
+reachable from Ctrl+P mid-session would publish last session's
+numbers under this session's timestamp.
+
+So the "unreachable while the camera runs" clause is held in three
+places at once: the button disables on the report's gate, the click
+re-checks the same gate (a stale enabled button must not print), and
+the @media print rules are inert without a body class that only a
+finished session's click sets and resetSession removes. Each layer
+fails safe alone; together a mid-session print can only produce the
+ordinary page.
+
+The other lesson is the input split. participantReportText built its
+inputs inline, which was fine while it had one caller; the moment a
+second surface needed the same facts, the build moved into
+participantReportInputs() and both surfaces call it. The alternative
+— the card calling participantReportText's twin — is how two
+renderings of one session drift apart.
