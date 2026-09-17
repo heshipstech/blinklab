@@ -1,4 +1,4 @@
-import type { ScreenPoint } from "./calibrationProfile";
+import { pointWithinWindow, type ScreenPoint } from "./calibrationProfile";
 
 // The accumulation grid behind the gaze heatmap: the screen divided
 // into cells, each counting how many frames the calibrated gaze
@@ -23,11 +23,14 @@ export function emptyGrid(
   return { cols, rows, cells: Array<number>(cols * rows).fill(0) };
 }
 
-// Bins one screen fraction point into its cell. Exactly 1.0 is still
-// the screen's far edge and lands in the last cell, anything outside
-// the unit square is off screen and accumulates nowhere.
+// Bins one window fraction point into its cell. Exactly 1.0 is still
+// the window's far edge and lands in the last cell; anything outside
+// the window accumulates nowhere. The boundary is pointWithinWindow,
+// the ONE on-window rule (roadmap 14.9b) — this inline check used to
+// be the second of two definitions, and the audit caught the export
+// column disagreeing with it.
 export function accumulate(grid: HeatmapGrid, point: ScreenPoint): HeatmapGrid {
-  if (point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) {
+  if (!pointWithinWindow(point)) {
     return grid;
   }
   const col = Math.min(grid.cols - 1, Math.floor(point.x * grid.cols));

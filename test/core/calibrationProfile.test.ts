@@ -8,8 +8,10 @@ import {
   calibratedPoint,
   calibratedQuadrant,
   parseCalibrationProfile,
+  pointWithinWindow,
   solveCalibration,
 } from "../../src/core/calibrationProfile";
+import { accumulate, emptyGrid } from "../../src/core/heatmap";
 import type { IrisOffset } from "../../src/core/gazeOffset";
 import { screenQuadrant } from "../../src/core/gazeQuadrant";
 
@@ -207,5 +209,61 @@ describe("parseCalibrationProfile, the reload boundary the store forgot", () => 
         JSON.stringify({ horizontal: 1, vertical: { slope: 5, intercept: 0 } }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("one definition of on-window (roadmap 14.9b)", () => {
+  // The audit's two-definitions finding: the export column judged the
+  // RAW offset against the guessed zero-centred threshold while the
+  // heatmap judged the CALIBRATED point against the unit square, so
+  // one frame could leave the screen by one rule and dwell on it by
+  // the other. With a profile there is now one boundary — the window
+  // itself, the exact bound accumulate always enforced — and these
+  // tests hold every consumer to it.
+
+  it("the window's own edges, far edge inclusive", () => {
+    expect(pointWithinWindow({ x: 0.5, y: 0.5 })).toBe(true);
+    expect(pointWithinWindow({ x: 0, y: 0 })).toBe(true);
+    // Exactly 1.0 is still the window's far edge — accumulate's own
+    // boundary convention, restated here so the two cannot drift.
+    expect(pointWithinWindow({ x: 1, y: 1 })).toBe(true);
+    expect(pointWithinWindow({ x: 1.001, y: 0.5 })).toBe(false);
+    expect(pointWithinWindow({ x: 0.5, y: -0.001 })).toBe(false);
+  });
+
+  it("the export, heatmap and quadrant definitions agree, point by point", () => {
+    // The row's second Check clause, on a fixture spanning inside,
+    // every edge, and outside on each axis.
+    const fixture = [
+      { x: 0.5, y: 0.5 },
+      { x: 0, y: 0 },
+      { x: 1, y: 1 },
+      { x: 1, y: 0 },
+      { x: -0.2, y: 0.5 },
+      { x: 0.5, y: 1.4 },
+      { x: 1.05, y: -0.05 },
+    ];
+    for (const point of fixture) {
+      const onWindow = pointWithinWindow(point);
+      // The heatmap's decision: dwell accumulates exactly when the
+      // point is on the window.
+      const grid = accumulate(emptyGrid(), point);
+      const accumulated = grid.cells.some((cell) => cell > 0);
+      expect(accumulated, `heatmap at ${point.x},${point.y}`).toBe(onWindow);
+      // The quadrant's decision: a named quadrant is only an answer
+      // for a point that is on the window; the page words the other
+      // case "outside the window" rather than naming a corner the
+      // gaze does not occupy. calibratedQuadrant itself stays total —
+      // this pins the APPLICABILITY rule the page and the export
+      // share.
+      if (onWindow) {
+        expect([
+          "top left",
+          "top right",
+          "bottom left",
+          "bottom right",
+        ]).toContain(calibratedQuadrant(point));
+      }
+    }
   });
 });
