@@ -132,6 +132,7 @@ import {
 } from "./core/participantReport";
 import { assessSession } from "./core/sessionVerdict";
 import { scoreRecords } from "./core/score";
+import { scoreSentence } from "./core/scoreSentence";
 import { serializeRecords } from "./core/csv";
 import { KSS_SCALE, kssMetadataRows, type KssRating } from "./core/kss";
 import {
@@ -5220,13 +5221,14 @@ function processFrame(
         // that while letting the number actually be the headline.
         writeReadout(
           scoreLabel,
-          calibrationRefused
-            ? "Alertness score: withheld, calibration was refused"
-            : breakdown !== null
-              ? `Alertness score: ${String(breakdown.score)} / 100`
-              : noFaceNow === false
-                ? "Alertness score: no face in frame"
-                : "Alertness score: measuring...",
+          // One sentence, one source: the podium big view (14.2)
+          // speaks this same function, so the two surfaces cannot
+          // drift apart about a null.
+          scoreSentence({
+            calibrationRefused,
+            score: breakdown === null ? null : breakdown.score,
+            faceDetected: noFaceNow,
+          }),
         );
 
         // The panel speaks only when a score exists: with no score
