@@ -1089,3 +1089,21 @@ DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
   is produced by the built app under Playwright and scored in
   Python, none of which imports vitest. The owner's next corpus run
   scores this entry and retires it beside the blocks above.
+
+DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
+
+  chore(deps): playwright 1.63.0 and prettier 3.9.7, the small pair
+
+  One watched file moves: package-lock.json. @playwright/test
+  1.62.1 to 1.63.0 is the named reason the lock sits under the
+  ratchet at all — the corpus runner drives the built app through
+  Playwright's browser, so a Playwright bump can move a stepped
+  measurement with no line of this repository's own code changing.
+  prettier 3.9.6 to 3.9.7 is a formatter patch that reformats
+  nothing here (the whole tree passes --check unchanged) and runs in
+  no measurement path.
+
+  Predicted corpus impact: none for a minor of the same driver
+  against the same pinned browsers — but that is the owner's next
+  corpus run's to score, not this note's to assert. That run scores
+  this entry and retires it beside the blocks above.
