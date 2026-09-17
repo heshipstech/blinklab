@@ -190,6 +190,10 @@ import {
 } from "./core/overlayEscape";
 import { EYE_OUTLINE_PATH, REPOSITORY_URL } from "./core/pageIdentity";
 import { formatDriver, panelSummary, topDrivers } from "./core/scorePanel";
+import {
+  gapClearsGazeBuffer,
+  offsetAboveBlinkLine,
+} from "./core/gazeBlinkGate";
 import { accumulate, emptyGrid, normalizedCells } from "./core/heatmap";
 import { alertStep, alertVisible, initialAlertState } from "./core/alert";
 import {
@@ -1227,6 +1231,9 @@ function resetSession(): void {
   gazeSmoothing = null;
   gazeTraces = emptyGazeTraces();
   gazeSamples = [];
+  // With the buffer goes its clock: a new session's first blink must
+  // not bridge to the last session's stillness (roadmap 14.9b).
+  lastGazeSampleMs = null;
   perclosState = emptyPerclos();
   longClosureState = initialLongClosureState;
   frozenShutBaselineMm = null;
@@ -3931,6 +3938,10 @@ let timelineDemoActive = false;
 // The 5.7 fixation buffer: smoothed samples since the last gap,
 // capped to the same 10 second window as the traces.
 let gazeSamples: GazeSample[] = [];
+// The last moment a trustworthy gaze sample existed, for telling a
+// blink-length hole from a lost face (roadmap 14.9b). Null until the
+// first sample and after every session reset.
+let lastGazeSampleMs: number | null = null;
 
 // The one clock the face model is ever handed. Every source start
 // rebases it above everything already sent; src/core/modelClock.ts
@@ -4305,7 +4316,36 @@ function processFrame(
               : `Iris offset, right: ${fmt(rightOffset.horizontal)} / ${fmt(rightOffset.vertical)}, left: ${fmt(leftOffset.horizontal)} / ${fmt(leftOffset.vertical)}`,
           );
 
-          const meanOffset = meanIrisOffset(rightOffset, leftOffset);
+          // Blinks out of the gaze chain (roadmap 14.9b): below the
+          // blink line the iris is covered and its "offset" is the
+          // lid, not a glance, so the gate nulls it HERE, at the one
+          // site every consumer reads through — the quadrant readout,
+          // the on-screen column, the smoother, and with the smoother
+          // the fixation buffer and the heatmap's dwell. The line is
+          // the same derivation the detector runs below, fallback
+          // included; computed fresh rather than hoisted, because a
+          // guided line adopted MID-frame must not move the detector's
+          // comparison, and on this side one frame of the older line
+          // can only withhold a glance, never invent one.
+          const gazeGateLineMm =
+            effectiveBlinkLineMm(
+              storedLineForSource(
+                storedBlinkCalibration,
+                frameSource === "camera",
+              ),
+              // The baseline is seeded further down this same frame,
+              // so the very first frame reads null here and the gate
+              // falls to the detector's own fallback constant, which
+              // is what the detector holds on that frame too.
+              baselineState === null
+                ? null
+                : personalThresholdMm(baselineState),
+            ) ?? BLINK_APERTURE_THRESHOLD_MM;
+          const meanOffset = offsetAboveBlinkLine(
+            meanIrisOffset(rightOffset, leftOffset),
+            stabilityMm,
+            gazeGateLineMm,
+          );
           frameMeanOffset = meanOffset;
           frameOnScreen = meanOffset === null ? null : isOnScreen(meanOffset);
           writeReadout(quadrantLabel, lookingTowardMessage(meanOffset));
@@ -4418,16 +4458,28 @@ function processFrame(
       };
 
       // Fixation and saccade separation runs on the smoothed signal,
-      // its first consumer. A gap clears the buffer: a fixation that
-      // bridged a lost face would be an invented stillness.
+      // its first consumer. A LONG gap clears the buffer — a fixation
+      // that bridged a lost face would be an invented stillness — but
+      // a blink-length gap bridges (roadmap 14.9b): the eye did not
+      // move, the lid covered it, and I-DT's dispersion box decides
+      // across the hole whether the stillness held. The old rule
+      // cleared on any null and split a real fixation on every blink;
+      // its caution is kept, only its lid-vs-absence blindness is
+      // removed (core/gazeBlinkGate.ts owns the bound).
       if (smoothedGaze.smoothed === null) {
-        gazeSamples = [];
+        if (
+          lastGazeSampleMs === null ||
+          gapClearsGazeBuffer(nowMs - lastGazeSampleMs)
+        ) {
+          gazeSamples = [];
+        }
         writeReadout(gazeStateLabel, "Gaze state: no valid measurement");
         writeReadout(
           fixationStatsLabel,
           "Fixations in the last 10 s: none yet",
         );
       } else {
+        lastGazeSampleMs = nowMs;
         gazeSamples = withinWindow(
           [
             ...gazeSamples,
