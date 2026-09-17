@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1869 unit tests and 665 Python tests, each figure
+- **The suite:** 1888 unit tests and 665 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE SESSION GETS ITS TIMELINE, PURE HALF FIRST, 17 September 2026 (row 14.1 starts; amendment 26 claimed it hours earlier).** Phase 14's header has always ordered the strip behind the session-end and phone-first block, and 14.0e's tick on the 15th spent that ordering; amendment 26 records the re-judgement, and the ladder's claim moved from the NOTHING form to one name. The strip's model is src/core/timelineStrip.ts, and nearly everything in it is aliased rather than invented: event ticks map moments across the session's own span — dropped outside it, never clamped onto an edge, because a tick at a false x is a lie about time on an instrument whose one axis is time; the score series is the panel's own scoreRecords asked at every row through a sliding window, pinned equal to the naive definition at every sample, so the strip can never tell a different story than the number beside it; and the polyline goes through sparkline.ts's proven segment builder, null drawing as a gap and never as a zero, exactly as TimedSample has promised since 3.2. The one rule the sparkline could not supply is the bridge bound: a paused tab writes no samples at all, so two confident rows an hour apart would join into one confident line across the hour — samples further apart than twice the record period (recordGate.ts's own constant, aliased) now get a null sentinel between them, and the proven splitter does the rest. Closure moments are recovered from the per-second record's own cumulative count, a rise drawn at the row that witnessed it, with the first retained row deliberately a baseline and not events: after the buffer drops its oldest rows, a count already standing at N names closures with no moment, and an unwitnessed event is not drawn at a made-up x. Both Check properties — no zero-height points, gaps never bridged — hold as property tests over synthetic records AND all five committed fixture sessions through the real row builders, the refused session's all-null score included. The page wiring and the injected-events e2e are the next increment; nothing renders yet, by design. The suite is 1888 unit tests, 45 end to end tests of which 43 run on every pull request.
 
 **THE DROOP BAND PAYS INTO THE CLOSURE, 17 September 2026 (issue #115's redesign lands; MANUAL item 44's known limitation is delivered).** Amendment 5 split one aperture line into two and its postscript named the cost the day it landed: a slow descent spends time in the droop band before reaching shut, and that time counted toward nothing — the owner's verified 700 ms closure (300 ms drooping, 400 ms fully shut) was refused by the blink counter as too long and missed by the long closure detector because its truly-shut span alone sat under the 500 ms line. The redesign is the issue's own sentence run as code, prediction first in docs/depth-qualified-episodes.txt: the episode boundary is the blink line — main.ts hands the reducer the identical per-frame value blinkStep just compared against, guided fallback and all — the clock runs from that crossing, and reaching the shut line is no longer where the clock starts but what makes the episode count; a droop that never reaches shut is a non-event at any length, depth rather than patience. Fix #126's double-count constraint is answered in writing and pinned: both clocks on one crossing make at-or-under the maximum the blink's bin and strictly beyond this one's, so the two-phase closure that landed in neither bin lands in exactly one. 10.11's re-arm fraction and bounded gap carry over re-anchored to the new boundary, their prediction doc gaining a dated superseded-in-part section with nothing above it edited; the unscored 12.0a pre-registration records what moved underneath it and that its offline instrument and frozen clauses are untouched. longClosureCount keeps its name, column and type — values change, keys do not — so no export contract moves, Eyeblink8 is untouched by construction (blink.ts unedited, no DETECTOR_SOURCES file moved), and the DROZY caveat already names long closures. The corridor caveat stays open on record — a guided blink line at or below the frozen shut line degrades the machine to the single-line design, honestly and pinned — with the personal shut floor still #113's and 12.0a's. The suite is 1869 unit tests, 45 end to end tests of which 43 run on every pull request.
 
@@ -3167,7 +3169,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 15 September 2026. When this file changes, this stamp changes
+Stamped: 17 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
