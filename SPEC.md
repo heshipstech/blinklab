@@ -34,7 +34,7 @@ export type FeatureRecord = {
   fixationCount: number | null;
   fixationMedianMs: number | null;
   fixating: boolean | null;
-  onScreen: boolean | null;
+  onScreen: boolean | null; // with a gaze profile: the calibrated point within the window (one rule with the heatmap, roadmap 14.9b); head moved past 14.9a's bounds reads null; without a profile: the raw offset inside the uncalibrated threshold box
   baselineOverResting: number | null; // the frozen ruler over the running median aperture (roadmap 10.1f1: this landed on 2026-08-23 and this block did not record it until 6 September)
   pupilDiameterMm: number | null; // millimetres, or null when the estimator refuses
   blinkLineMm: number | null; // the line the blink detector actually read this frame (roadmap 10.13a)

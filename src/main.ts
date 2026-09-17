@@ -83,6 +83,7 @@ import {
 import {
   calibratedPoint,
   headMovedSinceCalibration,
+  pointWithinWindow,
   profileLoadVerdict,
   solveCalibrationOutcome,
   type ProfileConditions,
@@ -2816,17 +2817,20 @@ function renderReplay(): void {
   );
 }
 
-// Four ways to answer where the eyes point. Off screen keeps its
-// uncalibrated tag even with a profile: that boundary is still the
-// guessed 5.3 threshold, only the quadrants are calibrated here.
+// Five ways to answer where the eyes point. With a profile the
+// boundary is the calibrated window — one definition with the export
+// column and the heatmap (roadmap 14.9b), and "window" not "screen"
+// because viewport fractions describe the browser window, never the
+// physical screen's edge. Without a profile the guessed threshold
+// keeps its uncalibrated tag, exactly as MANUAL item 34 recorded.
 function lookingTowardMessage(offset: IrisOffset | null): string {
   if (offset === null) {
     return "Looking toward: no valid measurement";
   }
-  if (!isOnScreen(offset)) {
-    return "Looking toward: off screen (uncalibrated)";
-  }
   if (calibrationProfile === null) {
+    if (!isOnScreen(offset)) {
+      return "Looking toward: off screen (uncalibrated)";
+    }
     return `Looking toward: ${screenQuadrant(offset)} (uncalibrated)`;
   }
   if (gazeHeadMoved()) {
@@ -2836,6 +2840,12 @@ function lookingTowardMessage(offset: IrisOffset | null): string {
     return "Looking toward: paused, head moved since calibration";
   }
   const point = calibratedPoint(calibrationProfile, offset);
+  if (!pointWithinWindow(point)) {
+    // Outside the window is an answer, not a quadrant: naming a
+    // corner the gaze does not occupy would be the exact guess the
+    // one-definition rule exists to retire.
+    return "Looking toward: outside the window (calibrated)";
+  }
   return `Looking toward: ${calibratedQuadrant(point)} (calibrated)`;
 }
 
@@ -4347,7 +4357,25 @@ function processFrame(
             gazeGateLineMm,
           );
           frameMeanOffset = meanOffset;
-          frameOnScreen = meanOffset === null ? null : isOnScreen(meanOffset);
+          // One definition of on-window (roadmap 14.9b): with a
+          // profile the column judges the CALIBRATED point against
+          // the window itself — the heatmap's own boundary — instead
+          // of the raw offset against the guessed threshold, so the
+          // export can no longer disagree with the dwell about what
+          // left the window. Head moved past 14.9a's bounds nulls
+          // rather than falling back to the biased raw box: the
+          // mapping answers a question about a geometry that no
+          // longer holds, and null means not measured.
+          frameOnScreen =
+            meanOffset === null
+              ? null
+              : calibrationProfile === null
+                ? isOnScreen(meanOffset)
+                : gazeHeadMoved()
+                  ? null
+                  : pointWithinWindow(
+                      calibratedPoint(calibrationProfile, meanOffset),
+                    );
           writeReadout(quadrantLabel, lookingTowardMessage(meanOffset));
         } else {
           // The gate refused: numbers pause, the gap is honest, the
