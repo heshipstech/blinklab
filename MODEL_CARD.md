@@ -9,7 +9,7 @@ that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 12 September 2026, claims `aae5833e`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 17 September 2026, claims `9fd5f76a`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
@@ -355,8 +355,8 @@ re-measure or a dated caveat is a red build.
 Every Eyeblink8 number in this card was produced by stepping real clip
 files in a real browser, not by decoding them in Node. The runner is
 `tools/measure_corpus.mjs`; it launches `webkit`, driven by
-@playwright/test `1.62.1`, which bundles WebKit `26.5` and Chromium
-`151.0.7922.34`.
+@playwright/test `1.63.0`, which bundles WebKit `26.6` and Chromium
+`153.0.8010.12`.
 
 Those three versions describe the instrument AS IT STANDS, not as it
 stood. The browser binary that produced the 25 and 26 August 2026
