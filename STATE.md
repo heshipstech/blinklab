@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1893 unit tests and 665 Python tests, each figure
+- **The suite:** 1898 unit tests and 665 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**ONE SENTENCE, ONE SOURCE, 17 September 2026 (row 14.2 starts under amendment 27; row 14.1 ticked earlier today).** The podium view's second Check clause — the big view and the panel share the identical formatted string for a null — is the kind of clause that goes stale the moment it is satisfied by two copies, so the first slice makes it structural: the score readout's four-branch sentence (withheld under a refusal, the number over 100, the empty chair named rather than scored, measuring) moves verbatim from the wiring into src/core/scoreSentence.ts, the readout re-points at it, and the coming overlay will speak the same function. The refusal-order comment travels with it, and one property is pinned that the inline ternary could only promise: with no score there is no digit in the sentence at all, so no projector can ever show "0" about an empty chair. The suite is 1898 unit tests, 47 end to end tests of which 45 run on every pull request.
 
 **THE STRIP'S LAST CLAUSE IS AN HONEST SHORTCUT, 17 September 2026 (row 14.1's e2e lands; the tick follows as its own increment).** The Check asked for e2e "via synthetic injected events, never a face video", and the e2e suite runs against the production build, where no camera and no committed clip can produce a blink — so the injection is a production query hook on the cued protocol's own arrangement, a shortcut the page confesses out loud. With ?timelineDemo=1 the strip paints a deterministic two-minute story from src/core/timelineDemo.ts — ordinary blinking, six seconds of lost face (null samples), a fifteen-second pause with no samples at all, a drowsy decline with two long closures and one fired alert — and the sentence beside it says "Synthetic demo data, not a measurement"; session state, detectors and exports are untouched, the demo repaints across a resize, and the first real session ends it through resetSession. The story is unit-pinned to exercise BOTH gap rules, because a story without a null sample and an over-bound pause would let the e2e pass while proving less than it reads. The spec recomputes every drawn count from the same pure modules the page used and holds the canvas's data attributes to them, then pins the strip and its confession absent without the flag; both tests also passed in this container against the preinstalled Chromium. The painter itself was split so the demo and the live session share one function and neither path can drift. README's e2e figures moved (47 end to end, of which 45 per pull request), its claim digest with them, and the stamp is re-made on a full read done this same day. The suite is 1893 unit tests, 47 end to end tests of which 45 run on every pull request.
 
