@@ -1,0 +1,124 @@
+DEPTH-QUALIFIED CLOSURE EPISODES, AND A PREDICTION
+==================================================
+
+Written 17 September 2026, before the change is made, in the
+predict-then-verify discipline. Issue #115, filed 6 August 2026 by
+the amendment 5 adversarial review; carried since then as the known
+limitation on record in MANUAL item 44. The current behaviours below
+are MEASURED on today's detector over the traces this document
+defines; the predictions are for the detector after the change.
+
+WHAT THE DEFECT IS
+------------------
+Two detectors, two clocks, two boundaries. blink.ts times a closure
+from the frame the aperture leaves the blink line. The long-closure
+detector times from the frame it reaches the deeper shut line. Time
+spent between the two lines counts toward nothing, so a slow drowsy
+descent — the microsleep-onset shape 6.2 and 6.3 exist for — pays
+its descent time as pure alert delay, and a closure whose truly-shut
+span stays under half a second is missed entirely however long the
+whole episode held. The verified consequence, executed against both
+reducers with the owner's measured numbers: 300 ms drooping through
+the band plus 400 ms fully shut, a genuinely shut 700 ms closure, is
+refused by the blink counter (too long) and missed by the long
+closure detector (truly shut span under the 500 ms line). It lands
+in neither bin.
+
+WHAT THE CHANGE WOULD BE
+------------------------
+Depth-qualified episodes, the redesign direction the issue itself
+states:
+
+  A closure EPISODE begins the frame the aperture leaves the blink
+  line — the same episode boundary blink.ts uses, fed the identical
+  per-frame line value (guided-aware), restoring a shared partition.
+  The episode clock runs from that crossing, and the episode ends
+  the frame the aperture is back at or above the blink line.
+
+  The episode counts as a LONG CLOSURE only if it reached truly
+  shut — strictly below the shut line — at some point. A steady
+  droop that never reaches shut stays a non-event, whatever its
+  length. The shut line itself does not move: 40 percent of the
+  frozen baseline, the same number PERCLOS reads.
+
+  The event fires at the earliest honest moment both conditions
+  hold: the clock past the blink maximum AND shut reached. For a
+  descent that reaches shut early, that is 500 ms after leaving the
+  blink line; for a descent that dawdles in the band past 500 ms, it
+  is the frame shut is first reached.
+
+  The re-arm gate and the bounded untrusted gap keep their 10.11
+  form, re-anchored to the episode boundary: re-arm is the blink
+  line cleared by the same noise-floor fraction blink.ts re-arms
+  with, and an over-bound gap abandons the episode together with its
+  reached-shut memory, gate closed.
+
+WHAT DOES NOT CHANGE
+--------------------
+blink.ts: untouched, not one line. The exports: longClosureCount is
+the only key the detector feeds, and it keeps its name, type and
+column; values change, keys do not. PERCLOS: untouched, still the
+frozen shut baseline. Eyeblink8: the corpus scores blinks and no
+DETECTOR_SOURCES file moves, so the published recall is untouched by
+construction. The 12.0a shut-line placement pre-registration: its
+instrument (analysis/blinklab/shutline.py) reads aperture columns
+offline and never consults episode state, so every frozen clause
+stands; a dated note beside it records that prediction P3's
+live-event phrasing predates this redesign. DROZY: the published
+caveat already names long closures as moved since the measuring
+commit, and this change is one more reason it must stay until the
+re-measure.
+
+THE PARTITION, fix #126's constraint answered
+---------------------------------------------
+Fix #126 destroyed an earlier design because it could count one
+closure as both a blink and a long closure. Here both reducers time
+from the SAME crossing of the SAME line: blink.ts counts an armed
+closure at or under 500 ms, this detector fires strictly beyond
+500 ms and only if shut was reached. One closure, at most one bin.
+The deliberate remainder: an episode past 500 ms that never reached
+shut is nobody's event — that is the droop non-event, now defined by
+depth rather than by which line the clock happened to start on.
+
+CORRIDOR CAVEAT, stated not solved
+----------------------------------
+The qualification is only meaningful while the shut line sits below
+the episode boundary. A guided blink line at or below the frozen
+shut line inverts the corridor: every episode then qualifies on
+entry and the detector degrades, honestly and pinned by a unit test,
+to the single-line design. The cure — a personal shut floor learned
+from observed blink minima — remains issue #113's and 12.0a's, not
+this increment's.
+
+PREDICTIONS
+-----------
+Baseline 7.2 mm where a baseline is named: blink line 3.6, shut
+line 2.88, the owner's 2026-08-05/06 measured numbers.
+
+P1  The 700 ms two-phase closure (300 ms at 3.4 mm, then 400 ms at
+    2.35 mm). Today: count 0, no alert, no duration. After: count 1,
+    fired at 500 ms plus at most one frame from the blink-line
+    crossing, recorded duration within one frame of 700 ms.
+
+P2  The reading droop (3.4 mm held, any length). Today: count 0.
+    After: count 0, at three seconds and at any hold length.
+
+P3  A full deliberate closure, both lines crossed within one frame
+    step. After: count, fire time and recorded duration identical to
+    today's within one frame.
+
+P4  The 10.11 iPhone hover traces (centre 2.9 plus-minus 0.3 mm
+    against shut 3.04, blink line 3.8). After: still exactly one
+    event each, at 30 and at 120 Hz.
+
+P5  Alert latency. Full closure: unchanged, 500 ms plus at most one
+    frame. Slow descent reaching shut inside 500 ms: the alert
+    arrives at 500 ms from the crossing, no longer 500 ms after
+    reaching shut — the descent time stops being pure delay.
+
+REFUTERS
+--------
+Any prediction above failing is a refutation, and so is either of:
+a trace on which one closure lands in both bins, or the droop of P2
+producing any event at any length. A refuted prediction is recorded
+here in a dated section below, never edited away.
