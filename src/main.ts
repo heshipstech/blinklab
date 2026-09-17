@@ -257,11 +257,13 @@ import {
 } from "./core/sparkline";
 import { coefficientOfVariation, percentile } from "./core/statistics";
 import { suspensionRefusal } from "./core/suspensionGuard";
+import { demoTimelineStory, timelineDemoRequested } from "./core/timelineDemo";
 import {
   closureTimesMs,
   timelineScoreSamples,
   timelineScoreSegments,
   timelineTickXs,
+  type TimelineSpan,
 } from "./core/timelineStrip";
 import { inferenceMessage, meanDurationMs, pushSample } from "./core/timing";
 import { poseValidity, poseValidityMessage } from "./core/validityGate";
@@ -1115,7 +1117,10 @@ function render(): void {
   sparkCanvas.hidden = !showing;
   gazeTraceHorizontalCanvas.hidden = !showing;
   gazeTraceVerticalCanvas.hidden = !showing;
-  timelineCanvas.hidden = !showing;
+  // The timeline additionally stays up while the demo hook owns it:
+  // its data is synthetic, says so beside it, and ends with the
+  // first real session.
+  timelineCanvas.hidden = !showing && !timelineDemoActive;
 
   // Left alone this reports the DISPLAY's refresh rate as though it
   // were the instrument's, which is a wrong number rather than a
@@ -1225,9 +1230,12 @@ function resetSession(): void {
   lastLiveIrisWidthPx = null;
   alertState = initialAlertState;
   // The strip's own state goes with the session it drew: the alert
-  // moments, and the pixels — a new session must not open under the
-  // last one's timeline.
+  // moments, the pixels, and the demo hook's claim on the canvas — a
+  // new session must not open under the last one's timeline, nor
+  // under the synthetic story's.
   alertFiredTimesMs = [];
+  timelineDemoActive = false;
+  timelineDemoNote.hidden = true;
   timelineContext?.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
   featureRecords = [];
   featureRecordsDropped = 0;
@@ -3806,23 +3814,35 @@ let alertFiredTimesMs: number[] = [];
 // Painted once per feature record rather than per frame: the strip
 // is a per-second instrument, and repainting at the camera rate
 // would spend frame budget re-deriving an unchanged picture.
-function drawTimelineStrip(nowMs: number): void {
+// What one paint of the strip draws, live and demo alike: the demo
+// hook below hands this the committed story where the live assembler
+// hands it the session's own state, and neither path gets its own
+// painter to drift in.
+type TimelinePicture = {
+  span: TimelineSpan;
+  scoreSamples: readonly TimedSample[];
+  blinkTimesMs: readonly number[];
+  closureTimesMs: readonly number[];
+  alertTimesMs: readonly number[];
+};
+
+function paintTimeline(picture: TimelinePicture): void {
   const context = timelineContext;
-  if (context === null || sessionStartMs === null) {
+  if (context === null) {
     return;
   }
-  const span = { startMs: sessionStartMs, endMs: nowMs };
+  const span = picture.span;
   const width = timelineCanvas.width;
   const height = timelineCanvas.height;
-  const samples = timelineScoreSamples(featureRecords);
-  const segments = timelineScoreSegments(samples, span, width, height);
-  const blinkXs = timelineTickXs(
-    blinkEvents.map((event) => event.atMs),
+  const segments = timelineScoreSegments(
+    picture.scoreSamples,
     span,
     width,
+    height,
   );
-  const closureXs = timelineTickXs(closureTimesMs(featureRecords), span, width);
-  const alertXs = timelineTickXs(alertFiredTimesMs, span, width);
+  const blinkXs = timelineTickXs(picture.blinkTimesMs, span, width);
+  const closureXs = timelineTickXs(picture.closureTimesMs, span, width);
+  const alertXs = timelineTickXs(picture.alertTimesMs, span, width);
   context.clearRect(0, 0, width, height);
   const drawTicks = (
     xs: readonly number[],
@@ -3858,6 +3878,35 @@ function drawTimelineStrip(nowMs: number): void {
   );
   timelineCanvas.setAttribute("data-score-segments", String(segments.length));
 }
+
+// The live assembler: the session's own state through the same
+// painter the demo uses.
+function drawTimelineStrip(nowMs: number): void {
+  if (sessionStartMs === null) {
+    return;
+  }
+  paintTimeline({
+    span: { startMs: sessionStartMs, endMs: nowMs },
+    scoreSamples: timelineScoreSamples(featureRecords),
+    blinkTimesMs: blinkEvents.map((event) => event.atMs),
+    closureTimesMs: closureTimesMs(featureRecords),
+    alertTimesMs: alertFiredTimesMs,
+  });
+}
+
+// Roadmap 14.1's last clause, the cued protocol's own arrangement
+// (cueTimeScale): a production query hook whose shortcut the page
+// confesses out loud. With ?timelineDemo=1 the strip paints the
+// committed story once and the sentence below stays visible; session
+// state, detectors and exports are untouched, and starting any
+// session ends the demo through resetSession.
+const timelineDemoNote = document.createElement("p");
+timelineDemoNote.textContent =
+  "Synthetic demo data, not a measurement: this timeline was drawn " +
+  "from a built-in story so the strip can be read without a camera.";
+timelineDemoNote.hidden = true;
+timelineDemoNote.setAttribute("data-testid", "timeline-demo-note");
+let timelineDemoActive = false;
 
 // The 5.7 fixation buffer: smoothed samples since the last gap,
 // capped to the same 10 second window as the traces.
@@ -5313,6 +5362,7 @@ graphStrip.append(
   gazeTraceHorizontalCanvas,
   gazeTraceVerticalCanvas,
   timelineCanvas,
+  timelineDemoNote,
 );
 
 // Everything else lives in one centred column. On a wide monitor the
@@ -5518,6 +5568,17 @@ document.addEventListener("fullscreenchange", () => {
 // Check drives, and the export says which (cue_time_scale).
 const cueProtocolScale = cueTimeScale(window.location.search);
 const cueProtocol = scaledCues(cueProtocolScale);
+
+// Roadmap 14.1's e2e clause: with ?timelineDemo=1 the strip paints
+// the committed story once, the confession sentence beside it shows,
+// and nothing else moves — the e2e reads the canvas's data
+// attributes against counts recomputed from the same pure story.
+if (timelineDemoRequested(window.location.search)) {
+  timelineDemoActive = true;
+  timelineDemoNote.hidden = false;
+  timelineCanvas.hidden = false;
+  paintTimeline(demoTimelineStory());
+}
 
 const cueProtocolButton = document.createElement("button");
 cueProtocolButton.textContent = "Cued protocol";
@@ -6105,6 +6166,13 @@ function sizeGraphsToBox(): void {
     }
     graph.style.width = "100%";
     graph.classList.add("graph");
+  }
+  // Setting a canvas's width clears it. The rolling traces repaint
+  // on the next frame and the live timeline on the next record, but
+  // the demo story paints once, so a resize would leave it blank
+  // until reload — repaint it here instead.
+  if (timelineDemoActive) {
+    paintTimeline(demoTimelineStory());
   }
 }
 
