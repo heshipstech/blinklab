@@ -131,6 +131,7 @@ import {
   type ReportValue,
 } from "./core/participantReport";
 import { assessSession } from "./core/sessionVerdict";
+import { PODIUM_SCORE_FONT_PX, PODIUM_TEXT_FONT_PX } from "./core/podiumView";
 import { scoreRecords } from "./core/score";
 import { scoreSentence } from "./core/scoreSentence";
 import { serializeRecords } from "./core/csv";
@@ -1238,6 +1239,11 @@ function resetSession(): void {
   timelineDemoActive = false;
   timelineDemoNote.hidden = true;
   timelineContext?.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
+  // The podium shows a session's numbers; a new session must not
+  // open under the last one's projection.
+  closePodiumView();
+  podiumButton.disabled = true;
+  podiumScore.textContent = "";
   featureRecords = [];
   featureRecordsDropped = 0;
   lastRecordAtMs = null;
@@ -5190,6 +5196,7 @@ function processFrame(
         // from timestamps, never from row counts.
         sessionStartedAtEpochMs ??= Date.now();
         drawTimelineStrip(nowMs);
+        refreshPodiumStrip();
         exportButton.disabled = featureRecords.length === 0;
         exportBlinksButton.disabled = blinkEvents.length === 0;
         exportFramesButton.disabled = frameTraceRows.length === 0;
@@ -5219,17 +5226,17 @@ function processFrame(
         // the caveat travels WITH the number so a screenshot cannot
         // separate them, and directly beneath in smaller type honours
         // that while letting the number actually be the headline.
-        writeReadout(
-          scoreLabel,
-          // One sentence, one source: the podium big view (14.2)
-          // speaks this same function, so the two surfaces cannot
-          // drift apart about a null.
-          scoreSentence({
-            calibrationRefused,
-            score: breakdown === null ? null : breakdown.score,
-            faceDetected: noFaceNow,
-          }),
-        );
+        // One sentence, one source, two surfaces: the readout and the
+        // podium view print the SAME string from the same call, so
+        // they cannot drift apart about a null (roadmap 14.2).
+        const scoreLine = scoreSentence({
+          calibrationRefused,
+          score: breakdown === null ? null : breakdown.score,
+          faceDetected: noFaceNow,
+        });
+        writeReadout(scoreLabel, scoreLine);
+        podiumScore.textContent = scoreLine;
+        podiumButton.disabled = featureRecords.length === 0;
 
         // The panel speaks only when a score exists: with no score
         // there is no arithmetic to explain, and an empty list under
@@ -5562,6 +5569,92 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
+// --- The podium view (roadmap 14.2) ---
+// A projector surface: the score sentence in letters a room can
+// read, the session timeline underneath, and the demo notice at the
+// same distance — a screenshotted number must carry its caveat, and
+// a projected one even more so. It computes nothing: the sentence is
+// scoreSentence's, the identical function the Alertness card calls,
+// so the two surfaces cannot disagree about a null (the row's second
+// Check clause, held by construction), and the strip is the timeline
+// canvas's own pixels copied rather than a second painter that could
+// drift.
+const podiumButton = document.createElement("button");
+podiumButton.textContent = "Podium view";
+podiumButton.dataset.testid = "podium-view-button";
+podiumButton.disabled = true;
+
+const podiumOverlay = document.createElement("div");
+podiumOverlay.dataset.testid = "podium-overlay";
+podiumOverlay.hidden = true;
+Object.assign(podiumOverlay.style, {
+  position: "fixed",
+  inset: "0",
+  // Under the light stimulus (z-index 20): a running experiment's
+  // screen is the one thing this view must never cover. No `display`
+  // is set, so the hidden attribute alone controls it — the light
+  // overlay's own arrangement, for the same reason.
+  zIndex: "10",
+  background: "#111111",
+  color: "#f5f5f5",
+  textAlign: "center",
+  overflow: "auto",
+});
+const podiumScore = document.createElement("p");
+podiumScore.dataset.testid = "podium-score";
+Object.assign(podiumScore.style, {
+  font: `bold ${String(PODIUM_SCORE_FONT_PX)}px system-ui, sans-serif`,
+  margin: "8vh 24px 4vh",
+});
+const podiumStrip = document.createElement("canvas");
+podiumStrip.width = 640;
+podiumStrip.height = 72;
+podiumStrip.setAttribute(
+  "aria-label",
+  "Session timeline: blinks, closures, alerts and score over the whole session",
+);
+Object.assign(podiumStrip.style, { width: "90%", maxWidth: "1400px" });
+const podiumStripContext = podiumStrip.getContext("2d");
+const podiumNotice = document.createElement("p");
+podiumNotice.dataset.testid = "podium-notice";
+podiumNotice.textContent = demoNoticeText();
+Object.assign(podiumNotice.style, {
+  font: `${String(PODIUM_TEXT_FONT_PX)}px system-ui, sans-serif`,
+  margin: "4vh auto 2vh",
+  maxWidth: "80%",
+});
+const podiumHint = document.createElement("p");
+podiumHint.textContent = "Esc or tap anywhere to close.";
+Object.assign(podiumHint.style, {
+  font: `${String(PODIUM_TEXT_FONT_PX)}px system-ui, sans-serif`,
+  opacity: "0.7",
+});
+podiumOverlay.append(podiumScore, podiumStrip, podiumNotice, podiumHint);
+
+// The strip, blitted rather than repainted: the timeline canvas's
+// pixels are the record, and copying them is the one way a second
+// surface can show them without a second painter to drift.
+function refreshPodiumStrip(): void {
+  if (podiumStripContext === null || podiumOverlay.hidden) {
+    return;
+  }
+  if (podiumStrip.width !== timelineCanvas.width) {
+    podiumStrip.width = timelineCanvas.width;
+  }
+  podiumStripContext.clearRect(0, 0, podiumStrip.width, podiumStrip.height);
+  podiumStripContext.drawImage(timelineCanvas, 0, 0);
+}
+
+function closePodiumView(): void {
+  podiumOverlay.hidden = true;
+}
+podiumButton.addEventListener("click", () => {
+  podiumOverlay.hidden = false;
+  refreshPodiumStrip();
+});
+// A tap ends it too, the light overlay's phone rule.
+podiumOverlay.addEventListener("click", closePodiumView);
+
 // The cued protocol (roadmap 11.0b), on the light stimulus's pattern:
 // every timing decision is pure (core/cueSchedule.ts, fixed in 11.0a
 // before any camera ran), and the code here is the thin io that
@@ -5789,6 +5882,10 @@ const OVERLAY_CONTROLS: Record<
     isOpen: () => !cueOverlay.hidden,
     close: endCueProtocol,
   },
+  "podium-overlay": {
+    isOpen: () => !podiumOverlay.hidden,
+    close: closePodiumView,
+  },
   // Present and never reached: the register marks it undismissible, so
   // `escapeCloses` never names it. It is here because leaving it out
   // would mean the exhaustive Record was not exhaustive, and then the
@@ -5950,6 +6047,7 @@ exportRow.append(
   lightResponseButton,
   cueProtocolButton,
   markButton,
+  podiumButton,
   exportButton,
   exportBlinksButton,
   exportFramesButton,
@@ -6280,6 +6378,7 @@ app.append(
   heatmapOverlay,
   lightOverlay,
   cueOverlay,
+  podiumOverlay,
   kssDialog,
 );
 // Every readout starts with the sentence the idle page shows, from
