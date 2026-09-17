@@ -134,3 +134,18 @@ the runs never summed, because adding them would be the dilution
 defect wearing a new column — side by side, in a dated section
 below this one. Row 12.0a ticks on that section — not on this
 rule.
+
+NOTE, 17 SEPTEMBER 2026: WHAT MOVED UNDERNEATH, AND WHAT DID NOT
+----------------------------------------------------------------
+The depth-qualified episode redesign (issue #115, prediction in
+docs/depth-qualified-episodes.txt) landed between this
+pre-registration and its data. The live detector's episode clock now
+starts at the blink line under EITHER placement of the shut line,
+which the qualification still reads, so prediction P3's live-event
+phrasing — "the personal line starting the event earlier" — is no
+longer reachable through the live detector. The instrument this
+document's tick actually reads, analysis/blinklab/shutline.py's
+placement-only eyes-shut shares and longest-below-line runs over
+retained aperture columns, is untouched, and so is every frozen
+clause: the form, k, the adoption condition and the invariants. This
+note is an addition, dated, in this file's own convention.
