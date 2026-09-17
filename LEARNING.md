@@ -4885,3 +4885,29 @@ fixture sessions through the real row builders, so the properties are
 held to sessions the exporter could actually write, not only to
 shapes invented for the test. The page wiring and the injected-events
 e2e are the next increment; nothing renders yet, by design.
+
+## 14.1 (e2e) An injected event is a confession, not a backdoor
+
+The concept this increment teaches is how to test a display end to end
+when the honest inputs cannot exist in the test environment. The e2e
+suite drives the production build, where no camera and no committed
+clip can produce a blink, and the row's own Check forbids a face
+video. The temptation is a hidden test hook; the project already had
+a better pattern and this increment reuses it.
+
+The cued protocol runs shortened schedules under ?cueTimeScale=, and
+its honesty lives in the export: the file itself says what ran. The
+timeline demo works the same way at the display: ?timelineDemo=1
+paints a built-in deterministic story once, and a sentence beside the
+strip says the data is synthetic until a real session ends the demo.
+Nothing else moves — no session state, no detector, no export — so
+the shortcut's whole surface is the strip's pixels plus the sentence
+that disowns them.
+
+Two details carry the proof. The story is unit-pinned to contain a
+null sample and an over-bound pause, so the e2e necessarily exercises
+both of the strip's gap rules on the real page rather than only in
+unit tests. And the spec copies no expected numbers: it recomputes
+every drawn count from the same pure modules the page imports, so the
+test and the page can only disagree if the page stops using its own
+model.

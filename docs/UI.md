@@ -121,15 +121,27 @@ questions are asked, and whether blink log frame numbers exist.
 ## 3. Region 1: Graph strip
 
 Full window width, above everything. Hidden entirely, occupying zero
-height, unless running.
+height, unless running — with one exception the session-timeline
+paragraph below records.
 
-| Element               | Content                     | Notes                         |
-| --------------------- | --------------------------- | ----------------------------- |
-| Sparkline             | Eye aspect ratio, last 10 s | Blue line, gaps drawn as gaps |
-| Horizontal gaze trace | Raw and smoothed            | Grey raw, orange smoothed     |
-| Vertical gaze trace   | Raw and smoothed            | Same                          |
+| Element               | Content                                        | Notes                                                        |
+| --------------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| Sparkline             | Eye aspect ratio, last 10 s                    | Blue line, gaps drawn as gaps                                |
+| Horizontal gaze trace | Raw and smoothed                               | Grey raw, orange smoothed                                    |
+| Vertical gaze trace   | Raw and smoothed                               | Same                                                         |
+| Session timeline      | Blinks, closures, alerts, score, whole session | Ticks in three bands plus the blue score line; gaps are gaps |
 
-All three resize to the window width. Height is fixed per canvas.
+All four resize to the window width. Height is fixed per canvas. The
+session timeline (roadmap 14.1) is the one whose left edge is the
+session start rather than a rolling window: blinks draw as short grey
+ticks, long closures as taller orange ones, fired alerts as full-height
+red ones, and the score as the blue line, with every unmeasured second
+a visible gap — null draws as nothing, never as zero, and a paused
+tab's silence is never bridged by a line. With `?timelineDemo=1` in the
+page's address the strip paints a built-in synthetic story at load so
+it can be read without a camera, and a sentence beside it says exactly
+that — "Synthetic demo data, not a measurement..." — until the first
+real session starts, which ends the demo.
 
 ---
 
