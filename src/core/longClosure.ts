@@ -7,34 +7,46 @@ import {
 // outstays a blink is a different phenomenon: not a flick of the
 // eyelid but eyes staying shut, the microsleep shape the drowsiness
 // literature watches for. It fires WHILE the eyes are still closed,
-// the moment a closed frame crosses the line, because an event only
-// reported after it ends is useless to an alert (6.3's business).
-// One exception keeps the partition airtight: a closure that crosses
-// the line between its last closed frame and the reopen frame fires
-// late, on the reopen, using the same reopen-measured span blink.ts
-// uses to refuse it.
+// the moment its clock and its depth are both proven, because an
+// event only reported after it ends is useless to an alert (6.3's
+// business). One exception keeps the partition airtight: a closure
+// that crosses the time line between its last in-episode frame and
+// the reopen frame fires late, on the reopen, using the same
+// reopen-measured span blink.ts uses to refuse it.
 //
 // The TIME line is the blink maximum itself, aliased not copied: at
 // or below it a closure is a blink (blink.ts counts it), strictly
-// beyond it a long closure (this counts it). For any one aperture
-// line, every closure lands in exactly one time category, and no
-// drifting constant can break that.
+// beyond it a long closure (this counts it). Since issue #115 both
+// clocks start at the SAME crossing of the SAME blink line, so for
+// any closure that reaches truly shut, every span lands in exactly
+// one time category, and no drifting constant can break that.
 export const LONG_CLOSURE_THRESHOLD_MS = MAX_BLINK_DURATION_MS;
 
-// The APERTURE line, roadmap amendment 5: eyes SHUT is not lids low.
-// The blink detector keeps its half-of-baseline line, because a
-// blink is a rapid partial descent. But this detector asks whether
-// the eyes are actually shut, and a real face proved the two lines
-// must differ: naturally low eyelids reading at the bottom of a
-// screen sat below the blink line for five seconds while fully
-// awake. The literature's P80 convention (20 percent of baseline)
-// assumes an instrument that reads shut eyes as nearly zero; this
-// instrument has a measured floor, fully shut eyes still report
-// about a third of baseline. So the shut line sits at 40 percent:
-// the measured midpoint between the owner's shut floor (about 33
-// percent) and their relaxed reading droop (45 to 50 percent). The
-// band between the blink line and this line is a partial droop,
-// deliberately neither a blink nor a long closure.
+// The APERTURE lines, two of them since issue #115 (the amendment 5
+// design carried only the deeper one, and its verified consequence
+// was a genuinely shut 700 ms closure landing in neither bin because
+// the two detectors' clocks started at different lines).
+//
+// The EPISODE BOUNDARY is the blink line — the same per-frame value
+// blink.ts is stepped with, guided-aware, handed in by the caller.
+// An episode begins the frame the aperture leaves it and the clock
+// runs from that crossing, so a slow drowsy descent pays its descent
+// time into the closure, not into alert delay.
+//
+// The SHUT line is the depth QUALIFICATION, roadmap amendment 5:
+// eyes SHUT is not lids low. The literature's P80 convention (20
+// percent of baseline) assumes an instrument that reads shut eyes as
+// nearly zero; this instrument has a measured floor, fully shut eyes
+// still report about a third of baseline. So the shut line sits at
+// 40 percent: the measured midpoint between the owner's shut floor
+// (about 33 percent) and their relaxed reading droop (45 to 50
+// percent). An episode counts as a long closure only if it reached
+// strictly below this line at some point; a steady droop that never
+// does stays a non-event, whatever its length. The corridor caveat
+// is on record in docs/depth-qualified-episodes.txt: a blink line at
+// or below the shut line inverts the corridor and every episode then
+// qualifies on entry — the single-line degradation, stated, whose
+// cure (a personal shut floor) is issue #113's and 12.0a's.
 export const EYES_SHUT_FRACTION = 0.4;
 
 export function longClosureThresholdMm(baselineMm: number): number {
@@ -47,14 +59,16 @@ export function longClosureThresholdMm(baselineMm: number): number {
 // HYSTERESIS rather than filtering: no aperture sample is altered or
 // discarded, the rules only decide whether a crossing ARMS an event.
 //
-// The re-arm gate: an eyelid hovering AT the shut line crosses it
-// with every wobble of noise, and each crossing used to mint another
-// countable closure — the dry run's iPhone rows sat in a 2.79 to
-// 3.01 mm band against a 3.04 mm line and one sustained droop
-// counted three times. Now a closure fires only while the gate is
-// open, the gate closes on a fire, and it reopens only when the eye
-// is seen CLEARLY open: above the line by the same noise-floor-
-// derived fraction blink.ts arms with.
+// The re-arm gate: an eyelid hovering AT the episode boundary
+// crosses it with every wobble of noise, and each crossing used to
+// mint another countable closure — the dry run's iPhone rows sat in
+// a 2.79 to 3.01 mm band against a 3.04 mm line and one sustained
+// droop counted three times. Now a closure fires only while the gate
+// is open, the gate closes on a fire, and it reopens only when the
+// eye is seen CLEARLY open: above the boundary by the same noise-
+// floor-derived fraction blink.ts arms with. Since issue #115 the
+// boundary is the blink line, so this is blink.ts's re-arm
+// expression verbatim, against the same line.
 export const LONG_CLOSURE_REARM_FRACTION = APERTURE_HYSTERESIS_FRACTION;
 
 // The bounded gap: a single untrusted frame used to abandon the whole
@@ -68,20 +82,30 @@ export const LONG_CLOSURE_REARM_FRACTION = APERTURE_HYSTERESIS_FRACTION;
 export const LONG_CLOSURE_MAX_GAP_MS = MAX_BLINK_DURATION_MS;
 
 export type LongClosureState = {
+  // "closed" means below the blink line — the same fact, in the same
+  // word, that blink.ts records for the identical frame. The band
+  // between the lines is inside an episode but not yet qualified.
   eye: "open" | "closed" | "unknown";
-  // When the current closure began. Kept across a bounded untrusted
-  // run, so it is meaningful while closed AND during such a run.
+  // When the current episode began: the blink-line crossing. Kept
+  // across a bounded untrusted run, so it is meaningful while closed
+  // AND during such a run.
   closedAtMs: number | null;
+  // Whether the current episode has reached strictly below the shut
+  // line at some point — the depth qualification, issue #115. Kept
+  // and abandoned exactly as the clock is.
+  reachedShut: boolean;
   // True once the current closure has fired its event: one closure,
   // one count, however long it holds.
   firedForCurrentClosure: boolean;
   count: number;
-  // The full closed span of the most recent completed long closure.
+  // The full episode span of the most recent completed long closure,
+  // blink-line crossing to reopen.
   lastLongClosureDurationMs: number | null;
-  // Whether the eye has been seen clearly open — above the shut line
-  // by LONG_CLOSURE_REARM_FRACTION — since the last fired closure or
-  // the last over-bound untrusted run. True at the start: the first
-  // closure needs no prior reopening evidence, blink.ts's own rule.
+  // Whether the eye has been seen clearly open — above the blink
+  // line by LONG_CLOSURE_REARM_FRACTION — since the last fired
+  // closure or the last over-bound untrusted run. True at the start:
+  // the first closure needs no prior reopening evidence, blink.ts's
+  // own rule.
   rearmed: boolean;
   // When the current untrusted run began, or null outside one.
   unknownSinceMs: number | null;
@@ -90,6 +114,7 @@ export type LongClosureState = {
 export const initialLongClosureState: LongClosureState = {
   eye: "unknown",
   closedAtMs: null,
+  reachedShut: false,
   firedForCurrentClosure: false,
   count: 0,
   lastLongClosureDurationMs: null,
@@ -101,7 +126,8 @@ export function longClosureStep(
   state: LongClosureState,
   nowMs: number,
   apertureMm: number | null,
-  thresholdMm: number,
+  blinkLineMm: number,
+  shutLineMm: number,
 ): LongClosureState {
   // Backwards clock: ignored, state unchanged. Same contract as
   // blink.ts, same reason: a reopen stamped earlier than the close
@@ -113,12 +139,13 @@ export function longClosureStep(
     return state;
   }
   // An untrusted frame no longer abandons the cycle outright: the
-  // closure survives a run of them up to LONG_CLOSURE_MAX_GAP_MS,
+  // episode survives a run of them up to LONG_CLOSURE_MAX_GAP_MS,
   // because eyes shut before a sub-blink-length gap and shut after
   // it did not plausibly open in between. Past the bound the cycle
-  // is abandoned — the closure's end is lost, so no duration — and
-  // the re-arm gate closes with it: what follows may be the same
-  // droop still going, and firing there would count it twice.
+  // is abandoned — the episode's end is lost, so no duration, and
+  // its depth evidence goes with it — and the re-arm gate closes:
+  // what follows may be the same droop still going, and firing there
+  // would count it twice.
   if (apertureMm === null) {
     const unknownSinceMs = state.unknownSinceMs ?? nowMs;
     if (nowMs - unknownSinceMs > LONG_CLOSURE_MAX_GAP_MS) {
@@ -126,6 +153,7 @@ export function longClosureStep(
         ...state,
         eye: "unknown",
         closedAtMs: null,
+        reachedShut: false,
         firedForCurrentClosure: false,
         rearmed: false,
         unknownSinceMs,
@@ -142,16 +170,27 @@ export function longClosureStep(
     state.unknownSinceMs !== null &&
     nowMs - state.unknownSinceMs > LONG_CLOSURE_MAX_GAP_MS;
   const survivedClosedAtMs = gapOverBound ? null : state.closedAtMs;
+  const survivedReachedShut = gapOverBound ? false : state.reachedShut;
   const fired = gapOverBound ? false : state.firedForCurrentClosure;
   const rearmed = gapOverBound ? false : state.rearmed;
-  if (apertureMm < thresholdMm) {
+  if (apertureMm < blinkLineMm) {
     const closedAtMs = survivedClosedAtMs ?? nowMs;
+    // Strictly below the shut line qualifies, exactly at it does
+    // not: the blink reducer's own boundary convention, carried to
+    // the depth test.
+    const reachedShut = survivedReachedShut || apertureMm < shutLineMm;
+    // The event fires at the earliest honest moment both conditions
+    // hold: the clock past the blink maximum AND truly shut proven.
     const fires =
-      rearmed && !fired && nowMs - closedAtMs > LONG_CLOSURE_THRESHOLD_MS;
+      rearmed &&
+      !fired &&
+      reachedShut &&
+      nowMs - closedAtMs > LONG_CLOSURE_THRESHOLD_MS;
     return {
       ...state,
       eye: "closed",
       closedAtMs,
+      reachedShut,
       firedForCurrentClosure: fired || fires,
       count: state.count + (fires ? 1 : 0),
       // The gate closes the moment a closure fires: the next event
@@ -162,27 +201,30 @@ export function longClosureStep(
   }
   const closedDurationMs =
     survivedClosedAtMs !== null ? nowMs - survivedClosedAtMs : null;
-  // A closure can cross the line BETWEEN its last closed frame and
-  // the reopen frame. blink.ts measures the span to the reopen and
-  // refuses anything beyond the maximum, so the same reopen-measured
-  // span must fire here too, late, or a witnessed closure just past
-  // the line would land in neither bin and the partition would leak.
+  // An episode can cross the time line BETWEEN its last in-episode
+  // frame and the reopen frame. blink.ts measures the span to the
+  // reopen and refuses anything beyond the maximum, so the same
+  // reopen-measured span must fire here too, late, or a witnessed
+  // qualified closure just past the line would land in neither bin
+  // and the partition would leak.
   const lateFire =
     rearmed &&
     !fired &&
+    survivedReachedShut &&
     closedDurationMs !== null &&
     closedDurationMs > LONG_CLOSURE_THRESHOLD_MS;
   const completedLong = (fired && closedDurationMs !== null) || lateFire;
-  // The gate reopens only on an eye seen CLEARLY open — the line
-  // cleared by the re-arm fraction — and a reopen that overshoots
-  // straight past that height on the firing frame has proven the
-  // reopening already, blink.ts's own boundary rule.
+  // The gate reopens only on an eye seen CLEARLY open — the episode
+  // boundary cleared by the re-arm fraction — and a reopen that
+  // overshoots straight past that height on the firing frame has
+  // proven the reopening already, blink.ts's own boundary rule.
   const clearlyOpen =
-    apertureMm >= thresholdMm * (1 + LONG_CLOSURE_REARM_FRACTION);
+    apertureMm >= blinkLineMm * (1 + LONG_CLOSURE_REARM_FRACTION);
   return {
     ...state,
     eye: "open",
     closedAtMs: null,
+    reachedShut: false,
     firedForCurrentClosure: false,
     count: state.count + (lateFire ? 1 : 0),
     lastLongClosureDurationMs:
@@ -197,7 +239,9 @@ export function longClosureStep(
 // The live readout: how long the eyes have been shut, spoken only
 // during a long closure in progress. Silent while open and silent
 // during blink sized closures, so the line never flickers on every
-// blink.
+// blink. Since issue #115 the span is the whole episode, descent
+// included: that is the redesign's claim, that band time belongs to
+// the closure.
 export function ongoingClosureMs(
   state: LongClosureState,
   nowMs: number,
