@@ -50,11 +50,11 @@ describe("blink ignores a backwards clock", () => {
 
 describe("long closure ignores a backwards clock", () => {
   it("a reopen stamped before the close cannot measure a negative closure", () => {
-    let state = longClosureStep(initialLongClosureState, 1000, 2, 3);
+    let state = longClosureStep(initialLongClosureState, 1000, 2, 3, 2.5);
     const closed = state;
-    expect(longClosureStep(state, 400, 8, 3)).toEqual(closed);
+    expect(longClosureStep(state, 400, 8, 3, 2.5)).toEqual(closed);
     // Honest reopen still ends the closure with a positive duration.
-    state = longClosureStep(state, 1700, 8, 3);
+    state = longClosureStep(state, 1700, 8, 3, 2.5);
     expect(state.lastLongClosureDurationMs).toBe(700);
   });
 });
@@ -95,9 +95,9 @@ describe("an ongoing closure never reads negative", () => {
   it("a read clock behind the closure start answers null", () => {
     // Issue #107 named this function. "0 ms and counting" would be
     // a wrong answer wearing a clamp; null is the honest one.
-    let state = longClosureStep(initialLongClosureState, 1000, 2, 3);
+    let state = longClosureStep(initialLongClosureState, 1000, 2, 3, 2.5);
     for (let t = 1100; t <= 1600; t += 100) {
-      state = longClosureStep(state, t, 2, 3);
+      state = longClosureStep(state, t, 2, 3, 2.5);
     }
     expect(ongoingClosureMs(state, 1700)).toBe(700);
     expect(ongoingClosureMs(state, 400)).toBeNull();

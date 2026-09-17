@@ -52,6 +52,10 @@ import {
 // and delivery, which no page can see.
 
 const BASELINE_MM = 7.78; // the owner's measured macbookair2 session
+// The episode boundary since issue #115: the passive blink line, half
+// the baseline. SHUT_MM crosses it and the shut line on the same
+// frame, so every latency below is measured from the same crossing.
+const BLINK_LINE_MM = BASELINE_MM / 2;
 const OPEN_MM = 7.0;
 const SHUT_MM = 2.0; // well under the 40 percent shut line of 3.11
 
@@ -85,6 +89,7 @@ function alertLatencyMs(rateHz: number): number {
       closure,
       nowMs,
       shut ? SHUT_MM : OPEN_MM,
+      BLINK_LINE_MM,
       shutLine,
     );
     const result = alertStep(alert, nowMs, closure.count > before);
@@ -145,6 +150,7 @@ describe("time from eye closure to alert (roadmap 7.8)", () => {
         closure,
         nowMs,
         reopen ? OPEN_MM : SHUT_MM,
+        BLINK_LINE_MM,
         shutLine,
       );
       const result = alertStep(alert, nowMs, closure.count > before);
@@ -203,7 +209,13 @@ describe("per-frame compute cost of the core chain (roadmap 7.8)", () => {
         const thresholdMm = personalThresholdMm(baseline) ?? 0;
         blink = blinkStep(blink, nowMs, apertureMm, thresholdMm);
         const before = closure.count;
-        closure = longClosureStep(closure, nowMs, apertureMm, shutLine);
+        closure = longClosureStep(
+          closure,
+          nowMs,
+          apertureMm,
+          BLINK_LINE_MM,
+          shutLine,
+        );
         alert = alertStep(alert, nowMs, closure.count > before).state;
         perclos = perclosStep(perclos, nowMs, apertureMm, BASELINE_MM);
       }

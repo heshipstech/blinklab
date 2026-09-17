@@ -4809,22 +4809,24 @@ function processFrame(
         );
       }
 
-      // Roadmap amendment 5: the long closure detector no longer
-      // rides the blink line. Eyes SHUT is the deeper 40 percent
-      // line, measured between the owner's shut floor and their
-      // relaxed reading droop; a lid relaxed between the two lines
-      // is a partial droop, deliberately neither blink nor long
-      // closure. No baseline yet means no personal shut line yet,
-      // so the frame is untrusted for this detector, the same rule
-      // PERCLOS keeps. The zero threshold below is never read: a
-      // null aperture returns before any comparison.
+      // Amendment 5 gave this detector the deeper 40 percent shut
+      // line — eyes SHUT is not lids low — and issue #115 split its
+      // two jobs across two lines: the EPISODE BOUNDARY is the blink
+      // line, the very value blinkStep was handed above, so both
+      // clocks start at the same crossing and the partition is
+      // genuinely shared; the shut line is the depth QUALIFICATION,
+      // still 40 percent of the frozen baseline, the same number
+      // PERCLOS reads. No baseline yet means no shut line yet, so
+      // the frame is untrusted for this detector, the same rule
+      // PERCLOS keeps. The zeros below are never read: a null
+      // aperture returns before any comparison, and the aperture is
+      // null whenever the shut line is not yet frozen — and once the
+      // baseline is ready the passive blink line exists, so the
+      // fallback constant beside it is equally unreachable.
       if (frozenShutBaselineMm === null && baselineState.kind === "ready") {
         frozenShutBaselineMm = baselineState.baselineMm;
       }
       const longCountBefore = longClosureState.count;
-      // The zero below is never read: a null aperture returns before
-      // any comparison, and the aperture is null whenever the shut
-      // line is not yet frozen.
       longClosureState = longClosureStep(
         longClosureState,
         nowMs,
@@ -4833,6 +4835,7 @@ function processFrame(
           !calibrationActiveThisFrame
           ? stabilityMm
           : null,
+        blinkLineMm ?? BLINK_APERTURE_THRESHOLD_MM,
         frozenShutBaselineMm !== null
           ? longClosureThresholdMm(frozenShutBaselineMm)
           : 0,
