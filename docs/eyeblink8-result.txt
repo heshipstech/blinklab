@@ -1065,3 +1065,27 @@ DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
   is the owner's next corpus run's to score, not this note's to
   assert. That run scores this entry and retires it beside the
   blocks above.
+
+DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
+
+  chore(deps): vitest 5.0.1 and coverage-v8 5.0.1, bumped as the pair
+
+  One watched file moves: package-lock.json, under the major bumps
+  Dependabot offered separately as pull requests #529 and #530 —
+  landed together and by hand, because the two packages peer on each
+  other and either alone is a red build, and so this caveat rides
+  the commit that moves the lock and names its own subject. vitest
+  and its coverage provider are the TEST runner: they execute no
+  measurement path, build no bundle, and the corpus runner does not
+  load them. The one measurement-adjacent surface the major moved is
+  the counts guard: vitest 5 made `vitest list` parse files
+  statically by default, which counts registrations the way the
+  retired grep counted calls (1836 where the runner runs 1869), so
+  tools/checkCollectedTests.mjs now passes --staticParse=false and
+  the published figure keeps its definition — what the runner
+  collects by loading every file.
+
+  Predicted corpus impact: none, by construction — the corpus number
+  is produced by the built app under Playwright and scored in
+  Python, none of which imports vitest. The owner's next corpus run
+  scores this entry and retires it beside the blocks above.
