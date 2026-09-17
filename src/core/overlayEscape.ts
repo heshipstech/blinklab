@@ -33,6 +33,7 @@ export type OverlayId =
   | "heatmap-overlay"
   | "light-overlay"
   | "cue-overlay"
+  | "podium-overlay"
   | "kss-dialog";
 
 export type Overlay = {
@@ -95,6 +96,14 @@ export const OVERLAYS: readonly Overlay[] = [
       "when the protocol started and the scorer refuses a session " +
       "shorter than the schedule, so leaving early loses a run and " +
       "never invents one (roadmap 11.0b)",
+  },
+  {
+    id: "podium-overlay",
+    dismissible: true,
+    because:
+      "the podium view is a rendering of numbers already measured, so " +
+      "closing it discards a picture and never a measurement (roadmap " +
+      "14.2, the heatmap's own reasoning at projector size)",
   },
   {
     id: "kss-dialog",
