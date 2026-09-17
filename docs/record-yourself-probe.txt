@@ -1,127 +1,84 @@
-THE RECORD-YOURSELF FEASIBILITY PROBE: DOES A BROWSER RECORDING STEP?
-====================================================================
+Record-yourself clip feasibility probe
+======================================
 
-Written 13 September 2026, before the probe is run and before any
-self-recording is stepped through the pipeline. Roadmap 14.6, whose
-Check asks the feasibility probe to PRE-COMMIT its result: a recorded
-Blob stepped through the existing pipeline, with an honest refusal for
-variable-rate or duration-less recordings by name, which 10.14 now
-provides. The two outcomes below are committed now so that whatever the
-probe returns, it is scored against a prediction and not rationalised
-after the fact.
+Pre-registered 17 September 2026, roadmap row 14.6's probe row, under
+amendment 22's marker regime. Committed BEFORE the probe runs, the
+stepper-honesty precedent: the outcome section at the end is appended
+after the probe, and nothing above it is edited afterwards.
 
-WHAT THE PROBE ASKS, AND WHY THE ANSWER IS NOT OBVIOUS. Row 14.6 wants a
-"record yourself" walkthrough: the person records a short clip of their
-own face in the browser and the app measures it, so someone with no
-second device can still step a clip through the same pipeline the
-Eyeblink8 corpus uses. The feasibility question is narrow and it is the
-gate for everything after it: does a clip produced by the browser's own
-MediaRecorder survive the existing file path — upload (src/io/videoFile.ts),
-calibration and stepping (src/io/videoStepper.ts, src/core/stepCalibration.ts),
-the detector — and if it does not, does it FAIL HONESTLY, by a named
-refusal, rather than by a fabricated measurement of the kind the
-September audit's critical finding (docs/stepper-honesty.txt) was about?
+The question
+------------
 
-The answer is not obvious because a MediaRecorder recording is not a
-prepared corpus clip. Two structural properties of a live browser
-recording collide with what the stepper needs, and both are already
-visible in the code the probe would run against:
+Row 14.6 wants a record-yourself walkthrough: the person records a
+short clip of themselves in the browser and the existing clip pipeline
+measures it. The probe row asks the only question that matters first:
+does a MediaRecorder recording survive the pipeline this project
+already trusts, and where it does not, does it fail by NAME rather
+than by silently measuring garbage? The later 14.6 rows are gated on
+this answer.
 
-  1. VARIABLE FRAME RATE. A MediaRecorder writes frames at whatever
-     cadence its source MediaStream delivers — a webcam under a browser
-     stamps each captured frame at its capture instant, not on a fixed
-     grid, so the gaps between frame times are not a constant period.
-     Row 10.14 (docs/stepper-honesty.txt) made exactly this a first-class
-     refusal: src/core/stepCalibration.ts requires every calibration gap
-     to be a whole multiple of the smallest within CALIBRATION_QUANTUM_S
-     (0.0015 s), and a gap that is no whole multiple is returned as
-     `kind: "variableRate"`, naming the first offending gap, before the
-     first frame is measured. A live webcam recording is the textbook
-     shape that rule refuses.
+The pipeline as read today (all paths read 17 September 2026)
+-------------------------------------------------------------
 
-  2. UNKNOWN DURATION. A Blob written in one MediaRecorder pass often
-     carries no duration in its container header, and the browser then
-     reports `HTMLVideoElement.duration` as Infinity. videoFile.ts
-     already reports this faithfully rather than lying to 0 (its comment,
-     lines 94-97: "A clip whose duration the container does not record
-     reads Infinity ... the caller decides what an unknown duration means
-     to it"). videoStepper.ts's `timelineEnd` then falls back from the
-     container duration to the `seekable` range, and to null when neither
-     is finite — a clip whose end the browser will not name.
+1. Ingestion: src/io/videoFile.ts loadVideoFile(video, file) takes a
+   File; a MediaRecorder Blob wraps in one. A clip whose container
+   records no duration deliberately reads durationSeconds = Infinity
+   ("Reporting 0 would be a lie; the caller decides what an unknown
+   duration means to it"). main.ts prints the duration readout only
+   when Number.isFinite says so.
+2. Stepping: src/io/videoStepper.ts finds the first frame by probing,
+   then measureFrameInterval hands up to twelve landed frame times to
+   src/core/stepCalibration.ts calibrateStep. Past the tolerances the
+   calibration returns {kind: "variableRate"} and the run is REFUSED
+   with variableRateRefusal's named sentence — 10.14's provision, the
+   named refusal this row's Check cites.
+3. Duration-less at the stepper grain: timelineEnd(video) prefers the
+   seekable range's end and falls back to video.duration; when neither
+   is finite it returns null, and the stepping loop then has NO end
+   bound — it steps until a seek stops landing. That is not a named
+   refusal; it is an honest walk off the end of the seekable range.
 
-THE PREDICTION, COMMITTED BEFORE THE PROBE RUNS.
+The prediction, committed before the probe runs
+-----------------------------------------------
 
-  P1 (PRIMARY). A clip recorded from a real webcam through MediaRecorder,
-     uploaded and stepped by the existing pipeline unchanged, is REFUSED
-     as a variable frame rate by src/core/stepCalibration.ts. This is the
-     first gate a clip reaches — calibration runs before any frame is
-     measured — so the variable-rate refusal fires before the duration
-     question matters. The refusal names the offending gap; the run
-     produces no per-second CSV and no blink count, exactly as a corpus
-     clip that failed the same rule would.
+A short webm recorded in Chromium via canvas.captureStream(30) plus
+MediaRecorder, wrapped as a File and loaded as a clip:
 
-  P2 (HONESTY, THE POINT OF THE ROW). Whatever the refusal path, the
-     outcome is a NAMED refusal or a visible stop, never a fabricated
-     rate. If a recording is near-constant enough to pass calibration but
-     the schedule then drifts, the inexact-landing tolerance
-     (INEXACT_LANDING_TOLERANCE = 0.02) refuses it; if the duration is
-     unknown, `timelineEnd` returns null or the seekable end and the run
-     stops at a real boundary rather than inventing frames past it. 10.14
-     exists precisely so that a clip the instrument cannot measure is
-     said to be unmeasurable, and this probe is the first test of that
-     guarantee on a clip the browser itself produced.
+P1. The container will record no duration: loadVideoFile reports
+    durationSeconds = Infinity, and the clip readout prints without a
+    duration figure. (The classic streaming-webm shape: MediaRecorder
+    writes no Duration element.)
+P2. The stepped run will be REFUSED BY NAME on the variable-rate path:
+    MediaRecorder stamps frames on the wall clock, so the landed frame
+    times will spread past stepCalibration's quantum and tolerance,
+    calibrateStep returns variableRate, and the page shows
+    variableRateRefusal's sentence. This is the primary predicted
+    outcome.
+P3. If prediction P2 is wrong — captureStream(30)'s cadence proves
+    constant enough to calibrate — the run will instead step to
+    wherever Chromium's seekable range ends for a blob URL. Whether
+    that end is finite for a MediaRecorder blob is exactly the fact
+    the probe exists to record; a run that measures frames and ends
+    cleanly is a PASS for feasibility, and a run that misbehaves in
+    any unnamed way (wrong count, silent stop, invented timestamps) is
+    a defect to be filed, not worked around here.
 
-  P3 (WHAT FEASIBILITY THEN MEANS). Given P1, "record yourself" is NOT
-     feasible as a naive drop-in: a raw webcam recording will be refused,
-     correctly. The feature the later 14.6 rows can honestly build is
-     therefore one of two shapes, and this probe decides which is needed
-     rather than assuming: either (a) the recording is constrained to a
-     constant rate — a fixed-rate canvas.captureStream at capture, or a
-     re-encode to a constant frame rate in preparation, which is a
-     heavier step than the lossless stream copy
-     analysis/tools/prepare_rldd.py uses for the RLDD corpus (that copy
-     preserves the source cadence rather than fixing it, which is why the
-     corpus needs 10.14b's coverage cross-check at all) — so that a
-     prepared clip, not the raw Blob, reaches the stepper; or (b) the
-     walkthrough is scoped to the honest
-     refusal itself, showing the person why their self-recording cannot
-     be measured and what a measurable one would need. The probe's result
-     selects between (a) and (b); it does not pre-judge them.
+What gates the later rows
+-------------------------
 
-THE FALSIFIER, FIXED HERE. If a clip recorded from a real webcam through
-MediaRecorder steps cleanly — calibration accepts it as constant rate,
-inexact_landings is 0, and the pipeline produces a per-second CSV whose
-frame count matches the clip's own — then P1 is wrong and one of two
-things is true, each with its own consequence:
-
-  - The browser and codec on that platform emitted a constant-rate
-    recording (some capture paths do quantise to a fixed grid). Then
-    "record yourself" IS feasible directly on that platform, shape (a)'s
-    remux is unnecessary there, and the later rows proceed on the raw
-    Blob — noting that the guarantee is per-platform, not universal,
-    because the next browser may record variable-rate.
-
-  - The recording was in fact variable-rate and the pipeline measured it
-    anyway. That is not a feature; it is the 10.14 defect reopened on a
-    new input class, and it is fixed — the refusal made to catch it —
-    before any record-yourself row ships. A self-recording that steps
-    "successfully" without its rate ever being checked is the failure
-    this probe exists to rule out.
-
-HOW THE PROBE IS RUN, AND WHAT IT IS NOT. The probe records or
-synthesises a MediaRecorder Blob (a canvas.captureStream driven at an
-uneven cadence is enough to exercise the variable-rate path without a
-camera) and steps it through the real pipeline in a browser, reporting
-the calibration verdict, inexact_landings, and the resolved timeline end.
-It is a feasibility measurement, not a validation of any blink number: no
-accuracy claim is drawn from a self-recording here, because a clip of the
-maintainer's own face in unknown lighting carries every limitation the
-six-person validation round found in live-camera measurement
-(docs/validation-round.txt). The probe answers one question — does the
-existing pipeline accept, or honestly refuse, a browser recording — and
-the later rows are gated on that answer.
+The walkthrough rows of 14.6 proceed only if the probe finds a path a
+visitor could actually walk: either the recording measures (P3 pass),
+or the refusal it hits is named and legible enough to instruct the
+visitor (P2 with the variableRate sentence on screen counts — a
+walkthrough can honestly say "your browser's recording is not
+constant-rate; use a file instead" — but only the owner can decide
+whether that walkthrough is worth shipping). A silent misbehavior
+gates everything until fixed. The probe builds NO remedy: no re-mux,
+no duration patch, no new ingestion path. It records what the
+pipeline this project already trusts does with a recording, by name.
 
 Outcome
 -------
 
-(appended after the probe runs; nothing above this line changes)
+(Appended after the probe runs; nothing above this line is edited
+afterwards.)
