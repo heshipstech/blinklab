@@ -80,5 +80,31 @@ pipeline this project already trusts does with a recording, by name.
 Outcome
 -------
 
-(Appended after the probe runs; nothing above this line is edited
-afterwards.)
+Run 17 September 2026, headless Chromium (the CI engine), by
+test/e2e/recordYourselfProbe.spec.ts on a 2.0 s canvas-stream
+recording at a nominal 30 frames per second:
+
+- P2 CONFIRMED, the predicted primary outcome: the stepped run was
+  refused by name — "Could not step this clip: its first frames are
+  not evenly spaced (a gap of 40.0 ms beside one of 33.0 ms, which
+  is not a whole number of frames), which is what a variable frame
+  rate looks like." MediaRecorder's wall-clock stamps are exactly
+  what the refusal exists to catch, and the sentence ends with an
+  instruction a visitor can follow.
+- P1 REFUTED on this engine: the container was NOT duration-less.
+  The clip readout printed a finite "2.0 s", so the
+  duration-Infinity path was never exercised. The classic
+  streaming-webm shape did not appear in today's Chromium; whether
+  other engines or longer recordings still produce it is unknown
+  and not claimed here.
+- P3 not reached: the refusal preceded any stepped measurement, as
+  the primary prediction expected.
+
+What this gates: the walkthrough rows stay gated. The pipeline's
+answer to a browser recording is the named variable-rate refusal —
+legible, honest, instructive — so a walkthrough is worth shipping
+only if the owner judges a refusal-first walkthrough acceptable, or
+a constant-rate recording path is designed as its own row. The
+probe built no remedy, per the pre-registration above. The spec
+stays in the suite and prints its outcome on every run, so an
+engine that changes either fact will say so in CI.
