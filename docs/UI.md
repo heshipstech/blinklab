@@ -377,6 +377,7 @@ strip plus the footer below.
 | Mark this moment               | Button   | Disabled until at least one record exists, and again once the session has ended (a marker names a moment of a running measurement). Each click writes a timestamped marker into the export                                                                                                                                                                  |
 | Light response                 | Button   | `Light response`. Camera sessions only, on the same record gate as the marker. Opens a full-screen stimulus overlay (fullscreen requested only where the browser offers it); its words during the settle and at the end come from `lightPhaseMessage` in `core/lightSchedule.ts` and name both exits, Esc and a tap anywhere on the overlay (roadmap 14.0b) |
 | Cued protocol                  | Button   | `Cued protocol`. Camera sessions only, same gate as the light response. Opens the cued-schedule overlay (roadmap 11.0b): instructions from `cueOverlayText` in `core/cueSchedule.ts`, a tone at every cue boundary because closed eyes cannot read a screen, and both exits — Esc and a tap — since an abandoned run records nothing false                  |
+| Podium view                    | Button   | `Podium view`. Enabled once a feature record exists, camera or clip alike, and it stays enabled after a kept ending — the podium renders numbers already measured. Opens the podium overlay (roadmap 14.2)                                                                                                                                                  |
 | Export state                   | Text     | Empty until an export is attempted. See the five strings below                                                                                                                                                                                                                                                                                              |
 | Sleepiness                     | Text     | Empty until asked. `Sleepiness: before 2 Very alert, after skipped`. Each half reads `not asked yet`, `skipped`, or the rating and its published label                                                                                                                                                                                                      |
 | Marks                          | Text     | `Marks: 1 at 42.0 s, 2 at 55.5 s`, empty until the first click                                                                                                                                                                                                                                                                                              |
@@ -672,6 +673,24 @@ or tap to close, then stop the camera and export the session.`; the cue texts
 between them come from `src/core/cueSchedule.ts`, which owns every string. A
 tap anywhere or Escape ends it, and the start time stays recorded either way,
 so the export can say the protocol ran even for an abandoned run.
+
+### Podium view overlay (`podium-overlay`)
+
+Opens on Podium view, enabled once the session holds at least one feature
+record — there is nothing to project before a measured second exists, and
+the button stays enabled after a kept ending, because the podium is a
+rendering of numbers already measured. A dark full-screen surface (under
+the light stimulus's layer, which must own the screen's luminance when it
+runs) showing three things at projector size, the sizes pinned by
+`src/core/podiumView.ts` and a test: the score sentence (`podium-score`,
+96px) — the IDENTICAL string the Alertness card prints, from the same
+`scoreSentence` function, so a null renders as the refusal sentence
+verbatim and never as "0"; the session timeline strip, blitted from the
+timeline canvas's own pixels rather than repainted; and the demo notice
+(`podium-notice`, 28px, floor 24) — a projected number must carry its
+caveat at the same distance. `Esc or tap anywhere to close.` is printed
+on the surface and both work; closing discards a picture, never a
+measurement. A session reset closes it and disables the button.
 
 ---
 
