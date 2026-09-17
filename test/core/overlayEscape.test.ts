@@ -32,6 +32,7 @@ describe("the register of things the page raises over itself", () => {
       "heatmap-overlay",
       "light-overlay",
       "cue-overlay",
+      "podium-overlay",
       "kss-dialog",
     ]);
   });
