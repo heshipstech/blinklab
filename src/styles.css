@@ -732,3 +732,55 @@ canvas {
   font-size: 0.85rem;
   line-height: 1.45;
 }
+
+/* ==========================================================================
+ * The printable report card (roadmap 14.4)
+ * ========================================================================== */
+
+/* Invisible on screen by design: the print dialog is the card's only
+ * viewport, so the page never grows a second on-screen report to keep
+ * in step with the first. The button populates the card from the same
+ * inputs the text report reads, marks <body> with .print-report-card
+ * and opens the print dialog; a session reset clears both, so a
+ * mid-session Ctrl+P prints the ordinary page and never a stale card
+ * — the row's "unreachable while the camera runs", held in CSS as
+ * well as in the gate.
+ */
+.report-card {
+  display: none;
+}
+
+/* These are the page's first print rules. Only a populated card
+ * changes what printing does: without the body class every rule here
+ * is inert, and the page prints as it always has.
+ */
+@media print {
+  body.print-report-card {
+    background: #fff;
+  }
+  body.print-report-card #app > :not(.report-card) {
+    display: none;
+  }
+  body.print-report-card .report-card {
+    display: block;
+    color: #000;
+    font-family: var(--font-ui);
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  body.print-report-card .report-card h2 {
+    font-family: var(--font-display);
+    font-size: 18pt;
+  }
+  /* The demo notice must PRINT, and legibly — the same rank it holds
+   * on screen, where it is the page's first strip and never
+   * dismissible. Paper outlives the page, so the caveat rides the
+   * artifact itself. */
+  body.print-report-card .report-card-notice {
+    font-weight: 700;
+  }
+  body.print-report-card .report-card-caveat,
+  body.print-report-card .report-card-omitted {
+    font-size: 10pt;
+  }
+}

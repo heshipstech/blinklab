@@ -131,6 +131,7 @@ import {
   type ReportValue,
 } from "./core/participantReport";
 import { assessSession } from "./core/sessionVerdict";
+import { reportCardModel } from "./core/reportCard";
 import { PODIUM_SCORE_FONT_PX, PODIUM_TEXT_FONT_PX } from "./core/podiumView";
 import { scoreRecords } from "./core/score";
 import { scoreSentence } from "./core/scoreSentence";
@@ -1331,9 +1332,12 @@ function resetSession(): void {
   poseGateFrames = 0;
   poseValidFrames = 0;
   // A new session's report does not exist yet: the old one vanishes
-  // with the records it described.
+  // with the records it described, and the printable card with it —
+  // a mid-session Ctrl+P must print the ordinary page, never a stale
+  // card (roadmap 14.4).
   reportPre.hidden = true;
   reportPre.textContent = "";
+  clearReportCard();
   refreshMarkButton();
   refreshLightResponseButton();
   refreshCueProtocolButton();
@@ -3263,7 +3267,11 @@ function kssValue(asked: boolean, rating: KssRating | null): ReportValue {
     : { kind: "measured", text: `${String(rating)} of 9` };
 }
 
-function participantReportText(): string {
+// Split from participantReportText for the printable card (roadmap
+// 14.4): the card and the text report assemble from THIS one call,
+// so a card can never be built from different session facts than
+// the report a reviewer would diff it against.
+function participantReportInputs(): ParticipantReportInputs {
   const refused = baselineState !== null && baselineState.kind === "refused";
   const last = featureRecords[featureRecords.length - 1];
   const rates = settledDeliveryRates();
@@ -3406,7 +3414,11 @@ function participantReportText(): string {
         ?.getAttribute("content") ?? null,
     generatedAt: new Date().toLocaleString(),
   };
-  return buildParticipantReport(inputs);
+  return inputs;
+}
+
+function participantReportText(): string {
+  return buildParticipantReport(participantReportInputs());
 }
 
 const reportGateLabel = document.createElement("p");
@@ -3433,6 +3445,7 @@ function refreshReportGate(): void {
   const available = reportAvailable(state.kind, featureRecords.length);
   reportButton.disabled = !available;
   exportReportButton.disabled = !available;
+  printCardButton.disabled = !available;
   reportGateLabel.textContent = available
     ? "The session has ended; the report is ready."
     : "The report renders only after the session ends — stop the " +
@@ -5655,6 +5668,97 @@ podiumButton.addEventListener("click", () => {
 // A tap ends it too, the light overlay's phone rule.
 podiumOverlay.addEventListener("click", closePodiumView);
 
+// --- The printable report card (roadmap 14.4) ---
+// A paper surface: the text report's highlights laid out for print,
+// every string the card model's (core/reportCard.ts), which builds
+// them with the report's own functions, so the card cannot disagree
+// with the report a reviewer would diff it against. The card is
+// invisible on screen — the print dialog is its only viewport — and
+// the @media print rules in styles.css show it alone once <body>
+// carries the print-report-card class, which only a finished
+// session's button click sets and a session reset removes. That is
+// the row's "unreachable while the camera runs": mid-session the
+// class is gone, the button is disabled, and the click re-checks the
+// same gate the report uses.
+const printCardButton = document.createElement("button");
+printCardButton.textContent = "Print report card";
+printCardButton.dataset.testid = "print-report-card";
+printCardButton.disabled = true;
+
+const reportCard = document.createElement("section");
+reportCard.className = "report-card";
+reportCard.dataset.testid = "report-card";
+
+const reportCardStrip = document.createElement("canvas");
+reportCardStrip.width = 640;
+reportCardStrip.height = 72;
+reportCardStrip.setAttribute(
+  "aria-label",
+  "Session timeline: blinks, closures, alerts and score over the whole session",
+);
+const reportCardStripContext = reportCardStrip.getContext("2d");
+
+function cardLine(text: string, className?: string): HTMLParagraphElement {
+  const p = document.createElement("p");
+  p.textContent = text;
+  if (className !== undefined) {
+    p.className = className;
+  }
+  return p;
+}
+
+function populateReportCard(): void {
+  const model = reportCardModel(participantReportInputs());
+  const title = document.createElement("h2");
+  title.textContent = model.title;
+  const notice = cardLine(model.notice, "report-card-notice");
+  notice.dataset.testid = "report-card-notice";
+  reportCard.replaceChildren(
+    title,
+    notice,
+    cardLine(model.headline, "report-card-headline"),
+    ...model.flagged.map((line) => cardLine(line)),
+    ...model.measured.map((row) => cardLine(`${row.label}: ${row.value}`)),
+    cardLine(model.score),
+    cardLine(model.scoreCaveat, "report-card-caveat"),
+    // 14.1's strip, blitted like the podium's: the timeline canvas's
+    // pixels are the record, and copying them is the one way a
+    // second surface shows them without a second painter to drift.
+    reportCardStrip,
+    ...model.conditions.map((row) => cardLine(`${row.label}: ${row.value}`)),
+    ...model.provenance.map((row) => cardLine(`${row.label}: ${row.value}`)),
+    cardLine(model.omitted, "report-card-omitted"),
+  );
+  if (reportCardStripContext !== null) {
+    if (reportCardStrip.width !== timelineCanvas.width) {
+      reportCardStrip.width = timelineCanvas.width;
+    }
+    reportCardStripContext.clearRect(
+      0,
+      0,
+      reportCardStrip.width,
+      reportCardStrip.height,
+    );
+    reportCardStripContext.drawImage(timelineCanvas, 0, 0);
+  }
+}
+
+function clearReportCard(): void {
+  reportCard.replaceChildren();
+  document.body.classList.remove("print-report-card");
+}
+
+printCardButton.addEventListener("click", () => {
+  // The report's own gate, re-checked at click time: a stale enabled
+  // button must not print a card mid-session.
+  if (!reportAvailable(state.kind, featureRecords.length)) {
+    return;
+  }
+  populateReportCard();
+  document.body.classList.add("print-report-card");
+  window.print();
+});
+
 // The cued protocol (roadmap 11.0b), on the light stimulus's pattern:
 // every timing decision is pure (core/cueSchedule.ts, fixed in 11.0a
 // before any camera ran), and the code here is the thin io that
@@ -6221,6 +6325,7 @@ const reportBox = box(
   reportGateLabel,
   reportButton,
   exportReportButton,
+  printCardButton,
   reportStatus,
   reportPre,
 );
@@ -6380,6 +6485,7 @@ app.append(
   cueOverlay,
   podiumOverlay,
   kssDialog,
+  reportCard,
 );
 // Every readout starts with the sentence the idle page shows, from
 // the table in core/idleStrings.ts (roadmap 14.0b, audit B19): "not
