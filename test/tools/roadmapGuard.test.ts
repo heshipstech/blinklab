@@ -338,12 +338,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 29's one row) is swapped
-    // for a list claiming 12.7 alone, so the gate check is exercised
-    // against a row whose phase forbids it whatever the real list
-    // currently says.
+    // The ladder's live claim (amendment 30's NOTHING declaration) is
+    // swapped for a list claiming 12.7 alone, so the gate check is
+    // exercised against a row whose phase forbids it whatever the
+    // real ladder currently says.
     const claimed = roadmap.replace(
-      "Row 14.9b remains startable and is not marked",
+      "NOTHING outside Phase 12 remains startable",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -523,12 +523,14 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 29: 14.4 ticked on 17 September 2026, and the sweep
-    // its tick prompted found 14.9b's death reason spent (14.9a
-    // ticked on the 12th), so the one row claimed is 14.9b;
-    // amendment 28's sentence is retired to past tense in place.
+    // Amendment 30: 14.9b ticked on 17 September 2026 and the sweep
+    // after it found nothing open and unmarked at the whole-row
+    // grain — every remaining row is gated, owner-shaped, or
+    // proceeding under amendment 22's markers — so the ladder
+    // carries the NOTHING declaration and the claim list is empty;
+    // amendment 29's sentence is retired to past tense in place.
     // This pins what the ladder actually says today, so changing it
     // is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual(["14.9b"]);
+    expect(startableClaims(roadmap)).toEqual([]);
   });
 });
