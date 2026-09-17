@@ -102,8 +102,11 @@ export function reportAvailable(
 }
 
 // The model card's own words; any mention of the score travels with
-// them, in section 1 and again beside the score itself.
-const UNVALIDATED_SCORE_SENTENCE =
+// them, in section 1, again beside the score itself, and on the
+// printable card (roadmap 14.4), which is why the constant is
+// exported: a surface that mentions the score imports the sentence
+// rather than paraphrasing it.
+export const UNVALIDATED_SCORE_SENTENCE =
   "The alertness score is an unvalidated heuristic: it has never " +
   "been shown to correspond to how sleepy anyone actually is.";
 
@@ -119,7 +122,10 @@ const SECTION_2_ORDER: readonly SurfaceStatus[] = [
   "ok",
 ];
 
-function statusWord(status: SurfaceStatus): string {
+/** Exported for the printable card (roadmap 14.4): one vocabulary
+ * for a surface's status, so a second rendering cannot invent a
+ * softer word for REFUSED. */
+export function statusWord(status: SurfaceStatus): string {
   switch (status) {
     case "ok":
       return "OK";
@@ -175,19 +181,32 @@ function sectionTwo(verdict: SessionVerdict): string[] {
   return rows;
 }
 
+/**
+ * The one score line, report section and printable card alike
+ * (roadmap 14.4): built pure and shared, so the card can never
+ * disagree with the report about the score, in digits or in
+ * refusal. The missing-reason fallback is deliberately an
+ * accusation against the page, not a blank.
+ */
+export function scoreLine(
+  score: ScoreBreakdown | null,
+  withheldReason: string | null,
+): string {
+  if (score === null) {
+    return `Alertness score: ${renderReportValue({
+      kind: "withheld",
+      reason:
+        withheldReason ??
+        "no reason was recorded, which is itself a defect worth reporting",
+    })}`;
+  }
+  return `Alertness score: ${String(score.score)} of 100.`;
+}
+
 function sectionThree(inputs: ParticipantReportInputs): string[] {
   const rows = ["3. WHAT WAS MEASURED", "", ...lines(inputs.measured), ""];
-  if (inputs.score === null) {
-    rows.push(
-      `Alertness score: ${renderReportValue({
-        kind: "withheld",
-        reason:
-          inputs.scoreWithheldReason ??
-          "no reason was recorded, which is itself a defect worth reporting",
-      })}`,
-    );
-  } else {
-    rows.push(`Alertness score: ${String(inputs.score.score)} of 100.`);
+  rows.push(scoreLine(inputs.score, inputs.scoreWithheldReason));
+  if (inputs.score !== null) {
     rows.push("The working — 100 minus the named penalties:");
     for (const contribution of inputs.score.contributions) {
       rows.push(
