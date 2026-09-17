@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1898 unit tests and 665 Python tests, each figure
+- **The suite:** 1901 unit tests and 665 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE NUMBERS GET A PODIUM, AND THE CAVEAT CLIMBS UP WITH THEM, 17 September 2026 (row 14.2's overlay lands; every Check clause now has its test).** The podium view is a projector surface and deliberately nothing more: the score sentence at 96 pixels is scoreSentence's own string — the identical function the Alertness card calls, so the second Check clause holds by construction and the no-face fake camera's e2e reads "Alertness score: no face in frame" verbatim off the rendered element with no digit anywhere in it; the session timeline underneath is the timeline canvas's own pixels blitted, not a second painter that could drift; and the demo notice rides at 28 pixels because a projected number must carry its caveat at the same distance — the sizes live in src/core/podiumView.ts where a test floors them (72 and 24), and the e2e measures the browser's computed sizes rather than trusting the stylesheet. podium-overlay is the Escape register's seventh screen, dismissible because closing a rendering of numbers already measured discards a picture and never a measurement; a tap closes it too, the light overlay's phone rule, and a session reset closes it with the rest. The button arms once a feature record exists and stays armed through a kept ending — a finished session is exactly when a podium is wanted. uiGuard drove the documentation the way it was built to: the button label and the new screen both reddened until docs/UI.md carried them. The suite is 1901 unit tests, 48 end to end tests of which 46 run on every pull request.
 
 **ONE SENTENCE, ONE SOURCE, 17 September 2026 (row 14.2 starts under amendment 27; row 14.1 ticked earlier today).** The podium view's second Check clause — the big view and the panel share the identical formatted string for a null — is the kind of clause that goes stale the moment it is satisfied by two copies, so the first slice makes it structural: the score readout's four-branch sentence (withheld under a refusal, the number over 100, the empty chair named rather than scored, measuring) moves verbatim from the wiring into src/core/scoreSentence.ts, the readout re-points at it, and the coming overlay will speak the same function. The refusal-order comment travels with it, and one property is pinned that the inline ternary could only promise: with no score there is no digit in the sentence at all, so no projector can ever show "0" about an empty chair. The suite is 1898 unit tests, 47 end to end tests of which 45 run on every pull request.
 

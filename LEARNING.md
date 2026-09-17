@@ -4911,3 +4911,32 @@ unit tests. And the spec copies no expected numbers: it recomputes
 every drawn count from the same pure modules the page imports, so the
 test and the page can only disagree if the page stops using its own
 model.
+
+## 14.2 The podium: a second surface earns its trust by owning nothing
+
+The concept this increment teaches is how to add a display surface
+without adding a source of truth. A podium view could easily become a
+second implementation of the page — its own score formatting, its own
+strip painter, its own disclaimer wording — and every one of those
+copies would be a place to drift.
+
+So the podium owns nothing. The score line is scoreSentence's string,
+the same function the Alertness card calls, which is why the row's
+identical-null-string clause cannot go stale: there is no second
+string to keep identical. The strip is the timeline canvas's pixels
+copied with drawImage, not repainted from the model, so the podium
+cannot show a different session than the page. The notice is
+demoNoticeText(), the constant the page, the README and the exports
+already share.
+
+The one thing the podium does own is SIZE, and size is the row's
+third clause — "legible at distance" pins as numbers in
+src/core/podiumView.ts with floors a test holds, and the e2e measures
+the browser's computed font sizes on the rendered elements rather
+than trusting a stylesheet to have applied.
+
+The Escape register did its job the way 14.0f designed it: adding
+"podium-overlay" to the union made the compiler demand a closer in
+OVERLAY_CONTROLS, and uiGuard refused the pull request until docs/UI.md
+documented both the button and the screen. Nothing about that needed
+remembering.
