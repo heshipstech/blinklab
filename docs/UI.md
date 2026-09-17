@@ -523,19 +523,33 @@ Full width, after Stored on this device: it is read once a session is
 over, and it sits past the erase control so every mid-session control
 stays above it.
 
-| Element | Strings                                                                                                                                                                                                                                         |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Gate    | `The session has ended; the report is ready.` or `The report renders only after the session ends — stop the camera first. A participant who reads it mid-session has learned what the instrument counts.`                                       |
-| Show    | Button, `Show the report`. Disabled unless `reportAvailable` in `core/participantReport.ts` says the session has ended with records — pinned by test: never while `running`, `requesting` or `loadingClip`, and never with nothing recorded     |
-| Export  | Button, `Export report`. Same gate as Show. Downloads `blinklab-report-<stamp>.txt` — the SAME bytes the panel shows, plain text, filename refused by `.gitignore` and read by `tools/exportGuard.mjs` like every other download                |
-| Status  | Text under the buttons. Empty until an export, then `Exported blinklab-report-<stamp>.txt. Check your downloads.`                                                                                                                               |
-| Report  | A `<pre>` holding the whole plain-text report from `buildParticipantReport` in `core/participantReport.ts`: eight numbered sections, refusals first, the three absence words (`withheld — reason`, `unknown`, `not applicable`) pinned distinct |
+| Element | Strings                                                                                                                                                                                                                                              |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gate    | `The session has ended; the report is ready.` or `The report renders only after the session ends — stop the camera first. A participant who reads it mid-session has learned what the instrument counts.`                                            |
+| Show    | Button, `Show the report`. Disabled unless `reportAvailable` in `core/participantReport.ts` says the session has ended with records — pinned by test: never while `running`, `requesting` or `loadingClip`, and never with nothing recorded          |
+| Export  | Button, `Export report`. Same gate as Show. Downloads `blinklab-report-<stamp>.txt` — the SAME bytes the panel shows, plain text, filename refused by `.gitignore` and read by `tools/exportGuard.mjs` like every other download                     |
+| Print   | Button, `Print report card`. Same gate as Show, re-checked at click time. Populates the printable card (`report-card`) from the same inputs the text report reads, marks `<body>` with `print-report-card` and opens the print dialog (roadmap 14.4) |
+| Status  | Text under the buttons. Empty until an export, then `Exported blinklab-report-<stamp>.txt. Check your downloads.`                                                                                                                                    |
+| Report  | A `<pre>` holding the whole plain-text report from `buildParticipantReport` in `core/participantReport.ts`: eight numbered sections, refusals first, the three absence words (`withheld — reason`, `unknown`, `not applicable`) pinned distinct      |
 
 **The report is plain text on purpose.** One pure builder produces the
 panel's text today and the exported file's bytes in increment 7, so the
 two renderings can never disagree; a report a reviewer can diff beats a
 report that needs a browser. A new session clears it with the records
 it described.
+
+**The printable report card (`report-card`, roadmap 14.4)** is a third
+rendering of the same session and it owns nothing: every line comes
+from `reportCardModel` in `core/reportCard.ts`, which builds the text
+report's own lines with the text report's own functions, and a parity
+test holds each card line to the report verbatim. The card is
+invisible on screen — the print dialog is its only viewport. The
+page's only `@media print` rules show it alone once `<body>` carries
+`print-report-card`, which only the button click sets and a session
+reset removes, so a mid-session print gets the ordinary page and
+never a stale card. The demo notice prints on the card in bold, and
+14.1's timeline strip rides it as the timeline canvas's blitted
+pixels.
 
 ---
 
