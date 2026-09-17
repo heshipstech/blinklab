@@ -4986,3 +4986,24 @@ second surface needed the same facts, the build moved into
 participantReportInputs() and both surfaces call it. The alternative
 — the card calling participantReportText's twin — is how two
 renderings of one session drift apart.
+
+## 14.9b A second gate must borrow the detector's own boundary
+
+The blink-gaze gate needed two thresholds, and the honest move both
+times was to not have an opinion. The aperture comparison is strictly
+below the line because blink.ts already decided that boundary
+(apertureMm < thresholdMm is closed), and two gates that disagree at
+exactly the line would let a frame be a blink to the detector and a
+glance to the gaze chain at once. The gap bound is
+MAX_BLINK_DURATION_MS because the codebase already draws that line
+twice — a closure past it is "no longer a blink" to the blink
+detector and the long-closure threshold alike. A new constant here
+would have been a third opinion about the same fact.
+
+The subtler lesson is in what the old rule protected. main.ts clears
+the gaze buffer on any null with a comment about invented stillness,
+and the comment is right — bridging a lost face WOULD invent a
+fixation. The defect was never the caution; it was that the rule
+could not tell a lid from an absence, so it paid for the caution
+with a split fixation on every blink. The fix keeps the caution
+(long gaps still clear) and adds only the discrimination.
