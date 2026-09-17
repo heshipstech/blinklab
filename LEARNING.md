@@ -5027,3 +5027,26 @@ pure function and admits one honest asymmetry: for the single frame
 where a calibration is adopted mid-frame, the gaze side holds the
 older line. On this side that can only withhold a glance, never
 invent one, which is the direction this codebase always errs.
+
+## 14.9b (one definition) A boundary that lives in two places is two boundaries
+
+The audit's finding was not that either on-screen rule was wrong —
+each was defensible alone. The raw threshold was honest about being
+a guess and the heatmap's unit square was the right bound for
+calibrated points. The defect was that both existed at once, so the
+export and the dwell could disagree about the same frame, and no
+test could redden because each rule was consistent with itself.
+
+The fix is the same shape as the score sentence and the report card:
+the rule moved into core once (pointWithinWindow), and every consumer
+was re-pointed at it — the heatmap's inline check retired rather than
+kept in agreement, because two identical implementations are still
+two boundaries, one refactor away from disagreeing again. The
+agreement test then pins the consumers to the rule on a fixture, so
+the next second definition cannot land quietly.
+
+The wording moved with the rule. "Screen" claimed knowledge the page
+does not have — viewport fractions describe the browser window, and
+a calibration performed in a window says nothing about the physical
+screen around it. A boundary should be named after what it actually
+bounds.
