@@ -338,12 +338,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 24's eight rows) is swapped
+    // The ladder's live claim (amendment 26's one row) is swapped
     // for a list claiming 12.7 alone, so the gate check is exercised
     // against a row whose phase forbids it whatever the real list
     // currently says.
     const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable at the whole-row grain",
+      "Row 14.1 remains startable and is not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -523,12 +523,11 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 24's adversarially verified list emptied on 13
-    // September 2026 when 10.3, its last name, ticked. The live claim
-    // is the NOTHING form amendment 21 gave emptiness, and the empty
-    // list is that claim's right answer. This pins what the ladder
-    // actually says today, so changing it is a deliberate edit to
-    // this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+    // Amendment 26: 14.0e's tick on 15 September 2026 spent the Phase
+    // 14 ordering that held the timeline strip, so the ladder's live
+    // claim is 14.1 alone — amendment 24's NOTHING sentence is retired
+    // to past tense in place. This pins what the ladder actually says
+    // today, so changing it is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual(["14.1"]);
   });
 });
