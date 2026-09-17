@@ -308,4 +308,14 @@ describe("a reset leaves no calibration in flight", () => {
       'OVERLAY_CONTROLS["blink-calibration-overlay"].close()',
     );
   });
+
+  it("clears the alert moments the timeline strip draws", () => {
+    // Roadmap 14.1: the strip's alert lane reads a log nothing else
+    // keeps, so a reset that forgot it would open the next session
+    // under the last one's alerts — the exact drift the records and
+    // blink log clears already prevent for their lanes.
+    const body = resetSessionBody(main);
+    expect(body, "main.ts no longer declares resetSession").not.toBeNull();
+    expect(body).toContain("alertFiredTimesMs = [];");
+  });
 });
