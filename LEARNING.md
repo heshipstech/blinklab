@@ -4852,3 +4852,36 @@ corridor caveat is stated, tested and unpaid: a guided blink line at
 or below the frozen shut line degrades the machine to the
 single-line design, honestly and pinned, and the cure is #113's
 personal shut floor, not this increment's.
+
+## 14.1 The timeline strip's pure half: reuse is a property you can test
+
+The concept this increment teaches is that a new display can be mostly
+made of proofs you already own. The session timeline strip has one
+axis, time, and three kinds of content: event ticks (blinks, closures,
+alerts), a score line, and — the part that matters — visible absence.
+
+Almost nothing in src/core/timelineStrip.ts is new machinery. The
+score series is the panel's own scoreRecords asked once per row, and a
+test pins every sample equal to the naive definition, so the strip and
+the panel can never disagree. The polyline goes through sparkline.ts's
+segment builder, which has drawn null-as-gap since 3.2. Closure
+moments are recovered from the per-second record's own cumulative
+count rather than from a new event stream.
+
+The one new rule is the bridge bound. The sparkline splits on null
+SAMPLES, but a paused tab writes no samples at all, so two confident
+rows an hour apart would draw one confident line across the hour.
+Samples further apart than twice the record period get a null sentinel
+between them first; the bound is aliased from recordGate.ts, not
+restated. Two smaller honesty rules ride along: an event outside the
+span is dropped, never clamped onto an edge, because a tick at a false
+x lies about time; and the first retained row's closure count is a
+baseline, not events, because after the buffer drops its oldest rows
+those closures have no moment to draw at.
+
+The Check's two properties — no zero-height points, gaps never
+bridged — run over synthetic records and over all five committed
+fixture sessions through the real row builders, so the properties are
+held to sessions the exporter could actually write, not only to
+shapes invented for the test. The page wiring and the injected-events
+e2e are the next increment; nothing renders yet, by design.
