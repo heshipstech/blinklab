@@ -342,6 +342,10 @@ import { downloadTextFile } from "./io/download";
 import { createWakeLock } from "./io/wakeLock";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
+  RECORD_WALKTHROUGH_STEPS,
+  RECORD_WHY_NOT_HERE,
+} from "./core/recordWalkthrough";
+import {
   chosenModeMetadataRows,
   modeMenu,
   type ModeMenuRow,
@@ -1016,6 +1020,29 @@ modeProbeButton.hidden = true;
 const modeMenuBlock = document.createElement("div");
 modeMenuBlock.setAttribute("data-testid", "mode-menu");
 modeMenuBlock.hidden = true;
+
+// Roadmap 14.6: the record-yourself walkthrough, refusal-first on the
+// owner's decided fork. A closed disclosure beside the clip picker —
+// three steps a visitor can walk, and the honesty paragraph quoting
+// the refusal the pipeline actually speaks, pinned in core so the
+// wording can never outlive the sentence.
+const recordWalkthrough = document.createElement("details");
+recordWalkthrough.setAttribute("data-testid", "record-walkthrough");
+const recordWalkthroughSummary = document.createElement("summary");
+recordWalkthroughSummary.textContent = "Record yourself";
+const recordWalkthroughList = document.createElement("ol");
+for (const step of RECORD_WALKTHROUGH_STEPS) {
+  const item = document.createElement("li");
+  item.textContent = step;
+  recordWalkthroughList.append(item);
+}
+const recordWalkthroughWhy = document.createElement("p");
+recordWalkthroughWhy.textContent = RECORD_WHY_NOT_HERE;
+recordWalkthrough.append(
+  recordWalkthroughSummary,
+  recordWalkthroughList,
+  recordWalkthroughWhy,
+);
 let chosenModeLabel: string | null = null;
 
 function renderModeMenu(rows: readonly ModeMenuRow[]): void {
@@ -6422,6 +6449,7 @@ const sourceBox = box(
   stepLabel,
   stopClipButton,
   picker,
+  recordWalkthrough,
   canvas,
   cameraLine,
   modeMenuBlock,
