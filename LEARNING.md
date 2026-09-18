@@ -5133,3 +5133,31 @@ Check says promotion is capped at "checked on the maintainer's
 sessions" — the first draft's label claimed that check had already
 happened, which was a lie one word wide. The constant now says the
 most the demo may EVER claim, and a test holds the wording.
+
+## 13.13 Recovery must be cheaper than the defect, and never louder
+
+The concept this increment teaches is the shape of a safe recovery
+path. The lost-face event was a wedged tracker state that rode 39
+seconds to the end of a clip because nothing ever walked away from
+it; the fix is three small parts, each refusing a different way to
+make things worse.
+
+The clock (core) decides WHEN. It runs on trusted-face presence, not
+the pose gate, because a turned head is not a lost face; it starts
+episodes only after a face has been seen, because a face never found
+is not a face lost — the faceless fixtures and fake camera stay
+honest and reset-free; and its threshold sits at two seconds, sixty
+frames of chances the tracker's own reacquisition already declined,
+so a blink can never trigger it.
+
+The walking-away (io) does the resetting. Close is best-effort — a
+wedged instance may refuse even to die, and the point is to leave
+it, not to win an argument with it — and every failure path returns
+rather than throws, because a recovery that can crash the page is
+worse than the defect it recovers from. A failed re-attempt keeps
+the old instance and the next signal tries again.
+
+And the record survives either way: past five seconds the page says
+what was lost and the export carries two keys, absent from every
+session where nothing happened, so a run that lost its face can
+never again finish looking like one that never did.

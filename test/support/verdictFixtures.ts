@@ -16,6 +16,10 @@ import {
   type RulerFitVerdict,
 } from "../../src/core/rulerFit";
 import {
+  faceLossMetadataRows,
+  INITIAL_FACE_LOSS,
+} from "../../src/core/faceLoss";
+import {
   calibrationMetadataRows,
   calibrationWindowMetadataRows,
   cueMetadataRows,
@@ -177,6 +181,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "gazeCalibrationMetadataRows",
   "wakeLockMetadataRows",
   "calibrationWindowMetadataRows",
+  "faceLossMetadataRows",
 ];
 
 /**
@@ -261,6 +266,11 @@ export function fixtureCsv(session: FixtureSession): string {
     // guided-line precedent: called anyway so the order cannot drift
     // from the page, and the committed bytes stay unchanged (11.6a).
     ...calibrationWindowMetadataRows([]),
+    // No fixture session ever loses a face it found, so the lost-face
+    // builder is called with the initial state and writes nothing —
+    // the same called-anyway rule, and the committed bytes stay
+    // unchanged (13.13).
+    ...faceLossMetadataRows(INITIAL_FACE_LOSS),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);
