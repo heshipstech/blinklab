@@ -5050,3 +5050,29 @@ does not have — viewport fractions describe the browser window, and
 a calibration performed in a window says nothing about the physical
 screen around it. A boundary should be named after what it actually
 bounds.
+
+## 13.7 (summarizer) A menu is honest only about what was granted
+
+The concept this increment teaches is that a menu of options is a
+set of claims, and each claim must come from a grant, not a request.
+A webcam accepts constraint asks the way a waiter accepts orders for
+dishes the kitchen stopped serving: politely, and then it brings what
+it has. Asked for 1080p at 60 and 720p at 60, most built-ins answer
+1080p at 30 both times, and a menu that lists the asks would offer a
+person two modes that do not exist.
+
+So the summarizer keys every row by what negotiation DELIVERED. Five
+asks landing on the same settings collapse to one row that lists all
+five, an ask whose apply threw lands in a not-granted list rather
+than vanishing, and a browser that reports nothing produces a row
+that says "unknown" instead of repeating the ask's numbers back as
+if they had been confirmed.
+
+Two sentences on each row keep two old disciplines. The rate verdict
+speaks the committed sampling bands but says "negotiated" and that
+delivery is measured live, because the capability ladder judges a
+measurement and this menu judges a promise, and the record already
+holds a device whose promise and delivery differ. The ruler sentence
+is relative — a narrower mode carries its width's share of the widest
+mode's pixels per millimetre — because the iris ruler runs on source
+pixels and no absolute count exists until a face is measured.
