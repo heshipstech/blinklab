@@ -134,6 +134,15 @@ export const APERTURE_HYSTERESIS_FRACTION = 0.1;
 // frames, and a count that missed blinks would read as calm.
 export const MIN_BLINK_FPS = 25;
 
+// Roadmap 10.12a. The gate's own hysteresis, the 60/65 pattern one
+// floor down: once the evidence rate has dipped below 25 the gate
+// reopens only at 30, because the rate is measured over a wobbling
+// window and a gate that flickers at the boundary would alternately
+// count and withhold the same eyes. Before any dip the plain floor
+// is the rule — today's behavior and the stepped corpus's, which is
+// what keeps the corpus unchanged by construction.
+export const MIN_BLINK_CLEAR_FPS = 30;
+
 // Remediation D1 stage two, decided by the owner on 20 August 2026.
 // Above the 25 fps floor the instrument still loses blinks near the
 // arm line, and how many depends on the processing rate: the offline

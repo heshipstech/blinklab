@@ -382,6 +382,20 @@ const MUTATIONS = [
     "asymmetry rule disabled: a pursuit sinusoid would read as reading",
     "test/core/readingRhythm.test.ts",
   ],
+  [
+    "src/core/constants.ts",
+    "MIN_BLINK_CLEAR_FPS = 30",
+    "MIN_BLINK_CLEAR_FPS = 26",
+    "gate hysteresis collapsed: a rate wobbling on the floor would flicker counting",
+    "test/core/fpsGate.test.ts",
+  ],
+  [
+    "src/core/constants.ts",
+    "MIN_BLINK_CLEAR_FPS = 30",
+    "MIN_BLINK_CLEAR_FPS = 100",
+    "gate clear bloated: a session that dipped once would never count again",
+    "test/core/fpsGate.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

@@ -6,7 +6,6 @@ import {
   MIN_BLINK_FPS,
 } from "./constants";
 import { keepRecent } from "./fps";
-import { measurableAtFps } from "./fpsGate";
 
 // Blinks per minute over a rolling window — of OBSERVED time, not
 // wall time. Roadmap 10.12b: the denominator used to be the clock,
@@ -182,12 +181,12 @@ export function suspendedSentence(seconds: number): string {
 // a healthy rate. Null, not zero: zero would claim calm eyes on
 // evidence that missed blinks.
 export function gatedBlinkRatePerMin(
-  fps: number | null,
+  blinkMeasurable: boolean,
   state: BlinkRateState,
   blink: BlinkState,
   nowMs: number,
 ): number | null {
-  if (!measurableAtFps(fps) || countingSuspended(blink, nowMs)) {
+  if (!blinkMeasurable || countingSuspended(blink, nowMs)) {
     return null;
   }
   return blinkRatePerMin(state, nowMs);
