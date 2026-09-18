@@ -178,3 +178,17 @@ describe("the canonical probe asks", () => {
     ]);
   });
 });
+
+describe("the chosen mode's export rows", () => {
+  it("absent until a mode was chosen, the pseudonym rule", async () => {
+    const { chosenModeMetadataRows } = await import("../../src/core/modeMenu");
+    expect(chosenModeMetadataRows(null)).toEqual([]);
+  });
+
+  it("one row carrying the menu's own label", async () => {
+    const { chosenModeMetadataRows } = await import("../../src/core/modeMenu");
+    expect(chosenModeMetadataRows("1280x720 at 60 fps")).toEqual([
+      "# chosen_mode: 1280x720 at 60 fps",
+    ]);
+  });
+});
