@@ -5183,3 +5183,26 @@ a menu nobody opened.
 The e2e closes the loop the way the cued protocol's does: it reads
 the downloaded CSV and demands the file carry the same label the
 page just spoke, no expected strings copied in to rot.
+
+## 14.6 A quoted sentence is a copy, and a copy is a drift waiting to happen
+
+The concept this increment teaches is how to quote your own software
+honestly. The walkthrough must tell a visitor what refusal they
+would see if they recorded in the browser — which means the page
+describing the refusal and the page speaking the refusal are two
+places holding one sentence. Copied prose rots: the stepper's
+wording would move someday, and the walkthrough would go on quoting
+a sentence the page stopped saying.
+
+So the quoted prefix lives in core as a constant, and a test calls
+the real variableRateRefusal and demands the sentence start with it.
+The e2e then holds the RENDERED walkthrough to the same constant,
+and the probe spec — still in the suite, still printing its outcome
+every CI run — remains the proof the pipeline actually speaks it.
+Three tests, one sentence, no copy that can drift alone.
+
+The other honesty is about the fork not taken. The owner ruled
+refusal-first and sent the in-browser recording remedy to the
+backlog, so a test bans workaround language from the paragraph: a
+walkthrough that hinted "we could fix this here" would be promising
+the declined branch.
