@@ -235,3 +235,13 @@ export function modeMenu(readings: ModeProbeReading[]): ModeMenu {
   });
   return { rows, notGranted };
 }
+
+/**
+ * The export's account of a chosen mode, or nothing when nobody
+ * chose — the pseudonym rule. The value is the menu row's own label,
+ * the negotiated truth, so the file can never claim a mode the
+ * camera did not grant.
+ */
+export function chosenModeMetadataRows(label: string | null): string[] {
+  return label === null ? [] : [`# chosen_mode: ${label}`];
+}

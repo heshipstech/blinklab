@@ -5161,3 +5161,25 @@ And the record survives either way: past five seconds the page says
 what was lost and the export carries two keys, absent from every
 session where nothing happened, so a run that lost its face can
 never again finish looking like one that never did.
+
+## 13.7 (io and menu) A probe is a question, and a question must not change the instrument
+
+The concept this increment completes is the boundary between asking
+and choosing. The probe sweeps the live track through three
+resolution-and-rate asks and reads back what each NEGOTIATED — and
+then restores the settings the session had, because a person who
+clicked "Probe camera modes" asked a question, and finding their
+session silently running at whatever the last ask left behind would
+be the probe answering a question nobody asked. Choosing is the
+separate, deliberate act: its own button per granted mode, and only
+a grant records the label.
+
+The label recorded is the menu row's — the negotiated truth — never
+the ask's, so the export can never claim a mode the camera refused.
+And the export row is conditional on the choice existing at all,
+the pseudonym rule again: an ordinary session carries no row about
+a menu nobody opened.
+
+The e2e closes the loop the way the cued protocol's does: it reads
+the downloaded CSV and demands the file carry the same label the
+page just spoke, no expected strings copied in to rot.
