@@ -66,6 +66,17 @@ describe("finding one row", () => {
   it("refuses a row that is not there rather than returning nothing", () => {
     expect(() => roadmapRow("- [ ] 1.1 first\n", "9.9")).toThrow(/9\.9/);
   });
+
+  it("reads an id whose letters and digits alternate more than once", () => {
+    // 10.1f4b is a real row, and the claim reader's charset accepted
+    // it while the row parser's shape (one letter run, then digits)
+    // did not — so a claim naming it threw "no row 10.1f4b" about a
+    // row sitting in the file. The two readers must accept the same
+    // ids, and this pins the shape that exposed the difference.
+    expect(
+      roadmapRow("- [ ] 10.1f4b the loader's floor\n", "10.1f4b"),
+    ).toContain("floor");
+  });
 });
 
 describe("the blendshape blocker, checked against the code", () => {
@@ -338,12 +349,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 30's NOTHING declaration) is
+    // The ladder's live claim (amendment 31's three-row list) is
     // swapped for a list claiming 12.7 alone, so the gate check is
     // exercised against a row whose phase forbids it whatever the
     // real ladder currently says.
     const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable",
+      "Rows 10.1f4b, 13.13 and 14.12 remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -523,14 +534,14 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 30: 14.9b ticked on 17 September 2026 and the sweep
-    // after it found nothing open and unmarked at the whole-row
-    // grain — every remaining row is gated, owner-shaped, or
-    // proceeding under amendment 22's markers — so the ladder
-    // carries the NOTHING declaration and the claim list is empty;
-    // amendment 29's sentence is retired to past tense in place.
-    // This pins what the ladder actually says today, so changing it
-    // is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+    // Amendment 31: the owner's four decisions of 18 September 2026
+    // re-opened 10.1f4b (a floor chosen) and 13.13 (the harness
+    // accepted, its marker retired), and the adversarial re-read of
+    // amendment 30's NOTHING sentence found 14.12 synthetic in every
+    // Check clause and barred by no gate that names it; amendment
+    // 30's sentence is retired to past tense in place. This pins
+    // what the ladder actually says today, so changing it is a
+    // deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual(["10.1f4b", "13.13", "14.12"]);
   });
 });
