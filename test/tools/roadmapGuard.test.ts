@@ -345,18 +345,21 @@ describe("a claimed row its phase will not let start", () => {
   });
 
   it("would have caught the three rows amendment 20 records", () => {
-    // The whole point, stated against the real ladder. Claiming 12.7,
-    // whose every Check clause is satisfiable here, is refused by the
-    // gate — which is what amendment 19's guard could not see and
-    // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 34's NOTHING declaration) is
-    // swapped for a list claiming 12.7 alone, so the gate check is
-    // exercised against a row whose phase forbids it whatever the
-    // real ladder currently says.
-    const claimed = roadmap.replace(
-      "NOTHING outside Phase 12 remains startable",
-      "Rows 12.7 remain startable and are not marked",
-    );
+    // The whole point, stated against the real ladder. Claiming 12.7
+    // while its phase's gate is shut is refused by the gate — which
+    // is what amendment 19's guard could not see and what cost three
+    // rows on the day it shipped.
+    // The real gate lifted when 10.12a ticked (amendment 35), so the
+    // bend re-shuts it: 10.12a is un-ticked synthetically and the
+    // ladder's live claim (amendment 35's three names) is narrowed to
+    // 12.7 alone, so the gate check keeps being exercised against a
+    // shut gate whatever the real ladder currently says.
+    const claimed = roadmap
+      .replace("- [x] 10.12a", "- [ ] 10.12a")
+      .replace(
+        "Rows 12.7, 12.8a and 12.10 remain startable and are not marked",
+        "Rows 12.7 remain startable and are not marked",
+      );
     expect(staleStartables(claimed)).toEqual([]);
     expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.7"]);
   });
@@ -534,14 +537,14 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 34: 13.13's container half landed and the row moved
-    // under amendment 22's markers, so nothing open and unmarked
-    // survives at the whole-row grain — every remaining row is
-    // gated, owner-shaped, or proceeding under markers — and the
-    // ladder carries the NOTHING declaration; amendment 33's
-    // sentence is retired to past tense in place. This pins what
-    // the ladder actually says today, so changing it is a
-    // deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual([]);
+    // Amendment 35: the owner's dim-room session landed, 10.12a
+    // ticked, and the Phase 12 gate lifted — the first time since
+    // amendment 17 wrote it. Three rows survived the clause-by-clause
+    // re-read: 12.7 (lid openness instrument), 12.8a (quadratic peak
+    // velocity, its sweep committed) and 12.10 (closure-fraction
+    // curve); amendment 34's NOTHING sentence is retired to past
+    // tense in place. This pins what the ladder actually says today,
+    // so changing it is a deliberate edit to this line.
+    expect(startableClaims(roadmap)).toEqual(["12.7", "12.8a", "12.10"]);
   });
 });
