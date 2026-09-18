@@ -128,6 +128,21 @@ PRE_PUPIL_COLUMNS: list[str] = PRE_LINE_COLUMNS[:-1]
 # measure them.
 LEGACY_COLUMNS: list[str] = PRE_PUPIL_COLUMNS[:-1]
 
+# The loader's FLOOR (roadmap 10.1f4b, the owner's ruling of
+# 18 September 2026): the OLDEST COMMITTED EVIDENCE is the least this
+# track loads. The legacy generation above IS that evidence's header —
+# the validation round's six files, the dry run's and the evidence
+# folders' — so the floor is spelled as an alias of it, and a header
+# below it (an even older prefix) is refused by the floor's NAME
+# rather than by a bare list of missing columns. The METADATA floor is
+# empty by the same ruling: the oldest committed evidence predates the
+# metadata block almost entirely (the committed fixture carries two
+# conditional KSS rows and nothing else), so requiring a fresh
+# export's always-written keys would abandon the record the floor
+# exists to keep; no key is floor-mandatory, and every reader keeps
+# its own per-key absence policy (10.1f4).
+FLOOR_COLUMNS: list[str] = LEGACY_COLUMNS
+
 # The header generations this loader accepts, newest first. Each is an
 # exact known list, never a pattern; a file matching none is refused
 # whole. Columns are append-only (src/core/csv.ts keeps every older
@@ -306,6 +321,18 @@ def _check_columns(found: list[str]) -> list[str]:
     for generation in ACCEPTED_GENERATIONS:
         if found == generation:
             return generation
+    if (
+        found
+        and found == FLOOR_COLUMNS[: len(found)]
+        and len(found) < len(FLOOR_COLUMNS)
+    ):
+        raise SessionError(
+            "below the loader's floor: this header predates the oldest "
+            "committed evidence (the validation round's own "
+            f"pre-23-August-2026 generation, {len(FLOOR_COLUMNS)} columns "
+            f"against this file's {len(found)}), which the owner ruled "
+            "the least this track loads (18 September 2026)"
+        )
     missing = [name for name in COLUMNS if name not in found]
     unknown = [name for name in found if name not in COLUMNS]
     if missing:
