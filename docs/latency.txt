@@ -69,3 +69,46 @@ The three latency tests were proven sensitive to the mechanism by
 mutation: removing the threshold comparison from longClosureStep
 turns them red. The debounce test survives that mutation, correctly,
 because it pins the governor and not the detector.
+
+THE 13.8c RE-LOOK, 18 September 2026
+------------------------------------
+
+Roadmap 13.8c asked for this document to be re-run and for the
+"about 42 microseconds" sentence above to be WITHDRAWN AS A CLAIM
+ABOUT THE TICK, and the distinction is the finding. Re-run today on
+this container, the same command as above:
+
+    39.9 microseconds per frame over 3600 frames at 60 Hz
+
+so the number itself stands and the ceiling test stays green. What
+is withdrawn is the reading of it as the page's per-tick cost. The
+measured chain is the closure-to-alert reducers only — baseline,
+blink, long closure, alert, PERCLOS — and the live tick also carries
+the gaze chain and the DOM. Before this row's residue landed, two of
+those costs grew with the tick rate itself: the fixation detector
+re-scanned its whole buffer every tick, so its per-second cost was
+QUADRATIC in tick rate (about 5 ms per tick at 120 Hz with a still
+gaze, two orders of magnitude over the sentence above), and the
+readout writer rebuilt three DOM nodes per readout per write whether
+or not the text had changed.
+
+What changed, each with its pin:
+
+- detectFixations folds each new sample into a running min/max, so
+  the scan is linear; the linearity is a test
+  (test/core/fixation.test.ts, the 13.8c describe block), not a
+  comment.
+- writeReadout remembers the last text per element and an unchanged
+  write is a no-op, so a readout costs DOM work only when it has
+  something new to say.
+- The pupil read draws only the source rect it reads back
+  (readVideoPixels, pinned in test/io/videoCanvas.test.ts): the
+  whole-frame draw it replaces moved about eight megabytes of 1080p
+  pixels across the canvas boundary to read a box a few dozen
+  pixels wide, twice a second.
+
+What this section does NOT claim: a measured end-to-end tick cost on
+a 120 Hz machine. This container has no display loop under load and
+no camera; the quadratic term is gone by construction and by test,
+and the honest per-tick figure on real hardware belongs to the
+owner's A/B live session (13.8c's first clause), not to this file.
