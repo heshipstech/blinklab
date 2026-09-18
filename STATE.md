@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1927 unit tests and 665 Python tests, each figure
+- **The suite:** 1928 unit tests and 665 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**FOUR DECISIONS, ONE STALE SENTENCE, AND A ROW THE GUARD COULD NOT SEE, 18 September 2026 (amendment 31; rows 10.1f4b, 13.13 and 14.12 re-open).** The owner answered the four decisions their rows had been waiting on, each recorded dated on its row: 14.6 proceeds as the refusal-first walkthrough with the constant-rate recording remedy sent to the backlog; 10.1f4b's loader floor is the oldest committed evidence, so everything the committed record leans on stays loadable and older files refuse by name; 13.13's fake-landmarker harness is accepted as the lost-face reproduction's stand-in, the exact exit its marker named, so the marker retires; and 11.6b's last Playwright clause is ruled met by the reachable states plus MANUAL item 62, to tick in its own increment. The amendment also stops a copied sentence: amendments 26 through 30 each closed with "10.12a and 13.2 still wait", boilerplate that went stale the day 13.2 ticked (14 September) and was carried forward unread four times — the Phase 12 gate waits on 10.12a alone. And the new claim sentence found a defect in the guard that holds it: the row parser's id shape allowed one letter run (10.0b3, 13.8a) while the claim reader's charset accepted 10.1f4b, so naming that real row threw "no row 10.1f4b" about a line sitting in the file; the parser now accepts the same ids the claim does, with the alternating shape pinned. Test watched failing first. The suite is 1928 unit tests, 50 end to end tests of which 48 run on every pull request.
 
 **THE PROBE KEPT ITS PROMISE, AND HALF THE PREDICTION DIED, 17 September 2026 (row 14.6's probe slice lands; the walkthrough stays gated).** The prediction was committed first and the probe run against it the same day, the stepper-honesty ritual at its smallest: test/e2e/recordYourselfProbe.spec.ts records a two-second canvas-stream webm in the browser it tests, hands the File to the clip input in-page, and passes only on a NAMED outcome — the spec records facts and cannot be satisfied by an unnamed failure. The named outcome came exactly where predicted and not where it was not: P2 confirmed, the stepped run refused verbatim by the variable-rate sentence (a 40.0 ms gap beside one of 33.0 ms — MediaRecorder stamps frames on the wall clock, which is what the refusal exists to catch, and the sentence ends with an instruction a visitor can follow); P1 refuted on this engine, today's Chromium writing a finite 2.0 s into the container where the classic streaming-webm Infinity was predicted — recorded as a fact about one engine on one day, not generalised. The dated Outcome sits below the prediction's do-not-edit line, the spec prints its outcome on every CI run so a changed engine will say so, and the walkthrough rows stay gated on the owner's judgement: a refusal-first walkthrough, a constant-rate recording path as its own row, or neither. The suite is 1927 unit tests, 50 end to end tests of which 48 run on every pull request.
 
