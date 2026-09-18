@@ -35,6 +35,11 @@ import {
   type WakeLockOutcome,
 } from "../../src/core/sessionMetadata";
 import { guidedCalibrationMetadataRows } from "../../src/core/blinkCalibrationStamp";
+import {
+  faceLossMetadataRows,
+  INITIAL_FACE_LOSS,
+  type FaceLossState,
+} from "../../src/core/faceLoss";
 import type { ProfileQuality } from "../../src/core/calibrationProfile";
 import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import {
@@ -186,6 +191,8 @@ type Shape = {
   cueProtocolStartMs: number | null;
   /** The gaze fit's quality; null when no profile was in force (14.9a). */
   gazeQuality: ProfileQuality | null;
+  /** The lost-face clock's final state (13.13). */
+  faceLoss: FaceLossState;
 };
 
 /**
@@ -253,6 +260,8 @@ const MINIMAL_CAMERA: Shape = {
   inferenceSamplesMs: [],
   cueProtocolStartMs: null,
   gazeQuality: null,
+  // A thin session never lost a face it never found: no rows (13.13).
+  faceLoss: INITIAL_FACE_LOSS,
 };
 
 /**
@@ -344,6 +353,17 @@ const FULL: Shape = {
     horizontal: { rmsResidual: 0.02, rSquared: 0.99 },
     vertical: { rmsResidual: 0.03, rSquared: 0.98 },
   },
+  // The face was lost mid-session long enough that acquisition was
+  // re-attempted twice, so the two rows appear in the session where
+  // every optional thing happened (13.13).
+  faceLoss: {
+    everSeenMs: 0,
+    lossStartMs: null,
+    lastResetMs: null,
+    resets: 2,
+    longestLossMs: 5200,
+    lastTimestampMs: 60_000,
+  },
 };
 
 /**
@@ -391,6 +411,7 @@ function metadataRows(shape: Shape): string[] {
     ),
     ...wakeLockMetadataRows(shape.wakeLock),
     ...calibrationWindowMetadataRows(shape.calibrationSpans),
+    ...faceLossMetadataRows(shape.faceLoss),
   ];
 }
 
@@ -417,6 +438,7 @@ const CALLED_HERE = [
   "gazeCalibrationMetadataRows",
   "wakeLockMetadataRows",
   "calibrationWindowMetadataRows",
+  "faceLossMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {

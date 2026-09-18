@@ -43,6 +43,7 @@ WRITERS = [
     "blinkLog",
     "csv",
     "delegateTruth",
+    "faceLoss",
     "frameClock",
     "frameRateNegotiation",
     "frameTrace",
@@ -130,6 +131,12 @@ CONDITIONAL = {
         "a camera session with a measurable rate"
     ),
     "device_pixel_ratio": "a camera session",
+    "face_lost_longest_ms": (
+        "a face lost long enough that acquisition was re-attempted"
+    ),
+    "face_reacquire_resets": (
+        "a face lost long enough that acquisition was re-attempted"
+    ),
     "facing_mode": "a camera session",
     "feature_records_dropped": "rows lost to the per-second buffer",
     "feature_records_note": "rows lost to the per-second buffer",

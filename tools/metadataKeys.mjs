@@ -25,6 +25,7 @@ export const METADATA_WRITERS = [
   "blinkLog",
   "csv",
   "delegateTruth",
+  "faceLoss",
   "frameClock",
   "frameRateNegotiation",
   "frameTrace",

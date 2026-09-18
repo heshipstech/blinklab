@@ -342,6 +342,12 @@ import { downloadTextFile } from "./io/download";
 import { createWakeLock } from "./io/wakeLock";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
+  faceLossMetadataRows,
+  faceLossSentence,
+  faceLossStep,
+  INITIAL_FACE_LOSS,
+} from "./core/faceLoss";
+import {
   negotiationMetadataRows,
   type FrameRateNegotiation,
 } from "./core/frameRateNegotiation";
@@ -376,6 +382,7 @@ import {
   steppingWarning,
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
+import { reacquireLandmarker } from "./io/faceReacquire";
 import { probeWebgl2 } from "./io/webgl2Probe";
 import { playCueTone, vibrateCue } from "./io/cueTone";
 import {
@@ -1339,6 +1346,7 @@ function resetSession(): void {
   sessionFramesMissed = null;
   poseGateFrames = 0;
   poseValidFrames = 0;
+  faceLossState = INITIAL_FACE_LOSS;
   // A new session's report does not exist yet: the old one vanishes
   // with the records it described, and the printable card with it —
   // a mid-session Ctrl+P must print the ordinary page, never a stale
@@ -1952,6 +1960,12 @@ let delegateTruth: DelegateTruth = {
   webgl2Supported: probeWebgl2(),
 };
 let lastFacePresent: boolean | null = null;
+// Roadmap 13.13. The clock over trusted-face presence that escalates
+// a persistent loss to a re-acquisition instead of coasting to the
+// end of a clip, and the in-flight latch so overlapping signals
+// cannot race two model loads.
+let faceLossState = INITIAL_FACE_LOSS;
+let faceReacquireInFlight = false;
 
 // Resolves true when the model is ready, false when the download
 // failed. Concurrent callers share one attempt and one answer. After
@@ -2143,6 +2157,9 @@ const pupilLabel = document.createElement("p");
 // of variation over the last 10 seconds, side by side.
 const stabilityLabel = document.createElement("p");
 const headPoseLabel = document.createElement("p");
+// Speaks only past the report threshold (13.13): a run that lost its
+// face for seconds must not finish looking like one that never did.
+const faceLossLabel = document.createElement("p");
 // The latest pose the model produced, kept for the gaze drift check
 // (14.9a): null whenever the face or its matrix is not trusted, and
 // an unknown can never convict.
@@ -3190,6 +3207,10 @@ function exportSession(): void {
     // fed null through, so a reader can tell a deliberate calibration
     // from a data gap; absent when none ran. Appended last.
     ...calibrationWindowMetadataRows(guidedCalibrationSpans),
+    // The lost-face record (13.13): absent unless a continuous loss
+    // ever reached the re-acquisition threshold, so an ordinary
+    // session carries no rows about an event that did not happen.
+    ...faceLossMetadataRows(faceLossState),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -4162,6 +4183,29 @@ function processFrame(
         const validation = validateLandmarkCount(face.length);
         modelStatus.textContent = landmarkValidationMessage(validation);
         faceTrusted = validation.kind === "valid";
+      }
+      // Roadmap 13.13: the loss clock runs on TRUSTED presence — a
+      // wrong landmark count is as lost as no face — and never on the
+      // pose gate, because a turned head is not a lost face. A
+      // persistent loss escalates to a fresh landmarker instead of
+      // riding a wedged tracker to the end of a clip; a failed
+      // re-attempt keeps the old instance and the next signal tries
+      // again.
+      const lossStep = faceLossStep(
+        faceLossState,
+        modelClockMs,
+        face !== undefined && faceTrusted,
+      );
+      faceLossState = lossStep.state;
+      writeReadout(faceLossLabel, faceLossSentence(faceLossState) ?? "");
+      if (lossStep.resetDue && !faceReacquireInFlight) {
+        faceReacquireInFlight = true;
+        void reacquireLandmarker(landmarker).then((fresh) => {
+          if (fresh !== null) {
+            landmarker = fresh;
+          }
+          faceReacquireInFlight = false;
+        });
       }
       if (face !== undefined && faceTrusted) {
         recorder?.captureFrame(nowMs, face);
@@ -6348,6 +6392,7 @@ const gazeBox = box(
   fixationStatsLabel,
   headPoseLabel,
   gateLabel,
+  faceLossLabel,
   gazeButtonRow,
 );
 
