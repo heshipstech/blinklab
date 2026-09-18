@@ -48,6 +48,7 @@ WRITERS = [
     "frameRateNegotiation",
     "frameTrace",
     "kss",
+    "modeMenu",
     "stepCalibration",
 ]
 
@@ -127,6 +128,7 @@ CONDITIONAL = {
     "camera_delivered_fps": "a camera session with a measurable rate",
     "camera_frame_driver": "a camera session",
     "camera_resolution": "a camera session",
+    "chosen_mode": "a mode chosen from the probe menu",
     "delivered_frames_read_fraction": (
         "a camera session with a measurable rate"
     ),

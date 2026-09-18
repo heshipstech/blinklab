@@ -30,6 +30,7 @@ export const METADATA_WRITERS = [
   "frameRateNegotiation",
   "frameTrace",
   "kss",
+  "modeMenu",
   "stepCalibration",
 ];
 

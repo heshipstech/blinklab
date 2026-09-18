@@ -19,6 +19,7 @@ import {
   faceLossMetadataRows,
   INITIAL_FACE_LOSS,
 } from "../../src/core/faceLoss";
+import { chosenModeMetadataRows } from "../../src/core/modeMenu";
 import {
   calibrationMetadataRows,
   calibrationWindowMetadataRows,
@@ -182,6 +183,7 @@ export const FIXTURE_ROW_BUILDERS = [
   "wakeLockMetadataRows",
   "calibrationWindowMetadataRows",
   "faceLossMetadataRows",
+  "chosenModeMetadataRows",
 ];
 
 /**
@@ -271,6 +273,9 @@ export function fixtureCsv(session: FixtureSession): string {
     // the same called-anyway rule, and the committed bytes stay
     // unchanged (13.13).
     ...faceLossMetadataRows(INITIAL_FACE_LOSS),
+    // No fixture session chooses a probe-menu mode: called with null,
+    // writes nothing, bytes stand (13.7).
+    ...chosenModeMetadataRows(null),
   ]);
   if (csv === null) {
     throw new Error(`${session.name}: the fixture holds no records`);

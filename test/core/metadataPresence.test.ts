@@ -40,6 +40,7 @@ import {
   INITIAL_FACE_LOSS,
   type FaceLossState,
 } from "../../src/core/faceLoss";
+import { chosenModeMetadataRows } from "../../src/core/modeMenu";
 import type { ProfileQuality } from "../../src/core/calibrationProfile";
 import { CUE_SCHEDULE } from "../../src/core/cueSchedule";
 import {
@@ -193,6 +194,8 @@ type Shape = {
   gazeQuality: ProfileQuality | null;
   /** The lost-face clock's final state (13.13). */
   faceLoss: FaceLossState;
+  /** The probe-menu mode chosen, or null when nobody chose (13.7). */
+  chosenMode: string | null;
 };
 
 /**
@@ -262,6 +265,8 @@ const MINIMAL_CAMERA: Shape = {
   gazeQuality: null,
   // A thin session never lost a face it never found: no rows (13.13).
   faceLoss: INITIAL_FACE_LOSS,
+  // Nobody opened the probe menu: no row (13.7).
+  chosenMode: null,
 };
 
 /**
@@ -364,6 +369,9 @@ const FULL: Shape = {
     longestLossMs: 5200,
     lastTimestampMs: 60_000,
   },
+  // A mode was chosen from the probe menu, so the row appears in the
+  // session where every optional thing happened (13.7).
+  chosenMode: "1280x720 at 60 fps",
 };
 
 /**
@@ -412,6 +420,7 @@ function metadataRows(shape: Shape): string[] {
     ...wakeLockMetadataRows(shape.wakeLock),
     ...calibrationWindowMetadataRows(shape.calibrationSpans),
     ...faceLossMetadataRows(shape.faceLoss),
+    ...chosenModeMetadataRows(shape.chosenMode),
   ];
 }
 
@@ -439,6 +448,7 @@ const CALLED_HERE = [
   "wakeLockMetadataRows",
   "calibrationWindowMetadataRows",
   "faceLossMetadataRows",
+  "chosenModeMetadataRows",
 ];
 
 function keysOf(shape: Shape): Set<string> {
