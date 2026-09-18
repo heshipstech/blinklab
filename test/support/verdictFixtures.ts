@@ -472,6 +472,20 @@ export const FIXTURES: FixtureSession[] = [
     delivery: { deliveredFps: 60, sampledFps: 59.96, readFraction: 0.999 },
   },
   {
+    // Roadmap 10.12a's fixture: the M5 Max shape, a machine
+    // processing 60 on a camera the browser reports sampling at 20.
+    // The evidence rate is 20, below the floor, so the verdict
+    // refuses — and the measured rows agree, every blink temporal
+    // null, because the gate that feeds them judges the same rate
+    // the verdict judges. Before 10.12a the gate judged the 60 and
+    // the report disowned rows the page had happily filled.
+    ...GOOD,
+    name: "rate-starved",
+    delivery: { deliveredFps: 20, sampledFps: 20, readFraction: 0.333 },
+    framesMissed: { missedWhileBusy: 2400, framesPresented: 3600 },
+    processingFps: 60,
+  },
+  {
     // The rounding boundary, roadmap 10.15 (audit G-export/l-1). A
     // measured 24.96 reaches the file as 25.0, and the page must hand
     // its verdict the same 25.0 rather than the raw double, or the two
