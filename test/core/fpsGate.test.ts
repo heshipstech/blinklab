@@ -10,10 +10,13 @@ import { initialBlinkState } from "../../src/core/blink";
 import {
   BLINK_RISK_CLEAR_FPS,
   BLINK_RISK_FPS,
+  MIN_BLINK_CLEAR_FPS,
   MIN_BLINK_FPS,
 } from "../../src/core/constants";
 import {
+  blinkMeasurableStep,
   clipRefusedMessage,
+  evidenceFps,
   fpsGateMessage,
   measurableAtFps,
   processingRateMessage,
@@ -59,38 +62,49 @@ describe("the ladder's assertion: null, not zero", () => {
     return rate;
   }
 
-  it("returns null below the gate even though blinks exist", () => {
+  it("returns null when the gate is closed even though blinks exist", () => {
+    // The gate verdict comes in as the decided boolean (10.12a): one
+    // decision per frame in the wiring, so this function cannot judge
+    // a different rate than the readout beside it.
     const rate = observedRate();
-    expect(gatedBlinkRatePerMin(20, rate, initialBlinkState, 30000)).toBeNull();
-    expect(gatedBlinkRatePerMin(20, rate, initialBlinkState, 30000)).not.toBe(
-      0,
-    );
+    expect(
+      gatedBlinkRatePerMin(false, rate, initialBlinkState, 30000),
+    ).toBeNull();
+    expect(
+      gatedBlinkRatePerMin(false, rate, initialBlinkState, 30000),
+    ).not.toBe(0);
   });
 
-  it("returns the true number at and above the gate", () => {
+  it("returns the true number while the gate is open", () => {
     const rate = observedRate();
     expect(
-      gatedBlinkRatePerMin(MIN_BLINK_FPS, rate, initialBlinkState, 30000),
-    ).toBeCloseTo(4, 6);
-    expect(
-      gatedBlinkRatePerMin(60, rate, initialBlinkState, 30000),
+      gatedBlinkRatePerMin(true, rate, initialBlinkState, 30000),
     ).toBeCloseTo(4, 6);
   });
 });
 
 describe("fpsGateMessage", () => {
   it("stays silent while measurable", () => {
-    expect(fpsGateMessage(60)).toBe("");
+    expect(fpsGateMessage(true, 60)).toBe("");
   });
 
   it("names the current fps and the minimum when refusing", () => {
-    const message = fpsGateMessage(18);
+    const message = fpsGateMessage(false, 18);
     expect(message).toContain("18");
     expect(message).toContain(String(MIN_BLINK_FPS));
   });
 
   it("explains an unknown fps readably", () => {
-    expect(fpsGateMessage(null).length).toBeGreaterThan(10);
+    expect(fpsGateMessage(false, null).length).toBeGreaterThan(10);
+  });
+
+  it("tells the hysteresis truth rather than a false below-25", () => {
+    // A 27 with the gate held closed is not "below 25", and the page
+    // must not say so (10.12a).
+    const message = fpsGateMessage(false, 27);
+    expect(message).toContain("resumes at 30");
+    expect(message).toContain("27");
+    expect(message).not.toContain("below the 25");
   });
 });
 
@@ -237,5 +251,71 @@ describe("the low-rate warning (remediation D1, stage two)", () => {
     expect(rateRiskMessage(54, 60)).toContain(
       "the camera's delivery is the limit",
     );
+  });
+});
+
+// Roadmap 10.12a. The blink gate reads the EVIDENCE rate — the
+// smaller of what the camera delivered and what the machine
+// processed — with the 60/65-style enter/clear pair one floor down,
+// so a machine processing 120 on a camera sampling 20 can no longer
+// count blinks the report then disowns. The dim-room observation
+// this rule required is in docs/blink-sample-rate.txt, dated
+// 18 September 2026, taken before this code existed.
+describe("the evidence rate the gate judges (roadmap 10.12a)", () => {
+  it("is the smaller of sampled and processing where both exist", () => {
+    expect(evidenceFps(20, 60)).toBe(20);
+    expect(evidenceFps(60, 20)).toBe(20);
+  });
+
+  it("is the processing rate alone where delivery is unreported", () => {
+    expect(evidenceFps(null, 60)).toBe(60);
+  });
+
+  it("is the sampled rate alone where processing is still unknown", () => {
+    expect(evidenceFps(20, null)).toBe(20);
+  });
+
+  it("is null only when neither exists", () => {
+    expect(evidenceFps(null, null)).toBeNull();
+  });
+});
+
+describe("the measurable gate holds with 25/30 hysteresis", () => {
+  it("the M5 Max case: sampled 20 under processing 60 is not measurable", () => {
+    const step = blinkMeasurableStep(true, evidenceFps(20, 60));
+    expect(step.measurable).toBe(false);
+  });
+
+  it("below the floor closes the gate, probed as literals", () => {
+    expect(blinkMeasurableStep(true, 24.9).measurable).toBe(false);
+    expect(blinkMeasurableStep(true, 25).measurable).toBe(true);
+  });
+
+  it("after a dip, the gate reopens only at the clear threshold", () => {
+    const dipped = blinkMeasurableStep(true, 20);
+    const still = blinkMeasurableStep(dipped.state, 27);
+    const clear = blinkMeasurableStep(still.state, 30);
+    expect(dipped.measurable).toBe(false);
+    expect(still.measurable).toBe(false);
+    expect(clear.measurable).toBe(true);
+  });
+
+  it("before any dip, the plain floor is the rule", () => {
+    // Today's behavior and the corpus's: a session that never fell
+    // below 25 is measurable at 27, hysteresis binding only after a
+    // real dip — so the stepped corpus is unchanged by construction.
+    expect(blinkMeasurableStep(true, 27).measurable).toBe(true);
+  });
+
+  it("an unknown rate is not measurable and does not move the state", () => {
+    const held = blinkMeasurableStep(true, null);
+    expect(held.measurable).toBe(false);
+    expect(held.state).toBe(true);
+    expect(blinkMeasurableStep(held.state, 27).measurable).toBe(true);
+  });
+
+  it("the clear threshold sits five above the floor, as literals", () => {
+    expect(MIN_BLINK_FPS).toBe(25);
+    expect(MIN_BLINK_CLEAR_FPS).toBe(30);
   });
 });

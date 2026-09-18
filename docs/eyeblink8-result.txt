@@ -1107,3 +1107,23 @@ DETECTOR CHANGED, not yet re-measured, declared 17 September 2026:
   against the same pinned browsers — but that is the owner's next
   corpus run's to score, not this note's to assert. That run scores
   this entry and retires it beside the blocks above.
+
+DETECTOR CHANGED, not yet re-measured, declared 18 September 2026:
+
+  Row 10.12a: blinkMeasurable judges the evidence rate, with 25/30 hysteresis
+
+  One watched file moves: src/core/constants.ts gains
+  MIN_BLINK_CLEAR_FPS = 30, the reopening rate for the blink gate's
+  new hysteresis. MIN_BLINK_FPS = 25 itself is unchanged. The gate
+  now judges the evidence rate — min(sampledFps, processingFps)
+  where delivery is reported — and once that rate has dipped below
+  25 it reopens only at 30, so a rate wobbling on the floor cannot
+  flicker counting on and off.
+
+  Predicted corpus impact: none by construction. A clip has no
+  delivery report, so its evidence rate is its own processing fps —
+  the same number the old gate judged — and before any dip below 25
+  the plain floor is the rule, so a clip that never dips is judged
+  exactly as it was and every stepped verdict is unchanged. The
+  owner's next corpus run scores this entry and retires it beside
+  the blocks above.

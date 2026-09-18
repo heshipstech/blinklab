@@ -179,7 +179,7 @@ describe("counting-suspended as a fact", () => {
       rate = observeFrame(rate, f, true);
     }
     rate = recordBlink(rate, 300);
-    expect(gatedBlinkRatePerMin(30, rate, blink, t)).toBeNull();
+    expect(gatedBlinkRatePerMin(true, rate, blink, t)).toBeNull();
   });
 
   it("reads a closure past the blink maximum as suspended", () => {
