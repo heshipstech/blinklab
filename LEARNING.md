@@ -5206,3 +5206,36 @@ refusal-first and sent the in-browser recording remedy to the
 backlog, so a test bans workaround language from the paragraph: a
 walkthrough that hinted "we could fix this here" would be promising
 the declined branch.
+
+## 10.12a Two judges of one question will eventually disagree
+
+The concept this increment teaches is why a gate and a report must
+share one judgement. The page decided "can blinks be counted?" in
+two places: the live gate read the processing rate, the session
+verdict read the evidence rate — the slower of sampling and
+processing. On most machines the two rates agree and nobody sees
+the seam. On a machine that processes at 60 while the camera
+delivers 20, the page counted blinks all session and then printed a
+verdict saying the numbers had been withheld. Both judges were
+internally consistent; the contradiction lived between them.
+
+The fix is structural, not a patched threshold: one function
+(blinkMeasurableStep) makes the judgement and every site reads its
+answer — the gate, both rate calls, the page sentence. The fixture
+that pins it is the disagreeing machine itself, sampled 20 under
+processing 60, byte-pinned from TypeScript and Python so neither
+side can drift back to its own opinion.
+
+Two design points worth keeping. Hysteresis (shut below 25, reopen
+at 30) exists because a rate wobbling on a threshold would flicker
+counting on and off — the 60/65 risk-band pattern one floor down.
+And an unknown rate holds the previous state rather than shutting
+the gate, because startup ignorance is not a dip; refusing on "not
+measured yet" would blank the first seconds of every session.
+
+The observation came first, as the row demanded, and it refuted the
+motivating fear: the owner's dim room did not halve delivery — 29.9
+of 29.9 frames read at a third of daylight luminance. The gate is
+still right to exist, because the mechanism is real on other
+hardware; but the record now says this device holds 30 in the dark,
+measured, instead of assumed either way.

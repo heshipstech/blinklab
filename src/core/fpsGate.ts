@@ -1,6 +1,7 @@
 import {
   BLINK_RISK_CLEAR_FPS,
   BLINK_RISK_FPS,
+  MIN_BLINK_CLEAR_FPS,
   MIN_BLINK_FPS,
 } from "./constants";
 
@@ -10,6 +11,56 @@ import {
 // null is an admission.
 export function measurableAtFps(fps: number | null): boolean {
   return fps !== null && fps >= MIN_BLINK_FPS;
+}
+
+/**
+ * The rate the blink gate judges (roadmap 10.12a): the smaller of
+ * what the camera delivered and what the machine processed, because
+ * evidence is bounded by BOTH. An M5 Max processing 120 frames a
+ * second of a camera sampling 20 has 20 frames of eyes; judging the
+ * 120 was how blinks got counted that the report then disowned.
+ * Where only one rate exists it is the evidence; where neither does,
+ * there is none.
+ */
+export function evidenceFps(
+  sampledFps: number | null,
+  processingFps: number | null,
+): number | null {
+  if (sampledFps === null) {
+    return processingFps;
+  }
+  if (processingFps === null) {
+    return sampledFps;
+  }
+  return Math.min(sampledFps, processingFps);
+}
+
+/**
+ * The measurable gate, stateful with the 25/30 enter-clear pair
+ * (roadmap 10.12a) — rateRiskActive's own shape one floor down.
+ * Below MIN_BLINK_FPS the gate closes; once closed it reopens only
+ * at MIN_BLINK_CLEAR_FPS, so a rate wobbling on the floor cannot
+ * alternately count and withhold the same eyes. Before any dip the
+ * plain floor is the rule, which is today's behavior and the stepped
+ * corpus's. An unknown rate is not measurable — null is an
+ * admission, and metrics stay null while it lasts — but it does NOT
+ * move the state, because the startup seconds before the first
+ * reading are ignorance, not a dip.
+ */
+export function blinkMeasurableStep(
+  previous: boolean,
+  evidence: number | null,
+): { measurable: boolean; state: boolean } {
+  if (evidence === null) {
+    return { measurable: false, state: previous };
+  }
+  const state =
+    evidence < MIN_BLINK_FPS
+      ? false
+      : evidence >= MIN_BLINK_CLEAR_FPS
+        ? true
+        : previous;
+  return { measurable: state, state };
 }
 
 /**
@@ -47,14 +98,23 @@ export function processingRateMessage(
     : `Processing rate: ${rounded} frames per second, on the clip's own clock`;
 }
 
-export function fpsGateMessage(fps: number | null): string {
-  if (measurableAtFps(fps)) {
+export function fpsGateMessage(
+  measurable: boolean,
+  evidence: number | null,
+): string {
+  if (measurable) {
     return "";
   }
-  if (fps === null) {
+  if (evidence === null) {
     return "Blink metrics not measurable: the frame rate is still unknown.";
   }
-  return `Blink metrics not measurable: ${fps.toFixed(0)} fps is below the ${String(MIN_BLINK_FPS)} fps a short blink needs.`;
+  if (evidence < MIN_BLINK_FPS) {
+    return `Blink metrics not measurable: ${evidence.toFixed(0)} fps is below the ${String(MIN_BLINK_FPS)} fps a short blink needs.`;
+  }
+  // The hysteresis case (10.12a): the rate is back above the floor
+  // but the gate holds until the clear threshold, and saying "below
+  // 25" about a 27 would be a false sentence on the page.
+  return `Blink metrics not measurable yet: after a drop below ${String(MIN_BLINK_FPS)} fps, counting resumes at ${String(MIN_BLINK_CLEAR_FPS)}; the rate is ${evidence.toFixed(0)} fps.`;
 }
 
 /**

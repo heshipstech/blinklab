@@ -664,3 +664,52 @@ are not physically accessible for an extended period, so their rows
 wait. Two devices have now been read under ordinary indoor light
 and both deliver 30: no camera in this project has yet been
 observed delivering above it.
+
+THE DIM ROOM, OBSERVED (10.12a's session, 18 September 2026)
+------------------------------------------------------------
+
+This file's own expectation, stated in the negotiated-versus-
+delivered section above: "auto-exposure in a dim room routinely
+halves real delivery while the negotiated setting stays where it
+is." Roadmap 10.12a required one deliberate dim-room session BEFORE
+the evidence-rate gate's code changes, so the rule would have its
+observation rather than its folklore. The owner ran it on
+18 September 2026, at app commit 3225940 — before any 10.12a code
+exists — on the MacBook Pro built-in at 1920x1080, Chrome on macOS.
+
+The room was genuinely dim by the file's own instrument: sceneLum
+median 0.141 over the 200 exported seconds (an ordinary daylight
+reading on this pipeline sits near 0.5), face lit mainly by the
+screen at faceLum median 0.315. And the expectation DID NOT OCCUR
+on this hardware:
+
+    camera_delivered_fps          29.9
+    sampled_fps                   29.9
+    delivered_frames_read_fraction 1.000
+    fps (processing)              median 30.0 over the session
+    frames: 6074 measured of 6080 presented, 5 missed while busy
+    face_detected_fraction        1.000
+    median_iris_width_px          47.3, pose valid 0.993
+    baseline frozen at 8.481 mm; blinks measured throughout
+
+Delivery held within a tenth of a frame of the negotiated 30: this
+camera answers dim light with gain, not with exposure time past its
+frame budget. The measurement stands beside the sentence it tested —
+the sentence stays, scoped to what it always was (a mechanism real
+cameras exhibit), and this device is now a recorded exception under
+a QUANTIFIED dimness, not an assumed one. Two consequences:
+
+1. The 25 fps floor and the evidence-rate gate remain necessary for
+   exactly the reason the M5 Max reading established: the danger on
+   record is delivery binding BELOW a fast machine's processing rate,
+   and the gate must read min(sampled, processing) whatever dims the
+   room. Nothing observed here weakens that; this session simply
+   shows the MacBook Pro's dim-room delivery does not add a second
+   route into the risk band.
+2. No camera in this project has yet been observed delivering above
+   30 — and now also none below it under dim light. Every observed
+   route to a sub-25 evidence rate remains hypothetical on owned
+   hardware; the gate exists for the devices not yet in this file.
+
+The raw session file stays in the owner's retained exports, per the
+standing rule; the numbers above are the published record.

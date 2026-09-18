@@ -73,8 +73,15 @@ class TestTheBytePin:
         # The floor. An empty list would make every parametrised test
         # below collect nothing and the suite report success.
         names = fixture_names()
-        assert len(names) >= 5
-        for required in ("good", "refused", "degraded", "edge", "risk-edge"):
+        assert len(names) >= 6
+        for required in (
+            "good",
+            "refused",
+            "degraded",
+            "edge",
+            "risk-edge",
+            "rate-starved",
+        ):
             assert required in names
 
     @pytest.mark.parametrize("name", fixture_names())
@@ -100,6 +107,22 @@ class TestTheBytePin:
         risk = derive_verdict(fixture_session("risk-edge"))
         assert surface(risk, "evidenceRate")["status"] == "ok"
         assert "60.0" in surface(risk, "evidenceRate")["sentence"]
+
+    def test_the_rate_starved_refusal_prints_no_numbers(self) -> None:
+        # Roadmap 10.12a. The M5 Max shape: processing at 60 while
+        # delivery is sampled at 20. The verdict judges the evidence
+        # rate — the rate of distinct frames, not the loop — and
+        # refuses; and the file's blink temporal columns are empty in
+        # every record, so the report cannot assert withholding while
+        # a number sits beside it.
+        session = fixture_session("rate-starved")
+        verdict = derive_verdict(session)
+        rate = surface(verdict, "evidenceRate")
+        assert rate["status"] == "refused"
+        assert "20.0" in rate["sentence"]
+        assert verdict["headline"] == "refused"
+        for column in ("blinkRatePerMin", "lastBlinkDurationMs"):
+            assert session.frame[column].isna().all()
 
     def test_the_fixture_files_carry_no_derived_verdict(self) -> None:
         # Derived, never exported: the CSV holds primary facts only,
