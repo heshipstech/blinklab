@@ -100,13 +100,17 @@ export function drawFittedCircle(
   context.stroke();
 }
 
-// Read the raw pixels of a region of the video from a CLEAN, full-resolution
-// copy. The visible canvas is mirrored, downscaled to fit the page, and may
-// carry the landmark overlays drawn on top of the frame; none of that is what
-// the pupil estimator should see. So this draws the untouched video to its
-// own (offscreen) context at the camera's source resolution, unmirrored, and
-// reads back just the requested box. Returns null when the video has no frame
-// yet, or the box does not fit inside the frame.
+// Read the raw pixels of a region of the video from a CLEAN copy at source
+// resolution. The visible canvas is mirrored, downscaled to fit the page, and
+// may carry the landmark overlays drawn on top of the frame; none of that is
+// what the pupil estimator should see. So this draws the untouched video to
+// its own (offscreen) context, unmirrored — and it draws ONLY the requested
+// box's source rect (roadmap 13.8c's per-tick residue): the whole-frame draw
+// this replaces moved about eight megabytes of 1080p pixels across the
+// boundary to read back a box a few dozen pixels wide. The nine-argument
+// drawImage copies the same source pixels at the same 1:1 scale, so the
+// bytes read back are identical; only the drawing shrinks. Returns null when
+// the video has no frame yet, or the box does not fit inside the frame.
 export function readVideoPixels(
   context: CanvasRenderingContext2D,
   video: HTMLVideoElement,
@@ -128,13 +132,23 @@ export function readVideoPixels(
     return null;
   }
   const canvas = context.canvas;
-  if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
+  if (canvas.width !== box.width || canvas.height !== box.height) {
+    canvas.width = box.width;
+    canvas.height = box.height;
   }
   context.setTransform(1, 0, 0, 1, 0, 0);
-  context.drawImage(video, 0, 0, width, height);
-  return context.getImageData(box.x, box.y, box.width, box.height);
+  context.drawImage(
+    video,
+    box.x,
+    box.y,
+    box.width,
+    box.height,
+    0,
+    0,
+    box.width,
+    box.height,
+  );
+  return context.getImageData(0, 0, box.width, box.height);
 }
 
 // Roadmap 12.16b. The whole frame, downscaled by the browser before it

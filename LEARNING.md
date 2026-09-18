@@ -5076,3 +5076,33 @@ holds a device whose promise and delivery differ. The ruler sentence
 is relative — a narrower mode carries its width's share of the widest
 mode's pixels per millimetre — because the iris ruler runs on source
 pixels and no absolute count exists until a face is measured.
+
+## 13.8c (residue) Work that grows with the clock is a different kind of cost
+
+The concept this increment teaches is that a per-tick cost is not a
+number, it is a function of the tick rate, and the dangerous terms
+are the ones that grow with the rate twice. A fixation detector that
+re-scans its whole buffer every tick does rate-squared work per
+second; at 120 Hz with a still gaze that was about 5 milliseconds a
+tick sitting under a document that said 42 microseconds — the
+document was not wrong, it had measured a different, smaller thing
+and been read as the whole.
+
+The three residues fixed here share one shape: work performed
+regardless of whether anything changed. The readout writer rebuilt
+three DOM nodes per readout per write even when the text was
+identical, so it now remembers the last text per element and an
+unchanged write is a no-op — safe because the one decoration a
+readout carries, the provenance button, is appended at registration
+and re-appended only on real rewrites. The pupil read drew the whole
+1080p frame into an offscreen canvas to read back a box a few dozen
+pixels wide, so it now draws only the source rect: the nine-argument
+drawImage copies the same pixels at the same scale, and the bytes
+read back are identical while the drawing shrinks a thousandfold.
+
+The discipline point: each fix carries a pin (a linearity test, a
+source-rect test), and the latency document was re-run and EXTENDED
+rather than corrected in place — the 39.9 microsecond core-chain
+figure stands, scoped to what it measured, and the withdrawal is of
+a reading, recorded as a dated section that says what changed and
+what no container can measure.

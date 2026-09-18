@@ -6477,7 +6477,20 @@ function sizeGraphsToBox(): void {
 // every write, so the affordance survives the rewriting the values do.
 const provenanceControls = new Map<HTMLElement, HTMLButtonElement>();
 
+// Roadmap 13.8c's per-tick residue: the frame loop rewrites readouts
+// whose text mostly has not changed, and every rewrite is three
+// nodes built and a replaceChildren the layout engine must consider.
+// So the last text written is remembered per element and an unchanged
+// write is a no-op. Skipping is safe for the provenance control too:
+// attachProvenance appends the button at registration, so a skipped
+// rewrite never leaves a readout without its control.
+const lastReadoutText = new WeakMap<HTMLElement, string>();
+
 function writeReadout(element: HTMLElement, text: string): void {
+  if (lastReadoutText.get(element) === text) {
+    return;
+  }
+  lastReadoutText.set(element, text);
   const control = provenanceControls.get(element);
   const at = text.indexOf(": ");
   if (at === -1) {
