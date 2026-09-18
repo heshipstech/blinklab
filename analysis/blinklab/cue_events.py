@@ -107,6 +107,36 @@ def _rate(metadata: dict[str, str], key: str) -> str:
     return "-" if value is None or value == "unknown" else value
 
 
+def blink_cue_latencies(
+    cues: list[CueRow],
+    window_ms: float,
+    blink_times_ms: list[float],
+) -> dict[int, float | None]:
+    """Latency per blink cue by index, None where the cue was missed.
+
+    ONE rule for what "caught" means, shared by the per-event table
+    below and by the 11.6 device matrix, because two scorers are two
+    boundaries one refactor away from disagreeing: the first unclaimed
+    blink event inside the window answers the cue, each event answers
+    at most one cue, and the window's edge is inclusive on both sides.
+    """
+    used: set[int] = set()
+    latencies: dict[int, float | None] = {}
+    for cue in cues:
+        if cue.kind != "blink":
+            continue
+        latencies[cue.index] = None
+        for position, at_ms in enumerate(blink_times_ms):
+            if position in used:
+                continue
+            latency = at_ms - cue.at_ms
+            if 0 <= latency <= window_ms:
+                used.add(position)
+                latencies[cue.index] = latency
+                break
+    return latencies
+
+
 def cue_event_rows(
     metadata: dict[str, str],
     blink_times_ms: list[float],
@@ -126,19 +156,14 @@ def cue_event_rows(
     delivered = _rate(metadata, "camera_delivered_fps")
     processing = _rate(metadata, "measured_fps")
     sampled = _rate(metadata, "sampled_fps")
-    used: set[int] = set()
+    latencies = blink_cue_latencies(cues, window, blink_times_ms)
     rows: list[list[str]] = []
     for cue in cues:
         if cue.kind == "blink":
-            tally = "missed"
-            for position, at_ms in enumerate(blink_times_ms):
-                if position in used:
-                    continue
-                latency = at_ms - cue.at_ms
-                if 0 <= latency <= window:
-                    used.add(position)
-                    tally = f"caught ({latency:.0f} ms)"
-                    break
+            latency = latencies[cue.index]
+            tally = (
+                "missed" if latency is None else f"caught ({latency:.0f} ms)"
+            )
         elif cue.kind in ("close3", "close20"):
             tally = "no closure event stream in this export; row 13.3"
         elif cue.kind == "lookAway":
