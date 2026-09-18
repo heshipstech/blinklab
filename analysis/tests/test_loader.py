@@ -511,3 +511,60 @@ class TestTheMeasurementColumns:
         # offset cuts.
         for generation in ACCEPTED_GENERATIONS:
             assert COLUMNS[: len(generation)] == generation
+
+
+class TestTheFloor:
+    """Roadmap 10.1f4b: the loader's floor, on the owner's ruling.
+
+    The owner ruled (18 September 2026) that the floor is the OLDEST
+    COMMITTED EVIDENCE: the legacy generation, which the validation
+    round's six files and the committed fixture carry. A header below
+    it — an even older prefix — is refused by the floor's NAME rather
+    than by a bare list of missing columns, and the metadata floor is
+    empty by the same ruling, because that evidence predates the
+    metadata block almost entirely.
+    """
+
+    def test_the_floor_is_the_legacy_generation(self) -> None:
+        # Moving the floor is a deliberate edit to this line, not a
+        # side effect of adding a generation.
+        from blinklab.loader import FLOOR_COLUMNS
+
+        assert FLOOR_COLUMNS is LEGACY_COLUMNS
+
+    def test_a_header_below_the_floor_is_refused_by_name(
+        self, tmp_path: Path
+    ) -> None:
+        below = LEGACY_COLUMNS[:-2]
+        text = ",".join(below) + "\r\n" + a_row(columns=below) + "\r\n"
+        with pytest.raises(SessionError, match="below the loader's floor"):
+            load_session(write(tmp_path, text))
+
+    def test_the_refusal_names_the_evidence_the_floor_stands_on(
+        self, tmp_path: Path
+    ) -> None:
+        below = LEGACY_COLUMNS[:-2]
+        text = ",".join(below) + "\r\n" + a_row(columns=below) + "\r\n"
+        with pytest.raises(SessionError, match="oldest committed evidence"):
+            load_session(write(tmp_path, text))
+
+    def test_every_committed_fixture_clears_the_floor(self) -> None:
+        # The Check's own clause: once a floor is chosen, every
+        # committed fixture either clears it or is regenerated. They
+        # all clear it, proven by loading rather than asserted.
+        fixtures = sorted(FIXTURE.parent.glob("*.csv"))
+        assert len(fixtures) >= 1
+        for fixture in fixtures:
+            load_session(fixture)
+
+    def test_no_metadata_key_is_required_at_the_floor(
+        self, tmp_path: Path
+    ) -> None:
+        # The committed fixture carries two CONDITIONAL keys and no
+        # unconditional one, so a metadata floor above "nothing" would
+        # abandon the evidence the floor exists to keep. A legacy file
+        # with no metadata block at all loads.
+        legacy_row = a_row(columns=LEGACY_COLUMNS)
+        text = f"{LEGACY_HEADER}\r\n{legacy_row}\r\n"
+        session = load_session(write(tmp_path, text))
+        assert session.metadata == {}
