@@ -140,9 +140,7 @@ def _setup_row(setup: str, sessions: list[LabelledSession]) -> list[str]:
                 "cued matrix (the censoring it exists to break)"
             )
         window = response_window_ms(session.metadata)
-        latencies = blink_cue_latencies(
-            cues, window, session.blink_times_ms
-        )
+        latencies = blink_cue_latencies(cues, window, session.blink_times_ms)
         issued += len(latencies)
         caught_latencies.extend(
             latency for latency in latencies.values() if latency is not None
@@ -204,10 +202,7 @@ def matrix_rows(sessions: list[LabelledSession]) -> list[list[str]]:
     by_setup: dict[str, list[LabelledSession]] = {}
     for session in sessions:
         by_setup.setdefault(session.setup, []).append(session)
-    rows = [
-        _setup_row(setup, grouped)
-        for setup, grouped in by_setup.items()
-    ]
+    rows = [_setup_row(setup, grouped) for setup, grouped in by_setup.items()]
     rows.extend(
         _absent_row(setup, sentence)
         for setup, sentence in ABSENT_SETUPS.items()

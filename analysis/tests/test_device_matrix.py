@@ -133,9 +133,7 @@ class TestLatencyAndDurationBands:
     def test_duration_band_keeps_the_outlier(self) -> None:
         # ADVERSARIAL: a 6-second "blink" is damage or a discovery,
         # and either way trimming it would hide it.
-        rows = matrix_rows(
-            [session(durations_ms=[80.0, 90.0, 6000.0])]
-        )
+        rows = matrix_rows([session(durations_ms=[80.0, 90.0, 6000.0])])
         assert row_for(rows, "macbook")[4] == "90 ms (80-6000)"
 
     def test_a_negative_duration_is_refused_by_name(self) -> None:
@@ -159,9 +157,7 @@ class TestRatesOnEveryRow:
         assert row[6] == "-"
 
     def test_two_sessions_rates_are_listed_not_averaged(self) -> None:
-        rows = matrix_rows(
-            [session(sampled="29.8"), session(sampled="12.0")]
-        )
+        rows = matrix_rows([session(sampled="29.8"), session(sampled="12.0")])
         row = row_for(rows, "macbook")
         assert row[8] == "12.0, 29.8"
 
@@ -218,9 +214,7 @@ class TestAbsentColumns:
 
 class TestClosureCuesAndMechanism:
     def test_closure_cues_say_there_is_no_event_stream(self) -> None:
-        rows = matrix_rows(
-            [session(cues=[("blink", 5.0), ("close3", 15.0)])]
-        )
+        rows = matrix_rows([session(cues=[("blink", 5.0), ("close3", 15.0)])])
         row = row_for(rows, "macbook")
         assert "no closure event stream" in row[5]
 
