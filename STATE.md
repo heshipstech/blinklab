@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1959 unit tests and 686 Python tests, each figure
+- **The suite:** 1959 unit tests and 691 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE FLOOR WAS ALREADY THERE, IT JUST HAD NO NAME, 18 September 2026 (row 10.1f4b ticks; amendment 33).** The owner ruled the loader's floor is the oldest committed evidence, and the build discovered the ladder's shape had quietly agreed all along: the generation ladder bottoms out at LEGACY_COLUMNS, exactly the header the validation round's six files and the committed fixture carry. So the floor is now SPELLED — FLOOR_COLUMNS, an alias identity-pinned to the legacy generation so moving it is a deliberate edit — and a header below it (an even older prefix) refuses BY THE FLOOR'S NAME, citing the ruling and both column counts, instead of a bare missing-columns list that told the reader nothing about why. The Check's clears-the-floor clause is a test that LOADS every committed fixture rather than asserting they would load. And the metadata floor is recorded as empty BY THE RULING, in the module and under test: the oldest committed evidence predates the metadata block almost entirely (the fixture carries two conditional KSS rows and nothing else), so requiring a fresh export's always-written keys would abandon the record the floor exists to keep, and every reader keeps its 10.1f4 per-key absence policy. Five tests, the two named refusals watched failing first; Python tests move 686 to 691. The live claim narrows to row 13.13. The suite is 1959 unit tests, 50 end to end tests of which 48 run on every pull request.
 
 **THE SINUSOID DIES AT ONE COMPARISON, 18 September 2026 (row 14.12 ticks; amendment 32).** The reading-rhythm detector: src/core/readingRhythm.ts reduces the horizontal gaze offsets to alternating sweeps by turning-point detection with hysteresis and counts consecutive line-shaped cycles — a slow drift one way, a return at most half as long the other, three in a row, either orientation because scripts run both ways. The three adversaries the row names each die by their own property: staring never assembles a sweep, a seeded random walk carries no consistent slow direction, and the pursuit sinusoid — the one adversary with reading's period and amplitude — fails exactly the asymmetry comparison, whose mutation is enrolled in tools/mutationCheck.mjs and was RUN: bending the fraction to 100 reddens four tests. Two honesty findings recorded on the way: the segmenter's truncated tail handed the sinusoid a fake fast return until the rule became "a sweep exists only once the turn back confirms it", and the first draft's promotion label claimed the maintainer-sessions check had happened — the constant now words the cap as a cap, the most the demo may ever claim, with a test on the wording. Twelve tests watched failing first; nothing wired to the page or the export. Amendment 32 narrows the live claim to rows 10.1f4b and 13.13, the two the owner's decisions unblocked. The suite is 1959 unit tests, 50 end to end tests of which 48 run on every pull request.
 

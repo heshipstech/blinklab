@@ -349,12 +349,12 @@ describe("a claimed row its phase will not let start", () => {
     // whose every Check clause is satisfiable here, is refused by the
     // gate — which is what amendment 19's guard could not see and
     // what cost three rows on the day it shipped.
-    // The ladder's live claim (amendment 32's two-row list) is
+    // The ladder's live claim (amendment 33's one-row list) is
     // swapped for a list claiming 12.7 alone, so the gate check is
     // exercised against a row whose phase forbids it whatever the
     // real ladder currently says.
     const claimed = roadmap.replace(
-      "Rows 10.1f4b and 13.13 remain startable and are not marked",
+      "Rows 13.13 remain startable and are not marked",
       "Rows 12.7 remain startable and are not marked",
     );
     expect(staleStartables(claimed)).toEqual([]);
@@ -534,13 +534,12 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 32: 14.12 ticked the day amendment 31 re-opened it,
-    // every Check clause tested and the asymmetry mutation run, so
-    // the claim narrows to the two rows the owner's decisions
-    // unblocked — 10.1f4b against the chosen floor, 13.13 against
-    // the accepted harness; amendment 31's sentence is retired to
+    // Amendment 33: 10.1f4b ticked on the owner's ruled floor (the
+    // loader names it, refuses below it, and every committed fixture
+    // loads), so the claim narrows to 13.13, the one open, unmarked,
+    // container-legal row; amendment 32's sentence is retired to
     // past tense in place. This pins what the ladder actually says
     // today, so changing it is a deliberate edit to this line.
-    expect(startableClaims(roadmap)).toEqual(["10.1f4b", "13.13"]);
+    expect(startableClaims(roadmap)).toEqual(["13.13"]);
   });
 });
