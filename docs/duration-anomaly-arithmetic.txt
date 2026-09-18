@@ -1,0 +1,139 @@
+THE BLINK-DURATION DEVICE ANOMALY: THE ARITHMETIC CANDIDATE FIRST
+=================================================================
+
+Written 18 September 2026, before the read it predicts. Roadmap 10.9's
+first candidate [C2's arithmetic], committed under the same discipline
+as docs/inference-once.txt's arithmetic stage: the prediction and its
+falsifier land in their own commit, the read happens on the owner's
+retained dry-run exports afterwards, and the outcome is appended below
+as a dated section that edits nothing above itself.
+
+THE ANOMALY. Across the dry-run sessions, one person's deliberate
+blinks read very different median durations by device: one Mac at
+about four processing stamps per delivered frame read 166 ms against
+one at about one stamp reading 149 ms, while the two iPhones read 96
+and 97 ms at one and two stamps. Two candidate mechanisms are named by
+the row, and they are tested in order of cheapness: first the line
+geometry (this document, arithmetic on existing columns, no camera),
+then the re-read candidate (a fresh paired session on one Mac behind a
+60 Hz and a 120 Hz display, because stamps per delivered frame is not
+a column the dry-run exports carry), then live cued sessions with the
+stepped device-independence control.
+
+THE MECHANISM UNDER TEST. A blink's duration is timed between
+crossings of the blink line, and the two placements put that line at
+different heights of each device's own swing:
+
+- The PASSIVE line is half the frozen open baseline, measured from
+  zero: line = 0.5 x B (BASELINE_THRESHOLD_FRACTION in
+  src/core/constants.ts, applied by personalThresholdMm to the p90
+  baseline B).
+- The GUIDED line (docs/shut-line-rule.txt, blink k = 0.5) is halfway
+  up the swing itself: line = C + 0.5 x (B - C), where C is the closed
+  baseline the export carries as shutBaselineMm.
+
+Write rho = C/B, each device's closed-to-open ratio. As a fraction f
+of the swing above closed:
+
+    f_guided  = 0.5                     on every device, by design
+    f_passive = (0.5 - rho) / (1 - rho) which varies with the device
+
+Two immediate consequences, both checkable before any read:
+
+1. The guided line sits above the passive one by exactly the factor
+   (1 + rho). The row's own parenthetical — "the guided line sits
+   30-50% above the passive one" — is therefore the statement that
+   rho runs about 0.3 to 0.5 in these exports. The read should
+   confirm that as a sanity check before anything else.
+2. At rho -> 0.5 the passive line touches the closed baseline
+   (f_passive -> 0) and time-below-line collapses toward zero: the
+   same geometry that produced the shallow-blink refusal band. The
+   passive placement is EXTREMELY sensitive to rho at the top of the
+   band; the guided placement is immune to rho by construction.
+
+THE SHAPE MODEL. As in the committed raised-cosine sweep beside
+docs/blink-sample-rate.txt, take a full blink of true duration D with
+aperture a(t) = B - (B - C) x (1 - cos(2 pi t / D)) / 2. The fraction
+of D spent below a line at swing fraction f is
+
+    T(f) = 1 - arccos(2f - 1) / pi
+
+so the measured duration is T(f) x D, and device ratios cancel D
+wherever the true blinks are comparable. Worked values:
+
+    rho    f_passive   T(f_passive)     T(f_guided)
+    0.30     0.286        0.359            0.500
+    0.35     0.231        0.319            0.500
+    0.40     0.167        0.268            0.500
+    0.45     0.091        0.194            0.500
+    0.50     0.000        0.000            0.500
+
+The read is arithmetic through this model: B re-derived per session as
+the p90 of its apertureMm column (the birth formula's own percentile),
+C as its shutBaselineMm, rho and f_passive from those, and the
+question is whether the geometry column T(f_passive) reproduces the
+duration ordering 166 : 149 : 96 : 97. One stated assumption, named
+rather than hidden: the dry-run sessions are one person's deliberate
+blinks, taken as comparable in true duration across devices. That
+assumption is exactly why the row's later stages exist — the cued
+protocol gives a denominator and the stepped control removes the
+device — so this stage can only rank the candidates, never convict.
+
+THE PREDICTION, committed before the read.
+
+P1. WITHIN THE MACS (166 vs 149 ms, ratio 1.114): the geometry will
+    NOT carry it. To carry it, the four-stamp Mac's rho would have to
+    sit about 0.05 BELOW the one-stamp Mac's (T moves -11% per +0.05
+    of rho in the middle of the band). Predicted: the two Macs' rho
+    gap is under 0.05, or in the wrong direction. The grounds are
+    13.8a's scored arithmetic: the four-stamp Mac's A/V inflation
+    (3.04x the Mac control) is rate-linked, and neither amplitude nor
+    velocity reads the line at all, so that evidence sits on an axis
+    the line geometry cannot reach. The 17 ms gap is also smaller
+    than one 30 fps frame period (33 ms), and the outcome section
+    must say so rather than over-read a sub-resolution difference.
+
+P2. MAC VERSUS IPHONE (149 vs 96/97 ms, ratio about 0.64): the
+    geometry will carry PART of it, direction committed — the
+    iPhones' rho sits HIGHER than the Macs' (their passive line lower
+    in their swing, shortening measured durations). For geometry to
+    carry the WHOLE gap, the rho spread must reach about 0.10-0.13
+    (e.g. Macs at 0.30 needing iPhones at 0.43). Predicted: the
+    spread is positive but smaller than that, so re-deriving every
+    session at the guided placement (f = 0.5 everywhere) NARROWS the
+    Mac-iPhone gap without closing it to within one frame period,
+    leaving a platform residue for the re-read candidate and the
+    stepped control to allocate.
+
+P3. THE ORDERING TEST that decides between the candidates at this
+    stage: under the guided placement the geometry term is constant,
+    so whatever duration ordering survives re-derivation is NOT the
+    line. Predicted survivor: 4-stamp Mac > 1-stamp Mac at about the
+    same ratio (the stamps candidate), Macs > iPhones by a reduced
+    but nonzero margin.
+
+THE FALSIFIER, fixed here: if the re-derived durations at the guided
+placement CONVERGE across all four sessions to within one frame
+period of the slowest device (33 ms at 30 fps), then the anomaly was
+the passive line's geometry all along; the camera-side hypothesis is
+falsified AT THIS FIRST STAGE, the fresh paired-display session is
+not run (there would be nothing left for it to explain), and the next
+instrument row is the guided line's adoption cascade (12.0a's own
+scoring), not a display-rate session. If instead the rho values land
+OUTSIDE the 0.3-0.5 band the row's parenthetical encodes, the
+sanity check has failed and the read stops there: the arithmetic was
+built on a mischaracterised export and the mischaracterisation is the
+finding.
+
+WHAT THIS STAGE CANNOT DO, stated in advance: it cannot convict the
+camera. A surviving gap is consistent with the stamps candidate but
+proves only that the line does not explain it; conviction needs the
+paired session (same Mac, same person, 60 Hz against 120 Hz display,
+prediction committed before that read as this row's Check requires)
+and acquittal of the devices needs the same clip stepped on each
+(15.4a), where disagreement beyond one frame period falsifies the
+camera-side hypothesis and names the next instrument row.
+
+The outcome is appended below as a dated section once the owner runs
+the read over the retained exports; nothing above it is edited after
+that.
