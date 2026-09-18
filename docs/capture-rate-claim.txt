@@ -102,3 +102,42 @@ answered, so the data cannot pick the flattering branch after the fact.
 The outcome is appended below as a dated section once the sessions run
 or the device day closes the door; this prediction is not edited after
 either.
+
+OUTCOME — BRANCH B, THE DEVICE DAY CLOSED THE DOOR
+--------------------------------------------------
+
+Recorded 18 September 2026, from 13.2's negotiation verdict of
+14 September 2026 (docs/frame-rate-negotiation.txt, the dated
+per-device section) — a fact about the hardware, read before a single
+cue was answered, exactly as the branch rule above required.
+
+The owner's MacBook Pro built-in — confirmed by the owner as the only
+camera in play — declared a maximum of 30 fps, was asked ideal-60, and
+stayed at 30: applyConstraints ok, the stream unbroken (delivered
+29.8, sampled 29.8), resolution held at 1920x1080 with the iris ruler
+at 32.8 px. The ruler clause passed (32.8 >= 22) and the rate clause
+failed (30 < 55), so no owner setup is 60-capable under the condition
+13.2 committed before any device was read.
+
+So BRANCH B is selected, by the cameras and not by any catch rate:
+
+- The 30-and-60 cued comparison CANNOT BE RUN on owned hardware, and
+  no 30-only session is reported in its place — a single-rate session
+  cannot test a rate comparison, and pretending otherwise is the
+  rewriting this document was committed in advance to prevent.
+- The capture-rate claim is UNSCORED and stands recorded as a
+  PLATFORM LIMIT: live accuracy on owned hardware is capped at
+  30 fps, and the 60 fps branch of the sampling model stays a model.
+  The sweep's deterministic finding (docs/blink-sample-rate.txt)
+  stands exactly as it did, neither confirmed nor weakened by a
+  hardware fact.
+- WHAT RE-ARMS IT: a camera that negotiates at least 55 fps with the
+  iris ruler at or above 22 px — 13.2's predictions P1/P2 (an owned
+  camera at 60, the Sony/Cam Link rig) were left open for exactly
+  this. If such a setup ever arrives, Branch A's prediction and
+  falsifier above are already committed and are not edited before
+  the sessions; the run lands as its own roadmap row citing this
+  file.
+
+The empty set was named a real, publishable outcome on 13 September,
+five days before it arrived. This section is that outcome.
