@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1943 unit tests and 686 Python tests, each figure
+- **The suite:** 1947 unit tests and 686 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**WORK ONLY WHEN SOMETHING CHANGED, 18 September 2026 (row 13.8c's residue slices land).** The per-tick residue the inference-once row carried is done, and the three fixes share one shape — work performed regardless of whether anything changed. writeReadout remembers the last text per element and an unchanged write is a no-op, safe because the provenance control is appended at registration and no element is written both directly and through the chokepoint (checked, not assumed). readVideoPixels draws only the source rect it reads back, pinned watched-failing-first against the whole-frame draw: the nine-argument drawImage copies the same pixels at the same scale, so the bytes the pupil estimator sees are identical while the drawing shrinks from a 1080p frame to a box a few dozen pixels wide. And docs/latency.txt carries the dated re-look: the core-chain figure re-measured today at 39.9 µs and SCOPED — it was the closure-to-alert reducers, never the whole tick — with the quadratic fixation term named beside its already-landed linear fix and test, and the honest per-tick figure on real hardware assigned to the owner's A/B session rather than claimed from a container with no display under load. What remains of 13.8c is the owner's: the A/B live session with its committed velocity prediction, and the MANUAL item 26 / LID_SLUGGISH re-derivations that ride its numbers. The suite is 1947 unit tests, 50 end to end tests of which 48 run on every pull request.
 
 **ONE RULE FOR "CAUGHT", AND A TABLE THAT SAYS ABSENT, 18 September 2026 (row 11.6's report-tool slice lands).** The per-device deliberate-blink matrix: analysis/blinklab/device_matrix.py aggregates labelled cued sessions per setup — catch rate with the Wilson interval every published proportion carries, latency and duration bands with the outlier kept, the closure cell saying there is no closure event stream rather than inventing a tally from the wrong column, and the three rates on every row, listed never averaged. Scoring is not reimplemented: cue_events gains blink_cue_latencies as the one rule for what "caught" means — first unclaimed event in the window, one event per cue, edges inclusive — shared with the per-event table, because two scorers are two boundaries one refactor away from disagreeing. The ABSENT rules are the row's own: the DSLR prints ABSENT until that rig returns, tablets and Android print ABSENT or wear the volunteer-supplied label, and an owner-sourced Android session refuses as mislabelled data, since the project owns none. Twenty-one tests watched failing first on adversarial synthetics: one event under two cue windows counts once, the window edge is inclusive and one millisecond past it is out, a plain session cannot sit in a cued matrix. The real tables need the owner's cued sessions on real devices. Python tests move 665 to 686. The suite is 1943 unit tests, 50 end to end tests of which 48 run on every pull request.
 
