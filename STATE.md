@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1947 unit tests and 686 Python tests, each figure
+- **The suite:** 1959 unit tests and 686 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE SINUSOID DIES AT ONE COMPARISON, 18 September 2026 (row 14.12 ticks; amendment 32).** The reading-rhythm detector: src/core/readingRhythm.ts reduces the horizontal gaze offsets to alternating sweeps by turning-point detection with hysteresis and counts consecutive line-shaped cycles — a slow drift one way, a return at most half as long the other, three in a row, either orientation because scripts run both ways. The three adversaries the row names each die by their own property: staring never assembles a sweep, a seeded random walk carries no consistent slow direction, and the pursuit sinusoid — the one adversary with reading's period and amplitude — fails exactly the asymmetry comparison, whose mutation is enrolled in tools/mutationCheck.mjs and was RUN: bending the fraction to 100 reddens four tests. Two honesty findings recorded on the way: the segmenter's truncated tail handed the sinusoid a fake fast return until the rule became "a sweep exists only once the turn back confirms it", and the first draft's promotion label claimed the maintainer-sessions check had happened — the constant now words the cap as a cap, the most the demo may ever claim, with a test on the wording. Twelve tests watched failing first; nothing wired to the page or the export. Amendment 32 narrows the live claim to rows 10.1f4b and 13.13, the two the owner's decisions unblocked. The suite is 1959 unit tests, 50 end to end tests of which 48 run on every pull request.
 
 **WORK ONLY WHEN SOMETHING CHANGED, 18 September 2026 (row 13.8c's residue slices land).** The per-tick residue the inference-once row carried is done, and the three fixes share one shape — work performed regardless of whether anything changed. writeReadout remembers the last text per element and an unchanged write is a no-op, safe because the provenance control is appended at registration and no element is written both directly and through the chokepoint (checked, not assumed). readVideoPixels draws only the source rect it reads back, pinned watched-failing-first against the whole-frame draw: the nine-argument drawImage copies the same pixels at the same scale, so the bytes the pupil estimator sees are identical while the drawing shrinks from a 1080p frame to a box a few dozen pixels wide. And docs/latency.txt carries the dated re-look: the core-chain figure re-measured today at 39.9 µs and SCOPED — it was the closure-to-alert reducers, never the whole tick — with the quadratic fixation term named beside its already-landed linear fix and test, and the honest per-tick figure on real hardware assigned to the owner's A/B session rather than claimed from a container with no display under load. What remains of 13.8c is the owner's: the A/B live session with its committed velocity prediction, and the MANUAL item 26 / LID_SLUGGISH re-derivations that ride its numbers. The suite is 1947 unit tests, 50 end to end tests of which 48 run on every pull request.
 
