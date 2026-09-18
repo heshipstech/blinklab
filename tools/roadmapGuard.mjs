@@ -20,7 +20,12 @@ import { LANDMARKER, landmarkerOptions } from "./modelProvenance.mjs";
 // the same silence in a louder font.
 
 const BLOCKED = /\*\*BLOCKED:\s*([^*]*)\*\*/;
-const ROW = /^- \[([ x~])\] ([\d.]+[a-z]?\d*)\s/;
+// The id's tail is any run of letters and digits, not one letter then
+// digits: 10.1f4b is a real row, and the narrower shape left it
+// invisible to every reader here while the claim sentence's charset
+// accepted it — a claim naming it threw "no row" about a row in the
+// file. Both readers accept the same ids now.
+const ROW = /^- \[([ x~])\] ([\d.]+[a-z\d]*)\s/;
 
 /**
  * The unticked rows carrying a blocked marker, each with what it says
