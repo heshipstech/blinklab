@@ -342,6 +342,11 @@ import { downloadTextFile } from "./io/download";
 import { createWakeLock } from "./io/wakeLock";
 import type { VideoFrameLoop } from "./io/frameLoop";
 import {
+  chosenModeMetadataRows,
+  modeMenu,
+  type ModeMenuRow,
+} from "./core/modeMenu";
+import {
   faceLossMetadataRows,
   faceLossSentence,
   faceLossStep,
@@ -383,6 +388,7 @@ import {
 } from "./core/frameClock";
 import { loadLandmarker } from "./io/landmarker";
 import { reacquireLandmarker } from "./io/faceReacquire";
+import { applyModeAsk, probeModes } from "./io/modeProbe";
 import { probeWebgl2 } from "./io/webgl2Probe";
 import { playCueTone, vibrateCue } from "./io/cueTone";
 import {
@@ -996,6 +1002,76 @@ mirrorLabel.style.whiteSpace = "nowrap";
 mirrorLabel.append(mirrorToggle, " Mirror");
 mirrorLabel.hidden = true;
 
+// Roadmap 13.7: the resolution-versus-rate probe and its honest mode
+// menu. The button asks the LIVE track the three canonical trades and
+// renders one row per mode the camera actually GRANTED; choosing a
+// row applies that ask and the export carries the chosen label. The
+// probe restores the session's settings afterwards, so pressing it
+// is a question, not a change.
+const modeProbeButton = document.createElement("button");
+modeProbeButton.type = "button";
+modeProbeButton.textContent = "Probe camera modes";
+modeProbeButton.setAttribute("data-testid", "mode-probe");
+modeProbeButton.hidden = true;
+const modeMenuBlock = document.createElement("div");
+modeMenuBlock.setAttribute("data-testid", "mode-menu");
+modeMenuBlock.hidden = true;
+let chosenModeLabel: string | null = null;
+
+function renderModeMenu(rows: readonly ModeMenuRow[]): void {
+  modeMenuBlock.replaceChildren();
+  const list = document.createElement("ul");
+  for (const row of rows) {
+    const item = document.createElement("li");
+    const choose = document.createElement("button");
+    choose.type = "button";
+    choose.textContent = `Use ${row.label}`;
+    choose.addEventListener("click", () => {
+      const ask = row.asked[0];
+      const track = streamOf(video)?.getVideoTracks()[0];
+      if (ask === undefined || track === undefined) {
+        return;
+      }
+      void applyModeAsk(track, ask).then((granted) => {
+        // The label recorded is the row's — the negotiated truth —
+        // and only on a grant, so the export can never claim a mode
+        // the camera refused at the moment of choosing.
+        if (granted) {
+          chosenModeLabel = row.label;
+        }
+        const note = document.createElement("p");
+        note.textContent = granted
+          ? `Mode chosen: ${row.label}.`
+          : `The camera refused ${row.label} when asked directly.`;
+        modeMenuBlock.append(note);
+      });
+    });
+    const sentences = document.createElement("small");
+    sentences.textContent = `${row.rateSentence} ${row.rulerSentence}`;
+    item.append(choose, document.createElement("br"), sentences);
+    list.append(item);
+  }
+  modeMenuBlock.append(list);
+  modeMenuBlock.hidden = false;
+}
+
+modeProbeButton.addEventListener("click", () => {
+  const track = streamOf(video)?.getVideoTracks()[0];
+  if (track === undefined) {
+    modeMenuBlock.replaceChildren("No live camera track to probe.");
+    modeMenuBlock.hidden = false;
+    return;
+  }
+  modeProbeButton.disabled = true;
+  void probeModes(track)
+    .then((readings) => {
+      renderModeMenu(modeMenu(readings).rows);
+    })
+    .finally(() => {
+      modeProbeButton.disabled = false;
+    });
+});
+
 // The tracking overlays, off by default.
 //
 // They exist to prove the model has found your eyes, which is a real
@@ -1127,6 +1203,10 @@ function render(): void {
   eyeMarkerLabel.hidden = !showing;
   faceMeshLabel.hidden = !showing;
   resolutionLabel.hidden = !showing;
+  modeProbeButton.hidden = !showing;
+  if (!showing) {
+    modeMenuBlock.hidden = true;
+  }
 
   // The traces, same reason: three empty strips look broken.
   sparkCanvas.hidden = !showing;
@@ -1347,6 +1427,9 @@ function resetSession(): void {
   poseGateFrames = 0;
   poseValidFrames = 0;
   faceLossState = INITIAL_FACE_LOSS;
+  chosenModeLabel = null;
+  modeMenuBlock.replaceChildren();
+  modeMenuBlock.hidden = true;
   // A new session's report does not exist yet: the old one vanishes
   // with the records it described, and the printable card with it —
   // a mid-session Ctrl+P must print the ordinary page, never a stale
@@ -3211,6 +3294,9 @@ function exportSession(): void {
     // ever reached the re-acquisition threshold, so an ordinary
     // session carries no rows about an event that did not happen.
     ...faceLossMetadataRows(faceLossState),
+    // The mode the person chose from the probe menu (13.7): absent
+    // unless somebody chose, and the label is the negotiated truth.
+    ...chosenModeMetadataRows(chosenModeLabel),
   ]);
   if (csv === null) {
     // A bare `return` here produced no file, no error and no message.
@@ -5527,7 +5613,13 @@ Object.assign(cameraLine.style, {
   gap: "16px",
   alignItems: "baseline",
 });
-cameraLine.append(mirrorLabel, eyeMarkerLabel, faceMeshLabel, resolutionLabel);
+cameraLine.append(
+  mirrorLabel,
+  eyeMarkerLabel,
+  faceMeshLabel,
+  modeProbeButton,
+  resolutionLabel,
+);
 
 // The boxes. Each one answers a different question, and grouping them
 // is what lets a stranger read the page without being told where to
@@ -6332,6 +6424,7 @@ const sourceBox = box(
   picker,
   canvas,
   cameraLine,
+  modeMenuBlock,
 );
 
 // The short caveat, directly under the number in smaller type: a
