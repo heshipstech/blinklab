@@ -68,7 +68,8 @@ import {
 import {
   clipRefusedMessage,
   fpsGateMessage,
-  measurableAtFps,
+  blinkMeasurableStep,
+  evidenceFps,
   processingRateMessage,
   rateRiskActive,
   rateRiskMessage,
@@ -1454,6 +1455,7 @@ function resetSession(): void {
   poseGateFrames = 0;
   poseValidFrames = 0;
   faceLossState = INITIAL_FACE_LOSS;
+  blinkGateState = true;
   chosenModeLabel = null;
   modeMenuBlock.replaceChildren();
   modeMenuBlock.hidden = true;
@@ -2076,6 +2078,10 @@ let lastFacePresent: boolean | null = null;
 // cannot race two model loads.
 let faceLossState = INITIAL_FACE_LOSS;
 let faceReacquireInFlight = false;
+// Roadmap 10.12a: the blink gate's hysteresis state. True until a
+// real dip below the floor — before any dip the plain floor is the
+// rule, which is today's behavior and the stepped corpus's.
+let blinkGateState = true;
 
 // Resolves true when the model is ready, false when the download
 // failed. Concurrent callers share one attempt and one answer. After
@@ -4176,16 +4182,16 @@ function processFrame(
   // processing rate only where the browser cannot report delivery.
   // An observed camera with no rate is UNKNOWN, never the display's
   // rate: a frozen camera used to inherit the animation loop's pace.
-  const evidenceFps = observation.observed
+  const riskEvidenceFps = observation.observed
     ? (delivery?.sampledFps ?? null)
     : fps;
   rateRiskShown =
     state.kind === "running" && frameSource === "camera"
-      ? rateRiskActive(rateRiskShown, evidenceFps)
+      ? rateRiskActive(rateRiskShown, riskEvidenceFps)
       : false;
   const riskText =
-    rateRiskShown && evidenceFps !== null && fps !== null
-      ? rateRiskMessage(evidenceFps, fps)
+    rateRiskShown && riskEvidenceFps !== null && fps !== null
+      ? rateRiskMessage(riskEvidenceFps, fps)
       : "";
   if (rateWarningLabel.textContent !== riskText) {
     rateWarningLabel.textContent = riskText;
@@ -5060,7 +5066,20 @@ function processFrame(
       // "the previous blink's end" is already this blink's end.
       const previousBlinkEndMs = blinkState.lastBlinkEndedAtMs;
       const wasOpen = blinkState.eye !== "closed";
-      const blinkMeasurable = measurableAtFps(fps);
+      // Roadmap 10.12a: the gate judges the EVIDENCE rate — the
+      // smaller of sampled and processing where delivery is reported,
+      // the processing rate alone where it is not (a rate not yet
+      // measured is not a dip) — with the 25/30 hysteresis pair, so a
+      // fast machine on a slow camera can no longer count blinks the
+      // report then disowns, and a rate wobbling on the floor cannot
+      // flicker the gate.
+      const gateEvidenceFps = evidenceFps(
+        observation.observed ? (delivery?.sampledFps ?? null) : null,
+        fps,
+      );
+      const gateStep = blinkMeasurableStep(blinkGateState, gateEvidenceFps);
+      blinkGateState = gateStep.state;
+      const blinkMeasurable = gateStep.measurable;
       if (blinkMeasurable) framesBlinkMeasurable += 1;
       // One decision for the whole frame (10.13a, ladder A8). The
       // readout, the record, the report and the log button each used
@@ -5176,10 +5195,13 @@ function processFrame(
       if (calibrationRefused) {
         writeReadout(blinkLabel, "Blinks: withheld, calibration was refused");
       } else if (!blinkMeasurable) {
-        writeReadout(blinkLabel, fpsGateMessage(fps));
+        writeReadout(
+          blinkLabel,
+          fpsGateMessage(blinkMeasurable, gateEvidenceFps),
+        );
       } else {
         const ratePerMin = gatedBlinkRatePerMin(
-          fps,
+          blinkMeasurable,
           rateState,
           blinkState,
           nowMs,
@@ -5407,7 +5429,12 @@ function processFrame(
             // go with the rate, and until 10.13a the record kept them.
             blinkRatePerMin: withheld
               ? null
-              : gatedBlinkRatePerMin(fps, rateState, blinkState, nowMs),
+              : gatedBlinkRatePerMin(
+                  blinkMeasurable,
+                  rateState,
+                  blinkState,
+                  nowMs,
+                ),
             lastBlinkDurationMs: withheld
               ? null
               : blinkState.lastBlinkDurationMs,
