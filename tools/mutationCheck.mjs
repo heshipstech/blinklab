@@ -375,6 +375,13 @@ const MUTATIONS = [
     "verification floor bloated: a sound, well-verified line would be refused",
     "test/core/guidedCalibration.test.ts",
   ],
+  [
+    "src/core/readingRhythm.ts",
+    "RETURN_MAX_FRACTION = 0.5",
+    "RETURN_MAX_FRACTION = 100",
+    "asymmetry rule disabled: a pursuit sinusoid would read as reading",
+    "test/core/readingRhythm.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner
