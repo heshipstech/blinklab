@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1981 unit tests and 691 Python tests, each figure
+- **The suite:** 1985 unit tests and 691 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**A QUOTE THAT CANNOT ROT, 18 September 2026 (row 14.6 ticks; the walkthrough ships refusal-first).** The record-yourself walkthrough is on the page, on the fork the owner decided: a closed disclosure beside the clip picker with three steps — record with the device's own camera app, save as an ordinary file, load with Choose file — and the honesty paragraph telling the visitor what would happen if they recorded in the browser instead. The paragraph quotes the pipeline's real variable-rate refusal, and the quote is pinned three ways so no copy can drift alone: the prefix constant is held to variableRateRefusal itself by a unit test, the e2e holds the rendered paragraph to the same constant, and the probe spec stays in the suite printing the pipeline's actual outcome on every CI run. A further test bans workaround language, because the declined fork — an in-browser constant-rate recording path — must not be implied by wording; it stays in the backlog as the owner ruled. Four tests watched failing first. With this tick the four-item docket the owner ordered this morning is built whole: the loader's floor, the lost-face recovery, the probe-and-menu, and the walkthrough. The suite is 1985 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **A QUESTION THAT LEAVES THE INSTRUMENT ALONE, 18 September 2026 (row 13.7's io-and-menu slice lands; the Playwright clause met).** The resolution-versus-rate probe is on the page: the Probe camera modes button sweeps the live track through the three canonical asks on 13.2's own pattern — a refusing track recorded, never thrown — and then RESTORES the session's settings, because a probe is a question and a question must not change the instrument that answered it, a rule the io tests pin by watching the final applyConstraints carry the pre-probe settings. The menu renders one row per mode the camera GRANTED, never per ask, each with its Use button, the negotiated-rate sentence and the relative ruler sentence; choosing is the separate deliberate act, only a grant records the label, and the export carries chosen_mode — the menu row's negotiated truth, so the file can never claim a mode the camera refused — through the whole key cascade, conditional on a choice existing at all. The new e2e drives the fake camera through probe, choice and export and reads the downloaded CSV, demanding it carry the same label the page spoke, the cued protocol's no-strings-copied-in discipline. What remains of 13.7 is the owner's alone: the dated note with real per-device probe tables. The suite is 1981 unit tests, 51 end to end tests of which 49 run on every pull request.
 
