@@ -5106,3 +5106,30 @@ rather than corrected in place — the 39.9 microsecond core-chain
 figure stands, scoped to what it measured, and the withdrawal is of
 a reading, recorded as a dated section that says what changed and
 what no container can measure.
+
+## 14.12 Only the asymmetry rule stands between pursuit and "reading"
+
+The concept this increment teaches is the adversary that shares your
+signal's period and amplitude. Staring and a random walk are easy to
+reject — one never sweeps, the other sweeps nowhere consistently —
+but a pursuit sinusoid oscillates exactly like reading at the coarse
+grain, and the ONLY property separating them is timing asymmetry: a
+reading return is a saccade, an order of magnitude faster than the
+drift it undoes, while a sinusoid's two half-cycles last the same by
+construction. When one comparison is a detector's whole defence
+against its best adversary, that comparison gets a mutation in the
+harness, run rather than assumed: bending the fraction to 100
+reddens four tests.
+
+The first test run taught a second lesson. The sweep segmenter
+emitted the segment still open when the series ended, and that
+truncated tail read as a fast return — handing the sinusoid one fake
+reading cycle. The fix is a rule, not a fixture patch: a sweep
+exists only once the turn back confirms it, because a truncated
+duration is unknown-short, not measured-short.
+
+And the promotion cap is worded as a CAP, not an achievement. The
+Check says promotion is capped at "checked on the maintainer's
+sessions" — the first draft's label claimed that check had already
+happened, which was a lie one word wide. The constant now says the
+most the demo may EVER claim, and a test holds the wording.
