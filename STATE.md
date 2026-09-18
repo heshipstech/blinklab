@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1928 unit tests and 665 Python tests, each figure
+- **The suite:** 1943 unit tests and 665 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**A MENU OF GRANTS, NOT REQUESTS, 18 September 2026 (row 13.7's summarizer slice lands).** The resolution-versus-rate row's pure half: src/core/modeMenu.ts turns the probe's readings into the honest mode menu, and its one design rule is that every row is keyed by what negotiation DELIVERED — a webcam that answers five asks with 1080p30 has one mode, and a menu listing five nominal modes it will not grant is the dishonesty the row exists to end. Asks landing on identical settings collapse to one row that lists them all, a failed apply is recorded in a not-granted list rather than dropped silently, and a browser that reports nothing yields an "unknown" row instead of the ask's numbers echoed back as if confirmed. The rate sentence speaks the committed sampling bands about a promise — it says "negotiated" and that delivery is measured live, keeping the capability ladder's delivered-rate claim distinct, because the record already holds a device whose promise and delivery differ — and the ruler sentence is relative, a narrower mode's share of the widest mode's pixels per millimetre, with no absolute iris promised before one is measured. Fifteen tests watched failing first. The io probe, the menu rendering with the chosen mode's export, and the dated per-device tables remain — the last the owner's. The suite is 1943 unit tests, 50 end to end tests of which 48 run on every pull request.
 
 **THE RULING ITS OWN NOTE ASKED FOR, 18 September 2026 (row 11.6b ticks).** The guided-calibration interface row landed in seven slices by 15 September and kept its open marker on one clause — "a Playwright run of the overlay off a shortened schedule reaches every state" — because the verify phase and the stored state need real eyes producing real blinks, which no headless fake camera has. The landing note named the row's two exits in advance: a face-producing e2e fixture, or the owner ruling the clause's intent met by the reachable states plus MANUAL item 62. The owner took the second exit today, and the row ticks on it: CI holds the dialog, the conditional refusal, both cancel paths with their nothing-was-stored receipt, and the seeded-line adoption through to the export; the verify-and-stored path stays item 62's job by the spec's own design, performable with closed eyes because every phase turn beeps and buzzes. A face-producing fixture, if one ever lands, upgrades that manual half to CI as its own work. The suite is 1928 unit tests, 50 end to end tests of which 48 run on every pull request.
 
