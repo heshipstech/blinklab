@@ -5239,3 +5239,37 @@ of 29.9 frames read at a third of daylight luminance. The gate is
 still right to exist, because the mechanism is real on other
 hardware; but the record now says this device holds 30 in the dark,
 measured, instead of assumed either way.
+
+## 12.7 An instrument can ship without an interpretation, if the guard holds the line
+
+The concept this increment teaches is how to publish a number that
+might mean something without claiming it does. The lid openness ratio
+is easy to compute — the aperture over the frozen baseline — and easy
+to over-read: it is exactly the kind of number a reader wants to call
+"drowsiness." No data this project may use has earned that word, and
+12.18 is the row that would.
+
+So the row ships the instrument and a guard against its own future
+misuse in the same PR. The claimGuard family bans the CLAIM (lid
+openness as a measure of drowsiness, alertness or fatigue) while
+leaving the honest label — the ratio, the percentage — untouched. The
+trick that makes that possible is a bounded word gap in the pattern:
+the two ideas may appear in one sentence far apart (as this very
+paragraph does) without tripping, but the tight pairing that reads a
+mind out of an eyelid does. The ladder names the refusal, which is why
+ROADMAP.md is exempt from it, and that exemption forced an honest
+correction elsewhere: the old test said each vocabulary cap exempts
+the ladder "and no other," which was true when there was one cap and
+false the moment there were two. The invariant it should always have
+stated is that the three MEASURED FALSEHOODS never exempt the ladder;
+a refusal the ladder itself declares may.
+
+The other lesson is the born-wrong-ruler refusal, and it is the same
+null-never-zero rule from a new angle. A ratio is only as trustworthy
+as its denominator. Rather than clamp an implausible value into range
+— a guess wearing a measurement's clothes — the instrument refuses
+when the ratio exceeds the ruler-fit tolerance, because past that line
+the likelier truth is that the ruler froze wrong-low, not that the
+eyelid opened impossibly wide. Reusing the validation round's own 1.25
+from the other direction kept the tolerance in one concept instead of
+inventing a second magic number.
