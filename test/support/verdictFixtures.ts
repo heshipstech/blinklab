@@ -161,6 +161,12 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     // the column is empty for every fixture — the verdict does not
     // read it, so the committed verdict bytes are unchanged (12.7).
     lidOpennessRatio: null,
+    // The closure-fraction curve is a per-second accumulator these
+    // static fixture rows do not drive, so its columns are empty for
+    // every fixture; the verdict does not read them either (12.10).
+    perclos30: null,
+    perclos50: null,
+    perclos60: null,
   }));
 }
 
