@@ -42,6 +42,17 @@ const EXEMPT = [
   "test/tools/claimGuard.test.ts",
 ];
 
+// The three claims that are MEASURED FALSEHOODS rather than vocabulary
+// caps. ROADMAP.md may name a refusal it declares (microsleep, lid
+// openness) and be exempt from that claim; it may never be exempt from
+// one of these, because these are things the page was caught claiming
+// and must never claim again.
+const MEASURED_FALSEHOODS = [
+  "no data leaves your device",
+  "no telemetry",
+  "zero runtime third party calls",
+];
+
 describe("retired claims stay retired", () => {
   it("names why each phrase is banned, so a failure explains itself", () => {
     expect(RETIRED_CLAIMS.length).toBeGreaterThanOrEqual(3);
@@ -148,19 +159,82 @@ describe("the microsleep vocabulary cap", () => {
     );
   });
 
-  it("exempts the ladder from this claim and from no other", () => {
+  it("exempts the ladder from the refusals it names, never a falsehood", () => {
     // Amendment 16 and row 12.6 both quote the phrase, because
     // declaring a refusal means naming it. That earns ROADMAP.md an
     // exemption from THIS claim. It does not earn the ladder the
-    // right to say the page sends nothing anywhere, so the exemption
-    // is carried by the claim rather than by the caller's list.
+    // right to say the page sends nothing anywhere, so the three
+    // MEASURED FALSEHOODS never exempt it — only vocabulary caps the
+    // ladder itself declares do.
     expect(capped?.exempt).toContain("ROADMAP.md");
     expect(EXEMPT).not.toContain("ROADMAP.md");
     for (const claim of RETIRED_CLAIMS) {
-      if (claim.says === capped?.says) {
-        continue;
+      if (MEASURED_FALSEHOODS.includes(claim.says)) {
+        expect(claim.exempt ?? []).not.toContain("ROADMAP.md");
       }
-      expect(claim.exempt ?? []).not.toContain("ROADMAP.md");
+    }
+  });
+});
+
+// Roadmap 12.7. The lid openness ratio is an instrument, and 12.18 is
+// the row that would read whether it means anything about a state of
+// mind. Until then the claim is capped the way the microsleep one is:
+// the honest label survives, the interpretation is refused.
+describe("the lid openness claim cap", () => {
+  const capped = RETIRED_CLAIMS.find(
+    (c) => c.says === "lid openness as a state-of-mind measure",
+  );
+
+  it("is one of the retired claims and says why", () => {
+    expect(capped).toBeDefined();
+    expect(capped?.because).toMatch(/12\.18|unvalidated/i);
+  });
+
+  it("bans the family and not one spelling", () => {
+    const family = new RegExp(capped?.pattern ?? "$^", "i");
+    expect(family.test("lid openness measures drowsiness")).toBe(true);
+    expect(family.test("lid-openness as a drowsiness signal")).toBe(true);
+    expect(family.test("Lid openness indicates alertness")).toBe(true);
+    expect(family.test("lid openness reflects fatigue")).toBe(true);
+    expect(family.test("drowsiness from lid openness")).toBe(true);
+    expect(family.test("sleepiness shown by lid-openness")).toBe(true);
+  });
+
+  it("leaves the honest instrument label alone", () => {
+    // The cap bans a claim, not the phrase. The ratio, the percentage,
+    // and prose that mentions the two ideas far apart have to stay
+    // writable or the guard would gag the row's own honest export.
+    const family = new RegExp(capped?.pattern ?? "$^", "i");
+    expect(family.test("lid openness ratio instrument")).toBe(false);
+    expect(family.test("Lid openness: 85% of the frozen open baseline")).toBe(
+      false,
+    );
+    expect(family.test("the lid openness ratio, exported and shown")).toBe(
+      false,
+    );
+    expect(
+      family.test(
+        "the lid openness ratio; whether it tracks drowsiness is 12.18's",
+      ),
+    ).toBe(false);
+  });
+
+  it("would fire on the ladder, which is why the ladder is exempt", () => {
+    // Honest only while row 12.7 really names the refusal. If this
+    // finds nothing, the ladder has stopped naming what it refuses and
+    // the exemption goes with it.
+    expect(trackedFilesMatching(capped?.pattern ?? "$^", root)).toContain(
+      "ROADMAP.md",
+    );
+  });
+
+  it("exempts the ladder from the refusals it names, never a falsehood", () => {
+    expect(capped?.exempt).toContain("ROADMAP.md");
+    expect(EXEMPT).not.toContain("ROADMAP.md");
+    for (const claim of RETIRED_CLAIMS) {
+      if (MEASURED_FALSEHOODS.includes(claim.says)) {
+        expect(claim.exempt ?? []).not.toContain("ROADMAP.md");
+      }
     }
   });
 });

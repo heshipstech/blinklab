@@ -73,6 +73,33 @@ export const RETIRED_CLAIMS = [
     // stays guarded against the other three.
     exempt: ["ROADMAP.md"],
   },
+  // Roadmap 12.7. Same shape as the microsleep cap: a claim held back
+  // until the read that could earn it, not a measured falsehood. The
+  // lid openness ratio (src/core/lidOpenness.ts) is an instrument —
+  // how open the lid sits as a fraction of the frozen baseline,
+  // exported and shown. Whether it stands for a state of mind is
+  // unvalidated against any outcome this project may use, and 12.18 is
+  // the row that would read one. So the CLAIM that the ratio tells you
+  // someone is drowsy, alert, fatigued or sleepy is refused, both
+  // directions and the plural, while the honest label — the ratio, the
+  // percentage of the frozen baseline — stays writable. The bounded
+  // word gap keeps ordinary prose that mentions both far apart out of
+  // range; only the tight pairing that reads a mind out of an eyelid
+  // is banned.
+  {
+    pattern:
+      "(lid[ -]+openness( +[a-z]+){0,4} +(drowsi|alert|fatigu|sleepi)|" +
+      "(drowsi|alert|fatigu|sleepi)[a-z]*( +[a-z]+){0,4} +lid[ -]+openness)",
+    says: "lid openness as a state-of-mind measure",
+    because:
+      "lid openness is an unvalidated instrument here; no data this " +
+      "project may use ties it to drowsiness, and 12.18 is the read " +
+      "that would earn the word",
+    // The ladder names this refusal in row 12.7, and naming a refusal
+    // is why ROADMAP.md may carry the phrase. Carried by the claim so
+    // the ladder stays guarded against every other one.
+    exempt: ["ROADMAP.md"],
+  },
 ];
 
 /** The repository root as a real filesystem path, not a percent-encoded one. */
