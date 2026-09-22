@@ -396,6 +396,20 @@ const MUTATIONS = [
     "gate clear bloated: a session that dipped once would never count again",
     "test/core/fpsGate.test.ts",
   ],
+  [
+    "src/core/lidOpenness.ts",
+    "ratio > LID_OPENNESS_MAX_PLAUSIBLE",
+    "ratio >= LID_OPENNESS_MAX_PLAUSIBLE",
+    "born-wrong-ruler edge flipped to the lower side: a lid exactly at the plausibility ceiling would be refused, and the ratio would lose a plausible reading",
+    "test/core/lidOpenness.test.ts",
+  ],
+  [
+    "src/core/lidOpenness.ts",
+    "ratio > LID_OPENNESS_MAX_PLAUSIBLE",
+    "ratio > LID_OPENNESS_MAX_PLAUSIBLE + 100",
+    "born-wrong-ruler refusal collapsed: a baseline that froze wrong-low would publish an inflated ratio nobody can trust",
+    "test/core/lidOpenness.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

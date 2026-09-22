@@ -80,6 +80,15 @@ export const METRIC_PROVENANCE: Readonly<Record<string, MetricProvenance>> = {
       "and its floor in iris pixels is measured in " +
       "docs/pupil-resolution-floor.txt.",
   },
+  "Lid openness": {
+    kind: "unvalidated",
+    status:
+      "The aperture as a fraction of the frozen shut baseline, an " +
+      "instrument with no ground truth here: no data this project may " +
+      "use ties it to any state of mind, and roadmap 12.18 is the read " +
+      "that would. The born-wrong-ruler refusal that withholds it when " +
+      "the baseline froze too low is grounded in docs/shut-line-rule.txt.",
+  },
   "Aperture stability": {
     kind: "measured",
     status:

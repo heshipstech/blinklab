@@ -338,13 +338,14 @@ its cap. At 50 entries it is by far the tallest thing on the page.**
 
 #### Box: Eyes
 
-| Element          | Strings                                                                                            |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| Aperture         | `Eyelid aperture, right: X mm, left: Y mm` or `Eyelid aperture: no valid measurement`              |
-| Eye aspect ratio | `Eye aspect ratio, right: X, left: Y` or `Eye aspect ratio: no valid measurement`                  |
-| Stability        | `Aperture stability over 10 s, px CV: X%, mm CV: Y%` or `Aperture stability: measuring...`         |
-| PERCLOS          | `PERCLOS (eyes closed share, last 60 s): X%` or `... : measuring...`                               |
-| Long closures    | `Long closures: N` or `Long closures: waiting for the baseline`, optionally with `(suppressed: M)` |
+| Element          | Strings                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| Aperture         | `Eyelid aperture, right: X mm, left: Y mm` or `Eyelid aperture: no valid measurement`                 |
+| Eye aspect ratio | `Eye aspect ratio, right: X, left: Y` or `Eye aspect ratio: no valid measurement`                     |
+| Stability        | `Aperture stability over 10 s, px CV: X%, mm CV: Y%` or `Aperture stability: measuring...`            |
+| PERCLOS          | `PERCLOS (eyes closed share, last 60 s): X%` or `... : measuring...`                                  |
+| Long closures    | `Long closures: N` or `Long closures: waiting for the baseline`, optionally with `(suppressed: M)`    |
+| Lid openness     | `Lid openness: X% of the frozen open baseline` or `Lid openness: no valid measurement` (roadmap 12.7) |
 
 #### Box: Gaze
 
@@ -569,6 +570,7 @@ The guard in `tools/uiGuard.mjs` holds this list to the code. None says
 | `Eye aspect ratio: no valid measurement`                |
 | `Eyelid aperture: no valid measurement`                 |
 | `Pupil diameter: no valid measurement`                  |
+| `Lid openness: no valid measurement`                    |
 | `Aperture stability: not measuring`                     |
 | `PERCLOS (eyes closed share, last 60 s): not measuring` |
 | `Long closures: not measuring`                          |

@@ -124,6 +124,7 @@ import {
   rulerFitMessage,
   rulerFitStep,
 } from "./core/rulerFit";
+import { lidOpennessRatio, lidOpennessSentence } from "./core/lidOpenness";
 import {
   asExported,
   buildParticipantReport,
@@ -2268,6 +2269,10 @@ framesMeasuredProbe.setAttribute("data-testid", "frames-measured");
 const earLabel = document.createElement("p");
 const apertureLabel = document.createElement("p");
 const pupilLabel = document.createElement("p");
+// Roadmap 12.7. How open the lid sits as a fraction of the frozen
+// shut baseline — an instrument, shown beside the aperture it derives
+// from, never a verdict.
+const lidOpennessLabel = document.createElement("p");
 
 // The lean in, lean out experiment, live: both apertures' coefficient
 // of variation over the last 10 seconds, side by side.
@@ -4546,6 +4551,7 @@ function processFrame(
           writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
           writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
           writeReadout(pupilLabel, "Pupil diameter: no valid measurement");
+          writeReadout(lidOpennessLabel, lidOpennessSentence(null));
           writeReadout(gazeLabel, "Iris offset: no valid measurement");
           writeReadout(quadrantLabel, "Looking toward: no valid measurement");
         }
@@ -4600,6 +4606,7 @@ function processFrame(
         writeReadout(earLabel, "Eye aspect ratio: no valid measurement");
         writeReadout(apertureLabel, "Eyelid aperture: no valid measurement");
         writeReadout(pupilLabel, "Pupil diameter: no valid measurement");
+        writeReadout(lidOpennessLabel, lidOpennessSentence(null));
         writeReadout(headPoseLabel, "Head pose: no valid measurement");
         writeReadout(gazeLabel, "Iris offset: no valid measurement");
         writeReadout(quadrantLabel, "Looking toward: no valid measurement");
@@ -5392,6 +5399,13 @@ function processFrame(
             ? "Pupil diameter: no valid measurement"
             : `Pupil diameter: ${framePupilDiameterMm.toFixed(1)} mm`,
         );
+        // Roadmap 12.7: the same two numbers this row will carry,
+        // computed once for the readout and the record.
+        const frameLidOpenness = lidOpennessRatio(
+          stabilityMm,
+          frozenShutBaselineMm,
+        );
+        writeReadout(lidOpennessLabel, lidOpennessSentence(frameLidOpenness));
         if (featureRecords.length >= FEATURE_RECORD_CAP) {
           featureRecordsDropped += 1;
         }
@@ -5464,6 +5478,10 @@ function processFrame(
             faceSeconds: sessionFaceTime.faceMs / 1000,
             blinkCountingSuspended: countingSuspended(blinkState, nowMs),
             irisOffsetVertical: frameMeanOffset?.vertical ?? null,
+            // Roadmap 12.7: the lid openness ratio, aperture over the
+            // frozen shut baseline, or null on the born-wrong-ruler
+            // refusal — computed once above for the readout too.
+            lidOpennessRatio: frameLidOpenness,
           }),
           FEATURE_RECORD_CAP,
         );
@@ -6526,6 +6544,7 @@ const eyesBox = box(
   perclosLabel,
   longClosureLabel,
   pupilLabel,
+  lidOpennessLabel,
 );
 
 // Head pose and the pose gate live with gaze rather than with the
@@ -6784,6 +6803,7 @@ const idleReadoutElements: Readonly<Record<string, HTMLElement>> = {
   "Eye aspect ratio": earLabel,
   "Eyelid aperture": apertureLabel,
   "Pupil diameter": pupilLabel,
+  "Lid openness": lidOpennessLabel,
   "Aperture stability": stabilityLabel,
   "PERCLOS (eyes closed share, last 60 s)": perclosLabel,
   "Long closures": longClosureLabel,

@@ -51,6 +51,7 @@ COLUMNS: list[str] = [
     "blinkCountingSuspended",
     "irisOffsetVertical",
     "faceSeconds",
+    "lidOpennessRatio",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -62,10 +63,19 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before roadmap 12.7 appended lidOpennessRatio
+# (22 September 2026): sessions recorded until then load with the lid
+# openness ratio unknown, which is the truth about them. This is the
+# generation immediately before the current one, so it is sliced from
+# COLUMNS; every older generation is sliced from the one AFTER it.
+PRE_LID_OPENNESS_COLUMNS: list[str] = COLUMNS[:-1]
+
 # The header before roadmap 10.12c appended faceSeconds (9 September
 # 2026, later the same day): sessions recorded until then load with
-# the face time unknown, which is the truth about them.
-PRE_FACE_SECONDS_COLUMNS: list[str] = COLUMNS[:-1]
+# the face time unknown, which is the truth about them. Sliced from the
+# generation after it, per the rule below, so an append can never
+# silently re-cut it — the latent defect row 12.15 found.
+PRE_FACE_SECONDS_COLUMNS: list[str] = PRE_LID_OPENNESS_COLUMNS[:-1]
 
 # The header before roadmap 10.12b appended the observed fraction,
 # the suspension flag and the vertical iris offset (9 September
@@ -150,6 +160,7 @@ FLOOR_COLUMNS: list[str] = LEGACY_COLUMNS
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_LID_OPENNESS_COLUMNS,
     PRE_FACE_SECONDS_COLUMNS,
     PRE_RATE_FACTS_COLUMNS,
     PRE_LUMINANCE_COLUMNS,

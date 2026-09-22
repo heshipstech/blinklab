@@ -17,6 +17,7 @@ export const IDLE_READOUTS: readonly (readonly [string, string])[] = [
   ["Eye aspect ratio", "no valid measurement"],
   ["Eyelid aperture", "no valid measurement"],
   ["Pupil diameter", "no valid measurement"],
+  ["Lid openness", "no valid measurement"],
   ["Aperture stability", "not measuring"],
   ["PERCLOS (eyes closed share, last 60 s)", "not measuring"],
   ["Long closures", "not measuring"],

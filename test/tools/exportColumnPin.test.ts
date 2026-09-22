@@ -61,25 +61,31 @@ describe("the evidence rate and the inference cost travel per second", () => {
     // exported before today, a cost this project has already declined
     // three times (baselineOverResting, pupilDiameterMm, and the two
     // luminance columns row 12.16 appended after these).
-    expect(CSV_COLUMNS.slice(-8, -6)).toEqual(["sampledFps", "inferenceMs"]);
+    expect(CSV_COLUMNS.slice(-9, -7)).toEqual(["sampledFps", "inferenceMs"]);
   });
 
   it("keeps the luminance pair trailing, for the same reason", () => {
-    expect(CSV_COLUMNS.slice(-6, -4)).toEqual(["sceneLum", "faceLum"]);
+    expect(CSV_COLUMNS.slice(-7, -5)).toEqual(["sceneLum", "faceLum"]);
   });
 
   it("keeps 10.12b's three facts trailing after them, likewise", () => {
     // The observed fraction, the suspension flag and the vertical
-    // iris offset landed 9 September 2026 as the newest generation,
-    // so every earlier header stays an exact prefix.
-    expect(CSV_COLUMNS.slice(-4, -1)).toEqual([
+    // iris offset landed 9 September 2026, so every earlier header
+    // stays an exact prefix.
+    expect(CSV_COLUMNS.slice(-5, -2)).toEqual([
       "blinkObservedFraction",
       "blinkCountingSuspended",
       "irisOffsetVertical",
     ]);
   });
 
-  it("keeps 10.12c's faceSeconds as the newest trailing column", () => {
-    expect(CSV_COLUMNS.slice(-1)).toEqual(["faceSeconds"]);
+  it("keeps 10.12c's faceSeconds trailing before the newest column", () => {
+    expect(CSV_COLUMNS.slice(-2, -1)).toEqual(["faceSeconds"]);
+  });
+
+  it("keeps 12.7's lidOpennessRatio as the newest trailing column", () => {
+    // Appended 22 September 2026 as the newest generation, so every
+    // earlier header — faceSeconds's included — stays an exact prefix.
+    expect(CSV_COLUMNS.slice(-1)).toEqual(["lidOpennessRatio"]);
   });
 });

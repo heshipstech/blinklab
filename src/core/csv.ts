@@ -69,6 +69,11 @@ export const CSV_COLUMNS = [
   // long a trusted face was actually seen, in the same units the
   // sample floors demand.
   "faceSeconds",
+  // Appended 22 September 2026 (roadmap 12.7), trailing like every
+  // addition before it so older headers stay an exact prefix: the lid
+  // openness ratio, aperture over the frozen shut baseline. An
+  // instrument, not a verdict.
+  "lidOpennessRatio",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it
