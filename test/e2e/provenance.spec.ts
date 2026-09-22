@@ -11,10 +11,11 @@ test("every readout explains itself, and the score names its evidence", async ({
   page,
 }) => {
   await page.goto("./");
-  // One control per rendered readout, the idle registry's sixteen.
+  // One control per rendered readout, the idle registry's seventeen
+  // (roadmap 12.7 added the lid openness readout).
   await expect(
     page.getByRole("button", { name: /^Explain this number: / }),
-  ).toHaveCount(16);
+  ).toHaveCount(17);
 
   const note = page
     .getByTestId("provenance-note")
