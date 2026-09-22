@@ -443,7 +443,10 @@ def spec_record_fields() -> list[str]:
     start = text.find("export type FeatureRecord = {")
     assert start != -1, "SPEC.md has no FeatureRecord block"
     end = text.find("};", start)
-    return re.findall(r"^\s{2}([A-Za-z]+):", text[start:end], re.M)
+    # A field name may carry digits (perclos30/50/60, roadmap 12.10), so
+    # the run after the first letter is letters OR digits, not letters
+    # alone — the shape the TypeScript side has always accepted.
+    return re.findall(r"^\s{2}([A-Za-z][A-Za-z0-9]*):", text[start:end], re.M)
 
 
 class TestTheSpecification:
