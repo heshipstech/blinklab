@@ -5273,3 +5273,40 @@ the likelier truth is that the ruler froze wrong-low, not that the
 eyelid opened impossibly wide. Reusing the validation round's own 1.25
 from the other direction kept the tolerance in one concept instead of
 inventing a second magic number.
+
+## 12.10 A derived family must not drift from the number it contains
+
+The concept this increment teaches is how to add a richer view of a
+measurement without letting the richer view and the original quietly
+disagree. PERCLOS is one line — the share of the last minute the eyes
+spent shut past 40% of baseline. The closure-fraction curve is the
+same idea at four depths (60/50/40/30%), and 40% is not a new line, it
+IS the existing PERCLOS. If the family computed its 40% share even
+slightly differently from perclos.ts — a different window, a different
+floor, an inclusive boundary where perclos is strictly-below — the
+export would carry two numbers for one fact and a reader could not
+tell which to trust.
+
+So the family imports everything that defines the shared point: the
+window, the four floors, and the 0.4 threshold itself (aliased from
+perclos.ts, not re-typed). And a test pins the 40% share byte-for-byte
+equal to perclosValue over one shared feed, so a future edit to either
+side that breaks the equality goes red. This is the closureTaxonomy
+lesson from 12.6 — import the shared constant rather than copy it —
+carried one level up, to a shared computation rather than a shared
+number.
+
+The monotonicity is worth a note because it is true BY CONSTRUCTION,
+not by measurement. A frame shut past 60% of baseline is necessarily
+also shut past 30%, so ordering the family loosest-first makes the
+curve non-increasing for any input whatsoever — it is a fact about the
+nested thresholds, not a claim about eyes. The test says so by proving
+it on a banded synthetic AND on the degenerate all-shut case, where
+all four shares are equal and a naive strictly-decreasing check would
+wrongly fail.
+
+The last discipline is storage. perclos stores one boolean per sample
+because it has one line. To answer four thresholds from one buffer,
+the curve stores the aperture and baseline of each moment and defers
+classification to read time. Same window, same floors, four questions
+asked of one record.

@@ -350,19 +350,14 @@ describe("a claimed row its phase will not let start", () => {
     // is what amendment 19's guard could not see and what cost three
     // rows on the day it shipped.
     // The real gate lifted when 10.12a ticked (amendment 35), so the
-    // bend re-shuts it: 10.12a is un-ticked synthetically and the
-    // ladder's live claim (amendment 36's two names) is narrowed to
-    // 12.10 alone — an open Phase 12 row, since 12.7 is now ticked and
-    // can no longer stand in — so the gate check keeps being exercised
-    // against a shut gate whatever the real ladder currently says.
-    const claimed = roadmap
-      .replace("- [x] 10.12a", "- [ ] 10.12a")
-      .replace(
-        "Rows 12.8a and 12.10 remain startable and are not marked",
-        "Rows 12.10 remain startable and are not marked",
-      );
+    // bend re-shuts it: 10.12a is un-ticked synthetically. The ladder's
+    // live claim (amendment 37) already names 12.8a alone — an open
+    // Phase 12 row, since 12.7 and 12.10 are now ticked and can no
+    // longer stand in — so the gate check keeps being exercised against
+    // a shut gate whatever the real ladder currently says.
+    const claimed = roadmap.replace("- [x] 10.12a", "- [ ] 10.12a");
     expect(staleStartables(claimed)).toEqual([]);
-    expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.10"]);
+    expect(gatedStartables(claimed).map((row) => row.id)).toEqual(["12.8a"]);
   });
 });
 
@@ -538,13 +533,12 @@ describe("the ladder that has nothing left to start", () => {
   });
 
   it("reads the real ladder's current claim, whatever shape it is in", () => {
-    // Amendment 36: 12.7 (the lid openness instrument) landed, the
-    // first row started after the Phase 12 gate lifted, so the ladder's
-    // claim narrows to the two rows amendment 35 opened that are still
-    // open — 12.8a (quadratic peak velocity, its sweep committed) and
-    // 12.10 (closure-fraction curve); amendment 35's sentence is
+    // Amendment 37: 12.10 (the closure-fraction curve) landed too, so
+    // of amendment 35's three opened rows only 12.8a (quadratic peak
+    // velocity, its sweep committed) is still open and unbuilt; the
+    // ladder's claim narrows to it, and amendment 36's sentence is
     // retired to past tense in place. This pins what the ladder
     // actually says today, so changing it is a deliberate edit here.
-    expect(startableClaims(roadmap)).toEqual(["12.8a", "12.10"]);
+    expect(startableClaims(roadmap)).toEqual(["12.8a"]);
   });
 });
