@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 1999 unit tests and 693 Python tests, each figure
+- **The suite:** 2015 unit tests and 693 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE FIRST ROW THROUGH THE OPEN GATE, 22 September 2026 (row 12.7 ticks; amendment 36).** With the Phase 12 gate lifted, the lid openness ratio is the first signal row built behind it: `src/core/lidOpenness.ts` is the aperture as a fraction of the frozen shut baseline (`shutBaselineMm`, an existing column), an instrument and nothing more. The born-wrong-ruler refusal is the row's spine — null, never a number, when there is no baseline to divide by, an impossible one, no aperture this frame, or a ratio past the plausibility ceiling, which is the 1.25 ruler-fit tolerance read from the other direction: an aperture more than 1.25× the frozen baseline says the baseline froze wrong-low, the failure docs/shut-line-rule.txt P2 names. Boundary probes are literals either side of 1.25 (per 10.1c) and two mutations guard the edge, both caught. The honesty half is a claimGuard family in the microsleep cap's shape: it bans the CLAIM that the ratio measures drowsiness, alertness or fatigue — both directions, the plural — with a bounded word gap so the instrument label survives, and the ladder names the refusal so ROADMAP.md is exempt on it. The two surfaces land together: the trailing export column `lidOpennessRatio` (the loader gaining PRE_LID_OPENNESS_COLUMNS, re-cut from itself per 12.15's discipline) and a panel readout registered through the idle table, docs/UI.md and the 14.3 provenance registry as an unvalidated metric. No stored line exists on a clip, so the stepped corpus is untouched and the column is not a detector source — no ratchet caveat is due. 16 unit tests watched failing first; the live claim narrows to 12.8a and 12.10. The suite is 2015 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **THE GATE AND THE REPORT NOW ASK THE SAME QUESTION, 18 September 2026 (row 10.12a ticks; amendment 35; the Phase 12 gate lifts).** The dim-room session came back first, as the row demanded, and it is a refutation worth having: at a scene luminance a third of daylight's (median 0.141 against ~0.5) the owner's camera HELD 29.9 delivered / 29.9 sampled with read fraction 1.000 at 1920x1080, so no owned camera has yet been observed delivering below 30 even in the dark — docs/blink-sample-rate.txt carries the numbers beside the pre-registered rule they refute. The gate is built anyway, because the defect was never the dim room: the live gate judged the PROCESSING rate while the session verdict judged the evidence rate, and a machine processing at 60 while sampling 20 counted blinks all session and then printed a verdict saying the numbers were withheld. One judgement now serves every site — blinkMeasurableStep on evidenceFps, the min of sampled and processing where delivery is reported — with the 60/65-style hysteresis one floor down (shut below 25, reopen at 30; MIN_BLINK_CLEAR_FPS in the mutation roster from both sides) so a rate wobbling on the floor cannot flicker counting, and an unknown rate holds the prior state, because startup ignorance is not a dip. The disagreeing machine itself is the new committed fixture: rate-starved, sampled 20 under processing 60, byte-pinned from both implementations, its refusal sitting beside empty blink temporal columns, and named in the Python floor so it cannot silently disappear. The stepped corpus is unchanged by construction and the dated ratchet caveat says so, for the owner's next corpus run to score. With the tick the Phase 12 gate lifts for the first time since amendment 17 wrote it; amendment 35 re-reads the phase the three careful ways and finds 12.7, 12.8a and 12.10 startable. Python tests move 691 to 693. The suite is 1999 unit tests, 52 end to end tests of which 50 run on every pull request.
 
@@ -3213,7 +3215,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 17 September 2026. When this file changes, this stamp changes
+Stamped: 22 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
