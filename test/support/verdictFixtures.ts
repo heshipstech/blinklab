@@ -156,6 +156,11 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     blinkCountingSuspended: false,
     irisOffsetVertical: null,
     faceSeconds: 0,
+    // No fixture session carries a frozen shut baseline (it is null
+    // above), so the lid openness ratio refuses by construction and
+    // the column is empty for every fixture — the verdict does not
+    // read it, so the committed verdict bytes are unchanged (12.7).
+    lidOpennessRatio: null,
   }));
 }
 
