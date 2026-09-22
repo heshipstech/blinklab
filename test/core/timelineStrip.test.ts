@@ -53,6 +53,9 @@ function rows(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     irisOffsetVertical: 0.02,
     faceSeconds: 42,
     lidOpennessRatio: null,
+    perclos30: null,
+    perclos50: null,
+    perclos60: null,
     ...over,
   }));
 }

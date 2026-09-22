@@ -410,6 +410,20 @@ const MUTATIONS = [
     "born-wrong-ruler refusal collapsed: a baseline that froze wrong-low would publish an inflated ratio nobody can trust",
     "test/core/lidOpenness.test.ts",
   ],
+  [
+    "src/core/perclosCurve.ts",
+    "sample.apertureMm < fraction * sample.baselineMm",
+    "sample.apertureMm <= fraction * sample.baselineMm",
+    "closure boundary flipped to inclusive: a lid exactly at the line would count as shut, and the 40% column would stop matching perclos",
+    "test/core/perclosCurve.test.ts",
+  ],
+  [
+    "src/core/perclosCurve.ts",
+    "0.6,\n  0.5,\n  PERCLOS_CLOSED_FRACTION,\n  0.3,",
+    "0.3,\n  0.5,\n  PERCLOS_CLOSED_FRACTION,\n  0.6,",
+    "closure-fraction family reversed to strictest-first: the exported curve would read monotone non-decreasing, the opposite of what the row promises",
+    "test/core/perclosCurve.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

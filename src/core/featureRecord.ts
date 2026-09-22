@@ -133,6 +133,19 @@ export type FeatureRecord = {
   // ratio past the plausibility ceiling that says the baseline froze
   // wrong-low. Null-never-zero, like every field here.
   lidOpennessRatio: number | null;
+  // Roadmap 12.10. The closure-fraction curve: the eyes-closed share of
+  // the last minute at three depths beside `perclos` above, which is
+  // the 40% line. `perclos60` is the share shut past 60% of the frozen
+  // baseline, `perclos50` past 50%, `perclos30` past 30% — with
+  // `perclos` they read monotone non-increasing (60 >= 50 >= 40 >= 30).
+  // INSTRUMENT-REFERENCED, not literature P80: this instrument reads a
+  // shut eye at about a third of baseline, so a 20% line is unreachable
+  // and every threshold here is a fraction of the measured baseline,
+  // the same convention `perclos` uses. Null on the same window and
+  // floors as `perclos` (src/core/perclosCurve.ts), all three together.
+  perclos30: number | null;
+  perclos50: number | null;
+  perclos60: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -242,6 +255,10 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     fractionOrNull(record.faceLum) &&
     // A ratio, non-negative and finite or null: a negative lid
     // openness is a defect upstream, not a measurement (roadmap 12.7).
-    nonNegativeOrNull(record.lidOpennessRatio)
+    nonNegativeOrNull(record.lidOpennessRatio) &&
+    // Closed shares, each a fraction in [0,1] or null (roadmap 12.10).
+    fractionOrNull(record.perclos30) &&
+    fractionOrNull(record.perclos50) &&
+    fractionOrNull(record.perclos60)
   );
 }

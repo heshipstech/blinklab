@@ -52,6 +52,9 @@ COLUMNS: list[str] = [
     "irisOffsetVertical",
     "faceSeconds",
     "lidOpennessRatio",
+    "perclos30",
+    "perclos50",
+    "perclos60",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -63,12 +66,19 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before roadmap 12.10 appended the closure-fraction curve's
+# three lines, perclos30/50/60 (22 September 2026): sessions recorded
+# until then load with them unknown. This is the generation immediately
+# before the current one, so it is sliced from COLUMNS; every older
+# generation is sliced from the one AFTER it.
+PRE_PERCLOS_CURVE_COLUMNS: list[str] = COLUMNS[:-3]
+
 # The header before roadmap 12.7 appended lidOpennessRatio
 # (22 September 2026): sessions recorded until then load with the lid
-# openness ratio unknown, which is the truth about them. This is the
-# generation immediately before the current one, so it is sliced from
-# COLUMNS; every older generation is sliced from the one AFTER it.
-PRE_LID_OPENNESS_COLUMNS: list[str] = COLUMNS[:-1]
+# openness ratio unknown, which is the truth about them. Sliced from the
+# generation after it, per the rule below, so an append can never
+# silently re-cut it — the latent defect row 12.15 found.
+PRE_LID_OPENNESS_COLUMNS: list[str] = PRE_PERCLOS_CURVE_COLUMNS[:-1]
 
 # The header before roadmap 10.12c appended faceSeconds (9 September
 # 2026, later the same day): sessions recorded until then load with
@@ -160,6 +170,7 @@ FLOOR_COLUMNS: list[str] = LEGACY_COLUMNS
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_PERCLOS_CURVE_COLUMNS,
     PRE_LID_OPENNESS_COLUMNS,
     PRE_FACE_SECONDS_COLUMNS,
     PRE_RATE_FACTS_COLUMNS,

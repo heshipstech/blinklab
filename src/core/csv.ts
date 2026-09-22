@@ -74,6 +74,13 @@ export const CSV_COLUMNS = [
   // openness ratio, aperture over the frozen shut baseline. An
   // instrument, not a verdict.
   "lidOpennessRatio",
+  // Appended 22 September 2026 (roadmap 12.10), trailing again: the
+  // closure-fraction curve's three other lines beside `perclos` (the
+  // 40% line). Instrument-referenced fractions of the baseline, not
+  // literature P80. Every older header stays an exact prefix.
+  "perclos30",
+  "perclos50",
+  "perclos60",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

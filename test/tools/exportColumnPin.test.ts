@@ -61,31 +61,40 @@ describe("the evidence rate and the inference cost travel per second", () => {
     // exported before today, a cost this project has already declined
     // three times (baselineOverResting, pupilDiameterMm, and the two
     // luminance columns row 12.16 appended after these).
-    expect(CSV_COLUMNS.slice(-9, -7)).toEqual(["sampledFps", "inferenceMs"]);
+    expect(CSV_COLUMNS.slice(-12, -10)).toEqual(["sampledFps", "inferenceMs"]);
   });
 
   it("keeps the luminance pair trailing, for the same reason", () => {
-    expect(CSV_COLUMNS.slice(-7, -5)).toEqual(["sceneLum", "faceLum"]);
+    expect(CSV_COLUMNS.slice(-10, -8)).toEqual(["sceneLum", "faceLum"]);
   });
 
   it("keeps 10.12b's three facts trailing after them, likewise", () => {
     // The observed fraction, the suspension flag and the vertical
     // iris offset landed 9 September 2026, so every earlier header
     // stays an exact prefix.
-    expect(CSV_COLUMNS.slice(-5, -2)).toEqual([
+    expect(CSV_COLUMNS.slice(-8, -5)).toEqual([
       "blinkObservedFraction",
       "blinkCountingSuspended",
       "irisOffsetVertical",
     ]);
   });
 
-  it("keeps 10.12c's faceSeconds trailing before the newest column", () => {
-    expect(CSV_COLUMNS.slice(-2, -1)).toEqual(["faceSeconds"]);
+  it("keeps 10.12c's faceSeconds trailing before the newer columns", () => {
+    expect(CSV_COLUMNS.slice(-5, -4)).toEqual(["faceSeconds"]);
   });
 
-  it("keeps 12.7's lidOpennessRatio as the newest trailing column", () => {
+  it("keeps 12.7's lidOpennessRatio trailing before the newest columns", () => {
+    expect(CSV_COLUMNS.slice(-4, -3)).toEqual(["lidOpennessRatio"]);
+  });
+
+  it("keeps 12.10's closure-fraction trio as the newest trailing columns", () => {
     // Appended 22 September 2026 as the newest generation, so every
-    // earlier header — faceSeconds's included — stays an exact prefix.
-    expect(CSV_COLUMNS.slice(-1)).toEqual(["lidOpennessRatio"]);
+    // earlier header — lidOpennessRatio's included — stays an exact
+    // prefix.
+    expect(CSV_COLUMNS.slice(-3)).toEqual([
+      "perclos30",
+      "perclos50",
+      "perclos60",
+    ]);
   });
 });

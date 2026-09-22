@@ -52,6 +52,9 @@ EXPECTED_COLUMNS = [
     "irisOffsetVertical",
     "faceSeconds",
     "lidOpennessRatio",
+    "perclos30",
+    "perclos50",
+    "perclos60",
 ]
 
 

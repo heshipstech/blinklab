@@ -39,6 +39,9 @@ const FULL: FeatureRecord = {
   irisOffsetVertical: 0.04,
   faceSeconds: 58.4,
   lidOpennessRatio: 0.82,
+  perclos30: 0.01,
+  perclos50: 0.05,
+  perclos60: 0.09,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -74,6 +77,9 @@ const ALL_NULL: FeatureRecord = {
   irisOffsetVertical: null,
   faceSeconds: 0,
   lidOpennessRatio: null,
+  perclos30: null,
+  perclos50: null,
+  perclos60: null,
 };
 
 const NUMBER_KEYS = [
@@ -92,6 +98,9 @@ const NUMBER_KEYS = [
   "fixationMedianMs",
   "pupilDiameterMm",
   "lidOpennessRatio",
+  "perclos30",
+  "perclos50",
+  "perclos60",
 ] as const;
 
 describe("assembleFeatureRecord", () => {
@@ -167,6 +176,10 @@ describe("isFeatureRecord, the schema", () => {
     expect(isFeatureRecord({ ...FULL, perclos: 1.1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, pupilDiameterMm: -1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, lidOpennessRatio: -0.2 })).toBe(false);
+    // The closure shares are fractions: below 0 or above 1 is not a
+    // share and must not reach a file (roadmap 12.10).
+    expect(isFeatureRecord({ ...FULL, perclos30: -0.1 })).toBe(false);
+    expect(isFeatureRecord({ ...FULL, perclos60: 1.1 })).toBe(false);
   });
 
   it("rejects every possible missing key, not just one", () => {

@@ -50,6 +50,9 @@ export type FeatureRecord = {
   irisOffsetVertical: number | null; // where the iris sits vertically in its eye, in eye widths, positive downward, mean of both eyes: separates downgaze droop from the drowsy kind, which the aperture alone cannot (roadmap 10.12b)
   faceSeconds: number; // how long a trusted face has actually been seen this session, in seconds, under the duplicate-proof credit the sample floors read: each fed frame credits at most one frame interval at the slowest measurable rate (roadmap 10.12c)
   lidOpennessRatio: number | null; // how open the lid sits this frame as a fraction of the frozen shut baseline (aperture over that open-eye ruler): an instrument, exported and shown, never a verdict — claimGuard holds the interpretive claim back until 12.18; null on the born-wrong-ruler refusal, a baseline missing, impossible, or too low for the ratio to be plausible (roadmap 12.7)
+  perclos30: number | null; // eyes-closed share of the last minute shut past 30% of the frozen baseline: the closure-fraction curve's strictest line. INSTRUMENT-REFERENCED, not literature P80 — a shut eye reads ~a third of baseline, so 20% is unreachable and every threshold is a fraction of the measured baseline. Null on perclos's own window and floors (roadmap 12.10)
+  perclos50: number | null; // eyes-closed share shut past 50% of the frozen baseline; with perclos (40%) and perclos30/60 the curve reads monotone non-increasing (roadmap 12.10)
+  perclos60: number | null; // eyes-closed share shut past 60% of the frozen baseline: the curve's loosest line, so the largest share. Instrument-referenced, not P80 (roadmap 12.10)
 };
 ```
 
