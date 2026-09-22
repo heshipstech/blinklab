@@ -51,6 +51,7 @@ function minute(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     blinkCountingSuspended: false,
     irisOffsetVertical: 0.02,
     faceSeconds: 42,
+    lidOpennessRatio: null,
     ...over,
   }));
 }

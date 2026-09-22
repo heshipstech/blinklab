@@ -49,6 +49,7 @@ export type FeatureRecord = {
   blinkCountingSuspended: boolean; // whether a blink this frame would not have been counted: the eye closed past the blink maximum, or the re-arm gate down because the eye never rose clearly above the line (roadmap 10.12b)
   irisOffsetVertical: number | null; // where the iris sits vertically in its eye, in eye widths, positive downward, mean of both eyes: separates downgaze droop from the drowsy kind, which the aperture alone cannot (roadmap 10.12b)
   faceSeconds: number; // how long a trusted face has actually been seen this session, in seconds, under the duplicate-proof credit the sample floors read: each fed frame credits at most one frame interval at the slowest measurable rate (roadmap 10.12c)
+  lidOpennessRatio: number | null; // how open the lid sits this frame as a fraction of the frozen shut baseline (aperture over that open-eye ruler): an instrument, exported and shown, never a verdict — claimGuard holds the interpretive claim back until 12.18; null on the born-wrong-ruler refusal, a baseline missing, impossible, or too low for the ratio to be plausible (roadmap 12.7)
 };
 ```
 

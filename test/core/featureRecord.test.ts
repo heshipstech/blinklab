@@ -38,6 +38,7 @@ const FULL: FeatureRecord = {
   blinkCountingSuspended: false,
   irisOffsetVertical: 0.04,
   faceSeconds: 58.4,
+  lidOpennessRatio: 0.82,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -72,6 +73,7 @@ const ALL_NULL: FeatureRecord = {
   blinkCountingSuspended: false,
   irisOffsetVertical: null,
   faceSeconds: 0,
+  lidOpennessRatio: null,
 };
 
 const NUMBER_KEYS = [
@@ -89,6 +91,7 @@ const NUMBER_KEYS = [
   "fixationCount",
   "fixationMedianMs",
   "pupilDiameterMm",
+  "lidOpennessRatio",
 ] as const;
 
 describe("assembleFeatureRecord", () => {
@@ -163,6 +166,7 @@ describe("isFeatureRecord, the schema", () => {
     expect(isFeatureRecord({ ...FULL, perclos: -0.1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, perclos: 1.1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, pupilDiameterMm: -1 })).toBe(false);
+    expect(isFeatureRecord({ ...FULL, lidOpennessRatio: -0.2 })).toBe(false);
   });
 
   it("rejects every possible missing key, not just one", () => {

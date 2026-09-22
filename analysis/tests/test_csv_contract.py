@@ -51,6 +51,7 @@ EXPECTED_COLUMNS = [
     "blinkCountingSuspended",
     "irisOffsetVertical",
     "faceSeconds",
+    "lidOpennessRatio",
 ]
 
 

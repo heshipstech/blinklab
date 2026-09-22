@@ -136,6 +136,7 @@ function record(timestampMs: number): FeatureRecord {
     blinkCountingSuspended: false,
     irisOffsetVertical: null,
     faceSeconds: 0,
+    lidOpennessRatio: null,
   };
 }
 

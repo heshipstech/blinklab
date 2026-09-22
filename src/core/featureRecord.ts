@@ -123,6 +123,16 @@ export type FeatureRecord = {
   // the sample floors read (src/core/faceSeconds.ts). Zero at the
   // start rather than null: no face seen yet is a measured amount.
   faceSeconds: number;
+  // Roadmap 12.7. How open the lid sits this frame as a fraction of
+  // the frozen shut baseline (shutBaselineMm above): the aperture over
+  // that open-eye ruler, one near 1 for a fully open lid and near a
+  // third for a shut one. An instrument, exported and shown, never a
+  // verdict — claimGuard holds the interpretive claim back until 12.18
+  // reads. Null on the born-wrong-ruler refusal (src/core/lidOpenness.ts):
+  // no frozen baseline, an impossible one, no aperture this frame, or a
+  // ratio past the plausibility ceiling that says the baseline froze
+  // wrong-low. Null-never-zero, like every field here.
+  lidOpennessRatio: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -229,6 +239,9 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     Number.isFinite(record.faceSeconds) &&
     record.faceSeconds >= 0 &&
     fractionOrNull(record.sceneLum) &&
-    fractionOrNull(record.faceLum)
+    fractionOrNull(record.faceLum) &&
+    // A ratio, non-negative and finite or null: a negative lid
+    // openness is a defect upstream, not a measurement (roadmap 12.7).
+    nonNegativeOrNull(record.lidOpennessRatio)
   );
 }
