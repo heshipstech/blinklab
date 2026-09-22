@@ -81,9 +81,9 @@ describe("the panel sentence", () => {
     );
   });
 
-  it("says not measurable, not a number, when the ruler was refused", () => {
+  it("says no valid measurement, not a number, when the ruler was refused", () => {
     expect(lidOpennessSentence(null)).toBe(
-      "Lid openness: not measurable this frame",
+      "Lid openness: no valid measurement",
     );
   });
 });

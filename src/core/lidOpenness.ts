@@ -69,7 +69,9 @@ export function lidOpennessRatio(
  */
 export function lidOpennessSentence(ratio: number | null): string {
   if (ratio === null) {
-    return "Lid openness: not measurable this frame";
+    // The house idiom for a frame with nothing to show, matching the
+    // idle string so the line does not jump when a session starts.
+    return "Lid openness: no valid measurement";
   }
   return `Lid openness: ${(ratio * 100).toFixed(0)}% of the frozen open baseline`;
 }
