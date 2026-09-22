@@ -226,6 +226,11 @@ import {
   ongoingClosureMs,
 } from "./core/longClosure";
 import { emptyPerclos, perclosStep, perclosValue } from "./core/perclos";
+import {
+  emptyPerclosCurve,
+  perclosCurveStep,
+  perclosCurveValueAt,
+} from "./core/perclosCurve";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
   BLINK_TABLE_HEADERS,
@@ -1352,6 +1357,7 @@ function resetSession(): void {
   // not bridge to the last session's stillness (roadmap 14.9b).
   lastGazeSampleMs = null;
   perclosState = emptyPerclos();
+  perclosCurveState = emptyPerclosCurve();
   longClosureState = initialLongClosureState;
   frozenShutBaselineMm = null;
   lastLiveIrisWidthPx = null;
@@ -3026,6 +3032,9 @@ const blinkShapeLabel = document.createElement("p");
 blinkShapeLabel.hidden = true;
 const perclosLabel = document.createElement("p");
 let perclosState = emptyPerclos();
+// Roadmap 12.10: the closure-fraction curve rides the same aperture
+// feed as perclos above, so its 40% line and the perclos column agree.
+let perclosCurveState = emptyPerclosCurve();
 const longClosureLabel = document.createElement("p");
 let longClosureState = initialLongClosureState;
 // The shut-line BASELINE freezes at the FIRST ready baseline, and
@@ -5330,13 +5339,23 @@ function processFrame(
       // reducer: below the fps gate the frame is untrusted, before
       // the baseline is ready there is no personal closed line yet,
       // both cases join neither side of the ratio.
+      const perclosApertureMm =
+        blinkMeasurable && !calibrationActiveThisFrame ? stabilityMm : null;
       perclosState = perclosStep(
         perclosState,
         nowMs,
-        blinkMeasurable && !calibrationActiveThisFrame ? stabilityMm : null,
+        perclosApertureMm,
         frozenShutBaselineMm,
       );
       const perclos = perclosValue(perclosState, nowMs);
+      // Roadmap 12.10: the same feed as perclos, so the curve's 40%
+      // line equals the perclos column and the family stays consistent.
+      perclosCurveState = perclosCurveStep(
+        perclosCurveState,
+        nowMs,
+        perclosApertureMm,
+        frozenShutBaselineMm,
+      );
       writeReadout(
         perclosLabel,
         calibrationRefused
@@ -5482,6 +5501,12 @@ function processFrame(
             // frozen shut baseline, or null on the born-wrong-ruler
             // refusal — computed once above for the readout too.
             lidOpennessRatio: frameLidOpenness,
+            // Roadmap 12.10: the closure-fraction curve's three other
+            // lines beside `perclos` (the 40% line), each null on the
+            // same window and floors.
+            perclos30: perclosCurveValueAt(perclosCurveState, nowMs, 0.3),
+            perclos50: perclosCurveValueAt(perclosCurveState, nowMs, 0.5),
+            perclos60: perclosCurveValueAt(perclosCurveState, nowMs, 0.6),
           }),
           FEATURE_RECORD_CAP,
         );

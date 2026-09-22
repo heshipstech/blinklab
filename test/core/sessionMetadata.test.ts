@@ -95,6 +95,9 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     irisOffsetVertical: null,
     faceSeconds: 0,
     lidOpennessRatio: null,
+    perclos30: null,
+    perclos50: null,
+    perclos60: null,
   };
 }
 
