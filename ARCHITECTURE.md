@@ -95,7 +95,7 @@ seconds. `withinWindow` in `src/core/sparkline.ts`.
 ## Layout
 
 ```
-src/core/     pure logic, no browser, ~45 modules, this is the project
+src/core/     pure logic, no browser, ~110 modules, this is the project
 src/io/       camera, video files, MediaPipe, canvas, downloads
 src/main.ts   wiring and the DOM. The only file that builds the page
 test/core/    unit tests, one per core module
