@@ -1615,7 +1615,7 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
 
 ## Stage D. Process and guards
 
-- [ ] **D1. The evaluator that produces 83.6% has zero tests; its three
+- [x] **D1. The evaluator that produces 83.6% has zero tests; its three
       deliberate properties can be deleted with CI green.**
       `high · confirmed ×2 (mutations survived) · M`
       **What:** `analysis/tools/evaluate_eyeblink8.py:14-26`, `:73-98`,
@@ -1630,6 +1630,20 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
       glasses split appears with its wording; pin the literal 0.01 / 5
       thresholds and A12's new refusals.
       **Findings:** G-Reproduc-2.
+      **Done:** 23 September 2026, with the tests roadmap 10.1d's
+      evaluator slice built on 13 September, the date its ratchet
+      caveat in docs/eyeblink8-result.txt carries:
+      analysis/tests/test_evaluate_eyeblink8.py pins the coverage bar
+      at max(5, 1%) from both sides, the missing frames_measured
+      header, the watched-mode refusal, the refusals printed in the
+      report body, the non-zero exit on a partial corpus and the
+      glasses split said not computable, and
+      TestCollectWalksACorpusOnDisk now drives collect() itself over
+      tmp_path fixtures. One leftover this item did not ask for is
+      recorded rather than fixed: report()'s "<-- MISMATCH" coverage
+      flag can no longer fire in a real run, because collect() refuses
+      any clip past the same bar first. Row 10.1d stays open for D3's
+      committed inputs.
 
 - [x] **D2. Refusal-threshold constants survive mutation; the mutation
       runner has been unrunnable since 20 August.** `high · confirmed ×2
