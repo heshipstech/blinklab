@@ -138,6 +138,35 @@ describe("device rows", () => {
     expect(deviceMetadataRows(null)[0]).toContain("not a camera session");
   });
 
+  // Roadmap 13.5, remediation D8: camera rows conditional, machine rows
+  // unconditional. A clip ran on a machine as surely as a camera session
+  // did, and the corpus results are clip exports.
+  it("writes a clip's machine beside its no-camera line", () => {
+    const rows = deviceMetadataRows(null, false, FULL);
+    expect(rows[0]).toBe("# camera: none, not a camera session");
+    expect(rows).toContain("# hardware_concurrency: 10");
+    expect(rows).toContain("# user_agent: an unknown browser on macOS");
+    // The camera's own rows stay conditional: a clip has no resolution,
+    // declared rate or facing mode to report.
+    const text = rows.join("\n");
+    expect(text).not.toContain("camera_resolution");
+    expect(text).not.toContain("camera_declared_fps");
+    expect(text).not.toContain("facing_mode");
+  });
+
+  it("gives a clip and a camera session the same machine rows", () => {
+    const camera = deviceMetadataRows(FULL);
+    const clip = deviceMetadataRows(null, false, FULL);
+    expect(clip.slice(1)).toEqual(camera.slice(4));
+  });
+
+  it("still writes a clip's machine rows when the machine was never read", () => {
+    const rows = deviceMetadataRows(null);
+    expect(rows).toHaveLength(deviceMetadataRows(null, false, FULL).length);
+    expect(rows).toContain("# user_agent: unknown");
+    expect(rows).toContain("# hardware_concurrency: unknown");
+  });
+
   // Roadmap 10.0a2, ladder B2. The full user agent names the browser
   // build, the engine build and often the operating system patch
   // level, and participants are asked to email these files. The

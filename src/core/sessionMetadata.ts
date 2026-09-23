@@ -32,8 +32,27 @@ import { reduceUserAgent } from "./userAgent";
 // in io/deviceInfo.ts, so the sentence-building can be tested without
 // a camera, which is the only way these strings ever get checked.
 
+/**
+ * What the browser can tell us about the machine alone.
+ *
+ * Its own type because a clip session has one too. A clip runs with no
+ * camera, but it runs in a browser on a computer, and the corpus results
+ * are exactly the files that need to say which (roadmap 13.5's "machine
+ * rows unconditional", remediation D8).
+ */
+export type MachineInfo = {
+  userAgent: string | null;
+  hardwareConcurrency: number | null;
+  viewportWidthPx: number | null;
+  viewportHeightPx: number | null;
+  screenWidthPx: number | null;
+  screenHeightPx: number | null;
+  devicePixelRatio: number | null;
+  orientation: string | null;
+};
+
 /** What the browser can tell us about the camera and the machine. */
-export type DeviceInfo = {
+export type DeviceInfo = MachineInfo & {
   /** The camera's own name, e.g. "FaceTime HD Camera". */
   cameraLabel: string | null;
   /** Negotiated capture size, which is not always what was asked for. */
@@ -52,14 +71,6 @@ export type DeviceInfo = {
   cameraDeclaredFps: number | null;
   /** "user" or "environment". Only meaningful on a phone. */
   facingMode: string | null;
-  userAgent: string | null;
-  hardwareConcurrency: number | null;
-  viewportWidthPx: number | null;
-  viewportHeightPx: number | null;
-  screenWidthPx: number | null;
-  screenHeightPx: number | null;
-  devicePixelRatio: number | null;
-  orientation: string | null;
 };
 
 /**
@@ -139,43 +150,64 @@ function line(key: string, value: string | number | null): string {
  * `user_agent_form` row says which, so a reader of the file is never
  * left deciding whether a short string is a reduction or a browser
  * that says little.
+ *
+ * The camera rows are conditional and the machine rows are not (roadmap
+ * 13.5, remediation D8). A clip has no camera and says so in one row,
+ * but it still ran in a browser on a machine. A clip export that
+ * dropped the browser, the core count and the pixel ratio left every
+ * corpus result silent on what it ran on. `clipMachine` is that
+ * machine, read when the clip started, and is used only when `info` is
+ * null. Null there still writes the rows, reading "unknown", because
+ * the rows are a promise.
  */
 export function deviceMetadataRows(
   info: DeviceInfo | null,
   fullUserAgent = false,
+  clipMachine: MachineInfo | null = null,
 ): string[] {
   if (info === null) {
     // A clip run has no camera. Saying so beats omitting the block and
     // leaving a reader to wonder whether it was dropped or never existed.
-    return [line("camera", "none, not a camera session")];
+    return [
+      line("camera", "none, not a camera session"),
+      ...machineRows(clipMachine, fullUserAgent),
+    ];
   }
   const size =
     info.cameraWidthPx === null || info.cameraHeightPx === null
       ? null
       : `${info.cameraWidthPx}x${info.cameraHeightPx}`;
-  const viewport =
-    info.viewportWidthPx === null || info.viewportHeightPx === null
-      ? null
-      : `${info.viewportWidthPx}x${info.viewportHeightPx}`;
-  const screen =
-    info.screenWidthPx === null || info.screenHeightPx === null
-      ? null
-      : `${info.screenWidthPx}x${info.screenHeightPx}`;
   return [
     line("camera", info.cameraLabel),
     line("camera_resolution", size),
     line("camera_declared_fps", info.cameraDeclaredFps),
     line("facing_mode", info.facingMode),
-    line(
-      "user_agent",
-      fullUserAgent ? info.userAgent : reduceUserAgent(info.userAgent),
-    ),
+    ...machineRows(info, fullUserAgent),
+  ];
+}
+
+/** The machine's rows, the same seven for a camera session and a clip. */
+function machineRows(
+  machine: MachineInfo | null,
+  fullUserAgent: boolean,
+): string[] {
+  const size = (width: number | null, height: number | null) =>
+    width === null || height === null ? null : `${width}x${height}`;
+  const userAgent = machine?.userAgent ?? null;
+  return [
+    line("user_agent", fullUserAgent ? userAgent : reduceUserAgent(userAgent)),
     line("user_agent_form", fullUserAgent ? "full" : "reduced"),
-    line("hardware_concurrency", info.hardwareConcurrency),
-    line("viewport", viewport),
-    line("screen", screen),
-    line("device_pixel_ratio", info.devicePixelRatio),
-    line("orientation", info.orientation),
+    line("hardware_concurrency", machine?.hardwareConcurrency ?? null),
+    line(
+      "viewport",
+      size(machine?.viewportWidthPx ?? null, machine?.viewportHeightPx ?? null),
+    ),
+    line(
+      "screen",
+      size(machine?.screenWidthPx ?? null, machine?.screenHeightPx ?? null),
+    ),
+    line("device_pixel_ratio", machine?.devicePixelRatio ?? null),
+    line("orientation", machine?.orientation ?? null),
   ];
 }
 
