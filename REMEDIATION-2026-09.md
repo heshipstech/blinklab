@@ -2063,6 +2063,22 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       `eyeblink8-result.txt`'s run header ("unknown, probe added after
       this run" if unrecoverable).
       **Findings:** G-Browser-4, G-Browser-3, F-108.
+      **Most of it done:** 12 September 2026, roadmap 13.5.
+      `src/core/delegateTruth.ts` writes the delegate block into every
+      export, camera and clip alike (the request, the GPU load's
+      outcome, the webgl2 probe, inference p50 and p95, and
+      `delegate_executed` stating the limit); `src/io/landmarker.ts`
+      retries exactly once as CPU when the GPU load rejects;
+      MODEL_CARD calls "GPU" a request, not an observation; and the
+      2026-09-09 run header carries "Delegate unknown, probe added
+      after this run". Still open: the first part of this fix, machine
+      rows unconditional. Row 13.5's own text names it ("camera rows
+      conditional, machine rows unconditional"), but its Check did
+      not, and `deviceMetadataRows(null)` still writes a clip export's
+      camera line alone, so no clip export carries `user_agent`,
+      `hardware_concurrency` or `device_pixel_ratio`. Recorded 23
+      September 2026 by a sweep that found the row ticked and this
+      item silent.
 
 - [x] **D9. A `connect-src 'self'` Content-Security-Policy closes the
       named residual risk at the network layer; the recorded objections
