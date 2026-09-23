@@ -1,4 +1,4 @@
-import type { DeviceInfo } from "../core/sessionMetadata";
+import type { DeviceInfo, MachineInfo } from "../core/sessionMetadata";
 
 // Reading the browser for the conditions of a measurement. Impure by
 // definition, so it lives here and hands core a plain object it can
@@ -16,6 +16,32 @@ function trackOf(video: HTMLVideoElement): MediaStreamTrack | null {
     return null;
   }
   return stream.getVideoTracks()[0] ?? null;
+}
+
+/**
+ * What the browser will tell us about the machine, with no camera to
+ * read. A clip session's half of `readDeviceInfo`, read when the clip
+ * starts (roadmap 13.5, remediation D8). As defensive as the reads below.
+ */
+export function readMachineInfo(): MachineInfo {
+  const orientation = (() => {
+    try {
+      return window.screen.orientation?.type ?? null;
+    } catch {
+      return null;
+    }
+  })();
+
+  return {
+    userAgent: navigator.userAgent.length > 0 ? navigator.userAgent : null,
+    hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+    viewportWidthPx: window.innerWidth,
+    viewportHeightPx: window.innerHeight,
+    screenWidthPx: window.screen?.width ?? null,
+    screenHeightPx: window.screen?.height ?? null,
+    devicePixelRatio: window.devicePixelRatio ?? null,
+    orientation,
+  };
 }
 
 /**
@@ -40,14 +66,6 @@ export function readDeviceInfo(video: HTMLVideoElement): DeviceInfo {
     }
   }
 
-  const orientation = (() => {
-    try {
-      return window.screen.orientation?.type ?? null;
-    } catch {
-      return null;
-    }
-  })();
-
   return {
     cameraLabel: label,
     cameraWidthPx: settings.width ?? null,
@@ -57,13 +75,6 @@ export function readDeviceInfo(video: HTMLVideoElement): DeviceInfo {
         ? null
         : Math.round(settings.frameRate * 100) / 100,
     facingMode: settings.facingMode ?? null,
-    userAgent: navigator.userAgent.length > 0 ? navigator.userAgent : null,
-    hardwareConcurrency: navigator.hardwareConcurrency ?? null,
-    viewportWidthPx: window.innerWidth,
-    viewportHeightPx: window.innerHeight,
-    screenWidthPx: window.screen?.width ?? null,
-    screenHeightPx: window.screen?.height ?? null,
-    devicePixelRatio: window.devicePixelRatio ?? null,
-    orientation,
+    ...readMachineInfo(),
   };
 }
