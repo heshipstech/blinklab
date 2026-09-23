@@ -398,6 +398,21 @@ downgraded/medium (b-1) · M`
       sentence UTA-RLDD cannot write.
       **Depends on:** A1 (inexact-landing witness for future runs).
       **Findings:** G-Stepped-3, G-Stepped-4, G-Stepped-9.
+      **Half done:** 13 September 2026, roadmap 10.14b's container
+      slice, three of this fix's five parts.
+      `analysis/tools/prepare_rldd.py` writes the ffprobe manifest,
+      one line per clip (`r_frame_rate`, `avg_frame_rate`,
+      `nb_read_packets`); `analysis/blinklab/rldd.py` refuses a clip
+      whose measured coverage and container duration disagree by more
+      than max(2 s, 2%); and `docs/uta-rldd-plan.md` says the floor
+      tests the rate this instrument measured. Still open: a way to
+      hand the manifest to the tools, because `load_corpus` takes one
+      as an optional argument and `analyse_rldd.py` and
+      `rldd_coefficients.py` both call it without; the 30 reason lines
+      from a re-run over the retained CSVs, reconciled with the count;
+      and the DROZY manifest and sentence. The last two read files on
+      the owner's machine. Recorded 23 September 2026 by a sweep that
+      found the slice landed and this item silent about it.
 
 - [ ] **A12. The Eyeblink8 evaluator exits 0 on a partial corpus, drops
       the glasses split silently, and its coverage rule tolerates 157
