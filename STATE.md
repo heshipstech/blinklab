@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 2043 unit tests and 695 Python tests, each figure
+- **The suite:** 2045 unit tests and 699 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE BLINK LOG LEARNS HOW MUCH OF THE EYE A BLINK CLOSED, 23 September 2026 (row 12.6b's third container slice: the trailing column; the row stays marked).** Every blink the page counts now carries the frozen open baseline in force when it was counted, and the blink-log export appends `closureFraction` trailing — the amplitude over that ruler, empty and never zero when there was no shape or no ruler: before the baseline is born, when the detector compares against the fixed fallback line, and after a refused birth. The two Python readers of the blink log refuse any header they were not taught, so they are taught the new generation BY NAME: `PRE_CLOSURE_FRACTION_BLINK_COLUMNS` keeps every committed log loadable, `ACCEPTED_BLINK_GENERATIONS` lists exactly what is accepted, and each row is held to its own header's width, so a seven-field row under the eight-column header is refused as damage rather than read as age. The contract pin that landed in the slice before this one did its job in its first use: SPEC went red until its column sentence named the new column, and now describes it beside the arm-line cut it belongs to. blink_log.py is a detector source, so the dated ratchet caveat declares it, predicting no corpus impact by construction — the evaluation reads the frame columns only. What remains of the container slice is the table's label in place of the 1.5 mm grey line; the min_ratio reproduction stays the owner's corpus run. Unit tests move 2043 to 2045 and Python tests 695 to 699. The live claim is unchanged at 12.8a. The suite is 2045 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **THE BLINK LOG'S BORDER, ASSERTED FROM BOTH SIDES, 23 September 2026 (row 12.6b's second container slice: the contract before the column).** The per-second file's columns have been held across the language border since the contract test landed, and the blink log's never were: blink_log.py refuses any header that is not its own, which is loud, but only when a real blink log is read — on the owner's machine, at the next corpus run, long after the change that caused it merged green. A column appended on the TypeScript side alone would pass every check here until then, and 12.6b is about to append one. So analysis/tests/test_csv_contract.py now reads `BLINK_CSV_COLUMNS` out of blinkLog.ts and holds it equal to the reader's written-out `BLINK_COLUMNS`, and holds SPEC's blink-log column sentence to the same list — the third copy, and the one a person actually reads. Both were watched failing on a drift (a column appended to the reader alone; two of SPEC's columns swapped) before passing on the tree. The column itself is the next slice, and this pin is what makes it land in all three places at once. Python tests move 693 to 695. The live claim is unchanged at 12.8a. The suite is 2043 unit tests, 52 end to end tests of which 50 run on every pull request.
 
