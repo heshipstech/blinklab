@@ -103,3 +103,49 @@ def test_the_ruler_fit_ceiling_matches_between_the_languages() -> None:
 def test_the_timestamp_column_comes_first() -> None:
     """Row order depends on it, and every plot will sort by it."""
     assert declared_columns()[0] == "timestampMs"
+
+
+BLINK_LOG_SOURCE = REPO_ROOT / "src" / "core" / "blinkLog.ts"
+SPEC = REPO_ROOT / "SPEC.md"
+
+
+def declared_blink_columns() -> list[str]:
+    """Read BLINK_CSV_COLUMNS out of the TypeScript source."""
+    source = BLINK_LOG_SOURCE.read_text(encoding="utf-8")
+    match = re.search(
+        r"export const BLINK_CSV_COLUMNS = \[(.*?)\] as const", source, re.S
+    )
+    assert match is not None, (
+        f"BLINK_CSV_COLUMNS not found in {BLINK_LOG_SOURCE}"
+    )
+    return re.findall(r'"([^"]+)"', match.group(1))
+
+
+def test_blink_log_columns_match_between_the_languages() -> None:
+    """The second file across the same border (roadmap 12.6b).
+
+    blink_log.py refuses a header that is not its own, which is loud,
+    but only when a real blink log is read: on the owner's machine, at
+    the next corpus run, long after the change that caused it merged
+    green. A column appended on one side and not the other would pass
+    every check here until then. This moves the refusal to the pull
+    request, the same way declared_columns() does for the per-second
+    file; the reader's own written-out list is the human acknowledgment.
+    """
+    from blinklab.blink_log import BLINK_COLUMNS
+
+    assert declared_blink_columns() == BLINK_COLUMNS
+
+
+def test_the_spec_names_the_blink_log_columns_in_order() -> None:
+    """SPEC's column sentence is the third copy, so it is held too."""
+    text = SPEC.read_text(encoding="utf-8")
+    match = re.search(
+        r"### The blink log export.*?- Columns, in order: (.*?)\.\n",
+        text,
+        re.S,
+    )
+    assert match is not None, "SPEC.md's blink log column sentence moved"
+    assert re.findall(r"`([^`]+)`", match.group(1)) == (
+        declared_blink_columns()
+    )
