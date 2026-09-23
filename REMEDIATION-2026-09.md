@@ -312,7 +312,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       and `resolveShutLine` says so, rather than answering that
       question by wiring.
 
-- [ ] **A9. The guided line has no soundness ceiling, and its open
+- [x] **A9. The guided line has no soundness ceiling, and its open
       phase samples the eye while the person is reading the
       instruction.** `high · confirmed ×2 (b-4), confirmed/high +
 downgraded/medium (b-1) · M`
@@ -338,6 +338,11 @@ downgraded/medium (b-1) · M`
       half-line by a committed factor); unit tests on both.
       **Depends on:** A8 (so the refusal is visible in the export).
       **Findings:** G-Guided b-4, G-Guided b-1.
+      **Done:** 15 September 2026, roadmap 11.6a: a settle window
+      opens each guided phase (GUIDED_CALIBRATION_SETTLE_MS), and a
+      resolve-time soundness ceiling refuses a line above the open
+      eye's lower tail. Ticked 23 September 2026 by a sweep that found
+      the row done and this box still open.
 
 - [ ] **A10. Guided calibration's own 3 s closed phase is scored as a
       microsleep and fed to the passive baseline.**
