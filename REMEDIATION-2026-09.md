@@ -1531,6 +1531,19 @@ copyright line per family. The test reads the families out of
       session (A8's rows), over the owner's devices first.
       **Depends on:** A8, A9.
       **Findings:** G-Guided b-5, G-Guided b-10.
+      **Most of it done:** 15 September 2026, roadmap 11.6a's
+      verification slices. After a sound resolve the calibration runs
+      a verification phase that asks for three ordinary blinks and
+      runs the candidate line through the detector; the line is stored
+      only when it catches at least
+      `GUIDED_CALIBRATION_VERIFY_MIN_BLINKS` (two), and a verification
+      that catches fewer is a refusal whose sentence says so and asks
+      for another try. The count caught is stored with the line and
+      exported, and MANUAL's calibration item (the one this item cites
+      as line 66) was rewritten to the shipped behaviour. Still open:
+      the harness, the verification outcome measured on people over
+      the owner's devices first. Recorded 23 September 2026 by a sweep
+      that found the row ticked and this item silent.
 
 - [x] **C4. A cued ground-truth capture tool, so live claims stop
       resting on the contaminated count-ten protocol.** `low ·
