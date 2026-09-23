@@ -576,7 +576,7 @@ deliveryRates(...)` reads a rolling 5 s window
       the capture at the transition, and the median is a separate
       decision for the ruler era.
 
-- [ ] **A19. One untrusted frame splits a closure into two long closures
+- [x] **A19. One untrusted frame splits a closure into two long closures
       and can hand its tail to the blink counter, pinned by test as
       intended.** `medium · confirmed ×2 · M · corpus rule`
       **What:** `longClosure.ts:77-84` resets `closedAtMs` and
@@ -591,6 +591,11 @@ deliveryRates(...)` reads a rolling 5 s window
       prediction first; Eyeblink8 through D10.
       **Depends on:** A7 (same reducer, land after it).
       **Findings:** F-036.
+      **Done:** 10 September 2026, roadmap 10.11: a closure carries
+      across an untrusted gap up to LONG_CLOSURE_MAX_GAP_MS, and the
+      split-closure test is re-pinned to the physical intent of one
+      closure. Ticked 23 September 2026 by a sweep that found the row
+      done and this box still open.
 
 - [ ] **A20. Baseline and guided-calibration sample floors count
       processing ticks, not seconds of face.**
