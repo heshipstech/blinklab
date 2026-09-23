@@ -1515,7 +1515,7 @@ confirmed/medium + downgraded · M`
       either way the result is scored.
       **Findings:** G-Stepped-5, F-048.
 
-- [ ] **C9. Gaze profile context and one definition of "off screen".**
+- [x] **C9. Gaze profile context and one definition of "off screen".**
       `medium · downgraded ×2 · M`
       **What:** the profile is four numbers
       (`calibrationProfile.ts:18-21`, `calibrationStore.ts:163-170`)
@@ -1538,6 +1538,15 @@ confirmed/medium + downgraded · M`
       **Depends on:** A23, A24; lands with D12's reorder (14.9 before
       12.11-12.13).
       **Findings:** F-011, F-043.
+      **Done:** 12 and 17 September 2026, roadmap 14.9a and 14.9b: the
+      profile stores its pose, iris width, viewport, DPR, screen and
+      camera, refuses or flags a different window or camera, and nulls
+      the calibrated point when the head has moved since calibration;
+      with a profile, on-screen means the calibrated point within the
+      margin, worded as the window. The harness's pose-delta logging
+      is roadmap 14.9's, still behind the brief-(3) gate. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [ ] **C10. Engine agreement on a fixed clip: one commit, one machine,
       one prepared clip, two engines, paired.** `low · downgraded ×2 ·
