@@ -424,6 +424,27 @@ const MUTATIONS = [
     "closure-fraction family reversed to strictest-first: the exported curve would read monotone non-decreasing, the opposite of what the row promises",
     "test/core/perclosCurve.test.ts",
   ],
+  [
+    "src/core/perclosBlinkExcluded.ts",
+    "endMs - start.timestampMs > MAX_BLINK_DURATION_MS",
+    "endMs - start.timestampMs >= MAX_BLINK_DURATION_MS",
+    "blink edge flipped: a closure of exactly the blink maximum, which blink.ts counts as a blink, would count as a slow closure",
+    "test/core/perclosBlinkExcluded.test.ts",
+  ],
+  [
+    "src/core/perclosBlinkExcluded.ts",
+    "next.closed &&\n      next.timestampMs - end.timestampMs <= LONG_CLOSURE_MAX_GAP_MS",
+    "next.closed &&\n      next.timestampMs - end.timestampMs <= LONG_CLOSURE_MAX_GAP_MS * 100",
+    "gap bound bloated: two blinks either side of a long face loss would be joined into one slow closure",
+    "test/core/perclosBlinkExcluded.test.ts",
+  ],
+  [
+    "src/core/perclosBlinkExcluded.ts",
+    "? next.timestampMs\n        : end.timestampMs",
+    "? end.timestampMs\n        : end.timestampMs",
+    "reopen dropped from the span: every closure would be measured one frame short of the span blink.ts measures",
+    "test/core/perclosBlinkExcluded.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner

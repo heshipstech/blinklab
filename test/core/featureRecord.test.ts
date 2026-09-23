@@ -42,6 +42,7 @@ const FULL: FeatureRecord = {
   perclos30: 0.01,
   perclos50: 0.05,
   perclos60: 0.09,
+  perclosBlinkExcluded: 0.004,
 };
 
 // The first honest second of a session: nothing is trusted yet.
@@ -80,6 +81,7 @@ const ALL_NULL: FeatureRecord = {
   perclos30: null,
   perclos50: null,
   perclos60: null,
+  perclosBlinkExcluded: null,
 };
 
 const NUMBER_KEYS = [
@@ -101,6 +103,7 @@ const NUMBER_KEYS = [
   "perclos30",
   "perclos50",
   "perclos60",
+  "perclosBlinkExcluded",
 ] as const;
 
 describe("assembleFeatureRecord", () => {
@@ -180,6 +183,10 @@ describe("isFeatureRecord, the schema", () => {
     // share and must not reach a file (roadmap 12.10).
     expect(isFeatureRecord({ ...FULL, perclos30: -0.1 })).toBe(false);
     expect(isFeatureRecord({ ...FULL, perclos60: 1.1 })).toBe(false);
+    expect(isFeatureRecord({ ...FULL, perclosBlinkExcluded: -0.1 })).toBe(
+      false,
+    );
+    expect(isFeatureRecord({ ...FULL, perclosBlinkExcluded: 1.1 })).toBe(false);
   });
 
   it("rejects every possible missing key, not just one", () => {

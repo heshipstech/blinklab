@@ -55,6 +55,7 @@ EXPECTED_COLUMNS = [
     "perclos30",
     "perclos50",
     "perclos60",
+    "perclosBlinkExcluded",
 ]
 
 

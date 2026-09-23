@@ -81,6 +81,11 @@ export const CSV_COLUMNS = [
   "perclos30",
   "perclos50",
   "perclos60",
+  // Appended 23 September 2026 (roadmap 12.10a), trailing again: perclos
+  // with blink-sized closures left out, the literature's slow-closure
+  // reading on the instrument's own line. Every older header stays an
+  // exact prefix.
+  "perclosBlinkExcluded",
 ] as const satisfies readonly (keyof FeatureRecord)[];
 
 // `satisfies` rejects a column name that is not a field, but it

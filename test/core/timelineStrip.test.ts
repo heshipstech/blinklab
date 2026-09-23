@@ -56,6 +56,7 @@ function rows(overrides: Partial<FeatureRecord>[]): FeatureRecord[] {
     perclos30: null,
     perclos50: null,
     perclos60: null,
+    perclosBlinkExcluded: null,
     ...over,
   }));
 }
