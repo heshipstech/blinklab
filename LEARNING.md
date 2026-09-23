@@ -5473,3 +5473,22 @@ The read stamp is what found these, and it only works because it is
 cheap to lie to and nobody does: the digest refuses a changed claim
 until someone reads the whole document again, and the stamp says in
 its own words that the read was an automated pass.
+
+## A8 (the gaze button) A progress note that says "both" is a claim about each
+
+The concept this increment teaches is how a correct-looking progress
+note can hide half a fix. Remediation A8 asked for both calibrate
+buttons to be gated on a live camera, and its note recorded that both
+were. The blink button was, carefully, with a comment explaining why a
+recording must not become a person's stored line. The gaze button sat
+one line above it, still enabled for any running source, because its
+own comment said it was available "whenever a source runs" and nobody
+re-read that sentence against the new rule.
+
+A plural in a done note is the easiest place for this to happen: the
+work that prompted the note was real and nearby, and "both" reads as
+true because one of them plainly is. The check that finds it is
+mechanical — read the note, then find each thing it names in the
+code — and the fix is the same one line the first half already had.
+The e2e now asserts each button by name, so a future "both" is held to
+both.
