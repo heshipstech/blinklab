@@ -2176,6 +2176,21 @@ probed) · M · owner`
 && npm ci && npm run build && npm run preview`); drop "frozen"
       from `ROADMAP.md:185` until the mechanism exists.
       **Findings:** F-073, G-Build d-4.
+      **Most of it done:** 15 September 2026, roadmap 11.8a's slices.
+      `tools/pinnedBuildGuard.mjs` holds every plan to its build: a
+      version token in a plan must be an existing git tag, and
+      "frozen" appears in no plan without one, with a dated,
+      shrink-only ledger for the two plans whose "frozen" means their
+      own text. README's "Reproduce the exact page" section gives the
+      checkout-and-build command and is honest that a rebuild's
+      provenance is the checkout, not a copied stamp.
+      `validation_report.py` and `pilot.py` refuse a cohort spanning
+      two builds; `analyse_drozy.py` and `analyse_rldd.py` state the
+      commit set, because their published corpora predate the stamp.
+      Still open: tagging and releasing, with `dist` attached, the
+      exact commit of a run that becomes evidence, which is the
+      owner's act at evidence time. Recorded 23 September 2026 by a
+      sweep that found the slices landed and this item silent.
 
 - [x] **D12. One roadmap PR: instrument rows before claim rows, as the
       era rule says.** `medium · confirmed ×2 · S` - 14.9 (with C9's additions) ahead of 12.11-12.13
