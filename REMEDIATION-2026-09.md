@@ -1902,7 +1902,7 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       this run" if unrecoverable).
       **Findings:** G-Browser-4, G-Browser-3, F-108.
 
-- [ ] **D9. A `connect-src 'self'` Content-Security-Policy closes the
+- [x] **D9. A `connect-src 'self'` Content-Security-Policy closes the
       named residual risk at the network layer; the recorded objections
       do not survive the bundle.** `medium · confirmed ×2 · M`
       **What:** `SECURITY.md:38-42` and `ADR-0004:79-82`, `:109-112`
@@ -1916,6 +1916,11 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       SECURITY.md and append to ADR-0004; keep the wrapper
       (`src/io/telemetryBlock.ts:7-8`).
       **Findings:** F-063.
+      **Done:** 14 September 2026, roadmap 10.2b: index.html carries
+      the connect-src 'self' Content-Security-Policy, SECURITY.md is
+      corrected, ADR-0004 has the rejected option's dated section, and
+      the telemetry wrapper is kept. Ticked 23 September 2026 by a
+      sweep that found the row done and this box still open.
 
 - [ ] **D10. Row 10.8a, a regression run at HEAD, with the replay tool
       committed first.** `medium · confirmed ×2 (F-037 third path
