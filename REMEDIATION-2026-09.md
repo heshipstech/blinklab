@@ -1688,7 +1688,7 @@ M · owner (the eight logs)`
       logs are not to hand).
       **Findings:** G-Reproduc-1, G-Reproduc-7.
 
-- [ ] **D4. The ratchet watches the browser half of the number only, its
+- [x] **D4. The ratchet watches the browser half of the number only, its
       caveat is satisfied by a sha anywhere in the file, and the engine
       is pinned by nothing.** `medium · confirmed ×2 · S`
       **What:** `DETECTOR_SOURCES` (`tools/detectorRatchet.mjs:37-60`)
@@ -1711,6 +1711,15 @@ M · owner (the eight logs)`
       Dependabot entry; browser and Playwright version in the
       reproduction block at `eyeblink8-result.txt:34-39`.
       **Findings:** F-058, G-Reproduc-6, G-Browser-2, G-Build d-3.
+      **Done:** 7 September 2026, roadmap 10.1g, 10.1g3 and 10.1g4:
+      the watch list covers the scorer, the log reader, the evaluator,
+      the corpus runner, the stepper and the lockfile, the sha is
+      matched inside the caveat block only, the tolerance is pinned by
+      a matches-and-does-not pair, and Playwright has its own
+      Dependabot entry and provenance lines. The gate-wiring
+      extraction is D7's by this item's own text, and the committed
+      inputs wait on D3. Ticked 23 September 2026 by a sweep that
+      found the row done and this box still open.
 
 - [x] **D5. GitHub Pages publishes four minutes before CI finishes and
       would publish a red merge.** `medium (downgraded/low once) · S`
