@@ -1045,7 +1045,7 @@ enabled false`.
       sessions; 95% upper bound ~56%"; express round-II criterion 1
       as a proportion with a minimum sound count. (F-050)
 
-- [ ] **B12. Six measured bounds are known and unstated in the
+- [x] **B12. Six measured bounds are known and unstated in the
       conditions sentences.** `low · confirmed · S` - PERCLOS counts blink frames; the literature's PERCLOS excludes
       them (`perclos.ts:3-7`, `:83`; `MODEL_CARD.md:172-177`,
       `test/MANUAL.md:44`, `drozy-result.txt:43`). State "includes
@@ -1132,6 +1132,12 @@ enabled false`.
       session rather than arithmetic, and it is the ladder's own
       separate row. The remaining sixth is F-034, the iris citation,
       roadmap 10.10c4d, which needs the owner.
+      **Done:** 9 September 2026, roadmap 10.10c4d, the sixth bound:
+      IRIS_DIAMETER_MM now cites Rüfer, Schröder and Erb (Cornea 2005,
+      11.71 ± 0.42 mm) and MediaPipe Iris, and MODEL_CARD's
+      measurement-uncertainty section states the ±4%. Six of six.
+      Ticked 23 September 2026 by a sweep that found the row done and
+      this box still open.
 
 - [x] **B13. "Reliable near the centre, degrades at the corners" is
       published with no measurement behind it.** `medium · downgraded ×2
