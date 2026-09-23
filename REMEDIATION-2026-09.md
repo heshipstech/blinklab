@@ -1971,7 +1971,7 @@ probed) · M · owner`
       from `ROADMAP.md:185` until the mechanism exists.
       **Findings:** F-073, G-Build d-4.
 
-- [ ] **D12. One roadmap PR: instrument rows before claim rows, as the
+- [x] **D12. One roadmap PR: instrument rows before claim rows, as the
       era rule says.** `medium · confirmed ×2 · S` - 14.9 (with C9's additions) ahead of 12.11-12.13
       (`ROADMAP.md:41`, `:206-208`, `:213`, `:244`); 12.18's gaze
       riders gated on a committed 14.9 number or dropped;
@@ -1985,6 +1985,12 @@ probed) · M · owner`
       11.0a/b.
       **Findings:** F-041, F-072, G-Stepped-8, plus the roadmap halves
       of F-002, F-025, F-009, F-074, F-071, F-075, G-Browser-6.
+      **Done:** 6 September 2026, roadmap amendment 17, which names
+      itself this item: the era's reorder put instrument rows before
+      claim rows, 14.9 ahead of the gaze claims, 13.2 first among the
+      rate rows, C10's engine row before 13.1 and 10.8a before 10.8.
+      Ticked 23 September 2026 by a sweep that found the row done and
+      this box still open.
 
 - [ ] **D13. ADR-0005 on the priority pivot; the mobile ADR before Phase
       13; a CONTRIBUTING rule for measurement-definition changes.**
