@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from blinklab.rldd import (
+    CONTAINER_NOT_CHECKED,
     SEED,
     SHUFFLES,
     RldError,
@@ -289,3 +290,55 @@ class TestTheCommandTakesTheShuffleControl:
             build_parser().parse_args(["measured", "--shuffles", "0"])
         assert stopped.value.code == 2
         assert "must be at least 1, not 0" in capsys.readouterr().err
+
+
+class TestTheCommandTakesTheManifest:
+    """Roadmap 10.14b. The container cross-check lived in the loader and no
+    command could reach it, so the owner's re-run would have read the
+    corpus unchecked. `--manifest` hands it over, the report says how far
+    it reached, and a clip short of its container refuses the run."""
+
+    def _manifest(self, directory: Path, frames: int) -> Path:
+        # Every synthetic clip is measured over seconds 0-400: 401 s, which
+        # is 12030 frames at 30 fps.
+        path = directory / "manifest.csv"
+        rows = ["clip,rFrameRate,avgFrameRate,nbReadPackets"]
+        for i in range(2):
+            for label in SIGNATURE:
+                rows.append(f"s{i}_{label},30/1,30/1,{frames}")
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        return path
+
+    def _measured(self, tmp_path: Path) -> Path:
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        _corpus_dir(measured, n_subjects=2)
+        return measured
+
+    def test_a_matching_manifest_is_named_in_the_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        measured = self._measured(tmp_path)
+        manifest = self._manifest(tmp_path, frames=12030)
+        argv = [str(measured), "--manifest", str(manifest), "--shuffles", "5"]
+        assert main(argv) == 0
+        printed = capsys.readouterr().out
+        assert "container check   6 of 6 clips within" in printed
+
+    def test_a_clip_short_of_its_container_refuses_the_run(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        measured = self._measured(tmp_path)
+        manifest = self._manifest(tmp_path, frames=36000)
+        argv = [str(measured), "--manifest", str(manifest), "--shuffles", "5"]
+        assert main(argv) == 1
+        captured = capsys.readouterr()
+        assert "coverage gap" in captured.err
+        assert captured.out == ""
+
+    def test_without_one_the_report_says_the_check_did_not_run(
+        self, tmp_path: Path
+    ) -> None:
+        _corpus_dir(tmp_path, n_subjects=2)
+        result = run_analysis(load_corpus(tmp_path), shuffles=5)
+        assert CONTAINER_NOT_CHECKED in format_report(result)

@@ -22,6 +22,12 @@ result's robustness reseeds are the same command with `--shuffles 250
 --seed 42` and `--shuffles 250 --seed 2024`, and the report of such a run
 names its pair as NOT the pre-registered one.
 
+`--manifest` takes the `manifest.csv` prepare_rldd.py writes beside the
+prepared clips, and refuses the run if any clip's measured coverage
+disagrees with its own container by more than max(2 s, 2%) (roadmap
+10.14b). The report states how many clips the check covered, or that it
+did not run.
+
 UTA-RLDD is used under written permission from Professor Vassilis Athitsos.
 Cite Ghoddoosian, Galib and Athitsos, CVPR Workshops 2019, wherever these
 results appear in any form.
@@ -37,6 +43,7 @@ from blinklab.drozy import MIN_USABLE_FPS
 from blinklab.loader import cohort_commit_line
 from blinklab.rldd import (
     BINARY_LABELS,
+    CONTAINER_NOT_CHECKED,
     LABELS,
     SEED,
     SHUFFLES,
@@ -45,7 +52,7 @@ from blinklab.rldd import (
     ShuffleControl,
     VideoFeatures,
     leave_one_subject_out,
-    load_corpus,
+    load_checked_corpus,
     shuffle_control,
 )
 
@@ -89,6 +96,10 @@ class AnalysisResult:
     # source.
     shuffles: int
     seed: int
+    # How far the container cross-check reached (roadmap 10.14b), the
+    # line `load_checked_corpus` built; CONTAINER_NOT_CHECKED without a
+    # manifest, so the report states the check's absence too.
+    container_check: str
 
 
 def shuffle_line(shuffles: int, seed: int) -> str:
@@ -115,6 +126,7 @@ def run_analysis(
     *,
     shuffles: int = SHUFFLES,
     seed: int = SEED,
+    container_check: str = CONTAINER_NOT_CHECKED,
 ) -> AnalysisResult:
     """The whole pre-registered evaluation over one corpus: the three-class
     leave-one-subject-out and its shuffle control, then the alert-vs-drowsy
@@ -149,6 +161,7 @@ def run_analysis(
         binary_control=binary_control,
         shuffles=shuffles,
         seed=seed,
+        container_check=container_check,
     )
 
 
@@ -226,6 +239,7 @@ def format_report(result: AnalysisResult) -> str:
     lines.append(f"  class balance     {_class_counts(result.usable, LABELS)}")
     lines.append(f"  {cohort_commit_line(result.commits)}")
     lines.append(f"  {shuffle_line(result.shuffles, result.seed)}")
+    lines.append(f"  {result.container_check}")
     lines.append("")
 
     floor = 1.0 / len(LABELS)
@@ -318,14 +332,27 @@ def build_parser() -> argparse.ArgumentParser:
         default=SEED,
         help=f"seed the shuffles are drawn from (default {SEED}, the plan's)",
     )
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help="prepare_rldd.py's manifest.csv: refuse a clip whose coverage "
+        "disagrees with its container (roadmap 10.14b)",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        corpus = load_corpus(args.measured_dir)
-        result = run_analysis(corpus, shuffles=args.shuffles, seed=args.seed)
+        corpus, container = load_checked_corpus(
+            args.measured_dir, args.manifest
+        )
+        result = run_analysis(
+            corpus,
+            shuffles=args.shuffles,
+            seed=args.seed,
+            container_check=container,
+        )
     except RldError as error:
         print(f"Cannot run the analysis: {error}", file=sys.stderr)
         return 1
