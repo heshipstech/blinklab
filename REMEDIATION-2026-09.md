@@ -1922,7 +1922,7 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       the telemetry wrapper is kept. Ticked 23 September 2026 by a
       sweep that found the row done and this box still open.
 
-- [ ] **D10. Row 10.8a, a regression run at HEAD, with the replay tool
+- [x] **D10. Row 10.8a, a regression run at HEAD, with the replay tool
       committed first.** `medium · confirmed ×2 (F-037 third path
 probed) · M · owner`
       **What:** the '5 armed_then_dropped = re-arm/refractory' diagnosis
@@ -1944,6 +1944,12 @@ probed) · M · owner`
       **Depends on:** A1, A2, A8, A15's decision, D4 (so the caveat is
       demanded for the whole chain).
       **Findings:** F-037, F-075, G-Guided b-10 (regression half).
+      **Done:** 8 and 9 September 2026, roadmap 10.8a: the replay tool
+      was committed first, the regression run at HEAD re-measured
+      Eyeblink8 and matched the anchor digit for digit, and the
+      procedure is in docs/regression-run-procedure.txt. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [ ] **D11. A frozen build for 11.8, and a way to get a published
       `app_commit` back.** `medium · confirmed ×2 (F-073); downgraded
