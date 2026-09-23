@@ -1945,8 +1945,10 @@ probed) · M · owner`
       demanded for the whole chain).
       **Findings:** F-037, F-075, G-Guided b-10 (regression half).
       **Done:** 8 and 9 September 2026, roadmap 10.8a: the replay tool
-      was committed first, the regression run at HEAD re-measured
-      Eyeblink8 and matched the anchor digit for digit, and the
+      was committed first, and the regression run at HEAD re-measured
+      Eyeblink8. The 8 September run met a one-clip face-tracking
+      transient that five re-measurements could not reproduce, and the
+      9 September full re-run matched the anchor digit for digit; the
       procedure is in docs/regression-run-procedure.txt. Ticked 23
       September 2026 by a sweep that found the row done and this box
       still open.
