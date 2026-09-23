@@ -2,7 +2,7 @@
 
 The product requirements document (PRD). Short on purpose. Updated only when the product intent changes.
 
-Read in full on 7 September 2026, claims `9904b409`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 23 September 2026, claims `cb3dbb1d`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## Problem statement
 
