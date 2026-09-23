@@ -29,6 +29,7 @@ import {
   type CameraFrameDriver,
   type DeviceInfo,
   type GuidedCalibrationSpan,
+  type MachineInfo,
   type MeasurementFrame,
   type PoseFrameCounts,
   type SessionMarker,
@@ -161,6 +162,9 @@ type Shape = {
   clipDurationSeconds: number | null;
   stepping: SteppingWitness | null;
   device: DeviceInfo | null;
+  /** The machine a clip ran on; null for a camera session, whose
+   * device carries its machine (13.5, remediation D8). */
+  clipMachine: MachineInfo | null;
   calibrationSamples: readonly number[];
   calibrationRefused: boolean;
   delivery: DeliveryRates | null;
@@ -221,6 +225,7 @@ const MINIMAL_CAMERA: Shape = {
   clipDurationSeconds: null,
   stepping: null,
   device: CAMERA,
+  clipMachine: null,
   calibrationSamples: [],
   calibrationRefused: false,
   delivery: null,
@@ -278,7 +283,8 @@ const MINIMAL_CAMERA: Shape = {
  * A clip stepped from a file, which has no camera and no room.
  *
  * `deviceMetadataRows` answers a null device with one row saying so,
- * and that one row is the whole of what a clip knows about hardware.
+ * and then the machine the clip ran on: camera rows conditional,
+ * machine rows unconditional (roadmap 13.5, remediation D8).
  */
 const MINIMAL_CLIP: Shape = {
   ...MINIMAL_CAMERA,
@@ -286,6 +292,7 @@ const MINIMAL_CLIP: Shape = {
   clipName: "corpus/06-5.mp4",
   mode: "stepped",
   device: null,
+  clipMachine: CAMERA,
   cameraFrameDriver: null,
   frameRateNegotiation: null,
   // A clip is stepped from its own decoded frames and misses none, so
@@ -312,6 +319,7 @@ const FULL: Shape = {
     inexactLandings: 2,
   },
   device: CAMERA,
+  clipMachine: null,
   calibrationSamples: Array.from({ length: 301 }, () => 7),
   calibrationRefused: false,
   delivery: { deliveredFps: 60, sampledFps: 59.9, readFraction: 0.998 },
@@ -392,7 +400,7 @@ function metadataRows(shape: Shape): string[] {
       shape.clipDurationSeconds,
     ),
     ...steppingMetadataRows(shape.stepping),
-    ...deviceMetadataRows(shape.device),
+    ...deviceMetadataRows(shape.device, false, shape.clipMachine),
     ...calibrationMetadataRows(
       describeCalibrationWindow(shape.calibrationSamples),
       shape.calibrationRefused,

@@ -81,8 +81,15 @@ ALWAYS_WRITTEN = [
     "delegate_executed",
     "delegate_gpu_load",
     "delegate_requested",
+    # The seven machine rows (device_pixel_ratio, hardware_concurrency,
+    # orientation, screen, user_agent, user_agent_form, viewport),
+    # roadmap 13.5's "machine rows unconditional" and remediation D8: a
+    # clip ran on a machine as surely as a camera session did, so every
+    # export says which. The camera's own rows stay conditional below.
+    "device_pixel_ratio",
     "face_detected_fraction",
     "frames_measured",
+    "hardware_concurrency",
     "inference_p50_ms",
     "inference_p95_ms",
     "kss_after",
@@ -93,13 +100,18 @@ ALWAYS_WRITTEN = [
     "measurement_mode",
     "median_iris_width_px",
     "observed_duration_seconds",
+    "orientation",
     "orientation_flips",
     "perclos_min_observed_ms",
     "perclos_min_samples",
     "pose_valid_fraction",
     "protocol",
     "records",
+    "screen",
     "source",
+    "user_agent",
+    "user_agent_form",
+    "viewport",
     "visibility_changes",
     "webgl2_supported",
 ]
@@ -132,7 +144,6 @@ CONDITIONAL = {
     "delivered_frames_read_fraction": (
         "a camera session with a measurable rate"
     ),
-    "device_pixel_ratio": "a camera session",
     "face_lost_longest_ms": (
         "a face lost long enough that acquisition was re-attempted"
     ),
@@ -172,7 +183,6 @@ CONDITIONAL = {
     "guided_open_samples": "a camera session with a stored guided line",
     "guided_recorded_at": "a camera session with a stored guided line",
     "guided_separation_ratio": "a camera session with a stored guided line",
-    "hardware_concurrency": "a camera session",
     "inexact_landings": "a stepped clip",
     "inference_note": "an inference sample set that hit its cap",
     "interruption_N_seconds": "one row per interruption",
@@ -185,13 +195,8 @@ CONDITIONAL = {
     "marker_N_seconds": "one row per marker",
     "marker_N_visibility_changes": "one row per marker",
     "median_iris_width_note": "an iris sample that hit its cap",
-    "orientation": "a camera session",
     "participant_pseudonym": "a pseudonym that was set",
     "sampled_fps": "a camera session with a measurable rate",
-    "screen": "a camera session",
-    "user_agent": "a camera session",
-    "user_agent_form": "a camera session",
-    "viewport": "a camera session",
     "wake_lock_acquired": "a camera session",
     "wake_lock_error": "a camera session",
     "wake_lock_reacquisitions": "a camera session",
