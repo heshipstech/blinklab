@@ -2058,20 +2058,6 @@ probed) · M · owner`
       `deploy.yml:32`); only fsevents has one today. `--ignore-scripts`
       in both; note in CONTRIBUTING; verify the wasm assets still
       populate via `package.json:24-26`'s prepare step. (F-100)
-
-- [ ] **D17. Make the stepped frame-count assertion the WebKit project's
-      mandatory local test.** `low · downgraded ×2 · S`
-      **What:** CI runs Chromium only (`ci.yml:92`,
-      `playwright.config.ts:17-27`, `:47-60`); 100% of published
-      detection numbers come from `webkit.launch()`
-      (`measure_corpus.mjs:128`) and the runner's success check is a
-      prefix match on "Measured" (`:161-169`); the config itself
-      records that the engines differ on seeking (`:29-31`).
-      **Fix:** `test/e2e/videoFile.spec.ts:147-190` mandatory for the
-      WebKit project with a config comment naming it the corpus
-      runner's only automated protection; after C10, decide from data
-      whether the runner stays on WebKit.
-      **Findings:** G-Browser-7.
       **Done:** 6 September 2026, roadmap 10.1c. `claimGuard` matches a
       family of wordings with `git grep -E` instead of one spelling
       with `-F`, and PROJECT.md's constraint says what actually
@@ -2087,6 +2073,20 @@ probed) · M · owner`
       `npm ci --ignore-scripts`; the flag is per invocation, so
       `npm run build` still runs `prepare-assets` and the wasm assets
       still populate, verified locally.
+
+- [ ] **D17. Make the stepped frame-count assertion the WebKit project's
+      mandatory local test.** `low · downgraded ×2 · S`
+      **What:** CI runs Chromium only (`ci.yml:92`,
+      `playwright.config.ts:17-27`, `:47-60`); 100% of published
+      detection numbers come from `webkit.launch()`
+      (`measure_corpus.mjs:128`) and the runner's success check is a
+      prefix match on "Measured" (`:161-169`); the config itself
+      records that the engines differ on seeking (`:29-31`).
+      **Fix:** `test/e2e/videoFile.spec.ts:147-190` mandatory for the
+      WebKit project with a config comment naming it the corpus
+      runner's only automated protection; after C10, decide from data
+      whether the runner stays on WebKit.
+      **Findings:** G-Browser-7.
 
 ---
 
