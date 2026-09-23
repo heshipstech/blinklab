@@ -434,7 +434,7 @@ startedAt, 60000)`; `rateState` starts on the first processed
       it. Ticked 23 September 2026 by a sweep that found the row done
       and this box still open.
 
-- [ ] **A14. Blink counting goes silently dead during a droop below the
+- [x] **A14. Blink counting goes silently dead during a droop below the
       line or the re-arm line, and the rate prints 0/min.**
       `medium · confirmed ×2 (probed through the real reducers) · M`
       **What:** `blink.ts:91-105` treats every sub-line aperture as
@@ -451,6 +451,12 @@ startedAt, 60000)`; `rateState` starts on the first processed
       arming on closing velocity is C5's question.
       **Depends on:** A13.
       **Findings:** F-031.
+      **Done:** 10 September 2026, roadmap 10.12b: suspended counting
+      is a fact, not a zero — "Blink counting suspended for N s" on
+      the page, a blinkCountingSuspended flag per record, and
+      irisOffsetVertical exported so a downgaze droop can be told
+      apart. Ticked 23 September 2026 by a sweep that found the row
+      done and this box still open.
 
 - [ ] **A15. Refusal does not withhold durations, amplitude, velocity
       or the blink log, and the first 30 s of every session counts
