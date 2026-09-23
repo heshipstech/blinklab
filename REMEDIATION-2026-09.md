@@ -1223,7 +1223,7 @@ downgraded/medium · M`
       ~34, six modules write them not one, and `csv.ts` writes none of
       its own today.
 
-- [ ] **B17. CHANGELOG's living Unreleased section publishes the
+- [x] **B17. CHANGELOG's living Unreleased section publishes the
       superseded 87.7/83.3/85.4 figure outside every guard.**
       `low · downgraded · S`
       **What:** `CHANGELOG.md:15-25`, `:35`, `:53-55`, `:71-75`
@@ -1235,6 +1235,11 @@ downgraded/medium · M`
       of superseded runs, or replace the numbers with a pointer to the
       generated README block; derive "Six checks" from disk or drop it.
       **Findings:** F-065, G-Build d-5.
+      **Done:** 7 September 2026, roadmap 10.0b4: CHANGELOG joined the
+      guarded documents (tools/changelogGuard.mjs) and no longer
+      publishes the superseded 87.7/83.3/85.4 figure. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [x] **B18. The shipped notice attributes MediaPipe 1.0.0 (the page
       ships 1.0.1) and paraphrases the font licences; no test reads
