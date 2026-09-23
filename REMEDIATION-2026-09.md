@@ -2033,7 +2033,7 @@ probed) · M · owner`
       Ticked 23 September 2026 by a sweep that found the row done and
       this box still open.
 
-- [ ] **D13. ADR-0005 on the priority pivot; the mobile ADR before Phase
+- [x] **D13. ADR-0005 on the priority pivot; the mobile ADR before Phase
       13; a CONTRIBUTING rule for measurement-definition changes.**
       `medium · confirmed ×2 · M`
       **What:** `PROJECT.md:3`, `:29`, `:42`, `:49` say explainability
@@ -2048,6 +2048,15 @@ probed) · M · owner`
       recording the practised-but-unwritten disciplines (append-only
       ADRs, dated adversarial passes; the taken half of F-102).
       **Findings:** F-067, (F-102 half).
+      **Done:** 23 September 2026, the CONTRIBUTING half, with
+      ADR-0005 from roadmap 10.0b on 7 September. ADR-0005 decided the
+      priority on the owner's ruling and carries the mobile decision
+      too (mobile in scope as a measurement surface), which is the
+      mobile ADR this item asked for before Phase 13. CONTRIBUTING's
+      rule 4 now says a change of intent or of what a measurement
+      means gets a one-page ADR first, and records the two practised
+      disciplines: ADRs are append-only, and an adversarial review is
+      recorded with its date.
 
 - [x] **D14. One page that says where the project stands; close the
       August trackers in writing.** `medium · confirmed ×2 · M`
