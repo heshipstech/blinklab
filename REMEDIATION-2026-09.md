@@ -2008,7 +2008,7 @@ probed) · M · owner`
       ADRs, dated adversarial passes; the taken half of F-102).
       **Findings:** F-067, (F-102 half).
 
-- [ ] **D14. One page that says where the project stands; close the
+- [x] **D14. One page that says where the project stands; close the
       August trackers in writing.** `medium · confirmed ×2 · M`
       **What:** `REMEDIATION.md:477-480` lists "Blocking the telemetry"
       under deliberately-not-doing while 8745468 shipped it;
@@ -2022,6 +2022,11 @@ probed) · M · owner`
       from F-070 worth adopting: a number that appears in more than one
       document is generated or appears once with links.
       **Findings:** F-069, (F-070 narrow half).
+      **Done:** 7 September 2026, roadmap 10.0b5: STATE.md opens with
+      a generated status block, and REMEDIATION.md, NEEDS-REVIEW.md
+      and docs/log.md each say RETIRED at their first line with a
+      pointer here. Ticked 23 September 2026 by a sweep that found the
+      row done and this box still open.
 
 - [ ] **D15. `docs/UI.md` and `test/MANUAL.md` describe a page two
       redesigns old under a headings-only guard.** `medium · confirmed
