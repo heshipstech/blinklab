@@ -123,6 +123,15 @@ an explicit `MIN_USABLE_FPS = 25` filter (`analysis/blinklab/drozy.py`).
 Only the live per-frame gate message (`fpsGateMessage`) is still a single
 line — for a sub-25 fps LIVE camera, the one case the twelve real sessions
 above never produced.
+_Corrected 23 September 2026, the paragraph above kept as the record:_
+since 18 September (roadmap 10.12a) a live camera's gate no longer
+judges the processing rate alone. It judges the evidence rate — the
+lower of what the camera delivers and what the page reads, where the
+browser reports delivery — so a slow camera behind a fast display IS
+caught, and once that rate dips below 25 counting reopens only at 30,
+so a rate wobbling on the floor cannot flicker it on and off. The
+owner's deliberate dim-room session, which the rule waited for, did
+not reproduce a dip on the owned camera; the gate guards the mechanism.
 
 **Above the floor it still loses blinks, and how many depends on the
 machine rather than the camera.** The processing rate is set by how fast
