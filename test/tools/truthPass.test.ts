@@ -7,6 +7,7 @@ import {
   readRepoFile,
   repoRoot,
 } from "../../tools/resultGuard.mjs";
+import { linkHrefs } from "../../tools/uiGuard.mjs";
 
 // Roadmap 10.0a1, ladder B1, B3, B6's dating half, B7 and B13. The
 // September audit found the page and the card publishing five
@@ -157,8 +158,15 @@ describe("the security reporting channel", () => {
     expect(collapse(security)).not.toContain("Report a vulnerability");
   });
 
-  it("names the contact the published page already offers", () => {
-    expect(collapse(security)).toContain("contact link at the bottom");
+  it("names the contact the published page already offers, where it sits", () => {
+    // Until 23 September this pinned "contact link at the bottom", a
+    // place the page does not put it: the footer carries only the
+    // maintainer's name, and the mailbox is one of the nav bar's icon
+    // links. So the pin holds the sentence to the top bar, and holds the
+    // page to a mailbox among the links that bar is built from.
+    expect(collapse(security)).toContain("contact link in the bar at the top");
     expect(collapse(security)).toContain("verified");
+    const hrefs = linkHrefs(readRepoFile("src/main.ts", root));
+    expect(hrefs.some((href) => href.startsWith("mailto:"))).toBe(true);
   });
 });
