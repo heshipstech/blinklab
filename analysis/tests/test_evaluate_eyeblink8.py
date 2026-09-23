@@ -18,7 +18,7 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from blinklab.blink_log import BlinkLog
+from blinklab.blink_log import BLINK_COLUMNS, BlinkLog
 from blinklab.blink_match import MatchResult
 from blinklab.eyeblink8 import Annotation
 
@@ -29,6 +29,7 @@ from evaluate_eyeblink8 import (  # noqa: E402
     ClipResult,
     Refusal,
     clip_refusal,
+    collect,
     coverage_refusal,
     exit_code,
     report,
@@ -299,3 +300,117 @@ class TestTheBindingToTheCommittedMissTable:
         assert f"{total} misses" in result
         assert str(closed) in result
         assert "70.1%" in result
+
+
+TAG_HEADER = "#eye-blink annotation file version 1.1\n#glasses: NO\n#start\n"
+
+
+def _write_tag(
+    corpus: Path,
+    subject: str,
+    name: str,
+    blink: tuple[int, int],
+    total_frames: int = 1000,
+) -> None:
+    """One clip's `.tag` in the real nineteen-field shape: one blink,
+    frames `blink[0]`..`blink[1]` carrying id 1, every other frame -1."""
+    start, end = blink
+    rows = [
+        ":".join(
+            [str(frame), "1" if start <= frame <= end else "-1"]
+            + ["X"] * 5
+            + ["236", "196", "142", "133", "257", "218"]
+            + ["281", "217", "320", "217", "344", "216"]
+        )
+        for frame in range(total_frames)
+    ]
+    directory = corpus / subject
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{name}.tag").write_text(
+        TAG_HEADER + "\n".join(rows) + "\n", encoding="utf-8"
+    )
+
+
+def _write_blink_log(
+    measured: Path,
+    name: str,
+    detection: tuple[int, int],
+    mode: str = "stepped",
+    frames_measured: int = 1000,
+) -> None:
+    """One clip's `<name>.blinks.csv` in the exporter's own shape."""
+    start, end = detection
+    measured.mkdir(parents=True, exist_ok=True)
+    (measured / f"{name}.blinks.csv").write_text(
+        "\n".join(
+            [
+                "# source: file",
+                f"# clip: {name}.mp4",
+                f"# measurement_mode: {mode}",
+                f"# frames_measured: {frames_measured}",
+                ",".join(BLINK_COLUMNS),
+                f"{start},{end},{start * 33.3},200,3.5,70,50,0.5",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+class TestCollectWalksACorpusOnDisk:
+    # Roadmap 10.1d, ladder D1. Every decision collect() applies is
+    # pinned one by one above; the walk itself, which pairs each .tag
+    # with its blink log by name, loads both and records a refusal for
+    # every clip it leaves out, was driven by nothing. These run it over
+    # files in the real shapes, so a change to the pairing, the loading
+    # or which refusal is recorded goes red here.
+
+    def test_scores_a_measured_clip_and_refuses_an_unmeasured_one(
+        self, tmp_path: Path
+    ) -> None:
+        corpus, measured = tmp_path / "corpus", tmp_path / "measured"
+        _write_tag(corpus, "s1", "clipa", (100, 106))
+        _write_tag(corpus, "s2", "clipb", (200, 205))
+        _write_blink_log(measured, "clipa", (101, 105))
+        results, refusals = collect(corpus, measured)
+        assert [r.name for r in results] == ["clipa"]
+        assert results[0].result.true_positives == 1
+        assert results[0].frames_measured == 1000
+        assert refusals == [
+            Refusal("clipb", "NOT MEASURED, no blink log found")
+        ]
+
+    def test_a_watched_log_is_refused_rather_than_scored(
+        self, tmp_path: Path
+    ) -> None:
+        corpus, measured = tmp_path / "corpus", tmp_path / "measured"
+        _write_tag(corpus, "s1", "clipa", (100, 106))
+        _write_blink_log(measured, "clipa", (101, 105), mode="played")
+        results, refusals = collect(corpus, measured)
+        assert results == []
+        assert [r.name for r in refusals] == ["clipa"]
+        assert "played" in refusals[0].reason
+
+    def test_a_short_measurement_is_refused_for_its_coverage(
+        self, tmp_path: Path
+    ) -> None:
+        corpus, measured = tmp_path / "corpus", tmp_path / "measured"
+        _write_tag(corpus, "s1", "clipa", (100, 106))
+        _write_blink_log(measured, "clipa", (101, 105), frames_measured=900)
+        results, refusals = collect(corpus, measured)
+        assert results == []
+        assert "coverage gap" in refusals[0].reason
+
+    def test_the_walk_feeds_a_partial_report_and_a_failing_exit(
+        self, tmp_path: Path
+    ) -> None:
+        corpus, measured = tmp_path / "corpus", tmp_path / "measured"
+        _write_tag(corpus, "s1", "clipa", (100, 106))
+        _write_tag(corpus, "s2", "clipb", (200, 205))
+        _write_blink_log(measured, "clipa", (101, 105))
+        results, refusals = collect(corpus, measured)
+        text = report(results, refusals)
+        assert "1 clips, 1 annotated blinks, 1 detected" in text
+        assert "Refused (1)" in text
+        assert "clipb" in text
+        assert exit_code(results, refusals) == 1
