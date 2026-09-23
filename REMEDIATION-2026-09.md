@@ -2196,13 +2196,18 @@ downgraded ×2 · S`
       12.16, the split this item asked for. Ticked 23 September 2026
       by a sweep that found the row done and this box still open.
 
-- [ ] **E7. A link from the page to the repository and to every doc
+- [x] **E7. A link from the page to the repository and to every doc
       path the page cites.** `low · confirmed/downgraded · S`
       `main.ts:405-418` has LinkedIn and mailto only; the conditions
       sentences cite bare paths (`samplingBounds.ts:142-165`,
       `fpsGate.ts:128-137`); `index.html:1-12` has no description or
       favicon. Repository icon-link; cited paths as GitHub blob links;
       meta description; favicon. (F-080)
+      **Done:** 7 September 2026, roadmap 14.0f2: the page links the
+      repository, cites its docs as GitHub blob links
+      (src/core/docCitations.ts), and carries a meta description and a
+      favicon. Ticked 23 September 2026 by a sweep that found the row
+      done and this box still open.
 
 - [ ] **E8. `facingMode`, wake lock and orientation.** `low · downgraded
 ×2 · S`
