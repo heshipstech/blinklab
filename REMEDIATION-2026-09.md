@@ -1523,6 +1523,26 @@ copyright line per family. The test reads the families out of
       clip).
       **Depends on:** A8, A9.
       **Findings:** F-005, F-030.
+      **Most of it done:** 12 September 2026 onward, roadmap 12.0a
+      with 10.13a and 10.9. The rule is pre-registered in
+      `docs/shut-line-rule.txt`: both lines as closed + k × (open −
+      closed), blink k = 0.5 and shut k = 0.15 with a 0.6 mm adoption
+      margin, predictions and falsifiers first.
+      `analysis/tools/shutline_compare.py` runs both placements over
+      retained exports, and ADR-0006 accepts the guided shut line
+      under that rule. Each per-second row records its lines' sources
+      (`blinkLineSource`, `shutLineSource`), SPEC names the two
+      duration quantities a blink line produces, and the floor-shift
+      arithmetic is 10.9's committed candidate
+      (`docs/duration-anomaly-arithmetic.txt`). The app does not adopt
+      the guided shut line yet, on purpose: `resolveShutLine` keeps
+      the population line until 12.0a publishes its scoring, which
+      could still falsify the rule. Still open: that scoring and this
+      item's harness, the owner's droop session, the dry-run
+      floor-shift comparison and the P80 trace, all reading files on
+      the owner's machine, and then the adoption. Recorded 23
+      September 2026 by a sweep that found the slices landed and this
+      item silent.
 
 - [ ] **C3. Verify the stored line against three real blinks before
       announcing "your detector uses it now"; then measure the
