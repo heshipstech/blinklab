@@ -2219,7 +2219,7 @@ downgraded ×2 · S`
       on `visibilitychange` (`main.ts:4238-4247`); record grant/refusal
       and orientation flips; scope 13.1 to laptops too. (F-081)
 
-- [ ] **E9. Prefetch the 15.8 MB model at page idle; a load timeout
+- [x] **E9. Prefetch the 15.8 MB model at page idle; a load timeout
       landing in `modelFailed`.** `low · confirmed/downgraded · M`
       `landmarker.ts:5-18` fetches only after Start (`main.ts:1130`,
       `:1228`); no timeout (`:1505-1522`, the residue
@@ -2227,6 +2227,12 @@ downgraded ×2 · S`
       at idle overlapping the permission prompt and KSS; a timeout;
       Cache API after first load; `docs/cold-load.txt` as 13.10
       (`ROADMAP.md:226`) asks. (F-084)
+      **Done:** 12 September 2026, roadmap 13.10: the model is
+      prefetched at page idle, the load has a timeout that lands in
+      modelFailed, the Cache API keeps it after the first load
+      (src/io/modelLoad.ts, src/io/modelCache.ts), and
+      docs/cold-load.txt records the measurement. Ticked 23 September
+      2026 by a sweep that found the row done and this box still open.
 
 - [ ] **E10. Per-tick polish left after A2.** `low · downgraded · S`
       Cache last text per readout and early-return
