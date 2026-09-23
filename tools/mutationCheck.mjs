@@ -445,6 +445,27 @@ const MUTATIONS = [
     "reopen dropped from the span: every closure would be measured one frame short of the span blink.ts measures",
     "test/core/perclosBlinkExcluded.test.ts",
   ],
+  [
+    "src/core/closureCompleteness.ts",
+    "fraction >= armLineClosureFraction(blinkLineMm, baselineMm)",
+    "fraction > armLineClosureFraction(blinkLineMm, baselineMm)",
+    "arm-line edge flipped: a lid that travelled exactly to the arm line, which blink.ts arms and counts, would be labelled incomplete",
+    "test/core/closureCompleteness.test.ts",
+  ],
+  [
+    "src/core/closureCompleteness.ts",
+    "(blinkLineMm * (1 - APERTURE_HYSTERESIS_FRACTION))",
+    "(blinkLineMm * (1 + APERTURE_HYSTERESIS_FRACTION))",
+    "cut moved above the line: a closure that crossed the line and never armed would be labelled complete",
+    "test/core/closureCompleteness.test.ts",
+  ],
+  [
+    "src/core/closureCompleteness.ts",
+    "baselineMm === null || baselineMm <= 0",
+    "baselineMm === null || baselineMm < 0",
+    "zero-ruler refusal lost: a zero baseline would publish an infinite closure fraction",
+    "test/core/closureCompleteness.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner
