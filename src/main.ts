@@ -1263,12 +1263,17 @@ function render(): void {
   // Buttons are DISABLED rather than hidden. A greyed "Calibrate gaze"
   // says the feature exists and is not available yet; a missing one
   // says nothing at all.
-  // Calibrate is available whenever a source runs, so render owns it
-  // outright. The other four have their own conditions, an export needs
-  // records, the heatmap needs a profile, the replay needs a scanpath,
-  // and the frame loop sets those while running. Here they are only
-  // forced off, never on, or this would overrule them.
-  calibrateButton.disabled = !running;
+  // Calibrate is available whenever a CAMERA runs, so render owns it
+  // outright. The nine dots ask a person to look at each one, and a
+  // recorded clip cannot look anywhere: calibrating gaze on a clip
+  // solved a profile from a stranger's eyes that were never following
+  // the dots. Remediation A8 asked for both calibrate buttons gated on a
+  // live camera; the blink one was, and this one only now is. The other
+  // four have their own conditions, an export needs records, the heatmap
+  // needs a profile, the replay needs a scanpath, and the frame loop sets
+  // those while running. Here they are only forced off, never on, or
+  // this would overrule them.
+  calibrateButton.disabled = !running || frameSource !== "camera";
   // The blink calibration needs a live aperture stream to read AND a
   // live person to read it from. It used to be available for any
   // running source, so three seconds of a recorded stranger's eye
