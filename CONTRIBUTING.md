@@ -1,8 +1,8 @@
 # Contributing
 
-Written 15 August 2026, revised 7 September 2026.
+Written 15 August 2026, revised 23 September 2026.
 
-Read in full on 7 September 2026, claims `ba04d655`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 23 September 2026, claims `dccd6eaf`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 blinklab is a solo learning project built in public. It is not looking for
 feature contributions, and there is no roadmap row for this file: it exists
@@ -70,7 +70,8 @@ In `analysis/`:
 .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/python -m pytest
 ```
 
-Three rules hold, and each was learned by breaking:
+Four rules hold. The first three were each learned by breaking; the fourth
+writes down what the decision records already practise:
 
 1. **Never push to `main`.** Branch, pull request, green CI, then merge.
 2. **A change under `src/` writes a `LEARNING.md` entry**, or says in a commit
@@ -80,6 +81,14 @@ Three rules hold, and each was learned by breaking:
 3. **Prove the check can fail.** A test that passes against the bug it claims
    to catch is worse than no test, because it certifies. The usual method here
    is to mutate the fix back out and watch the suite go red.
+4. **A change of intent, or of what a measurement means, gets an ADR first.**
+   One page in `decisions/`, numbered, with the context, the options and the
+   decision, committed before the change it decides: ADR-0006 decided the
+   personal shut line before any code adopted it. Two disciplines ride with
+   it. An ADR is append-only, so a decision that changes is superseded by a
+   new record rather than edited, the ADR-0002 and ADR-0004 convention. And an
+   adversarial review is recorded with its date where its findings land, so a
+   later reader knows which state of the code it examined.
 
 ## Where the documents are
 
@@ -97,6 +106,7 @@ Three rules hold, and each was learned by breaking:
 | `DATASETS.md`            | every public dataset assessed, and why none cleared the bar    |
 | `docs/UI.md`             | every element the page can show, and every string              |
 | `REMEDIATION-2026-09.md` | **the live fix ladder**, after the September 2026 audit        |
+| `decisions/`             | the decision records, one page each, append-only               |
 
 Three documents in earlier versions of this table are retired and say so at
 their own first line: `REMEDIATION.md` and `NEEDS-REVIEW.md`, the August
