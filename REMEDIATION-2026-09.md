@@ -492,7 +492,7 @@ startedAt, 60000)`; `rateState` starts on the first processed
       September 2026 by a sweep that found the row done and this box
       still open.
 
-- [ ] **A16. The 25 fps refusal judges the processing rate, not the
+- [x] **A16. The 25 fps refusal judges the processing rate, not the
       evidence rate; the report can say blink numbers were withheld
       while printing them.** `medium · downgraded ×2 · M · owner
 (one session)`
@@ -516,6 +516,11 @@ measurableAtFps(fps)` gates the reducer, long closures (`:3693`)
       verdict agree; stepped corpus unchanged.
       **Depends on:** C1 (the observation), A3, A18.
       **Findings:** F-003.
+      **Done:** 18 September 2026, roadmap 10.12a: the owner's
+      dim-room session ran first, and the gate now judges the evidence
+      rate with 25/30 hysteresis, the rate-starved verdict fixture
+      pinning page and report to one answer. Ticked 23 September 2026
+      by a sweep that found the row done and this box still open.
 
 - [x] **A17. There is no ended state: a finished clip stays running,
       the report is unreachable for every clip session, interruptions
