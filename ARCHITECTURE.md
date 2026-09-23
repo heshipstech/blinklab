@@ -101,7 +101,8 @@ src/main.ts   wiring and the DOM. The only file that builds the page
 test/core/    unit tests, one per core module
 test/e2e/     Playwright. Chromium in CI, WebKit added locally
 analysis/     Python. Reads exported CSV, does statistics. Never measures
-tools/        the corpus runner, which drives the real built app
+tools/        the corpus runner, which drives the real built app, and
+              the guards and generators that hold the docs to the code
 docs/evidence/ the data behind published claims
 ```
 
