@@ -5310,3 +5310,34 @@ because it has one line. To answer four thresholds from one buffer,
 the curve stores the aperture and baseline of each moment and defers
 classification to read time. Same window, same floors, four questions
 asked of one record.
+
+## 12.10a Two readings of one buffer cannot be fed different frames
+
+The concept this increment teaches is the difference between keeping
+two measurements consistent by discipline and keeping them consistent
+by construction. The blink-excluded PERCLOS is the existing PERCLOS
+with blink-sized closures left out. The obvious build is a second
+accumulator, fed the same aperture every frame. That works until some
+future edit feeds one of them a gated frame the other never sees, and
+then the two columns disagree about the same minute with nothing to
+say which is right.
+
+So there is no second accumulator. The new column is a second READING
+of perclos's own sample buffer: the same samples, the same four floors
+in the same order, a different reduction. The payoff is a set of
+properties that hold by construction rather than by test: the two
+columns are null together, and the blink-excluded share can never
+exceed perclos, because it counts a subset of the same closed samples
+over the same denominator. The tests still check both, but a failure
+there would mean the reduction is wrong, not that the feeds drifted.
+
+The second lesson is about defining "a blink" without inventing a new
+definition. The project already has one time partition: at or below
+the blink maximum a closure is a blink (blink.ts counts it), strictly
+beyond it a long closure (longClosure.ts counts it). The new column
+imports that edge and longClosure's gap bound rather than choosing its
+own, and it measures a closure the way blink.ts does, from the first
+closed sample to the reopen. Where the witnessing runs out — a long
+untrusted gap, or a closure that began before the window — the column
+judges only what it saw, which can only leave a closure out. An error
+that can only understate is one a reader can reason about.

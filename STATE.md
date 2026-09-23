@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 2025 unit tests and 693 Python tests, each figure
+- **The suite:** 2034 unit tests and 693 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE LITERATURE'S PERCLOS, AS NEAR AS THIS INSTRUMENT CAN HONESTLY GET, 23 September 2026 (row 12.10a's container slice lands; the row stays open on the DROZY refit).** This instrument's perclos cannot leave blinks out — its shut line is the one every full blink crosses — so at rest it is mostly blink time and inherits the blink rate's variance, while the literature's PERCLOS counts slow closures only. `src/core/perclosBlinkExcluded.ts` is the second reading beside it: the same share with every closure at or below the blink maximum left out. The design's one decision is that it keeps no buffer of its own: it reads perclos's own samples with a different reduction, applying perclos's four floors in the same order, so the two columns cannot be fed different frames, are null together, and the blink-excluded share can never exceed perclos — the family-cannot-drift lesson of 12.10, taken one step further from a shared constant to a shared buffer. A closure's span runs from its first closed sample to its reopen, the span blink.ts measures, with the project's one edge convention (at the blink maximum a closure is still a blink); an untrusted gap is bridged up to longClosure.ts's own bound and split past it, and both that and the window's trailing edge can only understate a closure, never inflate one. SPEC's column header names the literature's definition — the share of a minute the eyelids are at least 80% closed, slow closures only, blinks excluded — and the departure beside it: this keeps the blink exclusion but not the 80% depth, because a shut eye reads about a third of baseline here and P80's 20% is unreachable. The score keeps perclos until 12.18 reads. Eight tests watched failing first, the blink edge probed with the literals 500 and 501; three mutations (the edge, the gap bound, the reopen-measured span) are enrolled and caught, taking the roster to 58. What remains is the owner's: the DROZY refit from the retained CSVs, rho side by side, on the machine that holds the measured corpus. The live claim is unchanged at 12.8a. The suite is 2034 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **PERCLOS BECOMES A CURVE, 22 September 2026 (row 12.10 ticks; amendment 37).** The second row through the lifted gate turns the single PERCLOS line into an honest family: `src/core/perclosCurve.ts` reports the eyes-closed share of the last minute at 60/50/40/30 percent of the frozen baseline, where PERCLOS is the 40% point. The design's whole discipline is that the family cannot disagree with the number it contains: the 40% line is aliased from perclos.ts's own `PERCLOS_CLOSED_FRACTION`, the window and the four floors and the strictly-below boundary are all imported, and a unit test pins the 40% share byte-identical to `perclosValue` over one shared feed. Ordered loosest-first, the curve reads monotone non-increasing BY CONSTRUCTION — a frame shut past 60% of baseline includes every frame shut past 30% — proven on a banded synthetic, on the all-shut degenerate, and at the strictly-below boundary exactly at the line, where a naive inclusive check would fail. Instrument-referenced, never literature P80: a shut eye reads about a third of baseline, so a 20% line is unreachable, and the SPEC and loader labels say so where the columns are defined. Where perclos stores one boolean per sample, this stores the aperture and baseline of the moment and defers classification to read time, one threshold at a time — the reason it can reclassify at four depths from one buffer. `perclos30/50/60` land trailing (the loader gaining `PRE_PERCLOS_CURVE_COLUMNS`, re-cut per 12.15's discipline); the `perclos` column and score.ts are untouched, so nothing published moves. Two mutations enroll the boundary and the family's order; ten unit tests watched failing first. The live claim narrows to 12.8a alone. The suite is 2025 unit tests, 52 end to end tests of which 50 run on every pull request.
 
@@ -3217,7 +3219,7 @@ current, and a live page contradicting a published document was
 invisible from it. **A clean working tree is not a current one — fetch
 before auditing.**
 
-Stamped: 22 September 2026. When this file changes, this stamp changes
+Stamped: 23 September 2026. When this file changes, this stamp changes
 with it; a test enforces that.
 
 ## Where things stand, 10 August 2026
