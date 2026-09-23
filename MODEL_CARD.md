@@ -3,13 +3,13 @@
 What blinklab measures, what it does not, where it fails, and who it has
 never been tested on.
 
-Roadmap row 8.4. Written 9 August 2026, revised 17 September 2026,
+Roadmap row 8.4. Written 9 August 2026, revised 23 September 2026,
 against the state of `main` on
 that date. Every number here is measured and links to how it was
 obtained. Where a number does not exist, this page says so rather than
 leaving a gap that reads as a pass.
 
-Read in full on 17 September 2026, claims `9fd5f76a`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 23 September 2026, claims `98d1855b`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## What this is
 
