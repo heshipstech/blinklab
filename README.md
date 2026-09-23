@@ -67,7 +67,11 @@ finding that directs the next work.
 
 **The detector did not fail its criterion.** Among the three sessions
 with a working baseline, zero of the scripted blinks were missed, and
-the strictest-excluded session also caught ten of ten. What did appear
+the strictest-excluded session also caught ten of ten. Three sessions
+are a small n, though: zero of three missing a blink bounds how often a
+sound session would miss one below about 56 percent (the 95% Wilson
+interval), not at zero, so this is a criterion not failed rather than a
+detector shown not to miss. What did appear
 in the wild is over-counting: one slow, deep blinker produced 25
 detections for 10 blinks, the first independent evidence for a
 double-counting defect this project had only seen on a benchmark.
