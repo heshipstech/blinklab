@@ -1286,7 +1286,7 @@ copyright line per family. The test reads the families out of
       by an e2e on `#box-alertness`; uiGuard now holds docs/UI.md to
       every button label and every idle string.
 
-- [ ] **B20. The guided-calibration refusals blame the person's eyelids
+- [x] **B20. The guided-calibration refusals blame the person's eyelids
       for what is most likely reading time or a low-held phone.**
       `medium · downgraded ×2 · S`
       **What:** `main.ts:1766`, `:1768`, `:1770` ("This is the same
@@ -1301,6 +1301,11 @@ copyright line per family. The test reads the families out of
       sentence for plentiful, unseparated closed samples.
       **Depends on:** E3 (the tone).
       **Findings:** G-Guided b-3.
+      **Done:** 18 September 2026, roadmap 11.6b: the guided refusals
+      are conditional on what the run saw (blinkRefusalDetail in
+      src/core/guidedCalibrationText.ts) rather than blaming the
+      person's eyelids unconditionally. Ticked 23 September 2026 by a
+      sweep that found the row done and this box still open.
 
 ---
 
