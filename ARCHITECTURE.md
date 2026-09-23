@@ -5,7 +5,7 @@ How blinklab fits together, for somebody reading it for the first time.
 Roadmap row 8.2. The target is that a newcomer understands the shape in
 five minutes and knows where to put their first change.
 
-Read in full on 7 September 2026, claims `6b6fbb01`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This first one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 23 September 2026, claims `2f922635`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This one was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 ## The one rule that shapes everything
 
