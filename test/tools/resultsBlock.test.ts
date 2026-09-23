@@ -132,9 +132,27 @@ describe("the generated results block (roadmap 7.9)", () => {
     );
     expect(verdicts).toEqual({
       detector: "not met",
+      detectorCounts: { missed: 0, sound: 3 },
       baseline: "FAILED",
       gate: "not met",
     });
+  });
+
+  it("the detector verdict carries its n and the interval it supports", () => {
+    // Remediation B11 (F-050): "not met" on three sound sessions is
+    // not a measured 0% miss rate; three sessions bound it below 56
+    // percent and no lower, and the block says so beside the verdict.
+    expect(committedResultsBlock(readme)).toContain(
+      "the detector's criterion not met (0 of 3 sound sessions missed a blink, 95% interval 0.0 to 56.1)",
+    );
+  });
+
+  it("a detector criterion that lost its counts refuses to build", () => {
+    const text = readRepoFile("docs/validation-round.txt", root).replace(
+      "sound sessions: 0 missed",
+      "sound sessions, none missed",
+    );
+    expect(() => parseRoundVerdicts(text)).toThrowError(/sound-session counts/);
   });
 });
 

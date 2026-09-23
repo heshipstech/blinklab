@@ -144,14 +144,31 @@ export function parseRoundVerdicts(text) {
     }
     throw new Error(`round write-up: no verdict in the ${name} criterion`);
   };
+  // Remediation B11 (F-050): the detector's verdict was judged on a
+  // handful of sound sessions and published with no n, so "not met"
+  // read as a measured 0% miss rate. The counts ride with the verdict
+  // so the block can print them and the interval they support. A
+  // round that could not evaluate the detector has no counts to give,
+  // and says so rather than inventing a denominator.
+  const detectorBody = paragraph(
+    "1. The detector does not generalise",
+    "2. The baseline does not generalise",
+  );
+  const detector = verdictIn(detectorBody, "detector");
+  const counts = detectorBody
+    .replace(/\s+/g, " ")
+    .match(/among the (\d+) sound sessions: (\d+) missed/);
+  if (counts === null && detector !== "NOT EVALUATED") {
+    throw new Error(
+      "round write-up: the detector criterion states no sound-session counts",
+    );
+  }
   return {
-    detector: verdictIn(
-      paragraph(
-        "1. The detector does not generalise",
-        "2. The baseline does not generalise",
-      ),
-      "detector",
-    ),
+    detector,
+    detectorCounts:
+      counts === null
+        ? null
+        : { missed: Number(counts[2]), sound: Number(counts[1]) },
     baseline: verdictIn(
       paragraph(
         "2. The baseline does not generalise",
@@ -164,6 +181,18 @@ export function parseRoundVerdicts(text) {
       "gate",
     ),
   };
+}
+
+/**
+ * The detector verdict's n and the interval it supports, or nothing
+ * when the round had no sound session to count. "0 of 3" is not a 0%
+ * miss rate: three sessions bound it below 56 percent and no lower.
+ */
+function detectorCountsClause(counts) {
+  if (counts === null || counts.sound === 0) {
+    return "";
+  }
+  return ` (${String(counts.missed)} of ${String(counts.sound)} sound sessions missed a blink, 95% interval ${intervalPercent(counts.missed, counts.sound)})`;
 }
 
 /** The whole generated block, markers included. */
@@ -242,7 +271,7 @@ export function buildResultsBlock(root) {
     "",
     `- **Does it find the blinks a human found?** On Eyeblink8, recall ${run.recallPercent}% (${String(run.found)} of ${String(run.annotated)} found, 95% interval ${intervalPercent(run.found, run.annotated)}), precision ${run.precisionPercent}% (${String(run.invented)} invented, 95% interval ${intervalPercent(run.found, run.found + run.invented)}), F1 ${run.f1Percent}%, measured from \`${run.reproDir}\`. **That table is a property of the machine and the prepared files, measured on two machines.** Re-measured on a second machine — same code, same committed model, same pinned runtime, identical frames — the corpus gives recall ${second.recallPercent}% (${String(second.found)} of ${String(second.annotated)}, 95% interval ${intervalPercent(second.found, second.annotated)}), precision ${second.precisionPercent}% (${String(second.invented)} invented), F1 ${second.f1Percent}%. On 26 August the full corpus, prepared by the committed remux tool, was re-measured on the second machine and reproduced this table IDENTICALLY — every count, every percentage, every coverage number, digit for digit, across a different processor, operating system, WebKit binary and fifteen commits of instrument change. That reproduction is WebKit to WebKit — the corpus runner launches no other engine — so no engine other than WebKit has measured this corpus. Roadmap row 13.0 has since paired the two engines on a fixed clip and found they step it identically, coverage frame for frame in WebKit and Chromium ([docs/engine-agreement.txt](docs/engine-agreement.txt)); the corpus itself is still WebKit-measured, so the numbers above remain a single-engine result, and 13.0 additionally recorded that the two engines' video decoders differ slightly in scene luminance, a difference no landmark measurement reads. The apparent gap had been the files: that run's clips were re-encoded instead of remuxed, and re-encoding alone collapses false alarms on the worst clip from 19 to 3. So the number above is a measured property of the instrument and the prepared files on two machines — and NOT a property of arbitrarily transcoded copies, which is why the preparation is part of the result. The re-encoded table stays published as a record of that discovery; it is not an Eyeblink8 result. **One qualification, measured 8 and 9 September 2026:** repeatability of WHICH frames are measured is exact, but the face model's tracker carries state that can rarely diverge — one run of six on one clip lost the face mid-clip and never recovered, moving that run's recall 7.9 points before five re-measurements at the identical commit showed the collapse was a transient. Full record, transient included: [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt).`,
     `- **Does any of it track reported sleepiness?** On the small DROZY set, no — a null result, published as readily as a positive one would have been: nothing cleared the pre-registered bar on the ${String(drozy.analysed)} of ${String(drozy.measured)} DROZY sessions this instrument can measure. On the larger UTA-RLDD set, yes. Across ${String(uta.subjects)} self-recording strangers (${String(uta.analysed)} videos, and the model was never trained on anyone it was scored against), the pre-registered classifier separates a coarse self-reported drowsiness state better than chance: three-class balanced accuracy ${uta.threeClass} where guessing scores ${uta.threeFloor}, and alert-vs-drowsy ${uta.binary} where guessing scores ${uta.binaryFloor}, both past a 1000-shuffle label-scramble control at p ${uta.p}. The plan predicted a null in writing and was WRONG in the one way it had named — a weak effect that DROZY (13 people) and a 12-subject pilot were too small to see, and ${String(uta.subjects)} were not. It is MODEST and not driving-relevant: the label is self-reported and noisy, each person recorded one video per state so the clips differ in more than drowsiness, nobody was driving, and this stays a demo, not a safety or medical device. Full records: [docs/uta-rldd-result.txt](docs/uta-rldd-result.txt), [docs/drozy-result.txt](docs/drozy-result.txt). Cite: ${drozy.cite} ${uta.cite}`,
-    `- **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion ${round.detector}, the baseline's criterion ${round.baseline}, the frame-rate gate's criterion ${round.gate}. Full record: [docs/validation-round.txt](docs/validation-round.txt).`,
+    `- **Does it work on other people?** Six volunteers, three pre-registered failure criteria: the detector's criterion ${round.detector}${detectorCountsClause(round.detectorCounts)}, the baseline's criterion ${round.baseline}, the frame-rate gate's criterion ${round.gate}. Full record: [docs/validation-round.txt](docs/validation-round.txt).`,
     `- **Limitations, stated plainly:** how many blinks it finds depends on how fast the viewer's computer is; the learned baseline was unusable on three of the six volunteer machines; the DROZY sample is missing its sleepiest sessions, so its null is weaker than a null on the ${String(drozy.measured)} it can measure; the UTA-RLDD detection is a modest classification-across-strangers result on a coarse self-reported label, not a validated per-person alertness meter; and the live 0–100 alertness score is a heuristic that, in a pre-registered test (roadmap 9.1), separated self-reported alert from drowsy across strangers above chance (AUC ${alertness.auc} at p ${alertness.p}), but has not been validated as a per-person measure of anyone's actual sleepiness.`,
     "",
     END_MARKER,
