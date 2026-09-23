@@ -413,6 +413,16 @@ downgraded/medium (b-1) · M`
       and the DROZY manifest and sentence. The last two read files on
       the owner's machine. Recorded 23 September 2026 by a sweep that
       found the slice landed and this item silent about it.
+      **Still half done:** 23 September 2026, the command-line slice,
+      which closes the wiring gap the note above names.
+      `analyse_rldd.py` and `rldd_coefficients.py` take `--manifest`
+      and load through `load_checked_corpus`, and each report's header
+      states how many clips the check covered, or that it did not run.
+      A manifest naming none of the measured clips is refused, because
+      it would check nothing while printing as run. Still open: the 30
+      reason lines from a re-run over the retained CSVs, reconciled
+      with the count, and the DROZY manifest and sentence, both
+      reading files on the owner's machine.
 
 - [ ] **A12. The Eyeblink8 evaluator exits 0 on a partial corpus, drops
       the glasses split silently, and its coverage rule tolerates 157
