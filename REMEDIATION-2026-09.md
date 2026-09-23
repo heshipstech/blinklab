@@ -2244,7 +2244,7 @@ probed) · M · owner`
       September 2026 by a sweep that found the row done and this box
       still open.
 
-- [ ] **D15. `docs/UI.md` and `test/MANUAL.md` describe a page two
+- [x] **D15. `docs/UI.md` and `test/MANUAL.md` describe a page two
       redesigns old under a headings-only guard.** `medium · confirmed
 ×2 · M`
       **What:** `tools/uiGuard.mjs:36-44` sees nine `box("...")`
@@ -2258,6 +2258,18 @@ probed) · M · owner`
       missing MANUAL items with dated "superseded by" notes; require a
       reason for "n/a".
       **Findings:** F-068.
+      **Done:** 15 September 2026, roadmap 14.0c's container slices.
+      docs/UI.md is brought to the shipped design, held mechanically
+      at the box, button, idle-string, screen and state grains
+      (`uiGuard`'s `documentedOverlayIds` and
+      `stateKinds`/`documentedStates` checks, both directions, watched
+      failing first); the four MANUAL checks that need real eyes on
+      real hardware carry dated OWNER-MANUAL marks; and the PR
+      template was found already requiring a one-line reason beside
+      any "n/a". Row 14.0c stays open only for the owner's
+      performed-once dates on those four marks, which this item does
+      not ask for. Ticked 23 September 2026 by a sweep that found
+      every part of the fix in the source and this box still open.
 
 - [x] **D16. Four small guard repairs, one PR.** `low · confirmed · S` - `tools/claimGuard.mjs:22-35` uses `git grep -F`; `PROJECT.md:41`
       restates the retired absolute claim one word away
