@@ -5446,3 +5446,30 @@ calibration finishes, so each counted blink now records the line it
 was counted against. A label recomputed later from the current line
 would quietly re-judge old blinks by a rule they were never counted
 under.
+
+## 10.0b6 (the reads) A sentence about how things stand expires; a sentence about a rule does not
+
+The concept this increment teaches is which sentences in a document go
+stale on their own. Two full reads found eight stale claims between
+them, in the README and ARCHITECTURE, and a sweep found a stale comment
+in the code. None of them was wrong when it was written. Every one
+described how things STOOD: a timing ("about three seconds"), a size
+("~45 modules"), a decision's status ("an open question the ladder
+holds as an ADR"), a pointer to the latest run's evidence, a phase
+still to come ("Earning that is what Phase 7 is for"). The project then
+moved and the sentence did not. The sentences around them that state a
+RULE or a REASON ("src/core is pure", "null means not measured") were
+all still true, because a rule does not change when the work does.
+
+Two habits follow. When writing, point at the record that stays current
+instead of restating what it currently says: the result file names
+each run's evidence folder, so a pointer to it outlives any one run,
+and ADR-0006 carries its own status, so a comment can name the ADR and
+the row that scores it rather than calling the question open or closed.
+And when a state-of-things sentence has to exist, date it, so the next
+reader can see how old the claim is before trusting it.
+
+The read stamp is what found these, and it only works because it is
+cheap to lie to and nobody does: the digest refuses a changed claim
+until someone reads the whole document again, and the stamp says in
+its own words that the read was an automated pass.
