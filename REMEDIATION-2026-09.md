@@ -2026,9 +2026,10 @@ probed) · M · owner`
       **Findings:** F-069, (F-070 narrow half).
       **Done:** 7 September 2026, roadmap 10.0b5: STATE.md opens with
       a generated status block, and REMEDIATION.md, NEEDS-REVIEW.md
-      and docs/log.md each say RETIRED at their first line with a
-      pointer here. Ticked 23 September 2026 by a sweep that found the
-      row done and this box still open.
+      and docs/log.md each say RETIRED at their first line, the two
+      trackers pointing here and the build log to STATE.md. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [ ] **D15. `docs/UI.md` and `test/MANUAL.md` describe a page two
       redesigns old under a headings-only guard.** `medium · confirmed
@@ -2124,9 +2125,9 @@ downgraded ×2 · S`
       risk. (F-079)
       **Done:** 7 September 2026, roadmap 14.0f1: Escape closes the
       overlays (src/core/overlayEscape.ts), and the KSS prompt is a
-      native dialog opened with showModal, its focus landing on the
-      prompt rather than on rating 1. Ticked 23 September 2026 by a
-      sweep that found the row done and this box still open.
+      native dialog opened with showModal, its focus landing on Skip
+      rather than on rating 1. Ticked 23 September 2026 by a sweep
+      that found the row done and this box still open.
 
 - [x] **E3. Guided calibration: a tone at each phase boundary, an
       explicit Cancel with a status line, and the run's quality in the
@@ -2228,9 +2229,10 @@ downgraded ×2 · S`
       Cache API after first load; `docs/cold-load.txt` as 13.10
       (`ROADMAP.md:226`) asks. (F-084)
       **Done:** 12 September 2026, roadmap 13.10: the model is
-      prefetched at page idle, the load has a timeout that lands in
-      modelFailed, the Cache API keeps it after the first load
-      (src/core/modelLoad.ts, src/io/modelCache.ts), and
+      prefetched from the page head by a rel=prefetch link, which the
+      browser fetches at idle priority, the load has a timeout that
+      lands in modelFailed, the Cache API keeps it after the first
+      load (src/core/modelLoad.ts, src/io/modelCache.ts), and
       docs/cold-load.txt records the measurement. Ticked 23 September
       2026 by a sweep that found the row done and this box still open.
 
