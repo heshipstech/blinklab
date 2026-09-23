@@ -5492,3 +5492,24 @@ mechanical — read the note, then find each thing it names in the
 code — and the fix is the same one line the first half already had.
 The e2e now asserts each button by name, so a future "both" is held to
 both.
+
+## D8 (the machine rows) A row's text is not its Check
+
+The concept this increment teaches is how a ticked row can carry a
+promise nobody tested. Roadmap 13.5 said, in its own words, "camera
+rows conditional, machine rows unconditional", and it ticked on 12
+September with every clause of its Check met. The Check asked about the
+delegate block, the observability sentence and the run header, and
+never about the machine rows, so nothing reddened when a clip export
+went on writing one camera line and no browser, core count or pixel
+ratio. The corpus results are clip exports, so the files that most
+needed to say what they ran on were the ones that said nothing.
+
+The lesson for reading a ladder is that the Check is what gets proved,
+and the text around it is what gets remembered. When they differ, the
+text is a claim with no test behind it. The fix here had its own small
+trap: the clip path resets the session after it starts, so the first
+draft read the machine and then wiped it. Every unit test passed that
+draft. The end-to-end assertion that the rows read something other
+than "unknown" is the test that would have caught it, which is why it
+landed with the fix.
