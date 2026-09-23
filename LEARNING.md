@@ -5378,3 +5378,40 @@ hysteresis constant, and the tests run blinkStep itself rather than a
 copy of its rule, so an edit to either side shows up as a
 disagreement instead of two quietly different definitions of "deep
 enough".
+
+## 12.6b (the column) A reader that refuses what it was not taught must be taught each generation by name
+
+The concept this increment teaches is how to add a column to a file
+whose readers refuse change. The blink log's two Python readers,
+blink_log.py and validation.py, refuse any header they were not
+written for — the project's refuse-rather-than-guess rule, because a
+half-read file still produces a number and that number looks exactly
+like a real one. So appending `closureFraction` is not a one-sided
+edit: the export learns a column, and the readers must learn a
+generation.
+
+The tempting loosening is to accept any header that STARTS with the
+known columns. It would work today and quietly accept whatever gets
+appended next, including a column that changes what an existing one
+means, which is the silent drift the strict check exists to stop. So
+each generation is named instead: `PRE_CLOSURE_FRACTION_BLINK_COLUMNS`
+is the header every committed log carries, `ACCEPTED_BLINK_GENERATIONS`
+lists exactly what is accepted, and the next column will have to be
+added to that list by a person, deliberately. The same thinking moves
+the row-width check from "the newest width" to "the width of the
+header above this row": a seven-field row under the eight-column
+header is a damaged file, not an old one, and must still be refused.
+
+The event keeps the fact and the file derives the number. The
+BlinkEvent now records the frozen baseline that was in force when the
+blink was counted, and the serialiser computes the fraction from it,
+so the one rule for what the fraction is lives in one place
+(closureCompleteness.ts) and an empty cell still means what it has
+always meant: not measured, never zero.
+
+And the order of landing paid for itself at once. The contract pin
+between TypeScript, Python and SPEC went in as its own increment, the
+slice before this one, and the first thing it did here was go red on
+SPEC before SPEC named the new column. A guard earns its keep the
+first time it catches the change it was built for, not the day it
+merges.
