@@ -1397,7 +1397,7 @@ copyright line per family. The test reads the families out of
       **Depends on:** A8, A9.
       **Findings:** G-Guided b-5, G-Guided b-10.
 
-- [ ] **C4. A cued ground-truth capture tool, so live claims stop
+- [x] **C4. A cued ground-truth capture tool, so live claims stop
       resting on the contaminated count-ten protocol.** `low ·
 confirmed/medium + downgraded · M`
       **What:** `docs/participant-instructions.md:55-59`;
@@ -1436,6 +1436,11 @@ confirmed/medium + downgraded · M`
       is beside the tally rather than absent from it.
       Still open: 11.0b, the overlay and the export rows, and the
       re-pointing of 10.9, 11.6, 13.3 and 14.5.
+      **Done:** 12 September 2026, roadmap 11.0b: the overlay and the
+      export rows landed, and rows 10.9, 11.6, 13.3 and 14.5 each name
+      the cued protocol (11.0a) as their ground truth, the re-pointing
+      the half-done note above left open. Ticked 23 September 2026 by
+      a sweep that found the row done and this box still open.
 
 - [ ] **C5. Droop-then-blink and re-crossing blinks: time the closed
       phase from the arm line, report fragmented durations honestly.**
