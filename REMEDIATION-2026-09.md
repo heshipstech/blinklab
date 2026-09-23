@@ -597,7 +597,7 @@ deliveryRates(...)` reads a rolling 5 s window
       closure. Ticked 23 September 2026 by a sweep that found the row
       done and this box still open.
 
-- [ ] **A20. Baseline and guided-calibration sample floors count
+- [x] **A20. Baseline and guided-calibration sample floors count
       processing ticks, not seconds of face.**
       `medium · confirmed ×2 · S`
       **What:** `baseline.ts:74-77` requires 30 s elapsed and 100
@@ -611,6 +611,11 @@ deliveryRates(...)` reads a rolling 5 s window
       makes ticks equal frames; this makes the floor say so.
       **Depends on:** A2.
       **Findings:** F-051.
+      **Done:** 10 September 2026, roadmap 10.12c: the baseline birth
+      and every guided phase demand trusted-face time
+      (src/core/faceSeconds.ts), and face seconds are shown and
+      exported. Ticked 23 September 2026 by a sweep that found the row
+      done and this box still open.
 
 - [ ] **A21. A stepped clip that crashes mid-run exports as a camera
       session with no clip name.** `medium · confirmed/high +
