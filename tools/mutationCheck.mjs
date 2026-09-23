@@ -466,6 +466,20 @@ const MUTATIONS = [
     "zero-ruler refusal lost: a zero baseline would publish an infinite closure fraction",
     "test/core/closureCompleteness.test.ts",
   ],
+  [
+    "src/core/blinkLog.ts",
+    "const label = rulerTrusted\n",
+    "const label = true\n",
+    "ruler-fit refusal lost: a baseline the page calls too long to trust would grey a person's real blinks as incomplete",
+    "test/core/blinkLog.test.ts",
+  ],
+  [
+    "src/core/blinkLog.ts",
+    'incomplete: label === "incomplete"',
+    'incomplete: label !== "complete"',
+    "no-ruler refusal lost: a blink counted before the baseline was born would be greyed with nothing to judge it by",
+    "test/core/blinkLog.test.ts",
+  ],
 ];
 
 // The suite must be green BEFORE anything is bent, and a runner
