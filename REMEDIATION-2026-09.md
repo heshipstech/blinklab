@@ -211,7 +211,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       core and name both exits; the no-fullscreen path and the tap
       exit are in lightResponse.spec.ts.
 
-- [ ] **A7. Long-closure reducer has no hysteresis: one hovering
+- [x] **A7. Long-closure reducer has no hysteresis: one hovering
       closure fires two or three times on phones.**
       `high · confirmed ×2 · S · corpus rule`
       **What:** `src/core/longClosure.ts:85` closes on one line and
@@ -232,6 +232,12 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       before Phase 12.
       **Depends on:** A2 (run the harness on the corrected cadence).
       **Findings:** F-009.
+      **Done:** 10 September 2026, roadmap 10.11: the long-closure
+      reducer re-arms only once the aperture clears the line by
+      blink.ts's own hysteresis fraction, a six-second closure under
+      ±0.3 mm noise counts once at both rates, and the owner's corpus
+      run reproduced the anchor. Ticked 23 September 2026 by a sweep
+      that found the row done and this box still open.
 
 - [ ] **A8. The line the detector reads is invisible to every export,
       follows the browser rather than the face, and can be learned from
