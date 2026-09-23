@@ -239,7 +239,7 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       run reproduced the anchor. Ticked 23 September 2026 by a sweep
       that found the row done and this box still open.
 
-- [ ] **A8. The line the detector reads is invisible to every export,
+- [x] **A8. The line the detector reads is invisible to every export,
       follows the browser rather than the face, and can be learned from
       a clip's face.** `high · confirmed ×2 · M`
       **What:** `main.ts:1692-1693` loads `storedBlinkCalibration` at
@@ -311,6 +311,15 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       the shut baseline. The shut line has exactly two sources today
       and `resolveShutLine` says so, rather than answering that
       question by wiring.
+      **Done:** 23 September 2026, with roadmap 10.13a (7 September),
+      14.0e (15 September), ADR-0006 (12 September) and 11.6b (18
+      September). The note above said both calibrate buttons were
+      gated on a live camera; only the blink one was, and the gaze one
+      is gated now, with the clip e2e asserting both disabled. The two
+      parts the note left open are done: resetSession cancels an
+      in-flight calibration (14.0e), and ADR-0006 answers whether a
+      guided line serves the shut baseline. The e2e that a seeded line
+      reaches the export landed with 11.6b.
 
 - [x] **A9. The guided line has no soundness ceiling, and its open
       phase samples the eye while the person is reading the
