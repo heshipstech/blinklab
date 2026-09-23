@@ -1,5 +1,5 @@
 import type { BlinkShape } from "./blinkShape";
-import { closureFraction } from "./closureCompleteness";
+import { closureCompleteness, closureFraction } from "./closureCompleteness";
 import { BLINK_LOG_DISPLAY_CAP, BLINK_LOG_RECORD_CAP } from "./constants";
 import { pushBounded } from "./ringBuffer";
 
@@ -23,6 +23,13 @@ export type BlinkEvent = {
   // compares against the fixed fallback line and a blink has no
   // personal ruler to be a share of.
   baselineMm: number | null;
+  // The blink line the detector counted this blink against, guided or
+  // passive, which the complete/incomplete cut hangs its arm line
+  // from. Null when the detector compared against the fixed fallback.
+  // Recorded per blink because the line can change mid-session: a
+  // guided calibration finishing moves it, and a blink counted before
+  // that must keep the cut it was counted against.
+  blinkLineMm: number | null;
 };
 
 export function appendEvent(
@@ -63,20 +70,37 @@ export const BLINK_TABLE_HEADERS = [
 ] as const;
 
 /**
- * A blink whose amplitude is this small did not travel far enough to be
- * a blink, and the table greys it rather than hiding it: the export
- * keeps the row, so the panel must not disagree with the file. Chosen
- * from measured sessions where real blinks ran 2.2 to 6.9 mm and the
- * phantoms sat under 1 mm.
+ * One row of the on-screen table, already formatted, newest first.
+ *
+ * `incomplete` greys the row, never hides it: the export keeps every
+ * blink, so the panel must not disagree with the file. It is the
+ * complete/incomplete label at the detector's arm line
+ * (closureCompleteness.ts, roadmap 12.6b) — the lid covered less of
+ * the frozen open baseline than the arm line asks — and it retired an
+ * absolute 1.5 mm line that was a different ruler on every face, a
+ * fifth of one eye and a third of another.
+ *
+ * No row is greyed without a ruler to judge it by, and none while the
+ * page itself says the ruler is too long to trust (`rulerTrusted`
+ * false: the settled ruler-fit verdict, rulerFit.ts). A baseline born
+ * long reads every blink's travel short, the failure the validation
+ * dry run caught at 1.41 times resting, and the table must not call a
+ * person's blinks incomplete on the word of a ruler the same page has
+ * just refused to vouch for.
  */
-export const FAINT_BLINK_MM = 1.5;
-
-/** One row of the on-screen table, already formatted, newest first. */
 export function blinkTableRow(
   event: BlinkEvent,
   sessionStartMs: number,
-): { cells: string[]; faint: boolean } {
+  rulerTrusted: boolean,
+): { cells: string[]; incomplete: boolean } {
   const shape = event.shape;
+  const label = rulerTrusted
+    ? closureCompleteness(
+        closureFraction(shape?.amplitudeMm ?? null, event.baselineMm),
+        event.blinkLineMm,
+        event.baselineMm,
+      )
+    : null;
   return {
     cells: [
       ((event.atMs - sessionStartMs) / 1000).toFixed(1),
@@ -85,7 +109,7 @@ export function blinkTableRow(
       shape === null ? "—" : shape.peakClosingVelocityMmPerS.toFixed(0),
       shape === null ? "—" : shape.amplitudeOverVelocityMs.toFixed(0),
     ],
-    faint: shape !== null && shape.amplitudeMm < FAINT_BLINK_MM,
+    incomplete: label === "incomplete",
   };
 }
 

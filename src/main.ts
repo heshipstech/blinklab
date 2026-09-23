@@ -5192,6 +5192,9 @@ function processFrame(
           // refused baseline is no ruler to be a share of.
           baselineMm:
             baselineState.kind === "ready" ? baselineState.baselineMm : null,
+          // The line the detector compared against, for the label's
+          // arm line; null when that was the fixed fallback.
+          blinkLineMm,
         });
         closureStartFrame = null;
         blinkTableBody.replaceChildren(
@@ -5199,9 +5202,15 @@ function processFrame(
           // keeps everything.
           ...[...eventsForDisplay(blinkEvents)].reverse().map((event) => {
             const row = document.createElement("tr");
-            const { cells, faint } = blinkTableRow(event, sessionStartMs ?? 0);
-            if (faint) {
-              row.className = "faint";
+            // The ruler-fit verdict the page is speaking right now: a
+            // ruler it calls too long to trust labels no blink.
+            const { cells, incomplete } = blinkTableRow(
+              event,
+              sessionStartMs ?? 0,
+              rulerFitState.shown !== "tooLong",
+            );
+            if (incomplete) {
+              row.className = "incomplete";
             }
             row.append(
               ...cells.map((text) => {
