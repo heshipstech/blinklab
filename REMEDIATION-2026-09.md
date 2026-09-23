@@ -1747,7 +1747,7 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       all of it, including the CI workflow's own name, since a rename
       on one side alone would stop every deployment silently.
 
-- [ ] **D6. A metadata contract across the language border: the ~42
+- [x] **D6. A metadata contract across the language border: the ~42
       keys have no documented contract, no cross-language test, five
       absence policies, two unread honesty rows, and hand-written
       fixtures that have already drifted.** `medium · confirmed ×2
@@ -1858,6 +1858,12 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       generates them and a fixture added there could otherwise be
       pinned on one side only. This closes D6 apart from the loader's
       floor, which is 10.1f4b and the owner's to decide.
+      **Done:** 18 September 2026, roadmap 10.1f4b, the last piece:
+      the half-done note above closes D6 apart from the loader's
+      floor, and 10.1f4b decided that floor on the owner's ruling (the
+      oldest committed evidence), which leaves nothing of D6 open.
+      Ticked 23 September 2026 by a sweep that found the row done and
+      this box still open.
 
 - [ ] **D7. No automated test ever sees a face; the gate wiring in
       `processFrame` sits outside every coverage floor.**
