@@ -454,6 +454,41 @@ def read_manifest(path: str | Path) -> dict[str, ClipProbe]:
     return out
 
 
+# What a report says when no manifest was given: the cross-check did not
+# run, which is a statement, not a silence.
+CONTAINER_NOT_CHECKED = "container check   not run, no manifest given"
+
+
+def load_checked_corpus(
+    measured_dir: str | Path, manifest: str | Path | None = None
+) -> tuple[list[VideoFeatures], str]:
+    """`load_corpus`, and the line a report prints about how far the
+    container cross-check reached (roadmap 10.14b).
+
+    A manifest narrows by design, since a clip it has no entry for loads
+    unchecked. So a report must say how many clips the check covered, or
+    a run against a manifest written for other clips reads exactly like
+    one against the right manifest. A manifest that names none of the
+    measured clips is refused, because that cross-check would print as run
+    while checking nothing. The line is built from the same manifest the
+    load just used, so every clip it counts has already passed."""
+    corpus = load_corpus(measured_dir, manifest)
+    if manifest is None:
+        return corpus, CONTAINER_NOT_CHECKED
+    probes = read_manifest(manifest)
+    checked = sum(1 for v in corpus if f"{v.subject}_{v.label}" in probes)
+    name = Path(manifest).name
+    if checked == 0:
+        raise RldError(
+            f"{name} names none of the {len(corpus)} measured clips, so "
+            "the container cross-check would check nothing"
+        )
+    return corpus, (
+        f"container check   {checked} of {len(corpus)} clips within "
+        f"max(2 s, 2%) of their container ({name})"
+    )
+
+
 # --- the model: multinomial logistic regression, L2, pure numpy ---------
 
 

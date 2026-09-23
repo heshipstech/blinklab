@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from blinklab.rldd import (
+    CONTAINER_NOT_CHECKED,
     LABELS,
     ClipProbe,
     RldError,
@@ -24,6 +25,7 @@ from blinklab.rldd import (
     coverage_refusal,
     label_of,
     leave_one_subject_out,
+    load_checked_corpus,
     load_corpus,
     load_video_features,
     parse_frame_rate,
@@ -534,3 +536,50 @@ class TestReadManifest:
         )
         with pytest.raises(RldError, match="frame count"):
             read_manifest(path)
+
+
+class TestTheCheckSaysHowFarItReached:
+    """Roadmap 10.14b. A clip the manifest has no entry for loads
+    unchecked, so the line a report prints must count the clips the check
+    covered, and a manifest covering none of them is refused: that check
+    would print as run while checking nothing."""
+
+    def _measured(self, tmp_path: Path) -> Path:
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        for stem in ("s1_alert", "s2_alert"):
+            _write_csv(
+                measured / f"{stem}.seconds.csv", _rows(last_second=359)
+            )
+        return measured
+
+    def test_no_manifest_says_the_check_did_not_run(
+        self, tmp_path: Path
+    ) -> None:
+        measured = self._measured(tmp_path)
+        corpus, line = load_checked_corpus(measured)
+        assert line == CONTAINER_NOT_CHECKED
+        assert corpus == load_corpus(measured)
+
+    def test_the_line_counts_the_clips_checked(self, tmp_path: Path) -> None:
+        manifest = tmp_path / "manifest.csv"
+        manifest.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "s1_alert,30/1,30/1,10800\n",
+            encoding="utf-8",
+        )
+        _, line = load_checked_corpus(self._measured(tmp_path), manifest)
+        assert "1 of 2 clips within max(2 s, 2%)" in line
+        assert "manifest.csv" in line
+
+    def test_a_manifest_naming_no_measured_clip_is_refused(
+        self, tmp_path: Path
+    ) -> None:
+        manifest = tmp_path / "manifest.csv"
+        manifest.write_text(
+            "clip,rFrameRate,avgFrameRate,nbReadPackets\n"
+            "s1_alert.mp4,30/1,30/1,10800\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(RldError, match="names none of the 2"):
+            load_checked_corpus(self._measured(tmp_path), manifest)
