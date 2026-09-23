@@ -65,6 +65,14 @@ a null result. Nothing survived the multiple-comparison correction
 (`docs/drozy-result.txt`). Treat the score as an illustration of how
 such a score could be assembled, not as evidence that it works. That
 was true before the measurement and it is still true after it.
+_Corrected 23 September 2026, the paragraph above kept as the record:_
+it holds one fact where the table above holds two. Roadmap 9.1's
+pre-registered test found the score separates self-reported alert from
+drowsy across strangers above chance (AUC 0.70 at p 0.001, 95 UTA-RLDD
+videos from 52 subjects, `docs/alertness-score-result.txt`), so it has
+been shown to track a coarse, self-reported label at the level of a
+cohort — and still not per person, and not against any objective
+measure of how sleepy someone is.
 
 **Anything clinical.** No condition, no impairment, no fitness to drive
 or work. It has not been compared against any medical standard and no
