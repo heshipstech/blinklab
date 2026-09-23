@@ -1311,7 +1311,7 @@ copyright line per family. The test reads the families out of
 
 ## Stage C. Accuracy levers, each with the harness that proves it
 
-- [ ] **C1. Ask the camera for 60 fps and record what it can do; fold
+- [x] **C1. Ask the camera for 60 fps and record what it can do; fold
       in the dim-room session.** `medium · confirmed/high + downgraded
 · S · owner`
       **What:** the only `getUserMedia` call (`src/io/camera.ts:28-32`)
@@ -1331,6 +1331,15 @@ copyright line per family. The test reads the families out of
       ten-blink protocol (or C4's cues) at 30 and 60 with the catch
       count compared against `blink-sample-rate.txt`'s sweep.
       **Findings:** F-025 (A16's precondition).
+      **Done:** 14 September 2026, roadmap 13.2, with the dim-room
+      session under 10.12a on 18 September: the page asks the camera
+      for 60 frames per second and exports the declared maximum, the
+      negotiated rate and any resolution change, with each owned
+      camera's dated section in docs/frame-rate-negotiation.txt. The
+      harness's 30-versus-60 comparison has no subject, because no
+      owned camera negotiates above 30; roadmap 13.3 recorded that
+      empty set as its Branch B. Ticked 23 September 2026 by a sweep
+      that found the row done and this box still open.
 
 - [ ] **C2. Place the guided line from the measured gap, give PERCLOS
       and long closures a personal shut line, and name the two
