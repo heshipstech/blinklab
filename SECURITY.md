@@ -55,14 +55,19 @@ take a few days.
   section said the absence of a Content-Security-Policy was "not a defect this
   repository can fix", which was wrong: a policy can be delivered as a
   `<meta http-equiv="Content-Security-Policy">` tag in the page itself, and
-  since 10 September 2026 it is — the page carries `connect-src 'self'` that
-  way (roadmap row 10.2b), the network-layer refusal beneath the telemetry
-  wrapper ADR-0004 records, held word for word to `src/core/pageIdentity.ts`.
+  since 14 September 2026 it is — the page carries `connect-src 'self'` that
+  way (roadmap row 10.2b, merged as pull request #491 once the owner's run of
+  both browser engines passed under it), the network-layer refusal beneath
+  the telemetry wrapper ADR-0004 records, held word for word to
+  `src/core/pageIdentity.ts`.
   `X-Frame-Options` has no meta equivalent and remains a genuine hosting
   limit, and `frame-ancestors` is one of the directives a meta policy is
   defined to ignore, so framing protection stays out of reach on this host.
   Corrected 7 September 2026, by the first full read under the stamp at the
-  top of this file; the shipped policy recorded 10 September 2026.
+  top of this file; the policy recorded 10 September 2026, when it was built
+  and deliberately held, and shipped 14 September 2026. (Until 23 September
+  this section dated the page's policy to 10 September, the day it was
+  written on the held pull request.)
 - Automated scanner output with no demonstrated impact.
 - The accuracy of the published measurements. That is not a security question —
   it is the subject of the audit and remediation documents, and corrections are
