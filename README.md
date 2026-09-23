@@ -493,6 +493,15 @@ treats that file as the source of truth.
 
 **No, not on the evidence available. This is a null result and it is
 published for the same reason the unflattering blink numbers above are.**
+_Corrected 23 September 2026, the answer above kept as the record:_ that
+"no" was DROZY's alone, and it predates the larger read. On UTA-RLDD, 54
+self-recording strangers, the pre-registered classifier separated a
+coarse self-reported drowsiness state better than chance, and roadmap
+9.1 found the demo score above chance too (AUC 0.70). Both are modest
+results on a noisy, self-reported label, stated with their limits in the
+results block at the top of this page and in
+[docs/uta-rldd-result.txt](docs/uta-rldd-result.txt). What follows is
+the DROZY null, and it stays one.
 
 Everything else on this page measures blink DETECTION, where a human had
 already marked the right answer. This asks the harder question: do these
