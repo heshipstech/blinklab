@@ -1127,3 +1127,20 @@ DETECTOR CHANGED, not yet re-measured, declared 18 September 2026:
   exactly as it was and every stepped verdict is unchanged. The
   owner's next corpus run scores this entry and retires it beside
   the blocks above.
+
+DETECTOR CHANGED, not yet re-measured, declared 23 September 2026:
+
+  Row 12.6b slice: the Python readers learn the blink log's new generation
+
+  One watched file moves: analysis/blinklab/blink_log.py learns the
+  blink log's newest header, closureFraction appended trailing, and
+  keeps the pre-12.6b header readable by name, each row held to the
+  width of the header above it. The evaluation reads the frame
+  columns only, and neither generation moves them.
+
+  Predicted corpus impact: none by construction. The detector, the
+  shape reader and every frame column are untouched; a blink log from
+  the next corpus run carries one more trailing column the evaluation
+  never reads, and a committed older log loads exactly as it did. The
+  owner's next corpus run scores this entry and retires it beside the
+  blocks above.
