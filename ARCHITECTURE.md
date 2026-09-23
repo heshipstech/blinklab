@@ -17,7 +17,7 @@ Everything that decides anything lives in `core` as a function from
 values to values. Everything that talks to the world lives in `io`.
 `main.ts` is the wiring between them.
 
-That is why 2050 unit tests run with no browser. The ones over `src/core`
+That is why 2053 unit tests run with no browser. The ones over `src/core`
 take about fifteen seconds; the whole suite takes a few minutes, because
 the guards under `test/tools` shell out to git and node. (This sentence
 said "about three seconds" until 23 September 2026, long after the suite

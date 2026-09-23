@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 2050 unit tests and 719 Python tests, each figure
+- **The suite:** 2053 unit tests and 719 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**A CLIP RAN ON A MACHINE TOO, 23 September 2026 (remediation D8 closes; row 13.5's promise kept eleven days after its tick).** Row 13.5 said "camera rows conditional, machine rows unconditional" and ticked on 12 September with every clause of its Check met, but the Check never asked about the machine rows. So a clip export went on writing one line, "camera: none, not a camera session", and nothing about the browser, the core count or the pixel ratio. The corpus results are clip exports, which made them exactly the files that needed to say what they ran on. `MachineInfo` is now its own type, `DeviceInfo` is the camera's fields on top of it, and a clip reads its machine with `readMachineInfo` when it starts, so its export carries the same seven machine rows a camera session does. The rows read "unknown" if the machine was never read, and the camera's four rows stay conditional. SPEC, the Python contract and the presence test all call the seven every-export keys now; the presence guard reddened at the first commit and went green when SPEC moved. The first draft read the machine before the clip path's session reset, which would have wiped it while every unit test passed. The clip e2e now asserts the rows arrive read rather than "unknown", and CI's Chromium arbitrates. LEARNING records the lesson: a row's text is not its Check. The live claim is unchanged at 12.8a. The suite is 2053 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **THREE ITEMS UNDER TICKED ROWS, AND ONE PROMISE A ROW MADE AND ITS CHECK DID NOT KEEP, 23 September 2026 (REMEDIATION-2026-09.md bookkeeping; no row moves).** An earlier sweep today ticked 32 boxes whose rows had ticked. Three more items sat under ticked rows and were rightly left open, but left silent: A10 and C3 under 11.6a, and D8 under 13.5. Each now carries a note, held to the source before it was written. C3's container half, the three-blink verification that gates storing a guided line, is in, and only its measurement on people is left. A10's reducers are fed null through a calibration and the export marks the span. But the baseline learner is still fed, and the row's reason for leaving it, that a guided line overrides the passive baseline, holds for the blink line and not for the frozen baseline itself, which 12.6b's closure fraction, 12.7's lid openness and 12.10's curve have read since. So a calibration run inside the learning window reaches all three, and whether to feed it null is recorded as the owner's reading rather than decided here. D8 found a promise: row 13.5's text says "machine rows unconditional", its Check never asked, and a clip export still writes its camera line alone, with no user agent, core count or pixel ratio. That part needs no owner and is the next increment. The live claim is unchanged at 12.8a. The suite is 2050 unit tests, 52 end to end tests of which 50 run on every pull request.
 
