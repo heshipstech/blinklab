@@ -1184,7 +1184,7 @@ downgraded/medium · M`
       `ci.yml`).
       **Findings:** F-062, G-Reproduc-8, F-101, F-103, F-099, F-102.
 
-- [ ] **B15. `resultGuard` counts `it(` tokens: three documents publish
+- [x] **B15. `resultGuard` counts `it(` tokens: three documents publish
       952 unit tests while vitest reports 962.** `low · confirmed · S`
       **What:** `tools/resultGuard.mjs:101-130` counts source tokens;
       loops at `test/core/rulerFit.test.ts:56-57` and
@@ -1193,6 +1193,11 @@ downgraded/medium · M`
       **Fix:** count from the runner and assert static == runtime, or
       say "about 950"; scope number checks to their section.
       **Findings:** F-059.
+      **Done:** 7 September 2026, roadmap 10.0b1: the published unit
+      count is what vitest collects, held in test/collected-tests.txt
+      and checked against the runner by npm run counts:check in CI.
+      Ticked 23 September 2026 by a sweep that found the row done and
+      this box still open.
 
 - [x] **B16. SPEC's "kept current" contract is two fields, two states
       and ~34 metadata keys behind.** `medium · confirmed ×2 · S`
