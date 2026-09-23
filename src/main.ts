@@ -172,6 +172,7 @@ import {
   type CameraFrameDriver,
   type GuidedCalibrationSpan,
   type DeviceInfo,
+  type MachineInfo,
   type MeasurementFrame,
   type SessionMarker,
 } from "./core/sessionMetadata";
@@ -345,7 +346,7 @@ import {
   stopStream,
   streamOf,
 } from "./io/camera";
-import { readDeviceInfo } from "./io/deviceInfo";
+import { readDeviceInfo, readMachineInfo } from "./io/deviceInfo";
 import { downloadTextFile } from "./io/download";
 import { createWakeLock } from "./io/wakeLock";
 import type { VideoFrameLoop } from "./io/frameLoop";
@@ -812,6 +813,11 @@ let framesMeasured = 0;
 // The conditions of the measurement, recorded beside it. A camera
 // session used to export no rate and no word about the camera.
 let deviceInfo: DeviceInfo | null = null;
+// A clip has no camera but runs on a machine all the same, and its
+// export says which (roadmap 13.5's "machine rows unconditional",
+// remediation D8). Read when the clip starts, just after the session
+// reset, the same point at which a camera session reads its device.
+let clipMachineInfo: MachineInfo | null = null;
 let irisWidthSamples: number[] = [];
 // The frame the model read, recorded so the iris width above has a
 // stated unit. The canvas is a display size and cannot stand in for it.
@@ -1445,6 +1451,7 @@ function resetSession(): void {
   // PREVIOUS session's aperture trace and exported as this clip's.
   framesMeasured = 0;
   deviceInfo = null;
+  clipMachineInfo = null;
   irisWidthSamples = [];
   // The export's percentiles describe ONE session's inferences; the
   // 60-sample readout window may carry across because it only ever
@@ -1767,6 +1774,9 @@ async function beginVideoFile(file: File): Promise<void> {
       `Clip: ${clip.name}, ${String(clip.widthPx)} x ${String(clip.heightPx)} pixels, ${duration}.${largeNote}`,
     );
     resetSession();
+    // After the reset, which clears it, as the camera path reads its
+    // device after its own.
+    clipMachineInfo = readMachineInfo();
     setState({ kind: "running" });
 
     // Awaited, not fired and forgotten. The model takes seconds to
@@ -3263,7 +3273,7 @@ function exportSession(): void {
       loadedClipDurationSeconds,
     ),
     ...steppingMetadataRows(steppingWitness()),
-    ...deviceMetadataRows(deviceInfo, exportFullUserAgent),
+    ...deviceMetadataRows(deviceInfo, exportFullUserAgent, clipMachineInfo),
     ...calibrationMetadataRows(
       // The certificate travels with a refusal exactly as with a
       // birth: both are frozen windows, and the refused export is
