@@ -615,7 +615,16 @@ last-frame double count (#156) and the model-clock fix (#189), the
 second of which changed a single clip's detection count from 43 to 54.
 So this table is a historical record of what two engines did on that
 build, not a statement about the current one. Re-measuring it is
-roadmap row 13.0.
+roadmap row 13.0. _Corrected 23 September 2026, the sentence before
+this one kept as the record:_ 13.0 ran on 14 September and found
+Chromium and WebKit step a fixed clip identically: the same frames
+measured, and every blink, aperture and PERCLOS field byte for byte,
+with only inference time and the decoded scene brightness differing
+([docs/engine-agreement.txt](docs/engine-agreement.txt)). That clip is
+a synthetic test pattern with no face in it, so every blink field was
+empty in both: it proves the two engines measure the same frames and
+says nothing about blinks on a face. This table has not been
+re-measured, and it stays the historical record it says it is.
 
 |                     | Chrome     | Safari     |
 | ------------------- | ---------- | ---------- |
