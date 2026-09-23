@@ -414,7 +414,7 @@ downgraded/medium (b-1) · M`
       pinned in D1's test file.
       **Findings:** G-Reproduc-3, G-Reproduc-5.
 
-- [ ] **A13. `blinkRatePerMin` divides by elapsed time, not observed
+- [x] **A13. `blinkRatePerMin` divides by elapsed time, not observed
       time.** `medium · confirmed/high + downgraded/medium · S`
       **What:** `src/core/blinkRate.ts:41-51`: `observedMs = min(now −
 startedAt, 60000)`; `rateState` starts on the first processed
@@ -428,6 +428,11 @@ startedAt, 60000)`; `rateState` starts on the first processed
       `BLINK_RATE_MIN_OBSERVATION_MS` of observed time; export the
       observed fraction beside the rate.
       **Findings:** F-004.
+      **Done:** 10 September 2026, roadmap 10.12b: the rate divides by
+      observed time, windowed like blink times and null below the
+      observation minimum, with blinkObservedFraction exported beside
+      it. Ticked 23 September 2026 by a sweep that found the row done
+      and this box still open.
 
 - [ ] **A14. Blink counting goes silently dead during a droop below the
       line or the re-arm line, and the rate prints 0/min.**
