@@ -264,14 +264,14 @@ its own learning window runs.
 
 This is the section most model cards leave vague, so here it is plainly.
 
-| Group                         | Number of people      | What is known about them                                                                 |
-| ----------------------------- | --------------------- | ---------------------------------------------------------------------------------------- |
-| Eyeblink8 subjects            | 8                     | Nothing beyond one glasses annotation                                                    |
-| DROZY subjects                | 14, of whom 13 usable | Nothing published beyond subject number                                                  |
-| The author                    | 1                     | One adult, four devices, six sessions                                                    |
-| Round volunteers              | 6                     | Six adults, six devices, one scripted session each, anonymous                            |
-| UTA-RLDD, classification read | 54 of 60              | Self-recording strangers; six subjects lose every video to the frame-rate floor          |
-| UTA-RLDD, alertness read      | 52 of those           | The subset the alertness comparison could score; nothing published beyond subject number |
+| Group                         | Number of people      | What is known about them                                                                                                                                      |
+| ----------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Eyeblink8 clips               | not recorded here     | Eight clips; the annotation carries no subject id, so the number of distinct people is not recorded in this repository. Nothing beyond one glasses annotation |
+| DROZY subjects                | 14, of whom 13 usable | Nothing published beyond subject number                                                                                                                       |
+| The author                    | 1                     | One adult, four devices, six sessions                                                                                                                         |
+| Round volunteers              | 6                     | Six adults, six devices, one scripted session each, anonymous                                                                                                 |
+| UTA-RLDD, classification read | 54 of 60              | Self-recording strangers; six subjects lose every video to the frame-rate floor                                                                               |
+| UTA-RLDD, alertness read      | 52 of those           | The subset the alertness comparison could score; nothing published beyond subject number                                                                      |
 
 The two UTA-RLDD counts are different reads of one dataset and are
 listed separately on purpose: 54 subjects survive the frame-rate floor
@@ -504,7 +504,7 @@ writing. See `DATASETS.md`.
 
 - Benchmark result and method: `README.md`
 - Full evaluation output: `docs/eyeblink8-result.txt`
-- Evidence and scripts: `docs/evidence/2026-08-09/`
+- Evidence and scripts: `docs/evidence/`, one folder per run, each named in `docs/eyeblink8-result.txt`
 - Dataset licences and permissions: `DATASETS.md`
 - Known defects: the [issue tracker](https://github.com/heshipstech/blinklab/issues)
 - The sleepiness analysis plan, written before its answer was known:
