@@ -82,7 +82,9 @@ baseline learned in the first 30 seconds, and on three of six
 volunteers' machines that baseline was unusable: drifted 34.6% during
 the measurement, drifted 15.4% before it, or settled 1.28 times the
 person's own resting aperture. The detector itself missed nothing on
-the sessions whose baseline worked. Table and write-up in
+the three sessions whose baseline worked, a small n: zero of three
+bounds how often a sound session would miss a blink below about 56
+percent (95% Wilson interval), not at zero. Table and write-up in
 `docs/validation-round.txt`.
 
 Since 23 August 2026 the page runs that round's baseline-length check
