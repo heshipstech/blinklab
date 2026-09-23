@@ -1029,6 +1029,17 @@ enabled false`.
       the result regenerated from stdout, which reads feature records
       on the owner's machine. Recorded 23 September 2026 by a sweep
       that found the slice landed and this item silent about it.
+      **Most of it done:** 23 September 2026, the flag half.
+      `analysis/tools/analyse_rldd.py` takes `--shuffles` and
+      `--seed`, both defaulting to the plan's pair, and its report
+      states the pair both label-shuffle controls were drawn from,
+      naming any pair but the plan's as not pre-registered. So the
+      result file's two robustness reseeds, 250 shuffles each from
+      seeds 42 and 2024, are now a command rather than a call made by
+      hand. A count below one is refused at the flag. Still open: the
+      result regenerated from stdout with the per-subject scores and
+      the coefficients, which reads feature records on the owner's
+      machine.
 
 - [ ] **B9. Alertness Bar 2 tests a joint-noise null and "about as good
       as a fitted one" is unsupported.** `medium · downgraded ×2 · S`
