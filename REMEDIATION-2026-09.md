@@ -1192,6 +1192,22 @@ downgraded/medium · M`
       pins (file count, phases complete vs ROADMAP, gate list vs
       `ci.yml`).
       **Findings:** F-062, G-Reproduc-8, F-101, F-103, F-099, F-102.
+      **Most of it done:** 23 September 2026, across three full reads.
+      The README (roadmap 10.0b6's read, four corrections including
+      "no objective validation of the score yet"), ARCHITECTURE (four
+      corrections, the module count and the evidence pointer among
+      them) and MODEL_CARD (its tested-on table counts eight clips
+      rather than eight people, the paragraph that split the
+      measurement table is moved, and three state-of-things paragraphs
+      carry dated corrections) were each read end to end and
+      re-stamped; tablets were already named untested; ROADMAP.md's
+      opening already says what is true, one row one pull request; and
+      the parser, the read stamp and the literal pins landed under
+      10.0b2, 10.0b3 and 10.0b6. Still open: F-099, the model's
+      upstream provenance in MODEL_CARD and ADR-0002 — origin URL,
+      variant, fetch date and matched upstream hash — which needs the
+      record of the original fetch and a network read of the upstream
+      file.
 
 - [x] **B15. `resultGuard` counts `it(` tokens: three documents publish
       952 unit tests while vitest reports 962.** `low · confirmed · S`
