@@ -318,8 +318,15 @@ that, sideways too on a phone.
 
 | When (s) | Closed for (ms) | Amplitude (mm) | Speed (mm/s) | A/V (ms) |
 
-A row whose amplitude is under `FAINT_BLINK_MM` (1.5 mm) is **greyed, not
-hidden**: the export keeps it, so the panel must not disagree with the file.
+A row the completeness label calls **incomplete** — the lid covered less of the
+frozen open baseline than the detector's arm line asks, the cut
+`src/core/closureCompleteness.ts` places (roadmap 12.6b) — is **greyed, not
+hidden**: the export keeps it, and its `closureFraction` column, so the panel
+must not disagree with the file. The label retired an absolute 1.5 mm line,
+which was a different ruler on every face. Nothing is greyed before the baseline
+is born, and nothing while the Ruler fit line says the baseline is too long to
+trust: a ruler the page will not vouch for does not get to call a blink
+incomplete.
 An unmeasurable shape shows an em dash per cell rather than a blank, because a
 blank cell reads as a rendering fault.
 
