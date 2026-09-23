@@ -2043,7 +2043,7 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       **Depends on:** A2 (the driver), A17.
       **Findings:** F-060.
 
-- [ ] **D8. Clip exports drop the machine rows, and the executed
+- [x] **D8. Clip exports drop the machine rows, and the executed
       delegate is unrecorded for every corpus run.** `medium · confirmed
 ×2 (l-4); downgraded ×2 (Browser-3, F-108) · S + M`
       **What:** `sessionMetadata.ts:120-126` returns only `camera: none`
@@ -2079,6 +2079,17 @@ ${{ github.event.workflow_run.head_sha }}` to checkout and set
       `hardware_concurrency` or `device_pixel_ratio`. Recorded 23
       September 2026 by a sweep that found the row ticked and this
       item silent.
+      **Done:** 23 September 2026, the part row 13.5 named and its
+      Check did not ask for: machine rows unconditional.
+      `deviceMetadataRows` writes a clip export's seven machine rows
+      (`user_agent`, `user_agent_form`, `hardware_concurrency`,
+      `viewport`, `screen`, `device_pixel_ratio`, `orientation`)
+      beside its no-camera line, read by `readMachineInfo` when the
+      clip starts, and `unknown` when never read; the camera's own
+      rows stay conditional. SPEC.md, the Python contract and the
+      presence test call the seven every-export keys now, and the clip
+      e2e asserts they arrive read rather than unknown. With the note
+      above, every part of this fix is in.
 
 - [x] **D9. A `connect-src 'self'` Content-Security-Policy closes the
       named residual risk at the network layer; the recorded objections
