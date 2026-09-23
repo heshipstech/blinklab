@@ -167,6 +167,9 @@ export function fixtureRecords(session: FixtureSession): FeatureRecord[] {
     perclos30: null,
     perclos50: null,
     perclos60: null,
+    // The blink-excluded share reads the same per-second buffer, so it
+    // is empty for the same reason (12.10a).
+    perclosBlinkExcluded: null,
   }));
 }
 
