@@ -133,6 +133,21 @@ Never run `npm install` or `npm ci` from inside a worktree scratch copy.
       **Depends on:** nothing. Do before A7/A19 so their trace harness
       runs on the corrected sample cadence.
       **Findings:** F-001, F-002 (F-044, F-082 partially).
+      **Most of it done:** 10 September 2026, roadmap 13.8a and 13.8b,
+      with 13.8c's residue on 18 September. The prediction came first
+      (`docs/inference-once.txt`). `startCameraFrameLoop`
+      (`src/io/frameLoop.ts`) now drives `processFrame` once per
+      presented frame on the callback's own timestamp; the display
+      loop is kept only to notice frames stopping and as the
+      measurement fallback where the callback does not exist; and
+      `camera_frame_driver` rides every export header. The owner's
+      stepped rerun reproduced the anchor digit for digit. The riders
+      are in too: readouts are rewritten only on change, and the
+      fixation scan is linear by test. Still open, under row 13.8c:
+      the A/B live session with its velocity prediction, which is the
+      owner's, and the LID_SLUGGISH ramp and MANUAL item 26 re-derived
+      from that session's numbers. Recorded 23 September 2026 by a
+      sweep that found the rows ticked and this item silent.
 
 - [x] **A3. `sampled_fps` crosses the export border rounded to one
       decimal, so the page and the Python mirror disagree on the 25 fps
