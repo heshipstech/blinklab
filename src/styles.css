@@ -540,11 +540,12 @@ input[type="file"] {
 .blink-table tbody tr:first-child td {
   padding-top: 6px;
 }
-/* A blink that barely moved is not a blink. Muted rather than hidden,
- * because the export keeps it and the panel should not disagree with
- * the file.
+/* A blink the label calls incomplete: the lid covered less of the
+ * frozen open baseline than the detector's arm line asks (roadmap
+ * 12.6b). Muted rather than hidden, because the export keeps it and the
+ * panel should not disagree with the file.
  */
-.blink-table tr.faint td {
+.blink-table tr.incomplete td {
   color: var(--muted);
 }
 

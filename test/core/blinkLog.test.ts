@@ -22,6 +22,7 @@ function eventAt(atMs: number): BlinkEvent {
     startFrame: null,
     endFrame: null,
     baselineMm: null,
+    blinkLineMm: null,
   };
 }
 
@@ -132,6 +133,23 @@ describe("serialiseBlinkEvents, when rows went missing", () => {
 });
 
 describe("blinkTableRow", () => {
+  // A blink on a ruler: an 8 mm frozen baseline and a 4 mm passive
+  // line, so the arm line sits at 3.6 mm and the label's cut at 0.55
+  // of the baseline, 4.4 mm of travel.
+  const onRuler = (amplitudeMm: number, baselineMm = 8): BlinkEvent => ({
+    atMs: 1000,
+    durationMs: 117,
+    startFrame: null,
+    endFrame: null,
+    baselineMm,
+    blinkLineMm: baselineMm / 2,
+    shape: {
+      amplitudeMm,
+      peakClosingVelocityMmPerS: 52,
+      amplitudeOverVelocityMs: 18,
+    },
+  });
+
   it("gives five cells in header order, units left to the header", () => {
     const { cells } = blinkTableRow(
       {
@@ -140,6 +158,7 @@ describe("blinkTableRow", () => {
         startFrame: null,
         endFrame: null,
         baselineMm: null,
+        blinkLineMm: null,
         shape: {
           amplitudeMm: 5.23,
           peakClosingVelocityMmPerS: 68.4,
@@ -147,6 +166,7 @@ describe("blinkTableRow", () => {
         },
       },
       10000,
+      true,
     );
     // Repeating "ms" and "mm" on every row was most of the ink in the
     // prose list this replaced and none of the information.
@@ -157,53 +177,55 @@ describe("blinkTableRow", () => {
   it("keeps its shape when the analysis produced none", () => {
     // A dash rather than a blank: an empty cell reads as a rendering
     // fault, and this is a real blink whose shape could not be measured.
-    const { cells, faint } = blinkTableRow(eventAt(11000), 10000);
+    const { cells, incomplete } = blinkTableRow(eventAt(11000), 10000, true);
     expect(cells[0]).toBe("1.0");
     expect(cells[1]).toBe("133");
     expect(cells.slice(2)).toEqual(["—", "—", "—"]);
-    expect(faint).toBe(false);
+    expect(incomplete).toBe(false);
   });
 
-  it("marks a blink that barely moved, without hiding it", () => {
+  it("greys a blink that stopped short of the arm line, without hiding it", () => {
     // The export keeps these rows, so the panel must not disagree with
-    // the file. Measured sessions put real blinks at 2.2 to 6.9 mm and
-    // the phantoms under 1 mm.
-    const faintRow = blinkTableRow(
-      {
-        atMs: 1000,
-        durationMs: 117,
-        startFrame: null,
-        endFrame: null,
-        baselineMm: null,
-        shape: {
-          amplitudeMm: 0.9,
-          peakClosingVelocityMmPerS: 52,
-          amplitudeOverVelocityMs: 18,
-        },
-      },
-      0,
-    );
-    expect(faintRow.faint).toBe(true);
-    expect(faintRow.cells[2]).toBe("0.9");
+    // the file. 2 of 8 mm is a quarter of the open eye, well short of
+    // the 0.55 the arm line asks.
+    const short = blinkTableRow(onRuler(2), 0, true);
+    expect(short.incomplete).toBe(true);
+    expect(short.cells[2]).toBe("2.0");
   });
 
-  it("does not mark an ordinary blink as faint", () => {
-    const ordinary = blinkTableRow(
-      {
-        atMs: 1000,
-        durationMs: 117,
-        startFrame: null,
-        endFrame: null,
-        baselineMm: null,
-        shape: {
-          amplitudeMm: 2.5,
-          peakClosingVelocityMmPerS: 166,
-          amplitudeOverVelocityMs: 15,
-        },
-      },
-      0,
-    );
-    expect(ordinary.faint).toBe(false);
+  it("does not grey a blink that travelled past the arm line", () => {
+    expect(blinkTableRow(onRuler(5), 0, true).incomplete).toBe(false);
+    // Exactly at the cut is complete, the house boundary rule: an
+    // 8 mm ruler and 4.4 mm of travel land on 0.55 up to rounding,
+    // so a hair past it is the honest probe.
+    expect(blinkTableRow(onRuler(4.4 + 1e-9), 0, true).incomplete).toBe(false);
+  });
+
+  it("judges the same millimetres by each face's own ruler", () => {
+    // The retired grey line's defect: 1.5 mm was a fifth of one eye and
+    // a third of another. The same 2.5 mm blink is most of a 4 mm eye
+    // and under a third of an 8 mm one, and only the second stopped
+    // short of its own arm line.
+    expect(blinkTableRow(onRuler(2.5, 4), 0, true).incomplete).toBe(false);
+    expect(blinkTableRow(onRuler(2.5, 8), 0, true).incomplete).toBe(true);
+    // And a blink the old line greyed for its millimetres alone is
+    // judged by its share: 1.2 of a 2 mm eye is 0.6, past the cut.
+    expect(blinkTableRow(onRuler(1.2, 2), 0, true).incomplete).toBe(false);
+  });
+
+  it("greys nothing without a ruler to judge by", () => {
+    // Before the baseline is born the detector counts against the
+    // fixed fallback line, and a blink has no personal ruler to be a
+    // share of.
+    const unruled = { ...onRuler(0.9), baselineMm: null, blinkLineMm: null };
+    expect(blinkTableRow(unruled, 0, true).incomplete).toBe(false);
+  });
+
+  it("greys nothing while the page calls the ruler too long to trust", () => {
+    // A baseline born long reads every blink short (the dry run's
+    // 1.41 x resting). The table must not call a person's blinks
+    // incomplete on the word of a ruler the page has refused.
+    expect(blinkTableRow(onRuler(2), 0, false).incomplete).toBe(false);
   });
 });
 
@@ -217,6 +239,7 @@ describe("serialiseBlinkEvents", () => {
     startFrame,
     endFrame,
     baselineMm: 10.4,
+    blinkLineMm: 5.2,
     shape: {
       amplitudeMm: 5.2,
       peakClosingVelocityMmPerS: 110,
@@ -251,6 +274,7 @@ describe("serialiseBlinkEvents", () => {
         startFrame: 5,
         endFrame: 9,
         baselineMm: 10.4,
+        blinkLineMm: 5.2,
       },
     ]);
     // The closure fraction too: no amplitude, no share of anything,
