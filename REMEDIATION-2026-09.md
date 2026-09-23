@@ -654,7 +654,7 @@ downgraded/medium · S`
       asked once on the ended transition, `kss_after_at_seconds`
       exported.
 
-- [ ] **A23. Gaze calibration has no goodness-of-fit refusal; a garbage
+- [x] **A23. Gaze calibration has no goodness-of-fit refusal; a garbage
       axis is stored and labelled "(calibrated)".**
       `medium · confirmed/high + downgraded/medium · S`
       **What:** `calibrationProfile.ts:36-59` `fitLine` refuses only
@@ -668,6 +668,11 @@ downgraded/medium · S`
       residual in the profile, button label and export header; pin the
       noise-only-axis case.
       **Findings:** F-010.
+      **Done:** 12 September 2026, roadmap 14.9a: per-axis RMS
+      residual and R-squared with the pre-stated refusal bound,
+      carried in the profile and the export header. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [ ] **A24. `headPose` reads MediaPipe's column-major matrix as
       row-major and decomposes the transpose.** `medium · confirmed ×2
