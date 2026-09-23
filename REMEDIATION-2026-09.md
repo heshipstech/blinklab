@@ -617,7 +617,7 @@ deliveryRates(...)` reads a rolling 5 s window
       exported. Ticked 23 September 2026 by a sweep that found the row
       done and this box still open.
 
-- [ ] **A21. A stepped clip that crashes mid-run exports as a camera
+- [x] **A21. A stepped clip that crashes mid-run exports as a camera
       session with no clip name.** `medium · confirmed/high +
 downgraded/medium · S`
       **What:** the shared catch at `main.ts:1465-1491` sets
@@ -631,6 +631,12 @@ downgraded/medium · S`
       extract the decision into core; e2e injecting a throw during a
       stepped clip asserting `# source: file` and the clip name.
       **Findings:** F-016.
+      **Done:** 15 September 2026, roadmap 14.0e: a stepped clip that
+      throws mid-run exports as a file session with its clip name, the
+      decision extracted into core (src/core/steppedCrash.ts) and
+      pinned end to end (test/e2e/steppedCrash.spec.ts). Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [x] **A22. KSS-after is re-asked on every export after a Skip and is
       stamped by whichever export comes first, even mid-session.**
