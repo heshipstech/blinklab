@@ -26,7 +26,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from blinklab.blink_log import BLINK_COLUMNS
+from blinklab.blink_log import ACCEPTED_BLINK_GENERATIONS, BLINK_COLUMNS
 from blinklab.loader import Session, SessionError, load_session
 from blinklab.metadata import read_metadata
 
@@ -178,7 +178,7 @@ def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
 
     reader = csv.reader(rows)
     header = next(reader)
-    if header != BLINK_COLUMNS:
+    if header not in ACCEPTED_BLINK_GENERATIONS:
         raise ValidationError(
             f"{path.name}: columns are {header}, expected "
             f"{BLINK_COLUMNS}. This was not written by the page's "
@@ -187,10 +187,10 @@ def load_camera_blinks(path: str | Path) -> CameraBlinkLog:
 
     blinks: list[CameraBlink] = []
     for number, row in enumerate(reader, start=2):
-        if len(row) != len(BLINK_COLUMNS):
+        if len(row) != len(header):
             raise ValidationError(
                 f"{path.name} row {number}: {len(row)} fields, expected "
-                f"{len(BLINK_COLUMNS)}"
+                f"{len(header)}"
             )
         # Frame numbers present means a clip, the mirror of the refusal
         # in blink_log.py. Checked as well as the metadata line above,

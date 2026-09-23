@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from blinklab.blink_log import BLINK_COLUMNS, load_blink_log
+from blinklab.blink_log import (
+    BLINK_COLUMNS,
+    PRE_CLOSURE_FRACTION_BLINK_COLUMNS,
+    load_blink_log,
+)
 
 HEADER = ",".join(BLINK_COLUMNS)
 META = (
@@ -21,7 +25,9 @@ def write(tmp_path: Path, body: str, name: str = "clip.blinks.csv") -> Path:
 
 class TestReading:
     def test_reads_frames_and_timings(self, tmp_path: Path) -> None:
-        body = META + HEADER + "\r\n374,382,6366.6,133.3,4.8,104.3,46.8\r\n"
+        body = (
+            META + HEADER + "\r\n374,382,6366.6,133.3,4.8,104.3,46.8,0.6\r\n"
+        )
         log = load_blink_log(write(tmp_path, body))
         assert len(log.blinks) == 1
         blink = log.blinks[0]
@@ -37,7 +43,7 @@ class TestReading:
         # complete annotation would blame the detector for frames it
         # never saw, so an evaluation has to be able to tell.
         stepped = load_blink_log(
-            write(tmp_path, META + HEADER + "\r\n1,4,10,50,1,1,1\r\n")
+            write(tmp_path, META + HEADER + "\r\n1,4,10,50,1,1,1,0.2\r\n")
         )
         assert stepped.measured_completely is True
         assert stepped.frames_measured == 5134
@@ -47,11 +53,29 @@ class TestReading:
                 tmp_path,
                 META.replace("stepped", "played")
                 + HEADER
-                + "\r\n1,4,10,50,1,1,1\r\n",
+                + "\r\n1,4,10,50,1,1,1,0.2\r\n",
                 name="b.blinks.csv",
             )
         )
         assert watched.measured_completely is False
+
+    def test_reads_the_generation_before_closure_fraction(
+        self, tmp_path: Path
+    ) -> None:
+        # Roadmap 12.6b appended closureFraction trailing. Every blink
+        # log a corpus run wrote before it carries seven columns, and
+        # the committed evidence was joined against such files, so the
+        # older header must keep loading, row widths held to IT.
+        header = ",".join(PRE_CLOSURE_FRACTION_BLINK_COLUMNS)
+        body = META + header + "\r\n374,382,6366.6,133.3,4.8,104.3,46.8\r\n"
+        log = load_blink_log(write(tmp_path, body))
+        assert [(b.start_frame, b.end_frame) for b in log.blinks] == [
+            (374, 382)
+        ]
+
+    def test_the_newest_column_is_closure_fraction_trailing(self) -> None:
+        assert BLINK_COLUMNS[-1] == "closureFraction"
+        assert BLINK_COLUMNS[:-1] == PRE_CLOSURE_FRACTION_BLINK_COLUMNS
 
     def test_a_log_with_no_blinks_is_readable_and_empty(
         self, tmp_path: Path
@@ -80,7 +104,7 @@ class TestRefusals:
         # Frame columns are empty for a live camera. Dropping those rows
         # silently would report on whatever was left and call it a
         # result.
-        body = META + HEADER + "\r\n,,10,50,1,1,1\r\n"
+        body = META + HEADER + "\r\n,,10,50,1,1,1,0.2\r\n"
         with pytest.raises(ValueError, match="camera session"):
             load_blink_log(write(tmp_path, body))
 
@@ -99,8 +123,18 @@ class TestRefusals:
             load_blink_log(path)
 
     def test_a_blink_that_ends_before_it_starts(self, tmp_path: Path) -> None:
-        body = META + HEADER + "\r\n40,10,10,50,1,1,1\r\n"
+        body = META + HEADER + "\r\n40,10,10,50,1,1,1,0.2\r\n"
         with pytest.raises(ValueError, match="before it starts"):
+            load_blink_log(write(tmp_path, body))
+
+    def test_an_old_width_row_under_the_new_header(
+        self, tmp_path: Path
+    ) -> None:
+        # Each row is held to the header above it, not to any accepted
+        # width: a seven-field row under the eight-column header is a
+        # damaged file, not an older one.
+        body = META + HEADER + "\r\n1,4,10,50,1,1,1\r\n"
+        with pytest.raises(ValueError, match="7 fields, expected 8"):
             load_blink_log(write(tmp_path, body))
 
     def test_a_short_row(self, tmp_path: Path) -> None:
