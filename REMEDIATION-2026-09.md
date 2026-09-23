@@ -2087,6 +2087,13 @@ probed) · M · owner`
       runner's only automated protection; after C10, decide from data
       whether the runner stays on WebKit.
       **Findings:** G-Browser-7.
+      **Half done:** 14 September 2026, roadmap 13.0's build half: the
+      stepped frame-count assertion is a mandatory local test of the
+      WebKit Playwright project, with a config comment naming what it
+      protects. Still open: the decision this item asks for after C10,
+      whether the corpus runner stays on WebKit. 13.0's paired run
+      found identical coverage, which gives no reason to move it, but
+      no decision is recorded, and it is the owner's to make.
 
 ---
 
