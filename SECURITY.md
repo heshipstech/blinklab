@@ -6,7 +6,7 @@ blinklab is a research and learning project: a browser demo that measures
 blinks from a webcam, plus the analysis code behind its published numbers. It
 is **not a medical device** and is not used to make decisions about anyone.
 
-Read in full on 10 September 2026, claims `2a4d3f74`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the first on 7 September, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
+Read in full on 23 September 2026, claims `b231a048`. That stamp records a READ, not an edit: it goes stale when a claim in this file changes, and not when a generated block or a count figure moves. This read, like the earlier ones on 7 and 10 September, was made by an automated pass, which is weaker evidence than the maintainer's own read and is labelled so rather than left to be assumed. Roadmap 10.0b6.
 
 Two properties shape what a vulnerability means here:
 
