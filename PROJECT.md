@@ -57,8 +57,10 @@ d. A stranger can clone and run it in under 5 minutes.
   rather than through a method nobody can audit. Decided in
   [ADR-0005](decisions/ADR-0005-explainability-and-mobile.md),
   7 September 2026, after the first full read under the stamp at the
-  foot of this file found this line and one under Out of scope both
-  saying things the project had moved past.
+  head of this file found this line and one under Out of scope both
+  saying things the project had moved past. (Until 23 September this
+  sentence said the stamp sat at the foot of the file; it has sat at the
+  head since the stamp was added.)
 
 ## Out of scope
 
