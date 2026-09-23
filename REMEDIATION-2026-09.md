@@ -1082,6 +1082,17 @@ enabled false`.
       a count over a count, so Wilson there would be arithmetic
       borrowed from a distribution it does not have. The bootstrap half
       is roadmap 10.10c2.
+      **Still half done:** 13 September 2026, roadmap 10.10c2b's
+      instrument slice. `subject_bootstrap` in
+      `analysis/blinklab/stats.py` is the seeded subject-level
+      percentile bootstrap this fix asks for, with eight tests, one
+      proving the resampling unit is the subject and one a
+      paired-difference statistic. No tool calls it yet, so no
+      bootstrap interval is printed anywhere. Still open: those
+      intervals printed beside the points in `analyse_rldd.py` and
+      `compare_alertness.py`, whose published numbers need the owner's
+      measured corpus. Recorded 23 September 2026 by a sweep that
+      found the slice landed and this item silent about it.
 
 - [x] **B11. Two statistical verdicts read stronger than their n.**
       `low · downgraded ×2 · S` - DROZY's within-subject bar (`analyse_drozy.py:66-94`,
