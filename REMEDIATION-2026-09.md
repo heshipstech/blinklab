@@ -458,7 +458,7 @@ startedAt, 60000)`; `rateState` starts on the first processed
       apart. Ticked 23 September 2026 by a sweep that found the row
       done and this box still open.
 
-- [ ] **A15. Refusal does not withhold durations, amplitude, velocity
+- [x] **A15. Refusal does not withhold durations, amplitude, velocity
       or the blink log, and the first 30 s of every session counts
       against the owner-fixture 4 mm line.**
       `medium · confirmed/high + downgraded (F-008); downgraded ×2
@@ -484,6 +484,13 @@ startedAt, 60000)`; `rateState` starts on the first processed
       conditions. Either way the line source per blink is A8's column.
       **Depends on:** A8.
       **Findings:** F-008, F-006.
+      **Done:** 7 and 10 September 2026, roadmap 10.13a and 10.13b: a
+      refused session feeds the reducer nothing, so its durations,
+      amplitude, velocity and blink log are withheld
+      (tools/withholdGuard.mjs), and the learning window was decided
+      and pre-registered in docs/learning-window.txt. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [ ] **A16. The 25 fps refusal judges the processing rate, not the
       evidence rate; the report can say blink numbers were withheld
