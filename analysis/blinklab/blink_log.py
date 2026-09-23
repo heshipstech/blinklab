@@ -27,6 +27,22 @@ BLINK_COLUMNS = [
     "amplitudeMm",
     "peakClosingVelocityMmPerS",
     "amplitudeOverVelocityMs",
+    "closureFraction",
+]
+
+# The header before roadmap 12.6b appended closureFraction trailing,
+# on 23 September 2026. Every blink log a corpus run wrote before then
+# carries it, and the committed evidence was joined against such
+# files, so it stays readable BY NAME: this reader still refuses any
+# header it was not taught, and a new generation is added here as a
+# deliberate edit, never inferred from a prefix that happens to match.
+PRE_CLOSURE_FRACTION_BLINK_COLUMNS = BLINK_COLUMNS[:-1]
+
+# Every header a blink log reader accepts, newest first. validation.py
+# reads the same file and holds it to the same list.
+ACCEPTED_BLINK_GENERATIONS = [
+    BLINK_COLUMNS,
+    PRE_CLOSURE_FRACTION_BLINK_COLUMNS,
 ]
 
 
@@ -120,7 +136,7 @@ def load_blink_log(path: Path) -> BlinkLog:
 
     reader = csv.reader(rows)
     header = next(reader)
-    if header != BLINK_COLUMNS:
+    if header not in ACCEPTED_BLINK_GENERATIONS:
         raise ValueError(
             f"{path.name}: columns are {header}, expected {BLINK_COLUMNS}. "
             "The browser's blink log contract has changed, or this is a "
@@ -129,10 +145,12 @@ def load_blink_log(path: Path) -> BlinkLog:
 
     blinks: list[DetectedBlink] = []
     for number, row in enumerate(reader, start=2):
-        if len(row) != len(BLINK_COLUMNS):
+        # Held to the file's OWN header: an older generation's rows are
+        # one field shorter, and each must match the header above it.
+        if len(row) != len(header):
             raise ValueError(
                 f"{path.name} row {number}: {len(row)} fields, expected "
-                f"{len(BLINK_COLUMNS)}"
+                f"{len(header)}"
             )
         start_raw, end_raw = row[0], row[1]
         # Empty frame numbers mean a live camera session, where a frame

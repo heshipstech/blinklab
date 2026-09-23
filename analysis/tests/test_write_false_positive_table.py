@@ -136,7 +136,7 @@ def write_log(
         ",".join(BLINK_COLUMNS),
     ]
     for start, end in detections:
-        lines.append(f"{start},{end},{start * 33.3},200,3.5,70,50")
+        lines.append(f"{start},{end},{start * 33.3},200,3.5,70,50,0.5")
     measured.mkdir(parents=True, exist_ok=True)
     (measured / f"{name}.blinks.csv").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"

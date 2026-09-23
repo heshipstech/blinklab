@@ -117,6 +117,28 @@ class TestReadingALiveBlinkLog:
         log = load_camera_blinks(blink_file(tmp_path, [blink_row(1000)]))
         assert log.blinks_lost == 0
 
+    def test_reads_the_generation_with_closure_fraction(
+        self, tmp_path: Path
+    ) -> None:
+        # Roadmap 12.6b appended closureFraction trailing. The round's
+        # files were written before it and carry BLINK_HEADER above; a
+        # session exported after it carries one more column, and both
+        # are the page's own exporter, so both must load.
+        path = tmp_path / "blinks.csv"
+        path.write_text(
+            "\r\n".join(
+                [
+                    "# source: camera",
+                    BLINK_HEADER + ",closureFraction",
+                    blink_row(1000) + ",0.62",
+                ]
+            )
+            + "\r\n",
+            encoding="utf-8",
+        )
+        log = load_camera_blinks(path)
+        assert [blink.at_ms for blink in log.blinks] == [1000.0]
+
 
 class TestWhatTheBlinkLogRefuses:
     def test_a_missing_file(self, tmp_path: Path) -> None:

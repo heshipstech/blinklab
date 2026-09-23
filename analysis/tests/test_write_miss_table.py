@@ -123,7 +123,7 @@ def write_log(
     for start, end in detections:
         # Only start and end matter to the match; the rest are plausible
         # numbers so load_blink_log reads the row without complaint.
-        lines.append(f"{start},{end},{start * 33.3},200,3.5,70,50")
+        lines.append(f"{start},{end},{start * 33.3},200,3.5,70,50,0.5")
     measured.mkdir(parents=True, exist_ok=True)
     (measured / f"{name}.blinks.csv").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
