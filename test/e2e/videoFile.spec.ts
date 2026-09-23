@@ -65,6 +65,16 @@ test("a recorded clip loads and runs through the same pipeline @chromium-only", 
     page.getByRole("button", { name: "Calibrate gaze" }),
   ).toBeVisible({ timeout: 30_000 });
 
+  // Remediation A8: a clip cannot calibrate either kind. Both
+  // procedures ask a live person to look or blink on cue, and a
+  // recording can do neither, so both buttons stay visible and off.
+  await expect(
+    page.getByRole("button", { name: "Calibrate gaze" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Calibrate blinks" }),
+  ).toBeDisabled();
+
   // Issue #301: a mirror is for a face looking at itself; recorded
   // footage mirrored shows backwards text. Loading a clip turns the
   // mirror default off.
