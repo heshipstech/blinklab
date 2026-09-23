@@ -1,4 +1,5 @@
 import type { BlinkShape } from "./blinkShape";
+import { closureFraction } from "./closureCompleteness";
 import { BLINK_LOG_DISPLAY_CAP, BLINK_LOG_RECORD_CAP } from "./constants";
 import { pushBounded } from "./ringBuffer";
 
@@ -16,6 +17,12 @@ export type BlinkEvent = {
   // ours agree only if the frame rate is exactly what both assumed.
   startFrame: number | null;
   endFrame: number | null;
+  // The frozen open baseline in force when the blink was counted: the
+  // ruler its closureFraction divides by (roadmap 12.6b). Null before
+  // the ruler is born and after a refused birth, when the detector
+  // compares against the fixed fallback line and a blink has no
+  // personal ruler to be a share of.
+  baselineMm: number | null;
 };
 
 export function appendEvent(
@@ -94,6 +101,10 @@ export const BLINK_CSV_COLUMNS = [
   "amplitudeMm",
   "peakClosingVelocityMmPerS",
   "amplitudeOverVelocityMs",
+  // Appended trailing (roadmap 12.6b), so every reader of the earlier
+  // columns finds them exactly where they were: the blink's amplitude
+  // over the frozen open baseline, empty when either is missing.
+  "closureFraction",
 ] as const;
 
 function cell(value: number | null | undefined): string {
@@ -149,6 +160,9 @@ export function serialiseBlinkEvents(
         cell(event.shape?.amplitudeMm),
         cell(event.shape?.peakClosingVelocityMmPerS),
         cell(event.shape?.amplitudeOverVelocityMs),
+        cell(
+          closureFraction(event.shape?.amplitudeMm ?? null, event.baselineMm),
+        ),
       ].join(","),
     );
   }

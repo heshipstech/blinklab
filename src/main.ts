@@ -5187,6 +5187,11 @@ function processFrame(
           shape,
           startFrame: closureStartFrame,
           endFrame: currentFrameIndex,
+          // The frozen ruler this blink's closureFraction divides by
+          // (roadmap 12.6b): ready means frozen, and a learning or
+          // refused baseline is no ruler to be a share of.
+          baselineMm:
+            baselineState.kind === "ready" ? baselineState.baselineMm : null,
         });
         closureStartFrame = null;
         blinkTableBody.replaceChildren(
