@@ -1548,7 +1548,7 @@ confirmed/medium + downgraded · M`
       September 2026 by a sweep that found the row done and this box
       still open.
 
-- [ ] **C10. Engine agreement on a fixed clip: one commit, one machine,
+- [x] **C10. Engine agreement on a fixed clip: one commit, one machine,
       one prepared clip, two engines, paired.** `low · downgraded ×2 ·
 M · owner`
       **What:** no roadmap row names the engine (`grep -ci engine
@@ -1565,6 +1565,13 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
       stops the line. Decides D17's question of which engine the
       runner should use.
       **Findings:** G-Browser-6.
+      **Done:** 14 September 2026, roadmap 13.0: Chromium and WebKit
+      were paired on the committed fixed clip against outcome classes
+      committed first, and the result was identical coverage
+      (docs/engine-agreement.txt). The clip has no face, so
+      blink-detection agreement across engines is recorded there as a
+      further check. Ticked 23 September 2026 by a sweep that found
+      the row done and this box still open.
 
 - [ ] **C11. `closureFraction` and a complete/incomplete label at the
       arm line.** `low · confirmed/medium + downgraded · S`
