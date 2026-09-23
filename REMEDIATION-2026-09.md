@@ -911,7 +911,7 @@ downgraded/medium · M`
       mechanism. Two mutations reddened their tests: a claim stripped
       of its pins, and the bullet returned to a typed literal.
 
-- [ ] **B6. The only cross-engine table was measured on pre-fix code and
+- [x] **B6. The only cross-engine table was measured on pre-fix code and
       never re-run; the headline says "different browser binary" where
       the source says "WebKit binary".** `medium · confirmed/high +
 downgraded/medium · S`
@@ -935,6 +935,15 @@ downgraded/medium · S`
       "WebKit binary" and add that no engine other than WebKit has
       measured this corpus. The re-measurement is roadmap row 13.0 and
       this item stays open until it runs.
+      **Done:** 14 September 2026, roadmap 13.0, the half this item
+      waited on after its dating half landed under 10.0a1: 13.0 paired
+      Chromium and WebKit on a fixed clip and found them step it
+      identically (docs/engine-agreement.txt). That clip has no face,
+      so the face table keeps the historical-record label the dating
+      half gave it, which this item's own fix allowed in place of a
+      re-run. The measurement this item calls C11 is C10. Ticked 23
+      September 2026 by a sweep that found the row done and this box
+      still open.
 
 - [x] **B7. SECURITY.md sends reporters to a private channel that is
       switched off.** `medium · confirmed live · S`
