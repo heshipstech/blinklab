@@ -2423,7 +2423,7 @@ downgraded ×2 · S`
       favicon. Ticked 23 September 2026 by a sweep that found the row
       done and this box still open.
 
-- [ ] **E8. `facingMode`, wake lock and orientation.** `low · downgraded
+- [x] **E8. `facingMode`, wake lock and orientation.** `low · downgraded
 ×2 · S`
       `camera.ts:28-32` has no `facingMode`; no `wakeLock` anywhere in
       `src/`; the only orientation read is one-shot
@@ -2432,6 +2432,19 @@ downgraded ×2 · S`
       `navigator.wakeLock.request("screen")` on start with re-request
       on `visibilitychange` (`main.ts:4238-4247`); record grant/refusal
       and orientation flips; scope 13.1 to laptops too. (F-081)
+      **Done:** 15 September 2026, roadmap 13.1's code slices, with
+      the facingMode ask from 13.2. `src/io/camera.ts` asks
+      `facingMode: {ideal: "user"}`, never exact, so a laptop webcam
+      is not refused; Mirror defaults off on an environment camera
+      (`mirrorDefaultForFacingMode`); `src/io/wakeLock.ts` asks the
+      screen to stay awake when a live camera session starts and
+      re-requests it from the visibilitychange handler; the export
+      records the lock's outcome in four `wake_lock_*` rows and
+      mid-session rotations in `orientation_flips`; and row 13.1 is
+      scoped to phones and laptops. Row 13.1 stays open for the
+      owner's MANUAL.md checks on real devices, which this item does
+      not ask for. Ticked 23 September 2026 by a sweep that found
+      every part of the fix in the source and this box still open.
 
 - [x] **E9. Prefetch the 15.8 MB model at page idle; a load timeout
       landing in `modelFailed`.** `low · confirmed/downgraded · M`
