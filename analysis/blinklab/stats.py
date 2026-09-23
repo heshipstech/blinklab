@@ -260,8 +260,8 @@ def subject_bootstrap(
 ) -> BootstrapInterval:
     """A percentile bootstrap that resamples SUBJECTS, not rows.
 
-    Roadmap 10.10c2b, ladder B10's remainder. The DROZY intervals — the
-    three-class balanced accuracy and the alertness paired bar — are
+    Roadmap 10.10c2b, ladder B10's remainder. The UTA-RLDD intervals —
+    the three-class balanced accuracy and the alertness paired bar — are
     counted over people, and rows within one person are not independent:
     a subject who blinks a certain way contributes a whole block of
     correlated rows, so resampling rows would treat that block as many
