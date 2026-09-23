@@ -1597,6 +1597,19 @@ ROADMAP.md` is 0); Phase 13's phone rows (`ROADMAP.md:219-223`)
       **Harness:** the committed miss table's min_ratio distribution
       reproduces from the new column; 12.14/12.18 riders name it.
       **Findings:** F-076.
+      **Half done:** 23 September 2026, roadmap 12.6b's container
+      slice. closureFraction is the amplitude over the frozen open
+      baseline (src/core/closureCompleteness.ts), with the
+      complete/incomplete label cut where the detector's arm line sits
+      on that scale; the blink log carries the column trailing, its
+      Python readers taught the new header by name; and the on-page
+      table greys the blinks the label calls incomplete in place of
+      the absolute 1.5 mm line, withholding the label while the ruler
+      fit calls the baseline too long to trust. Still open: the
+      harness. The committed miss table's min_ratio distribution
+      reproduced from the new column needs the per-frame traces only
+      the owner's corpus run holds, and the 12.14 and 12.18 riders
+      name it when their plans are written.
 
 ---
 
