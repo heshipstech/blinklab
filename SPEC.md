@@ -110,7 +110,21 @@ given second, and at a resting rate of fifteen a minute that is not
 rare.
 
 - Columns, in order: `startFrame`, `endFrame`, `atMs`, `durationMs`,
-  `amplitudeMm`, `peakClosingVelocityMmPerS`, `amplitudeOverVelocityMs`.
+  `amplitudeMm`, `peakClosingVelocityMmPerS`, `amplitudeOverVelocityMs`,
+  `closureFraction`.
+- `closureFraction` (appended trailing on 23 September 2026, roadmap
+  12.6b) is the blink's `amplitudeMm` over the session's frozen open
+  baseline: the share of the person's measured open eye the lid
+  covered. It is empty when the shape could not be analysed and when
+  no ruler was in force — before the baseline is born, when the
+  detector compares against the fixed fallback line, and after a
+  refused birth. It is only as good as that baseline, which the
+  per-second file's `baselineOverResting` judges. The complete/
+  incomplete cut belonging to it sits where the detector's arm line
+  falls on the same scale, `1 - 0.9 × line / baseline` (0.55 for a
+  passive line), and is `src/core/closureCompleteness.ts`'s, not a
+  column. Files written before it carry the seven columns above it
+  and still load.
 - `durationMs` is closed time under the session's blink line, so the
   one column carries one of TWO quantities: a passive-line duration
   (against the line derived from the learned baseline) or a
