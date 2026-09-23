@@ -31,6 +31,7 @@ function blink(atMs: number, durationMs: number): BlinkEvent {
     shape: null,
     startFrame: null,
     endFrame: null,
+    baselineMm: null,
   };
 }
 
@@ -126,6 +127,7 @@ describe("drift across a sitting", () => {
       },
       startFrame: null,
       endFrame: null,
+      baselineMm: null,
     });
     const events = [
       ...Array.from({ length: 40 }, (_, n) => withShape(n * 10000, 6)),

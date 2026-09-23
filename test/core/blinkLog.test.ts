@@ -21,6 +21,7 @@ function eventAt(atMs: number): BlinkEvent {
     shape: null,
     startFrame: null,
     endFrame: null,
+    baselineMm: null,
   };
 }
 
@@ -138,6 +139,7 @@ describe("blinkTableRow", () => {
         durationMs: 133,
         startFrame: null,
         endFrame: null,
+        baselineMm: null,
         shape: {
           amplitudeMm: 5.23,
           peakClosingVelocityMmPerS: 68.4,
@@ -172,6 +174,7 @@ describe("blinkTableRow", () => {
         durationMs: 117,
         startFrame: null,
         endFrame: null,
+        baselineMm: null,
         shape: {
           amplitudeMm: 0.9,
           peakClosingVelocityMmPerS: 52,
@@ -191,6 +194,7 @@ describe("blinkTableRow", () => {
         durationMs: 117,
         startFrame: null,
         endFrame: null,
+        baselineMm: null,
         shape: {
           amplitudeMm: 2.5,
           peakClosingVelocityMmPerS: 166,
@@ -212,6 +216,7 @@ describe("serialiseBlinkEvents", () => {
     durationMs: 133,
     startFrame,
     endFrame,
+    baselineMm: 10.4,
     shape: {
       amplitudeMm: 5.2,
       peakClosingVelocityMmPerS: 110,
@@ -224,7 +229,7 @@ describe("serialiseBlinkEvents", () => {
     expect(csv).not.toBeNull();
     const lines = (csv ?? "").trimEnd().split("\r\n");
     expect(lines[0]).toBe(BLINK_CSV_COLUMNS.join(","));
-    expect(lines[1]).toBe("100,108,1000,133,5.2,110,47");
+    expect(lines[1]).toBe("100,108,1000,133,5.2,110,47,0.5");
   });
 
   it("refuses a session with no blinks rather than writing a lone header", () => {
@@ -239,15 +244,58 @@ describe("serialiseBlinkEvents", () => {
     // blink of zero amplitude, which is a real and very different
     // claim about somebody's eyelid.
     const csv = serialiseBlinkEvents([
-      { atMs: 1000, durationMs: 133, shape: null, startFrame: 5, endFrame: 9 },
+      {
+        atMs: 1000,
+        durationMs: 133,
+        shape: null,
+        startFrame: 5,
+        endFrame: 9,
+        baselineMm: 10.4,
+      },
     ]);
-    expect((csv ?? "").trimEnd().split("\r\n")[1]).toBe("5,9,1000,133,,,");
+    // The closure fraction too: no amplitude, no share of anything,
+    // whatever ruler stood beside it.
+    expect((csv ?? "").trimEnd().split("\r\n")[1]).toBe("5,9,1000,133,,,,");
   });
 
   it("writes missing frame numbers as empty, which is what a camera has", () => {
     const csv = serialiseBlinkEvents([withShape(null, null)]);
     expect((csv ?? "").trimEnd().split("\r\n")[1]).toBe(
-      ",,1000,133,5.2,110,47",
+      ",,1000,133,5.2,110,47,0.5",
+    );
+  });
+
+  it("writes closureFraction last, amplitude over the frozen baseline", () => {
+    // Roadmap 12.6b: appended trailing, so the seven columns before it
+    // sit exactly where every existing reader expects them.
+    expect(BLINK_CSV_COLUMNS[BLINK_CSV_COLUMNS.length - 1]).toBe(
+      "closureFraction",
+    );
+    expect(BLINK_CSV_COLUMNS.slice(0, -1)).toEqual([
+      "startFrame",
+      "endFrame",
+      "atMs",
+      "durationMs",
+      "amplitudeMm",
+      "peakClosingVelocityMmPerS",
+      "amplitudeOverVelocityMs",
+    ]);
+    const csv = serialiseBlinkEvents([{ ...withShape(1, 2), baselineMm: 6.5 }]);
+    // 5.2 of 6.5 mm is 0.8 of the open eye.
+    expect((csv ?? "").trimEnd().split("\r\n")[1]?.split(",").at(-1)).toBe(
+      String(5.2 / 6.5),
+    );
+  });
+
+  it("leaves closureFraction empty before the ruler is born, never zero", () => {
+    // A blink counted against the fixed fallback line has no personal
+    // ruler to be a share of. Empty means not measured; a zero would
+    // claim the lid never moved.
+    const csv = serialiseBlinkEvents([
+      { ...withShape(1, 2), baselineMm: null },
+    ]);
+    expect((csv ?? "").trimEnd().split("\r\n")[1]).toBe(
+      "1,2,1000,133,5.2,110,47,",
     );
   });
 
