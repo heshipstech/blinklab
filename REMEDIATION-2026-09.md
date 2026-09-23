@@ -369,6 +369,27 @@ downgraded/medium (b-1) · M`
       calibration"; auto-write a marker at start and end
       (`main.ts:4226`); wiring test.
       **Findings:** F-040, G-Guided b-9.
+      **Most of it done:** 15 September 2026, roadmap 11.6a's
+      reducer-null and marker slices. `calibrationSuppressesReducers`
+      feeds the blink, long-closure and PERCLOS reducers null while a
+      guided calibration collects or verifies, so the instructed
+      stare, the 3 s hold and the verification blinks no longer land
+      as a long closure, a 3 s blink or a rate spike; the export's
+      `calibration_windows` rows mark each span, deliberately outside
+      the user-placed markers stream. Three parts differ from this
+      fix. The baseline learner is still fed: the row leaves it
+      untouched because a guided line overrides the passive baseline,
+      which holds for the blink line but not for the frozen baseline
+      itself, and 12.6b's closure fraction, 12.7's lid openness and
+      12.10's curve all read that baseline since, so a calibration run
+      inside the learning window still reaches them. No "paused for
+      calibration" text is shown; the calibration's modal overlay
+      covers the page for the whole span. And the suppression is
+      unit-pinned but has no wiring test, because no automated test
+      sees a face (D7). Still open: whether the baseline learner is
+      fed null too, which is the owner's reading of the row's reason,
+      and the wiring test after D7. Recorded 23 September 2026 by a
+      sweep that found the row ticked and this item silent.
 
 - [ ] **A11. UTA-RLDD's 25 fps exclusion is a property of the stepper's
       calibration on each file, cross-checked against nothing; the
