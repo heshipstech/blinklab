@@ -859,7 +859,7 @@ downgraded/medium · S`
       so a reworded copy is a red build. The two pinning tests carry
       the new half. The install-order sentence is 10.1c's.
 
-- [ ] **B4. `drozyGuard` watches one file while four of the seven DROZY
+- [x] **B4. `drozyGuard` watches one file while four of the seven DROZY
       rows depend on code that has since moved; the guarded caveat is
       now false.** `high · confirmed ×2 · M`
       **What:** `tools/drozyGuard.mjs:30` `SHAPE_SOURCE =
@@ -875,6 +875,12 @@ downgraded/medium · S`
       `drozy-result.txt:26-28`; feed owner decision 10.3 the true
       stale list.
       **Findings:** F-020.
+      **Done:** 13 September 2026, roadmap 10.3: drozyGuard carries a
+      per-feature source map (FEATURE_SOURCES) and the caveat names
+      every row whose sources moved, and the README and
+      drozy-result.txt retire the stale rows by the dated ruling
+      rather than presenting them as current. Ticked 23 September 2026
+      by a sweep that found the row done and this box still open.
 
 - [x] **B5. Generator tests freeze hard-coded prose: the report and
       README say the miss mechanism is unexplained while the record
