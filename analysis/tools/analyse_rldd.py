@@ -17,6 +17,11 @@ Usage, from the analysis directory, once the owner's feature CSVs exist:
 <measured-dir> holds the `<subject>_<label>.seconds.csv` files the corpus
 runner produced. This reads NUMBERS ONLY; it never sees a frame.
 
+`--shuffles` and `--seed` default to the plan's pair. The published
+result's robustness reseeds are the same command with `--shuffles 250
+--seed 42` and `--shuffles 250 --seed 2024`, and the report of such a run
+names its pair as NOT the pre-registered one.
+
 UTA-RLDD is used under written permission from Professor Vassilis Athitsos.
 Cite Ghoddoosian, Galib and Athitsos, CVPR Workshops 2019, wherever these
 results appear in any form.
@@ -278,15 +283,49 @@ def format_report(result: AnalysisResult) -> str:
     return "\n".join(lines)
 
 
-def main(argv: list[str] | None = None) -> int:
+def _shuffle_count(text: str) -> int:
+    """A shuffle count from the command line: a whole number, at least one.
+    Zero would leave the null empty and fail inside numpy's percentile,
+    far from the flag that caused it."""
+    try:
+        count = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"{text!r} is not a whole number"
+        ) from None
+    if count < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, not {count}")
+    return count
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """The command line. The shuffle flags default to the plan's pair, so
+    the bare command is the pre-registered analysis; any other pair is a
+    robustness reseed, and the report says so (`shuffle_line`)."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "measured_dir", help="Folder of <subject>_<label>.seconds.csv files"
     )
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--shuffles",
+        type=_shuffle_count,
+        default=SHUFFLES,
+        help=f"label shuffles per control (default {SHUFFLES}, the plan's)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=SEED,
+        help=f"seed the shuffles are drawn from (default {SEED}, the plan's)",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     try:
         corpus = load_corpus(args.measured_dir)
-        result = run_analysis(corpus)
+        result = run_analysis(corpus, shuffles=args.shuffles, seed=args.seed)
     except RldError as error:
         print(f"Cannot run the analysis: {error}", file=sys.stderr)
         return 1
