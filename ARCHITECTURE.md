@@ -113,14 +113,14 @@ app in a real browser through `tools/measure_corpus.mjs`.
 
 ## Where to make your first change
 
-| You want to                       | Go to                                                          |
-| --------------------------------- | -------------------------------------------------------------- |
-| Change how a blink is detected    | `src/core/blink.ts` and its test                               |
-| Change a threshold                | `src/core/constants.ts`, where each carries its origin         |
-| Add a measurement                 | a new pure module in `core`, a test, then wire it in `main.ts` |
-| Change the page                   | `src/main.ts`                                                  |
-| Analyse exported data             | `analysis/`, in Python                                         |
-| Understand a number in the README | `docs/evidence/2026-08-09/`                                    |
+| You want to                       | Go to                                                               |
+| --------------------------------- | ------------------------------------------------------------------- |
+| Change how a blink is detected    | `src/core/blink.ts` and its test                                    |
+| Change a threshold                | `src/core/constants.ts`, where each carries its origin              |
+| Add a measurement                 | a new pure module in `core`, a test, then wire it in `main.ts`      |
+| Change the page                   | `src/main.ts`                                                       |
+| Analyse exported data             | `analysis/`, in Python                                              |
+| Understand a number in the README | `docs/eyeblink8-result.txt`, which names each run's evidence folder |
 
 ## Conventions that will surprise you
 
