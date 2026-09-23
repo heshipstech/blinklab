@@ -2182,7 +2182,7 @@ downgraded ×2 · S`
       first score sits under the score; "measuring..." stays the
       running page's word.
 
-- [ ] **E6. Capability ladder 13.6a now: rate and iris-px verdicts,
+- [x] **E6. Capability ladder 13.6a now: rate and iris-px verdicts,
       light unknown.** `medium · confirmed ×2 · S`
       `ROADMAP.md:38` defines capability per setup and `:224` renders
       it after 12.16 (`:211`); delivered rate and iris px
@@ -2190,6 +2190,11 @@ downgraded ×2 · S`
       `MODEL_CARD.md:113-116`) exist today. Split 13.6a (now) from
       13.6b (after 12.16); derive boundaries from committed data.
       (F-074)
+      **Done:** 12 September 2026, roadmap 13.6a: the capability
+      ladder renders rate and iris-pixel verdicts now
+      (src/core/capabilityLadder.ts), with light left to 13.6b after
+      12.16, the split this item asked for. Ticked 23 September 2026
+      by a sweep that found the row done and this box still open.
 
 - [ ] **E7. A link from the page to the repository and to every doc
       path the page cites.** `low · confirmed/downgraded · S`
