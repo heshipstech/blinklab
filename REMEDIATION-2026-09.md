@@ -2230,7 +2230,7 @@ downgraded ×2 · S`
       **Done:** 12 September 2026, roadmap 13.10: the model is
       prefetched at page idle, the load has a timeout that lands in
       modelFailed, the Cache API keeps it after the first load
-      (src/io/modelLoad.ts, src/io/modelCache.ts), and
+      (src/core/modelLoad.ts, src/io/modelCache.ts), and
       docs/cold-load.txt records the measurement. Ticked 23 September
       2026 by a sweep that found the row done and this box still open.
 
