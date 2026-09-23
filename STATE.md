@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 2050 unit tests and 710 Python tests, each figure
+- **The suite:** 2050 unit tests and 719 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**A CHECK NO COMMAND COULD REACH, 23 September 2026 (roadmap 10.14b's command-line slice; the row stays marked for the owner's files).** Row 10.14b's container cross-check landed on 13 September inside the loader: `load_corpus` takes an ffprobe manifest and refuses a clip whose measured coverage disagrees with its container. Both command-line tools called it with the folder alone, so the owner's re-run for the row's exclusion lines would have read the corpus unchecked, and nothing would have said so. `analyse_rldd.py` and `rldd_coefficients.py` now take `--manifest` and load through `load_checked_corpus`. That helper also answers a second, quieter gap: a manifest narrows by design, since a clip it has no entry for loads unchecked. So each report's header now states how far the check reached, "N of M clips within max(2 s, 2%) of their container", or that it did not run, and a manifest naming none of the measured clips is refused. Such a manifest, keyed by file name where the loader keys by stem, would otherwise check nothing while printing as run. Nine tests pin it, and the Python suite is 719. A11 stays half done on the owner's two parts, the 30 reason lines and the DROZY manifest. The live claim is unchanged at 12.8a. The suite is 2050 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **THE RESEEDS BECOME A COMMAND, 23 September 2026 (remediation B8's flag half; roadmap 10.10c3 stays marked).** The UTA-RLDD result records two robustness reseeds, 250 shuffles each from seeds 42 and 2024, and no command could run them. The analysis took only the corpus folder, the shuffle count and seed sat fixed in the source, and the report printed neither, so even the pre-registered run's permutation p could not be reproduced from its own report. `analyse_rldd.py` now takes `--shuffles` and `--seed`, both defaulting to the plan's pair, so the bare command is still the pre-registered analysis. Its report states the pair both label-shuffle controls were drawn from. Any other pair is named as NOT the pre-registered one, beside the plan's, so a reseeded report cannot pass as the result. A shuffle count below one is refused at the flag instead of failing inside numpy on an empty null. Seven tests pin it, among them one holding the command's output byte-identical to a direct run with the same pair, and the Python suite is 710. B8 is most of the way done; the result regenerated from stdout stays the owner's. The live claim is unchanged at 12.8a. The suite is 2050 unit tests, 52 end to end tests of which 50 run on every pull request.
 
