@@ -1018,6 +1018,17 @@ enabled false`.
       `--shuffles` flags in `format_report`; regenerate the result
       from stdout with the per-subject table.
       **Findings:** F-047.
+      **Half done:** 13 September 2026, roadmap 10.10c3's instrument
+      slice. `standardized_coefficients` in
+      `analysis/blinklab/rldd.py` fits the pre-registered model to the
+      whole usable corpus on z-scored features, for interpretation
+      only, and `analysis/tools/rldd_coefficients.py` prints the
+      coefficients in one command beside a per-subject table of usable
+      videos by label, both pinned on synthetic records. Still open:
+      the `--seed` and `--shuffles` flags, which no tool has yet, and
+      the result regenerated from stdout, which reads feature records
+      on the owner's machine. Recorded 23 September 2026 by a sweep
+      that found the slice landed and this item silent about it.
 
 - [ ] **B9. Alertness Bar 2 tests a joint-noise null and "about as good
       as a fitted one" is unsupported.** `medium · downgraded ×2 · S`
