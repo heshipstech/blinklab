@@ -5341,3 +5341,40 @@ closed sample to the reopen. Where the witnessing runs out — a long
 untrusted gap, or a closure that began before the window — the column
 judges only what it saw, which can only leave a closure out. An error
 that can only understate is one a reader can reason about.
+
+## 12.6b Travel and depth are two questions, and a label must say which it answers
+
+The concept this increment teaches is how to hang a new label on a
+decision the instrument already makes without pretending the two are
+one computation. The detector already decides, at its arm line,
+whether a closure went deep enough to be a blink: blink.ts arms once
+the aperture reaches the blink line less the 10% hysteresis gap. The
+tempting build of a complete/incomplete label is "the detector
+armed", and that is true of every counted blink, so it would stamp
+every row of the blink log the same word and say nothing. The row
+asks for a label with content: closureFraction, the blink's amplitude
+over the frozen open baseline, cut where the arm line sits on that
+scale — 1 - armLine / baseline, which is 0.55 for every passive
+session whoever the face belongs to.
+
+So the label reads TRAVEL (how much of the open eye the lid covered)
+while the detector reads DEPTH (how low the lid got). For a lid that
+starts its fall at the baseline the two are the same decision, and
+the test proves it with the real blinkStep over a sweep of depths
+that lands on the exact arm line and on the band just above it,
+where a closure crosses the line and never arms. For a lid that
+starts lower they can disagree, and that is the reason the row's
+Check says "agree on every fixture blink" rather than assuming it.
+The owner's second recorded blink is the case in the flesh: it began
+0.93 mm under its baseline, bottomed a millimetre past the arm line,
+and cleared the label's cut by two hundredths of the baseline. A
+check that could never fail would not be a check; this one very
+nearly did, which is exactly what makes its pass informative.
+
+The discipline for the cut is the same one 12.6 and 12.10 kept for
+their edges: nothing is chosen here. The cut is computed from the line
+actually in force — passive or guided — with the detector's own
+hysteresis constant, and the tests run blinkStep itself rather than a
+copy of its rule, so an edit to either side shows up as a
+disagreement instead of two quietly different definitions of "deep
+enough".
