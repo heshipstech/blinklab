@@ -14,12 +14,20 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from blinklab.rldd import RldError, ShuffleControl, VideoFeatures, load_corpus
+from blinklab.rldd import (
+    SEED,
+    SHUFFLES,
+    RldError,
+    ShuffleControl,
+    VideoFeatures,
+    load_corpus,
+)
 from tools.analyse_rldd import (
     _verdict_narrative,
     exclusion_reason,
     format_report,
     run_analysis,
+    shuffle_line,
 )
 
 COLUMNS = [
@@ -208,3 +216,43 @@ class TestTheReportNamesTheCohortsBuilds:
         _corpus_dir(tmp_path, n_subjects=2)
         result = run_analysis(load_corpus(tmp_path), shuffles=5)
         assert "predate the build stamp" in format_report(result)
+
+
+class TestTheReportStatesItsShuffleControl:
+    """Remediation B8. The label-shuffle control's count and seed were
+    fixed in the source and printed nowhere, so the report's permutation p
+    could not be reproduced from the report, and the result file's two
+    published reseeds could not be told apart from the analysis they
+    checked. The report now states the pair and names any pair but the
+    plan's."""
+
+    def test_the_plans_pair_is_named_as_pre_registered(self) -> None:
+        line = shuffle_line(SHUFFLES, SEED)
+        assert f"{SHUFFLES} from seed {SEED}, as pre-registered" in line
+
+    def test_a_reseed_is_named_as_not_the_plan(self) -> None:
+        line = shuffle_line(250, 42)
+        assert "250 from seed 42" in line
+        assert f"NOT the pre-registered {SHUFFLES} from seed {SEED}" in line
+
+    def test_either_change_alone_is_not_the_plan(self) -> None:
+        assert "NOT the pre-registered" in shuffle_line(250, SEED)
+        assert "NOT the pre-registered" in shuffle_line(SHUFFLES, 42)
+
+    def test_the_pair_reaches_both_controls_and_the_report(
+        self, tmp_path: Path
+    ) -> None:
+        _corpus_dir(tmp_path, n_subjects=2)
+        corpus = load_corpus(tmp_path)
+        first = run_analysis(corpus, shuffles=5, seed=42)
+        again = run_analysis(corpus, shuffles=5, seed=42)
+        other = run_analysis(corpus, shuffles=5, seed=2024)
+        assert len(first.three_control.null) == 5
+        assert len(first.binary_control.null) == 5
+        assert np.array_equal(
+            first.three_control.null, again.three_control.null
+        )
+        assert not np.array_equal(
+            first.three_control.null, other.three_control.null
+        )
+        assert "5 from seed 42, NOT the pre-registered" in format_report(first)

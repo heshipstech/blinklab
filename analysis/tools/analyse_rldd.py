@@ -78,6 +78,31 @@ class AnalysisResult:
     three_control: ShuffleControl
     binary: LosoResult
     binary_control: ShuffleControl
+    # The pair both label-shuffle controls were drawn from (remediation
+    # B8). A permutation p reproduces only from the count and seed that
+    # drew it, so the report states them rather than leaving them to the
+    # source.
+    shuffles: int
+    seed: int
+
+
+def shuffle_line(shuffles: int, seed: int) -> str:
+    """The report line naming the shuffle count and seed, and whether they
+    are the plan's.
+
+    Remediation B8. The published result records two robustness reseeds
+    (250 shuffles each, seeds 42 and 2024) that no command could
+    reproduce. With the pair now settable, a reseeded report must not
+    read as the pre-registered one, so any other pair is named beside
+    the plan's rather than printed as if it were the analysis."""
+    if shuffles == SHUFFLES and seed == SEED:
+        return (
+            f"label shuffles    {shuffles} from seed {seed}, as pre-registered"
+        )
+    return (
+        f"label shuffles    {shuffles} from seed {seed}, NOT the "
+        f"pre-registered {SHUFFLES} from seed {SEED}"
+    )
 
 
 def run_analysis(
@@ -117,6 +142,8 @@ def run_analysis(
         three_control=three_control,
         binary=binary,
         binary_control=binary_control,
+        shuffles=shuffles,
+        seed=seed,
     )
 
 
@@ -193,6 +220,7 @@ def format_report(result: AnalysisResult) -> str:
     lines.append(f"  subjects          {len(subjects)}")
     lines.append(f"  class balance     {_class_counts(result.usable, LABELS)}")
     lines.append(f"  {cohort_commit_line(result.commits)}")
+    lines.append(f"  {shuffle_line(result.shuffles, result.seed)}")
     lines.append("")
 
     floor = 1.0 / len(LABELS)
