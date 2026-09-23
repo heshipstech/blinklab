@@ -162,6 +162,15 @@ camera frames read and blames whichever side binds. The thresholds
 and the 25 fps floor did not move; the decision rule was committed
 in `docs/blink-sample-rate.txt` before the measurement was seen.
 
+Corrected again 23 September 2026, both paragraphs above kept as the
+record: since 10 September (roadmap 13.8b) a live camera session is
+measured once per frame the camera presents, on that frame's own
+timestamp, so a machine faster than its camera no longer re-reads old
+frames at all; the machine is the limit only when it cannot keep up
+with the camera. Where the browser lacks the per-frame callback the
+old display-paced loop is kept as the fallback, and the export
+header's `camera_frame_driver` says which of the two ran.
+
 **It misses blinks that are plainly there.** Of the blinks it missed on
 Eyeblink8, 70.1% contained at least one frame a human marked as fully
 closed, 47 of the 67. (This card said 78.6% until 11 August and 72.0%
