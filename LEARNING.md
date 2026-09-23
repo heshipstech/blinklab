@@ -5415,3 +5415,34 @@ slice before this one, and the first thing it did here was go red on
 SPEC before SPEC named the new column. A guard earns its keep the
 first time it catches the change it was built for, not the day it
 merges.
+
+## 12.6b (the table) A label is only as honest as the ruler under it
+
+The concept this increment teaches is what to do when a better rule
+inherits a known failure. The blink table greyed blinks under an
+absolute 1.5 mm, which judged every face by one ruler: a fifth of one
+eye and a third of another. The completeness label judges each face
+by its own frozen baseline, which is better — until the baseline
+itself is wrong. The audit's skeptic said so plainly: a relative line
+couples the display to a ruler this project has already caught being
+born wrong, 1.41 times the person's resting eye on the dry run's
+macbookair, where nearly every real blink would read short and grey.
+
+There were two easy answers and both were wrong. Keeping the absolute
+line beside the label would leave the per-face defect in place and
+give the panel two rules that can disagree about the same row.
+Ignoring the objection would have the table call a person's blinks
+incomplete on the word of a ruler the same page, one box away, calls
+too long to trust. The answer is the one this project gives
+everywhere: refuse. The page already speaks a settled ruler-fit
+verdict, and while it says "too long to trust" the label is withheld
+and nothing is greyed. The label is not reworded and not clamped; it
+is simply not issued on a ruler nobody vouches for.
+
+The second lesson is small and easy to miss: record what a decision
+depended on at the moment it was made. The arm line hangs from the
+blink line, and the blink line can move mid-session when a guided
+calibration finishes, so each counted blink now records the line it
+was counted against. A label recomputed later from the current line
+would quietly re-judge old blinks by a rule they were never counted
+under.
