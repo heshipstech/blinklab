@@ -1026,7 +1026,7 @@ enabled false`.
       borrowed from a distribution it does not have. The bootstrap half
       is roadmap 10.10c2.
 
-- [ ] **B11. Two statistical verdicts read stronger than their n.**
+- [x] **B11. Two statistical verdicts read stronger than their n.**
       `low · downgraded ×2 · S` - DROZY's within-subject bar (`analyse_drozy.py:66-94`,
       `:206-218`, 3 of 5 agreeing) passes by chance with p 0.5 and
       alone grants three "suggestive" verdicts
@@ -1044,6 +1044,15 @@ enabled false`.
       `:66-68`, `MODEL_CARD.md:74-75` carry no n. Add "0 of 3 sound
       sessions; 95% upper bound ~56%"; express round-II criterion 1
       as a proportion with a minimum sound count. (F-050)
+      **Done:** 23 September 2026, the F-050 half: the README's
+      results block, its detector paragraph and MODEL_CARD's failure
+      section now print the detector verdict with its n — 0 of 3 sound
+      sessions missed a blink, 95% Wilson interval 0.0 to 56.1 percent
+      — the block's interval computed by tools/wilson.mjs from the
+      counts parsed out of the round's own criterion line. The DROZY
+      half landed under roadmap 10.10c2 on 7 September. Round II's
+      criterion 1 as a proportion with a minimum sound count is for
+      that round's plan when it is written.
 
 - [x] **B12. Six measured bounds are known and unstated in the
       conditions sentences.** `low · confirmed · S` - PERCLOS counts blink frames; the literature's PERCLOS excludes
