@@ -1493,6 +1493,17 @@ confirmed/medium + downgraded · M`
       retained CSVs (rho and AUC side by side); the score keeps the
       current one until 12.10 reads.
       **Findings:** F-029.
+      **Half done:** 23 September 2026, roadmap 12.10a's container
+      slice. The fix is in, with one improvement on its wording:
+      src/core/perclosBlinkExcluded.ts is a second READING of
+      perclos's own buffer rather than a second accumulator, so the
+      two columns cannot be fed different frames, are null together,
+      and the blink-excluded share can never exceed perclos. Both
+      columns are exported, perclosBlinkExcluded trailing, and the
+      score keeps perclos. Still open: the harness, the DROZY refit
+      from the retained CSVs with rho side by side, which reads a
+      corpus directory on the owner's machine; the RLDD half rides
+      12.18 as a named rider.
 
 - [ ] **C8. Two RLDD refits over numbers already on disk: drop the three
       shape features; add a within-subject null and paired share.**
