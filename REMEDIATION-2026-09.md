@@ -2128,7 +2128,7 @@ downgraded ×2 · S`
       prompt rather than on rating 1. Ticked 23 September 2026 by a
       sweep that found the row done and this box still open.
 
-- [ ] **E3. Guided calibration: a tone at each phase boundary, an
+- [x] **E3. Guided calibration: a tone at each phase boundary, an
       explicit Cancel with a status line, and the run's quality in the
       result.** `medium · confirmed/downgraded · S`
       The closed phase's instruction, countdown and end are visual
@@ -2146,6 +2146,13 @@ downgraded ×2 · S`
       export (A8). Rewrite `MANUAL.md:66` as a procedure a person with
       closed eyes can perform. (G-Guided b-2, G-Guided b-7,
       G-Guided b-8)
+      **Done:** 18 September 2026, roadmap 11.6b: tones and vibration
+      at each phase boundary, a dialog with an assertive live region,
+      an explicit Cancel that says nothing was stored, and the run's
+      quality in the result; the verify-and-stored path is MANUAL item
+      62, performable with closed eyes on the owner's ruling. Ticked
+      23 September 2026 by a sweep that found the row done and this
+      box still open.
 
 - [x] **E4. The refusal sentence is hidden behind the guided-line label,
       and the stored-data box lists four keys under "Nothing is
