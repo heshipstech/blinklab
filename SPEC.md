@@ -53,6 +53,7 @@ export type FeatureRecord = {
   perclos30: number | null; // eyes-closed share of the last minute shut past 30% of the frozen baseline: the closure-fraction curve's strictest line. INSTRUMENT-REFERENCED, not literature P80 — a shut eye reads ~a third of baseline, so 20% is unreachable and every threshold is a fraction of the measured baseline. Null on perclos's own window and floors (roadmap 12.10)
   perclos50: number | null; // eyes-closed share shut past 50% of the frozen baseline; with perclos (40%) and perclos30/60 the curve reads monotone non-increasing (roadmap 12.10)
   perclos60: number | null; // eyes-closed share shut past 60% of the frozen baseline: the curve's loosest line, so the largest share. Instrument-referenced, not P80 (roadmap 12.10)
+  perclosBlinkExcluded: number | null; // perclos with every closure at or below the blink maximum (500 ms, blink.ts's own partition) left out. THE LITERATURE'S DEFINITION: PERCLOS is the share of a minute the eyelids are at least 80% closed, slow closures only, blinks excluded (the P80 convention). This column keeps the blink exclusion and NOT the 80% depth — it uses the instrument's own 40%-of-baseline line, because a shut eye reads ~a third of baseline here and P80's 20% is unreachable. Read from perclos's own sample buffer: null exactly when perclos is, never above it; the score keeps perclos (roadmap 12.10a)
 };
 ```
 

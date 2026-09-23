@@ -55,6 +55,7 @@ COLUMNS: list[str] = [
     "perclos30",
     "perclos50",
     "perclos60",
+    "perclosBlinkExcluded",
 ]
 
 # The two columns that hold a word rather than a number, and the only
@@ -66,12 +67,18 @@ COLUMNS: list[str] = [
 STRING_COLUMNS = {"blinkLineSource", "shutLineSource"}
 LINE_SOURCES = ("none", "fixed", "passive", "guided")
 
+# The header before roadmap 12.10a appended perclosBlinkExcluded
+# (23 September 2026): sessions recorded until then load with it
+# unknown. This is the generation immediately before the current one,
+# so it is sliced from COLUMNS; every older generation is sliced from
+# the one AFTER it.
+PRE_PERCLOS_BLINK_EXCLUDED_COLUMNS: list[str] = COLUMNS[:-1]
+
 # The header before roadmap 12.10 appended the closure-fraction curve's
 # three lines, perclos30/50/60 (22 September 2026): sessions recorded
-# until then load with them unknown. This is the generation immediately
-# before the current one, so it is sliced from COLUMNS; every older
-# generation is sliced from the one AFTER it.
-PRE_PERCLOS_CURVE_COLUMNS: list[str] = COLUMNS[:-3]
+# until then load with them unknown. Sliced from the generation after
+# it, per the rule below, so an append can never silently re-cut it.
+PRE_PERCLOS_CURVE_COLUMNS: list[str] = PRE_PERCLOS_BLINK_EXCLUDED_COLUMNS[:-3]
 
 # The header before roadmap 12.7 appended lidOpennessRatio
 # (22 September 2026): sessions recorded until then load with the lid
@@ -170,6 +177,7 @@ FLOOR_COLUMNS: list[str] = LEGACY_COLUMNS
 # missing trailing columns arrive as NaN.
 ACCEPTED_GENERATIONS: list[list[str]] = [
     COLUMNS,
+    PRE_PERCLOS_BLINK_EXCLUDED_COLUMNS,
     PRE_PERCLOS_CURVE_COLUMNS,
     PRE_LID_OPENNESS_COLUMNS,
     PRE_FACE_SECONDS_COLUMNS,

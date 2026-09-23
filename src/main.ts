@@ -231,6 +231,7 @@ import {
   perclosCurveStep,
   perclosCurveValueAt,
 } from "./core/perclosCurve";
+import { blinkExcludedPerclosValue } from "./core/perclosBlinkExcluded";
 import { replayIndex, sliderTime } from "./core/replay";
 import {
   BLINK_TABLE_HEADERS,
@@ -5507,6 +5508,12 @@ function processFrame(
             perclos30: perclosCurveValueAt(perclosCurveState, nowMs, 0.3),
             perclos50: perclosCurveValueAt(perclosCurveState, nowMs, 0.5),
             perclos60: perclosCurveValueAt(perclosCurveState, nowMs, 0.6),
+            // Roadmap 12.10a: perclos's own buffer read with blink-sized
+            // closures left out, so it can never be fed other frames.
+            perclosBlinkExcluded: blinkExcludedPerclosValue(
+              perclosState,
+              nowMs,
+            ),
           }),
           FEATURE_RECORD_CAP,
         );

@@ -98,6 +98,7 @@ function record(timestampMs: number, faceDetected: boolean): FeatureRecord {
     perclos30: null,
     perclos50: null,
     perclos60: null,
+    perclosBlinkExcluded: null,
   };
 }
 

@@ -146,6 +146,15 @@ export type FeatureRecord = {
   perclos30: number | null;
   perclos50: number | null;
   perclos60: number | null;
+  // Roadmap 12.10a. `perclos` above with every closure at or below the
+  // blink maximum left out — the literature's PERCLOS counts slow
+  // closures only and leaves blinks out, and this is the instrument's
+  // nearest honest reading of that. Still the instrument's 40% line,
+  // not P80's 20%, and "blink" is blink.ts's own time partition. Read
+  // from perclos's own sample buffer (src/core/perclosBlinkExcluded.ts),
+  // so the two are null together and this never exceeds `perclos`. The
+  // score keeps `perclos` until 12.18 reads.
+  perclosBlinkExcluded: number | null;
 };
 
 // The assembler is the identity with a type, and that is the point:
@@ -259,6 +268,7 @@ export function isFeatureRecord(value: unknown): value is FeatureRecord {
     // Closed shares, each a fraction in [0,1] or null (roadmap 12.10).
     fractionOrNull(record.perclos30) &&
     fractionOrNull(record.perclos50) &&
-    fractionOrNull(record.perclos60)
+    fractionOrNull(record.perclos60) &&
+    fractionOrNull(record.perclosBlinkExcluded)
   );
 }
