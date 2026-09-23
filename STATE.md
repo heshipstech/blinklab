@@ -14,7 +14,7 @@ fails when the committed copy differs by a byte.
   Read from the current run in
   [docs/eyeblink8-result.txt](docs/eyeblink8-result.txt), which keeps every
   superseded run below it.
-- **The suite:** 2048 unit tests and 699 Python tests, each figure
+- **The suite:** 2048 unit tests and 703 Python tests, each figure
   what its runner collects rather than what a grep counted.
 - **The bundle ceiling** is 326.0 kB, checked after every build.
 
@@ -25,6 +25,8 @@ rather than deleted, which is the same rule this project applies to a
 superseded measurement.
 
 <!-- status:end -->
+
+**THE WALK THE EVALUATOR'S TESTS NEVER RAN, 23 September 2026 (remediation D1 closes; roadmap 10.1d stays open for D3).** The tool that produces the published 83.6% had every decision it applies pinned one function at a time — the coverage bar at max(5, 1%) from both sides, the missing frames_measured header, the watched-mode refusal, the refusals in the report body, the non-zero exit on a partial corpus, the glasses split said not computable — but collect(), the walk that pairs each annotation with its blink log by name, loads both and records a refusal for every clip it leaves out, was reached by nothing. Four tests now run it over tmp_path files in the real shapes: a measured clip scores while an unmeasured one is refused by name, a watched log and a short measurement are refused rather than scored, and the walk's output feeds a report showing the headline beside the refusal and an exit code that fails the partial run. All four were watched failing on a broken pairing before passing. With that, every property D1 named is under test and the tracker ticks it. One leftover is recorded rather than fixed: report()'s coverage-mismatch flag can no longer fire in a real run, because collect() refuses any clip past the same bar first, and removing it would touch a detector source for no change in behaviour. Python tests move 699 to 703. The live claim is unchanged at 12.8a. The suite is 2048 unit tests, 52 end to end tests of which 50 run on every pull request.
 
 **A SECOND READ, AND THREE SMALL RECORD FIXES, 23 September 2026 (ARCHITECTURE.md read in full under row 10.0b6's stamp; no behaviour moves).** ARCHITECTURE, read end to end for the first time since its 7 September stamp, carried four claims the work had overtaken. "2048 unit tests run in about three seconds" now says what the suite takes: about fifteen seconds for the tests over src/core, a few minutes in all, because the guards shell out to git and node. The layout block's "~45 modules" is ~110. tools/ is the guards and generators as well as the corpus runner. And the pointer for understanding a README number now names docs/eyeblink8-result.txt rather than the evidence of a superseded run. The read stamp moves to 23 September, claims digest 2f922635. Three record fixes ride along. resolveShutLine's comment called a guided shut line an open question when ADR-0006 had answered it on 12 September; the comment now says what the ADR decided and why the population line stays until 12.0a's scoring can falsify or confirm the rule. subject_bootstrap's docstring called the UTA-RLDD intervals DROZY's. And row 12.0a cited its comparison script from the wrong directory. LEARNING records the pattern the reads keep finding: sentences about how things stand expire, and sentences about rules do not. The live claim is unchanged at 12.8a. The suite is 2048 unit tests, 52 end to end tests of which 50 run on every pull request.
 
