@@ -437,6 +437,28 @@ downgraded/medium (b-1) · M`
       frame early) produces the +1, or that it is unresolved. All
       pinned in D1's test file.
       **Findings:** G-Reproduc-3, G-Reproduc-5.
+      **Most of it done:** 13 September 2026, roadmap 10.1d's
+      evaluator slice. `exit_code` fails any run with a refusal, so a
+      partial corpus exits non-zero; the not-measured and watched-mode
+      refusals print in the report body; a glasses split with an empty
+      side prints "not computable"; a missing or unreadable
+      `frames_measured` header refuses the clip, and so does a
+      coverage gap past the bar, which the refusal line states; and
+      all of it is pinned in D1's test file, which since D1 also
+      drives collect() over clips on disk. Two parts differ from this
+      fix. The bar is max(5 frames, 1%), the tolerance row 10.1d's
+      Check names, not a frame-exact bound, and a frame-exact bound
+      cannot land before the "+1" is explained: the published anchor's
+      two "+1" clips have a gap of one frame and would be refused. And
+      the "+1" paragraph is not yet written:
+      `docs/stepper-honesty.txt`'s dated 8 September outcome refutes
+      the schedule-drift candidate and places the "+1" in the clip and
+      annotation pair, but no record tells apart the two candidates
+      named here, the stepper's last-frame duplicate and an annotator
+      stopping a frame early. Still open: that paragraph, which reads
+      the anchor run's inputs (D3), and with it the bound. Recorded 23
+      September 2026 by a sweep that found the slice landed and this
+      item silent about it.
 
 - [x] **A13. `blinkRatePerMin` divides by elapsed time, not observed
       time.** `medium · confirmed/high + downgraded/medium · S`
