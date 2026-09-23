@@ -2114,7 +2114,7 @@ downgraded ×2 · S`
       1000 px, the comment corrected, a `phone` Playwright project at
       375 px asserting Start camera in the idle viewport.
 
-- [ ] **E2. Keyboard users cannot leave the calibration or heatmap
+- [x] **E2. Keyboard users cannot leave the calibration or heatmap
       overlays; the KSS dialog has no focus trap and lands on rating 1.** `medium · confirmed ×2 · M`
       `main.ts:1670-1674`, `:1753-1757`, `:1988` register click only;
       the sole keydown is the light overlay's (`:4183-4187`);
@@ -2122,6 +2122,11 @@ downgraded ×2 · S`
       `<dialog>` with `showModal()` intercepting cancel; initial focus
       on the prompt or Skip. WCAG 2.1.2 / 2.4.3 plus a wrong-label
       risk. (F-079)
+      **Done:** 7 September 2026, roadmap 14.0f1: Escape closes the
+      overlays (src/core/overlayEscape.ts), and the KSS prompt is a
+      native dialog opened with showModal, its focus landing on the
+      prompt rather than on rating 1. Ticked 23 September 2026 by a
+      sweep that found the row done and this box still open.
 
 - [ ] **E3. Guided calibration: a tone at each phase boundary, an
       explicit Cancel with a status line, and the run's quality in the
