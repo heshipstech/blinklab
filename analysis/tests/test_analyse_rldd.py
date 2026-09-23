@@ -24,8 +24,10 @@ from blinklab.rldd import (
 )
 from tools.analyse_rldd import (
     _verdict_narrative,
+    build_parser,
     exclusion_reason,
     format_report,
+    main,
     run_analysis,
     shuffle_line,
 )
@@ -256,3 +258,34 @@ class TestTheReportStatesItsShuffleControl:
             first.three_control.null, other.three_control.null
         )
         assert "5 from seed 42, NOT the pre-registered" in format_report(first)
+
+
+class TestTheCommandTakesTheShuffleControl:
+    """Remediation B8. The two flags turn the published reseeds into a
+    command rather than an edit to the source: `--shuffles 250 --seed 42`
+    is the first of them. Both default to the plan's pair, and a count
+    below one is refused by name rather than failing inside numpy on an
+    empty null."""
+
+    def test_the_defaults_are_the_plans_pair(self) -> None:
+        args = build_parser().parse_args(["measured"])
+        assert (args.shuffles, args.seed) == (SHUFFLES, SEED)
+
+    def test_the_flags_reach_the_analysis(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        _corpus_dir(tmp_path, n_subjects=2)
+        argv = [str(tmp_path), "--shuffles", "5", "--seed", "42"]
+        assert main(argv) == 0
+        printed = capsys.readouterr().out
+        direct = run_analysis(load_corpus(tmp_path), shuffles=5, seed=42)
+        assert printed == format_report(direct) + "\n"
+        assert "5 from seed 42, NOT the pre-registered" in printed
+
+    def test_a_count_below_one_is_refused_by_name(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with pytest.raises(SystemExit) as stopped:
+            build_parser().parse_args(["measured", "--shuffles", "0"])
+        assert stopped.value.code == 2
+        assert "must be at least 1, not 0" in capsys.readouterr().err
