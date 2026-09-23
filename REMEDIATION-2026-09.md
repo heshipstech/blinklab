@@ -692,7 +692,7 @@ downgraded/medium · S`
       distance gate (C10).
       **Findings:** F-032.
 
-- [ ] **A25. Blinks are not excluded from the gaze chain: each blink
+- [x] **A25. Blinks are not excluded from the gaze chain: each blink
       splits a fixation, truncates it ~330 ms and credits dwell to the
       wrong cell.** `medium · confirmed ×2 · M`
       **What:** no aperture check anywhere from `main.ts:3193-3221`
@@ -704,6 +704,11 @@ downgraded/medium · S`
       blink-length null gap; exclude those frames from the heatmap;
       pin with `session-01.json` fixation count before/after.
       **Findings:** F-042.
+      **Done:** 17 September 2026, roadmap 14.9b: the gaze offset is
+      nulled below the blink line, I-DT bridges a blink-length gap,
+      and blink frames are kept out of the heatmap and the dwell
+      (src/core/gazeBlinkGate.ts). Ticked 23 September 2026 by a sweep
+      that found the row done and this box still open.
 
 - [x] **A26. A camera that stops delivering reads as "this browser does
       not report it" and records continue from a frozen frame.**
