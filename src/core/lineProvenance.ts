@@ -92,9 +92,12 @@ export function resolveBlinkLine(
  * column would faithfully describe a line nobody reads.
  *
  * Two sources only. Whether a guided line should also serve the shut
- * baseline is an open question the ladder holds as an ADR, and wiring
- * it here would answer that question by default rather than by
- * argument.
+ * baseline was decided by ADR-0006 (accepted 12 September 2026): it
+ * will, under the rule docs/shut-line-rule.txt pre-registered. But the
+ * ADR hands the rule's scoring to roadmap 12.0a, and that scoring can
+ * still falsify it, so wiring the guided source here now would adopt a
+ * decision ahead of its evidence. The population line stays until 12.0a
+ * publishes its outcome.
  */
 export function resolveShutLine(
   frozenShutBaselineMm: number | null,
