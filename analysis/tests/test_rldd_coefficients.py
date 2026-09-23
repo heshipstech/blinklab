@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 from blinklab.rldd import (
+    CONTAINER_NOT_CHECKED,
     LABELS,
     RldError,
     VideoFeatures,
@@ -27,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 from rldd_coefficients import (  # noqa: E402
     format_report,
+    main,
     per_subject_label_counts,
 )
 
@@ -150,3 +152,74 @@ class TestFormatReport:
         assert "s2" in text
         assert "pooled" in text
         assert "blink_rate_per_min" in text
+
+
+_COLUMNS = [
+    "timestampMs",
+    "fps",
+    "blinkRatePerMin",
+    "lastBlinkDurationMs",
+    "perclos",
+    "longClosureCount",
+]
+
+
+def _write_measured(directory: Path, n_subjects: int) -> None:
+    """The seconds files a corpus run writes, 401 measured seconds each,
+    with one blink signature per label inside the 60-360 s window."""
+    signature = {
+        "alert": (20, 150, 0.02),
+        "lowvigilant": (12, 250, 0.10),
+        "drowsy": (5, 400, 0.30),
+    }
+    for s in range(n_subjects):
+        for label, (rate, duration, perclos) in signature.items():
+            lines = ["# measurement_mode: stepped", ",".join(_COLUMNS)]
+            for second in range(401):
+                cells = [second * 1000, 30.0, "", "", "", 0]
+                if 60 <= second < 360:
+                    cells[2:5] = [rate, duration, perclos]
+                lines.append(",".join(str(cell) for cell in cells))
+            path = directory / f"s{s}_{label}.seconds.csv"
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _write_manifest(path: Path, n_subjects: int, suffix: str = "") -> None:
+    rows = ["clip,rFrameRate,avgFrameRate,nbReadPackets"]
+    for s in range(n_subjects):
+        for label in LABELS:
+            rows.append(f"s{s}_{label}{suffix},30/1,30/1,12030")
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+class TestTheCommandTakesTheManifest:
+    """Roadmap 10.14b. The table reads the same feature records the
+    analysis does, so it takes the same container cross-check and states
+    it the same way."""
+
+    def test_the_report_says_the_check_did_not_run_without_one(self) -> None:
+        text = format_report(_separable_corpus(n_subjects=3))
+        assert CONTAINER_NOT_CHECKED in text
+
+    def test_a_matching_manifest_is_named_in_the_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        _write_measured(measured, n_subjects=2)
+        manifest = tmp_path / "manifest.csv"
+        _write_manifest(manifest, n_subjects=2)
+        assert main([str(measured), "--manifest", str(manifest)]) == 0
+        printed = capsys.readouterr().out
+        assert "container check   6 of 6 clips within" in printed
+
+    def test_a_manifest_naming_no_clip_refuses_the_table(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        measured = tmp_path / "measured"
+        measured.mkdir()
+        _write_measured(measured, n_subjects=2)
+        manifest = tmp_path / "manifest.csv"
+        _write_manifest(manifest, n_subjects=2, suffix=".mp4")
+        assert main([str(measured), "--manifest", str(manifest)]) == 1
+        assert "names none of the 6" in capsys.readouterr().err

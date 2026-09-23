@@ -15,6 +15,11 @@ coefficients are a deterministic function of the records.
 
     uv run python -m tools.rldd_coefficients <measured-dir>
 
+`--manifest` takes the `manifest.csv` prepare_rldd.py writes, exactly as
+analyse_rldd.py does: a clip whose coverage disagrees with its container
+refuses the table (roadmap 10.14b), and the report states how far the
+check reached.
+
 UTA-RLDD is used under written permission from Professor Vassilis
 Athitsos. Cite Ghoddoosian, Galib and Athitsos, CVPR Workshops 2019.
 """
@@ -25,10 +30,11 @@ import argparse
 import sys
 
 from blinklab.rldd import (
+    CONTAINER_NOT_CHECKED,
     LABELS,
     RldError,
     VideoFeatures,
-    load_corpus,
+    load_checked_corpus,
     standardized_coefficients,
 )
 
@@ -53,15 +59,19 @@ def per_subject_label_counts(
 
 
 def format_report(
-    videos: list[VideoFeatures], labels: tuple[str, ...] = LABELS
+    videos: list[VideoFeatures],
+    labels: tuple[str, ...] = LABELS,
+    container_check: str = CONTAINER_NOT_CHECKED,
 ) -> str:
-    """The per-subject table and the standardised coefficient table."""
+    """The per-subject table and the standardised coefficient table, under
+    a header that says how far the container cross-check reached."""
     counts = per_subject_label_counts(videos, labels)
     model = standardized_coefficients(videos, labels)
 
     lines: list[str] = []
     lines.append("UTA-RLDD per-subject table and standardised coefficients")
     lines.append("Plan fixed in advance: docs/uta-rldd-plan.md")
+    lines.append(f"  {container_check}")
     lines.append("")
 
     lines.append("PER-SUBJECT (usable videos by label; columns sum to pooled)")
@@ -110,10 +120,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "measured_dir", help="Folder of <subject>_<label>.seconds.csv files"
     )
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help="prepare_rldd.py's manifest.csv: refuse a clip whose coverage "
+        "disagrees with its container (roadmap 10.14b)",
+    )
     args = parser.parse_args(argv)
     try:
-        corpus = load_corpus(args.measured_dir)
-        report = format_report(corpus)
+        corpus, container = load_checked_corpus(
+            args.measured_dir, args.manifest
+        )
+        report = format_report(corpus, container_check=container)
     except RldError as error:
         print(f"Cannot build the table: {error}", file=sys.stderr)
         return 1
