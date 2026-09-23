@@ -97,4 +97,15 @@ test("a clip export says plainly that there was no camera", async ({
   });
 
   expect(csv).toContain("not a camera session");
+
+  // Camera rows conditional, machine rows unconditional (roadmap 13.5,
+  // remediation D8): the clip ran in this browser on this machine, and
+  // the export says which. Not "unknown": the machine is read after the
+  // clip's session reset, which would otherwise have cleared it.
+  expect(csv).toContain("# user_agent: ");
+  expect(csv).not.toContain("# user_agent: unknown");
+  expect(csv).toContain("# hardware_concurrency: ");
+  expect(csv).not.toContain("# hardware_concurrency: unknown");
+  expect(csv).toContain("# viewport: ");
+  expect(csv).not.toContain("# camera_resolution:");
 });
